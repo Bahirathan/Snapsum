@@ -1,0 +1,6 @@
+{
+  "name": "SnapSum - Universal Video Summarizer",
+  "description": "Extracts summaries, takeaways, timelines, custom quizzes, and social marketing assets from any video URL (YouTube, Vimeo, TikTok, direct stream, or web links) using Gemini AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
