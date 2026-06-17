@@ -7,9 +7,9 @@ on:
       - master
 
 env:
-  PROJECT_ID: gen-lang-client-0003754495 # This is your Google Cloud Project ID
+  PROJECT_ID: gen-lang-client-0003754495 # Set this to your Google Cloud Project ID
   SERVICE_NAME: snapsum                # Cloud Run service name
-  REGION: europe-west2                 # The region matches your development server (Europe)
+  REGION: europe-west2                 # Google Cloud Region
   AR_REPOSITORY: snapsum-repo          # Artifact Registry repository name
 
 jobs:
@@ -32,7 +32,7 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      # Create Artifact Registry Repository if it doesn't already exist
+      # Create Artifact Registry Repository if it doesn't exist
       - name: Create Artifact Registry Repository
         run: |
           gcloud artifacts repositories describe ${{ env.AR_REPOSITORY }} --location=${{ env.REGION }} || \
@@ -67,7 +67,9 @@ jobs:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
           image: ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          # Set runtime variables (like GEMINI_API_KEY) by referencing GitHub secrets
           env_vars: |
             NODE_ENV=production
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          # Allows public (unauthenticated) traffic to access the app
           flags: --allow-unauthenticated
