@@ -80,5 +80,5 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
         run: |
           mkdir -p dist
-          echo "Deploying..." > dist/index.html
+          touch dist/.gitkeep
           npx firebase-tools deploy --only hosting --project ${{ env.PROJECT_ID }} --non-interactive
