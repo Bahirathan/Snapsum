@@ -10,7 +10,7 @@
       {
         "source": "**",
         "run": {
-          "serviceId": "snapsum-universal-video-summarizer",
+          "serviceId": "snapsum",
           "region": "europe-west2"
         }
       }

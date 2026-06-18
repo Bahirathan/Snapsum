@@ -73,3 +73,10 @@ jobs:
             GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
           # Allows public (unauthenticated) traffic to access the app
           flags: --allow-unauthenticated
+
+      # Deploy Firebase Hosting configuration to activate domain rewrites to Cloud Run
+      - name: Deploy Firebase Hosting
+        run: |
+          mkdir -p dist
+          echo "Deploying..." > dist/index.html
+          npx firebase-tools deploy --only hosting --project ${{ env.PROJECT_ID }}
