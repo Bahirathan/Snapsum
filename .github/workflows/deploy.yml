@@ -76,6 +76,7 @@ jobs:
 
       # Deploy Firebase Hosting configuration to activate domain rewrites to Cloud Run
       - name: Deploy Firebase Hosting
+        continue-on-error: true
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
         run: |

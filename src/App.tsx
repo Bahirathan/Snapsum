@@ -415,6 +415,40 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     setAudioUrl(null);
     setIsPlaying(false);
 
+    // 🌟 Smart Interceptor: If pasted URL corresponds to one of the rich preloaded videos,
+    // load it directly with zero network delay and zero API costs! Great for free live demos.
+    const matchedPreload = PRELOADED_VIDEOS.find(
+      (video) => videoUrl.includes(video.metadata.videoId) || video.metadata.videoUrl === videoUrl
+    );
+
+    if (matchedPreload) {
+      setLoadingStep('Bypassing API: Loading pre-rendered high-fidelity summary...');
+      setTimeout(() => {
+        setActiveSummary(matchedPreload);
+
+        // Save to shelf history
+        const alreadySaved = savedSummaries.some((item) => item.id === matchedPreload.metadata.videoId);
+        if (!alreadySaved) {
+          const updatedShelf: SavedSummary[] = [
+            {
+              id: matchedPreload.metadata.videoId,
+              savedAt: new Date().toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              response: matchedPreload,
+            },
+            ...savedSummaries,
+          ];
+          saveToShelf(updatedShelf);
+        }
+        setLoading(false);
+      }, 700); // Authentic processing delay for micro-animation feel
+      return;
+    }
+
     setLoadingStep('Analyzing video metadata & extracting transcripts...');
 
     try {
