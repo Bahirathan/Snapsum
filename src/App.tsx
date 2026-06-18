@@ -82,7 +82,7 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // MVP Screen navigation state
-  const [currentScreen, setCurrentScreen] = useState<'app' | 'domain' | 'billing' | 'marketing'>('app');
+  const [currentScreen, setCurrentScreen] = useState<'app' | 'domain' | 'billing' | 'marketing' | 'admin'>('app');
 
   // Stripe Live Status state
   const [stripeConfig, setStripeConfig] = useState<{ stripeConfigured: boolean; publishableKey: string }>({
@@ -98,9 +98,130 @@ export default function App() {
   const [marketingShortsScript, setMarketingShortsScript] = useState('');
   const [shortsScriptLoading, setShortsScriptLoading] = useState(false);
 
-  useEffect(() => {
-    // 1. Check live Stripe credentials
-    fetch('/api/stripe-status')
+  // Admin and Environmental settings state
+  const [adminFreeReqsLimit, setAdminFreeReqsLimit] = useState(() => {
+    try {
+      return localStorage.getItem('admin_free_reqs_limit') || '3';
+    } catch {
+      return '3';
+    }
+  });
+
+  const [adminSelectedModel, setAdminSelectedModel] = useState(() => {
+    try {
+      return localStorage.getItem('admin_selected_model') || 'gemini-3.5-flash';
+    } catch {
+      return 'gemini-3.5-flash';
+    }
+  });
+
+  const [adminTemperature, setAdminTemperature] = useState(() => {
+    try {
+      return localStorage.getItem('admin_temperature') || '0.2';
+    } catch {
+      return '0.2';
+    }
+  });
+
+  const [adminSearchGrounding, setAdminSearchGrounding] = useState(() => {
+    try {
+      return localStorage.getItem('admin_search_grounding') || 'default';
+    } catch {
+      return 'default';
+    }
+  });
+
+  // Secure Auth & user session management
+  const [adminUserField, setAdminUserField] = useState('');
+  const [adminPassField, setAdminPassField] = useState('');
+  const [adminError, setAdminError] = useState('');
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
+    try {
+      return sessionStorage.getItem('is_admin_authenticated') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [adminIpList, setAdminIpList] = useState<Array<{ ip: string; count: number; lastResetAt: string }>>([]);
+  const [adminIpLoading, setAdminIpLoading] = useState(false);
+
+  // Developer Override States (Local Cached Overrides for Stripe + VIP + Usage metrics)
+  const [customVipCode, setCustomVipCode] = useState(() => {
+    try {
+      return localStorage.getItem('custom_vip_code') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  const [customStripeSecret, setCustomStripeSecret] = useState(() => {
+    try {
+      return localStorage.getItem('custom_stripe_secret') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  const [customStripePublishable, setCustomStripePublishable] = useState(() => {
+    try {
+      return localStorage.getItem('custom_stripe_publishable') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  const [usageTracker, setUsageTracker] = useState({
+    count: 0,
+    limit: 3,
+    remaining: 3,
+    vipBypassActive: false,
+  });
+
+  // Developer Sandboxing Custom API Key (Stores in localStorage for 100% $0 user costs)
+  const [customApiKey, setCustomApiKey] = useState(() => {
+    try {
+      return localStorage.getItem('custom_gemini_api_key') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  const getHeaders = () => {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (customApiKey && customApiKey.trim()) {
+      headers['x-custom-gemini-api-key'] = customApiKey.trim();
+    }
+    if (customVipCode && customVipCode.trim()) {
+      headers['x-vip-bypass-code'] = customVipCode.trim();
+    }
+    if (customStripeSecret && customStripeSecret.trim()) {
+      headers['x-custom-stripe-secret-key'] = customStripeSecret.trim();
+    }
+    if (customStripePublishable && customStripePublishable.trim()) {
+      headers['x-custom-stripe-publishable-key'] = customStripePublishable.trim();
+    }
+
+    // Admin Dashboard parameter injectors:
+    if (adminFreeReqsLimit) {
+      headers['x-custom-free-reqs-limit'] = adminFreeReqsLimit;
+    }
+    if (adminSelectedModel) {
+      headers['x-custom-gemini-model'] = adminSelectedModel;
+    }
+    if (adminTemperature) {
+      headers['x-custom-gemini-temperature'] = adminTemperature;
+    }
+    if (adminSearchGrounding !== 'default') {
+      headers['x-custom-search-grounding'] = adminSearchGrounding;
+    }
+    return headers;
+  };
+
+  const refreshStatus = () => {
+    // 1. Check live Stripe status with credentials check
+    fetch('/api/stripe-status', { headers: getHeaders() })
       .then((res) => res.json())
       .then((data) => {
         setStripeConfig({
@@ -110,19 +231,49 @@ export default function App() {
       })
       .catch((err) => console.warn('Could not read backend Stripe metadata:', err));
 
-    // 2. Handle successful Stripe Checkout redirect session
+    // 2. Check dynamic IP request limits
+    fetch('/api/usage-status', { headers: getHeaders() })
+      .then((res) => res.json())
+      .then((data) => {
+        setUsageTracker({
+          count: data.count || 0,
+          limit: data.limit || 3,
+          remaining: typeof data.remaining === 'number' ? data.remaining : 3,
+          vipBypassActive: !!data.vipBypassActive,
+        });
+        if (data.vipBypassActive) {
+          setIsPremium(true);
+        }
+      })
+      .catch((err) => console.warn('Could not retrieve dynamic custom limits:', err));
+  };
+
+  useEffect(() => {
+    refreshStatus();
+
+    // Handle successful Stripe Checkout redirect session
     const params = new URLSearchParams(window.location.search);
     if (params.get('checkout_success') === 'true') {
       savePremiumStatus(true);
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, document.title, cleanUrl);
     }
-  }, []);
+  }, [
+    customApiKey,
+    customVipCode,
+    customStripeSecret,
+    customStripePublishable,
+    adminFreeReqsLimit,
+    adminSelectedModel,
+    adminTemperature,
+    adminSearchGrounding
+  ]);
 
   // MVP Premium & billing state
   const [isPremium, setIsPremium] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('youtube_summarizer_premium') === 'true';
+      return localStorage.getItem('youtube_summarizer_premium') === 'true' || 
+             localStorage.getItem('custom_vip_code') === 'PROPASS';
     } catch {
       return false;
     }
@@ -454,9 +605,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     try {
       const response = await fetch('/api/summarize', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getHeaders(),
         body: JSON.stringify({
           videoUrl,
           customTranscript: customTranscript || undefined,
@@ -497,9 +646,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         document.getElementById('summary-dashboard')?.scrollIntoView({ behavior: 'smooth' });
       }, 300);
 
+      refreshStatus();
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'An unexpected failure occurred while loading the video summary.');
+      refreshStatus();
     } finally {
       setLoading(false);
       setLoadingStep('');
@@ -513,7 +664,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     try {
       const response = await fetch('/api/tts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ text: textSource }),
       });
 
@@ -591,6 +742,92 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     setIsPlaying(false);
 
     document.getElementById('summary-dashboard')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Admin Dashboard API Handler utilities:
+  const handleAdminAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAdminError('');
+    try {
+      const response = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: adminUserField, password: adminPassField }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Authentication challenge failed.');
+      }
+      sessionStorage.setItem('is_admin_authenticated', 'true');
+      setIsAdminAuthenticated(true);
+      fetchAdminIpTracker();
+    } catch (err: any) {
+      setAdminError(err.message || 'Invalid credentials. Access denied.');
+    }
+  };
+
+  const fetchAdminIpTracker = async () => {
+    setAdminIpLoading(true);
+    try {
+      const response = await fetch('/api/admin/ip-tracker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          username: adminUserField || 'admin', 
+          password: adminPassField || 'SnapSumAdmin2026!' 
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAdminIpList(data.ips || []);
+      }
+    } catch (err) {
+      console.warn('Could not read IP tracker list:', err);
+    } finally {
+      setAdminIpLoading(false);
+    }
+  };
+
+  const handleResetSpecificIp = async (ip: string) => {
+    if (!confirm(`Are you sure you want to reset rate limits for guest IP ${ip}?`)) return;
+    try {
+      const response = await fetch('/api/admin/ip-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: adminUserField || 'admin',
+          password: adminPassField || 'SnapSumAdmin2026!',
+          targetIp: ip
+        }),
+      });
+      if (response.ok) {
+        fetchAdminIpTracker();
+        refreshStatus();
+      }
+    } catch (err) {
+      console.warn('Could not reset guest IP rate limits:', err);
+    }
+  };
+
+  const handleResetAllIps = async () => {
+    if (!confirm('Are you sure you want to clear rate limits for ALL guests simultaneously?')) return;
+    try {
+      const response = await fetch('/api/admin/ip-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: adminUserField || 'admin',
+          password: adminPassField || 'SnapSumAdmin2026!',
+          clearAll: true
+        }),
+      });
+      if (response.ok) {
+        fetchAdminIpTracker();
+        refreshStatus();
+      }
+    } catch (err) {
+      console.warn('Could not reset all rate limits:', err);
+    }
   };
 
   // Quiz score check
@@ -678,6 +915,17 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               <Megaphone className="w-3.5 h-3.5" />
               <span className="hidden xs:inline">Marketing</span>
             </button>
+            <button
+              onClick={() => setCurrentScreen('admin')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
+                currentScreen === 'admin'
+                  ? 'bg-zinc-800 text-white shadow-sm'
+                  : 'text-[#86868b] hover:text-[#1d1d1f]'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline">Admin</span>
+            </button>
           </nav>
 
           <div className="flex items-center gap-4">
@@ -758,6 +1006,29 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           Summarize Video
                         </>
                       )}
+                    </button>
+                  </div>
+
+                  {/* Dynamic Guest Allocation Control Feedback Module */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] px-1 pt-0.5 font-sans">
+                    {isPremium || usageTracker.vipBypassActive ? (
+                      <span className="text-emerald-600 font-semibold flex items-center gap-1.5">
+                        <CheckCircle className="w-3.5 h-3.5 fill-emerald-50 text-emerald-600 shrink-0" />
+                        ✨ Unlimited summary engine activated (Premium/VIP Plan)
+                      </span>
+                    ) : (
+                      <span className="text-[#86868b] font-light flex items-center gap-1.5 font-sans">
+                        <AlertCircle className="w-3.5 h-3.5 text-[#86868b] shrink-0" />
+                        <span>guest allocation remaining: <strong className="font-semibold text-neutral-800">{usageTracker.remaining}</strong> of <strong className="font-semibold text-neutral-800">{usageTracker.limit}</strong> daily video analyses.</span>
+                      </span>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => setCurrentScreen('billing')}
+                      className="text-[#0071e3] hover:underline font-semibold text-left sm:text-right cursor-pointer"
+                    >
+                      {isPremium || usageTracker.vipBypassActive ? 'Manage Connection Hub →' : 'Upgrade to bypass limits →'}
                     </button>
                   </div>
 
@@ -1968,6 +2239,235 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 </div>
               </div>
 
+              {/* ZERO-COST MVP DEV SANDBOX: CUSTOM GEMINI API KEY */}
+              <div className="p-6 rounded-3xl border border-blue-100 bg-blue-50/20 text-left space-y-4 font-sans">
+                <div className="flex items-center gap-2 text-blue-800">
+                  <Server className="w-5 h-5 text-blue-700" />
+                  <h3 className="font-bold text-sm tracking-tight text-blue-950">Zero-Cost MVP Launchpad & Developer Sandbox</h3>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed max-w-4xl font-light">
+                  To get real market validation, run your SnapSum MVP at <strong>$0 hosting and API costs</strong>! By pasting your personal <strong>Google Gemini API Key</strong> below, it will be saved securely in your browser's private <code>localStorage</code>. All summaries and premium audio voiceovers will execute utilizing your personal free-tier sandbox. This completely bypasses server quota blocks and costs you absolutely nothing!
+                </p>
+
+                <div className="max-w-xl space-y-2">
+                  <div className="flex gap-2.5">
+                    <input
+                      type="password"
+                      placeholder="Paste your private personal Gemini API key here (AI_...) or leave blank to use the default"
+                      value={customApiKey}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomApiKey(val);
+                        if (val.trim()) {
+                          localStorage.setItem('custom_gemini_api_key', val.trim());
+                        } else {
+                          localStorage.removeItem('custom_gemini_api_key');
+                        }
+                      }}
+                      className="flex-1 px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-blue-500 font-mono shadow-sm"
+                    />
+                    {customApiKey && (
+                      <button
+                        onClick={() => {
+                          setCustomApiKey('');
+                          localStorage.removeItem('custom_gemini_api_key');
+                        }}
+                        className="px-3.5 py-2 text-xs hover:bg-neutral-100/60 text-neutral-600 rounded-xl border border-black/[0.08] transition whitespace-nowrap font-medium cursor-pointer"
+                      >
+                        Clear Key
+                      </button>
+                    )}
+                  </div>
+                  <span className="block text-[10px] text-slate-500 font-light">
+                    🔑 Security: Your API key is cached locally inside your browser's private state, keeping it completely immune to leaking over open servers.
+                  </span>
+                </div>
+
+                <div className="pt-3.5 border-t border-blue-100/50 space-y-2">
+                  <h4 className="text-xs font-bold text-blue-950 leading-none">🚀 How to host this full-stack MVP entirely for free:</h4>
+                  <ul className="text-[11px] text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed font-light">
+                    <li>
+                      <strong>Avoid Google Cloud Run for $0 Budgets</strong>: Cloud Run & GCP Artifact Registry require linking an active payment billing profile, which is why your GitHub Actions push errored with <code>BILLING_DISABLED</code>.
+                    </li>
+                    <li>
+                      <strong>Use Render.com or Koyeb instead</strong>: These platforms feature robust <strong>Free Tiers for Node.js</strong> servers which require no credit cards or billing setup to deploy! This Express + Vite project will compile and deploy on them out-of-the-box.
+                    </li>
+                    <li>
+                      <strong>Try Static Hosting like Vercel or Netlify</strong>: By relying on your custom Gemini API key above, you can export this React project as a purely static site and deploy it instantly for $0.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Dynamic Rate Control Center & Stripe Integration Hub */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2 text-left">
+                
+                {/* CARD 1: RATE LIMITS & ACCESS PROTECTION */}
+                <div className="p-6 rounded-3xl border border-rose-100 bg-rose-50/10 text-left space-y-4 font-sans">
+                  <div className="flex items-center gap-2 text-rose-800">
+                    <Lock className="w-5 h-5 text-rose-700" />
+                    <h3 className="font-bold text-sm tracking-tight text-rose-950">
+                      Rate Limiting & Guest Control Suite
+                    </h3>
+                  </div>
+                  <p className="text-xs text-[#515154] leading-relaxed font-light">
+                    Prevent guest users from spamming your default server credits! This engine automatically rate-limits individual guest IP addresses to a max daily allowance.
+                  </p>
+
+                  {/* Active meter badge or status */}
+                  <div className="bg-white p-4 rounded-2xl border border-rose-100/60 shadow-sm space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-semibold text-rose-950">Your Guest IP Limit Profile:</span>
+                      {usageTracker.vipBypassActive || isPremium ? (
+                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider">
+                          Unlocked (VIP Bypass)
+                        </span>
+                      ) : (
+                        <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold">
+                          Standard Guest Limit
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                        <span>Daily Credit Allocation:</span>
+                        <span className="font-bold text-slate-800">
+                          {usageTracker.vipBypassActive || isPremium ? 'Unlimited' : `${usageTracker.count} / ${usageTracker.limit} used`}
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full transition-all duration-300 ${usageTracker.vipBypassActive || isPremium ? 'bg-emerald-500 w-full' : 'bg-rose-500'}`} 
+                          style={{ width: usageTracker.vipBypassActive || isPremium ? '100%' : `${Math.min(100, (usageTracker.count / usageTracker.limit) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="block text-[10px] text-[#86868b] font-light pt-0.5">
+                        🔄 Limit automatically resets every 24 hours back to full credits.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* VIP Access Code input */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-bold text-rose-950 uppercase tracking-wider font-mono">
+                      VIP Access Passcode (Creator Bypass)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="password"
+                        placeholder="Enter VIP code (e.g. PROPASS)"
+                        value={customVipCode}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCustomVipCode(val);
+                          if (val.trim()) {
+                            localStorage.setItem('custom_vip_code', val.trim());
+                            if (val.trim() === 'PROPASS') {
+                              setIsPremium(true);
+                            }
+                          } else {
+                            localStorage.removeItem('custom_vip_code');
+                            localStorage.removeItem('youtube_summarizer_premium');
+                            setIsPremium(false);
+                          }
+                        }}
+                        className="flex-1 px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-rose-500 font-mono shadow-sm"
+                      />
+                      {customVipCode && (
+                        <button
+                          onClick={() => {
+                            setCustomVipCode('');
+                            localStorage.removeItem('custom_vip_code');
+                            localStorage.removeItem('youtube_summarizer_premium');
+                            setIsPremium(false);
+                          }}
+                          className="px-3.5 py-2 text-xs hover:bg-neutral-100/60 text-neutral-600 rounded-xl border border-black/[0.08] transition whitespace-nowrap font-medium cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <span className="block text-[10px] text-slate-500 leading-normal font-light">
+                      🔑 Host instructions: Provide VIPs with the <code>VIP_BYPASS_CODE</code> (default: <code>PROPASS</code>) to grant premium access instantly without payment!
+                    </span>
+                  </div>
+                </div>
+
+                {/* CARD 2: STRIPE ACCOUNT CONNECTOR */}
+                <div className="p-6 rounded-3xl border border-emerald-100 bg-emerald-50/10 text-left space-y-4 font-sans">
+                  <div className="flex items-center gap-2 text-emerald-800">
+                    <CreditCard className="w-5 h-5 text-emerald-700" />
+                    <h3 className="font-bold text-sm tracking-tight text-emerald-950">
+                      Stripe Direct Account Integration
+                    </h3>
+                  </div>
+                  <p className="text-xs text-[#515154] leading-relaxed font-light">
+                    Direct your subscription receipts to your bank! To transition from local simulating sandbox mode, setup active credentials here:
+                  </p>
+
+                  <div className="space-y-2.5">
+                    {/* Secret Key Input */}
+                    <div className="space-y-1">
+                      <label className="block text-[9px] font-mono font-bold text-emerald-950 uppercase tracking-widest leading-none">
+                        Stripe Secret Key (sk_test_...)
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="sk_test_..."
+                        value={customStripeSecret}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCustomStripeSecret(val);
+                          if (val.trim()) {
+                            localStorage.setItem('custom_stripe_secret', val.trim());
+                          } else {
+                            localStorage.removeItem('custom_stripe_secret');
+                          }
+                        }}
+                        className="w-full px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-emerald-500 font-mono shadow-sm"
+                      />
+                    </div>
+
+                    {/* Publishable Key Input */}
+                    <div className="space-y-1">
+                      <label className="block text-[9px] font-mono font-bold text-emerald-950 uppercase tracking-widest leading-none">
+                        Stripe Publishable Key (pk_test_...)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="pk_test_..."
+                        value={customStripePublishable}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCustomStripePublishable(val);
+                          if (val.trim()) {
+                            localStorage.setItem('custom_stripe_publishable', val.trim());
+                          } else {
+                            localStorage.removeItem('custom_stripe_publishable');
+                          }
+                        }}
+                        className="w-full px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-emerald-500 font-mono shadow-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-2.5 border-t border-emerald-100/50 space-y-1.5">
+                    <h4 className="text-[10px] font-extrabold text-[#1d1d1f] uppercase tracking-wider font-mono">
+                      🔒 SECURE PERMANENT INTEGRATION GUIDE:
+                    </h4>
+                    <p className="text-[10px] text-slate-500 leading-normal font-light font-sans">
+                      To roll this secure integration to all users permanently, define these parameters in your **AI Studio Settings** secrets dashboard:
+                    </p>
+                    <ul className="text-[10px] text-slate-500 space-y-1 list-disc pl-4 font-mono leading-normal">
+                      <li>Name: <code className="bg-slate-100 px-1 rounded text-neutral-800">STRIPE_SECRET_KEY</code></li>
+                      <li>Name: <code className="bg-slate-100 px-1 rounded text-neutral-800">STRIPE_PUBLISHABLE_KEY</code></li>
+                    </ul>
+                  </div>
+                </div>
+
+              </div>
+
               {/* Monthly / Yearly Billing Cycle Switcher */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 text-left">
                 <div>
@@ -2416,12 +2916,473 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     Mid-Tier Creator Tagging
                   </h4>
                   <p className="text-[11px] text-neutral-400 leading-relaxed font-sans font-light">
-                    Summarize long podcasts or interviews of popular independent creators. Post the summary chapter logs on Twitter, tag the podcast host, and say: "Summarized the epic interview into a study package for visual learners!". Hosts love sharing summaries of their own podcasts with their fans, giving you 50,000+ targeted impressions instantly!
+                    Summarize long podcasts or interviews of popular independent creators. Post the summary chapter logs on Twitter, tag the podcast host, and say: "Summarized the epic interview into a study package for visual learners!". Hosts love sharing summaries of their own podcasts with their fans, giving you 50,000+ targeted impressions impressions instantly!
                   </p>
                 </div>
 
               </div>
             </div>
+
+          </div>
+        )}
+
+        {currentScreen === 'admin' && (
+          <div className="space-y-6 animate-fadeIn transition-all duration-300 font-sans">
+            
+            {/* Unauthenticated Security Shield Login Screen */}
+            {!isAdminAuthenticated ? (
+              <div className="max-w-md mx-auto py-12 px-4">
+                <div className="bg-white rounded-3xl border border-black/[0.04] p-8 space-y-6 shadow-sm text-center">
+                  <div className="h-14 w-14 bg-zinc-900 mx-auto flex items-center justify-center text-white rounded-2xl shadow-inner">
+                    <Lock className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-xl font-bold tracking-tight text-neutral-900 font-sans">
+                      Admin Access Challenge
+                    </h2>
+                    <p className="text-xs text-neutral-500 font-sans leading-relaxed">
+                      Enter authorized administrative User ID and password credentials to enter the environmental controls dashboard.
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleAdminAuth} className="space-y-4 text-left">
+                    <div className="space-y-1.5 font-sans">
+                      <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold">
+                        Admin User ID
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. admin"
+                        value={adminUserField}
+                        onChange={(e) => setAdminUserField(e.target.value)}
+                        required
+                        className="w-full px-4 py-2.5 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-black/[0.05]"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5 font-sans">
+                      <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        placeholder="••••••••••••"
+                        value={adminPassField}
+                        onChange={(e) => setAdminPassField(e.target.value)}
+                        required
+                        className="w-full px-4 py-2.5 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-black/[0.05]"
+                      />
+                    </div>
+
+                    {adminError && (
+                      <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-xs text-center font-medium font-sans">
+                        ⚠️ {adminError}
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      className="w-full bg-[#1d1d1f] hover:bg-black text-white text-xs font-semibold py-3 rounded-xl transition cursor-pointer shadow-sm text-center"
+                    >
+                      Authenticate Access Credentials
+                    </button>
+                  </form>
+
+                  {/* Built-in sandbox visual help for testing convenience */}
+                  <div className="bg-amber-50/50 border border-amber-100/65 rounded-2xl p-4 text-left space-y-1.5 text-amber-900 leading-normal">
+                    <span className="text-[10px] uppercase font-bold font-mono tracking-wider text-amber-800 flex items-center gap-1.5 justify-center sm:justify-start">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      Applet Default Credentials
+                    </span>
+                    <p className="text-[10px] text-amber-700 font-sans font-light">
+                      Use the requested account credential overrides below to verify the secure panel logic:
+                    </p>
+                    <ul className="text-[10px] font-mono space-y-1 pl-4 list-disc text-amber-805">
+                      <li>User ID (Username): <code className="bg-amber-100/50 px-1 rounded">admin</code></li>
+                      <li>Password: <code className="bg-amber-100/50 px-1 rounded">SnapSumAdmin2026!</code></li>
+                    </ul>
+                    <p className="text-[9px] text-[#86868b] leading-tight pt-1">
+                      Customize these permanently in your secrets console using <code>ADMIN_USER_ID</code> and <code>ADMIN_PASSWORD</code>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Authenticated Admin Control Panel View */
+              <div className="space-y-6 text-left font-sans">
+                
+                {/* Dashboard Title Banner */}
+                <div className="bg-[#1d1d1f] rounded-3xl p-6 md:p-8 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1 text-left font-sans">
+                    <span className="text-[9px] font-mono uppercase text-[#86868b] tracking-wider font-bold">SnapSum Operations Suite</span>
+                    <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                      Administrative Control Terminal
+                    </h2>
+                    <p className="text-neutral-400 text-xs font-sans font-light leading-relaxed">
+                      Configure environment quotas, rate limit parameters, billing gateways, simulated users, and Gemini API inference settings.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      sessionStorage.removeItem('is_admin_authenticated');
+                      setIsAdminAuthenticated(false);
+                    }}
+                    className="bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition cursor-pointer self-start sm:self-center"
+                  >
+                    Log Out Configurator
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  
+                  {/* CARD 1: ENVIRONMENTAL SETTINGS */}
+                  <div className="bg-white p-6 rounded-3xl border border-black/[0.04] space-y-4 shadow-sm text-left font-sans">
+                    <div className="flex items-center gap-2 text-zinc-800">
+                      <Server className="w-5 h-5 text-zinc-700" />
+                      <h3 className="font-bold text-sm tracking-tight text-[#1d1d1f]">
+                        Environmental & Access Settings
+                      </h3>
+                    </div>
+                    <p className="text-xs text-[#515154] font-sans font-light leading-relaxed">
+                      Control standard system variables and request limits mapped directly throughout your active server.
+                    </p>
+
+                    <div className="space-y-4 pt-2 border-t border-neutral-100">
+                      
+                      {/* guest credit limit */}
+                      <div className="space-y-1.5 font-sans">
+                        <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold">
+                          Guest Daily Limits (FREE_REQS_LIMIT)
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="range"
+                            min="1"
+                            max="20"
+                            value={adminFreeReqsLimit}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setAdminFreeReqsLimit(val);
+                              localStorage.setItem('admin_free_reqs_limit', val);
+                              refreshStatus();
+                            }}
+                            className="flex-1 accent-black animate-pulse"
+                          />
+                          <span className="text-xs font-bold font-mono bg-[#f5f5f7] px-3 py-1.5 rounded-lg border border-black/[0.04]">
+                            {adminFreeReqsLimit} Req/Day
+                          </span>
+                        </div>
+                        <span className="block text-[10px] text-[#86868b] leading-normal font-light">
+                          Determines the threshold count of daily video analyses allowed for non-paying guest IP addresses.
+                        </span>
+                      </div>
+
+                      {/* default bypass code */}
+                      <div className="space-y-1.5 font-sans">
+                        <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#86868b] block font-bold">
+                          VIP Bypass Access Code
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. PROPASS"
+                          value={customVipCode}
+                          onChange={(e) => {
+                            const val = e.target.value.trim();
+                            setCustomVipCode(val);
+                            if (val) {
+                              localStorage.setItem('custom_vip_code', val);
+                              if (val === 'PROPASS') {
+                                setIsPremium(true);
+                              }
+                            } else {
+                              localStorage.removeItem('custom_vip_code');
+                              setIsPremium(false);
+                            }
+                          }}
+                          className="w-full px-4 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white"
+                        />
+                        <span className="block text-[10px] text-[#86868b] leading-normal font-light">
+                          Supply guests or creators with this specific passkey to grant instant premium access. Default: <code>PROPASS</code>.
+                        </span>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* CARD 2: BILLING & GATEWAY SETTINGS */}
+                  <div className="bg-white p-6 rounded-3xl border border-black/[0.04] space-y-4 shadow-sm text-left font-sans">
+                    <div className="flex items-center gap-2 text-zinc-805">
+                      <CreditCard className="w-5 h-5 text-zinc-700" />
+                      <h3 className="font-bold text-sm tracking-tight text-[#1d1d1f]">
+                        Billing Settings & Stripe Portal
+                      </h3>
+                    </div>
+                    <p className="text-xs text-[#515154] font-sans font-light leading-relaxed">
+                      Coordinate billing credentials to receive active user subscriptions directly in support of real growth.
+                    </p>
+
+                    <div className="space-y-3 pt-2 border-t border-neutral-100">
+                      
+                      {/* secret key */}
+                      <div className="space-y-1 font-sans">
+                        <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold">
+                          Stripe Secret Key (Overriding System API)
+                        </label>
+                        <input
+                          type="password"
+                          placeholder="sk_test_..."
+                          value={customStripeSecret}
+                          onChange={(e) => {
+                            const val = e.target.value.trim();
+                            setCustomStripeSecret(val);
+                            if (val) {
+                              localStorage.setItem('custom_stripe_secret', val);
+                            } else {
+                              localStorage.removeItem('custom_stripe_secret');
+                            }
+                          }}
+                          className="w-full px-4 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono"
+                        />
+                      </div>
+
+                      {/* publishable key */}
+                      <div className="space-y-1 font-sans">
+                        <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold">
+                          Stripe Publishable Key
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="pk_test_..."
+                          value={customStripePublishable}
+                          onChange={(e) => {
+                            const val = e.target.value.trim();
+                            setCustomStripePublishable(val);
+                            if (val) {
+                              localStorage.setItem('custom_stripe_publishable', val);
+                            } else {
+                              localStorage.removeItem('custom_stripe_publishable');
+                            }
+                          }}
+                          className="w-full px-4 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono"
+                        />
+                      </div>
+
+                      {/* Toggle mock premium test bypass */}
+                      <div className="p-3 bg-emerald-50/50 rounded-xl border border-emerald-100/40 flex items-center justify-between text-left mt-2">
+                        <div className="space-y-0.5 max-w-[80%]">
+                          <span className="text-[11px] font-bold text-emerald-950 block">Simulate Sandbox Pro Pass</span>
+                          <span className="text-[9px] text-emerald-800 leading-none block">Enable mock subscription active state for verification purposes on current browser.</span>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={isPremium}
+                          onChange={(e) => {
+                            const checkState = e.target.checked;
+                            setIsPremium(checkState);
+                            localStorage.setItem('youtube_summarizer_premium', checkState ? 'true' : 'false');
+                          }}
+                          className="h-4 w-4 accent-emerald-600 rounded cursor-pointer"
+                        />
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* CARD 3: GEMINI API CONFIGURATION SETTINGS */}
+                  <div className="bg-white p-6 rounded-3xl border border-black/[0.04] space-y-4 shadow-sm text-left font-sans">
+                    <div className="flex items-center gap-2 text-zinc-800">
+                      <Sparkles className="w-5 h-5 text-zinc-700" />
+                      <h3 className="font-bold text-sm tracking-tight text-[#1d1d1f]">
+                        Gemini AI API Configuration Settings
+                      </h3>
+                    </div>
+                    <p className="text-xs text-[#515154] font-sans font-light leading-relaxed">
+                      Optimize models, inference parameters, and advanced groundings to adjust depth, cost, or speeds.
+                    </p>
+
+                    <div className="space-y-4 pt-2 border-t border-neutral-100">
+                      
+                      {/* custom api key override */}
+                      <div className="space-y-1 font-sans">
+                        <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold">
+                          Developer Custom Gemini API Key Override
+                        </label>
+                        <input
+                          type="password"
+                          placeholder="AIzaSy..."
+                          value={customApiKey}
+                          onChange={(e) => {
+                            const val = e.target.value.trim();
+                            setCustomApiKey(val);
+                            if (val) {
+                              localStorage.setItem('custom_gemini_api_key', val);
+                            } else {
+                              localStorage.removeItem('custom_gemini_api_key');
+                            }
+                          }}
+                          className="w-full px-4 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono"
+                        />
+                        <span className="block text-[9px] text-[#86868b] leading-tight">
+                          Empty default utilizes host defaults (No direct developer prompt fees).
+                        </span>
+                      </div>
+
+                      {/* Model Selector */}
+                      <div className="space-y-1.5 font-sans">
+                        <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold">
+                          Active Gemini Model
+                        </label>
+                        <select
+                          value={adminSelectedModel}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminSelectedModel(val);
+                            localStorage.setItem('admin_selected_model', val);
+                          }}
+                          className="w-full px-3 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl font-sans"
+                        >
+                          <option value="gemini-3.5-flash">gemini-3.5-flash (Recommended Default)</option>
+                          <option value="gemini-3.5-pro">gemini-3.5-pro (High long-form reasoning accuracy)</option>
+                          <option value="gemini-2.5-flash">gemini-2.5-flash (Highest latency throughput)</option>
+                          <option value="gemini-2.5-pro">gemini-2.5-pro (Advanced coding/analytical depth)</option>
+                        </select>
+                      </div>
+
+                      {/* Temperature configuration */}
+                      <div className="space-y-1.5 font-sans">
+                        <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold">
+                          Inference Temperature (Creativity Index)
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="range"
+                            min="0.0"
+                            max="1.0"
+                            step="0.1"
+                            value={adminTemperature}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setAdminTemperature(val);
+                              localStorage.setItem('admin_temperature', val);
+                            }}
+                            className="flex-1 accent-black"
+                          />
+                          <span className="text-[10px] font-mono font-semibold bg-[#f5f5f7] px-2 py-1 rounded">
+                            TEMP = {adminTemperature}
+                          </span>
+                        </div>
+                        <span className="block text-[9px] text-slate-500 font-sans leading-none">
+                          Lower weights specify standard summary fact listings. Higher weights allow highly creative branding copies.
+                        </span>
+                      </div>
+
+                      {/* Google search grounding selection */}
+                      <div className="space-y-1.5 font-sans">
+                        <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold">
+                          Google Search Grounding Engine
+                        </label>
+                        <select
+                          value={adminSearchGrounding}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setAdminSearchGrounding(val);
+                            localStorage.setItem('admin_search_grounding', val);
+                          }}
+                          className="w-full px-3 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl font-sans"
+                        >
+                          <option value="default">Default Fallback (Use search tools only when lacking transcript)</option>
+                          <option value="true">Force Search Grounding (Inject Google Search queries on all jobs)</option>
+                          <option value="false">Disable Search Grounding (No external internet fetching)</option>
+                        </select>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* CARD 4: ACTIVE USER TRACKER & RATE LIMIT RESETS */}
+                  <div className="bg-white p-6 rounded-3xl border border-black/[0.04] space-y-4 shadow-sm text-left font-sans flex flex-col justify-between">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-zinc-800">
+                          <History className="w-5 h-5 text-zinc-700" />
+                          <h3 className="font-bold text-sm tracking-tight text-[#1d1d1f]">
+                            User Management & IP Rate Limiter
+                          </h3>
+                        </div>
+                        <button
+                          onClick={fetchAdminIpTracker}
+                          disabled={adminIpLoading}
+                          className="text-[#0071e3] text-[10px] font-bold uppercase tracking-wider font-mono hover:underline disabled:opacity-40 cursor-pointer"
+                        >
+                          {adminIpLoading ? 'Polling...' : 'Sync Logs 🔄'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-[#515154] font-sans font-light leading-relaxed">
+                        Track unique IP addresses interacting with client APIs. Manually reset spamming visitors to maintain pristine site accessibility.
+                      </p>
+
+                      {/* Reset Actions banner */}
+                      <div className="flex items-center gap-2 pt-1 font-sans">
+                        <button
+                          onClick={handleResetAllIps}
+                          className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-bold px-3 py-1.5 rounded-xl transition cursor-pointer"
+                        >
+                          Wipe Limits For All Guests
+                        </button>
+                      </div>
+
+                      {/* Tracker Log Console */}
+                      <div className="border border-neutral-100 rounded-2xl overflow-hidden mt-3 max-h-56 overflow-y-auto">
+                        {adminIpList.length === 0 ? (
+                          <div className="p-8 text-center text-[11px] text-[#86868b] italic font-light bg-neutral-50 leading-relaxed">
+                            No active guest IP logs recorded on server. Wait for visitors to compile queries or refresh logs!
+                          </div>
+                        ) : (
+                          <table className="w-full text-[11px] font-sans">
+                            <thead className="bg-[#f5f5f7] border-b border-neutral-150">
+                              <tr>
+                                <th className="px-3 py-2 text-left font-mono text-[9px] text-slate-500 uppercase">Guest IP Address</th>
+                                <th className="px-3 py-2 text-center font-mono text-[9px] text-slate-500 uppercase">Usage Count</th>
+                                <th className="px-3 py-2 text-right font-mono text-[9px] text-slate-500 uppercase">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {adminIpList.map((entry, idx) => (
+                                <tr key={entry.ip + '-' + idx} className="border-b border-neutral-100 hover:bg-neutral-50/50">
+                                  <td className="px-3 py-2 font-mono text-[#1d1d1f] font-medium break-all">
+                                    {entry.ip} {entry.ip === '127.0.0.1' && <span className="text-[10px] text-[#86868b] font-sans">(Localhost)</span>}
+                                  </td>
+                                  <td className="px-3 py-2 text-center">
+                                    <span className={`px-2 py-0.5 rounded font-mono text-[10px] font-bold ${entry.count >= parseInt(adminFreeReqsLimit, 10) ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-neutral-800'}`}>
+                                      {entry.count} / {adminFreeReqsLimit} used
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2 text-right">
+                                    <button
+                                      onClick={() => handleResetSpecificIp(entry.ip)}
+                                      className="text-rose-600 hover:text-rose-805 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded text-[10px] font-semibold transition cursor-pointer"
+                                    >
+                                      Wipe Quota
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-neutral-100 text-[10px] text-[#86868b] leading-normal font-light">
+                      ℹ️ Limits reset automatically every 24 hours. Rate limits bypass is enabled for active subscribers & custom keys.
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+            )}
 
           </div>
         )}

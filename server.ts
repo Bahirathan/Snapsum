@@ -24,6 +24,86 @@ const ai = new GoogleGenAI({
   },
 });
 
+// Helper to get active Gemini client (with on-the-fly client-supplied custom API key header fallback to avoid billing blockages)
+function getGeminiClient(req: express.Request): GoogleGenAI {
+  const customKey = req.headers['x-custom-gemini-api-key'] as string;
+  if (customKey && customKey.trim().length > 10) {
+    return new GoogleGenAI({
+      apiKey: customKey.trim(),
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build-custom',
+        },
+      },
+    });
+  }
+  return ai;
+}
+
+// =========================================================================
+// MVP STATE & RATE CONTROL ENGINE: PREVENT EMBEDDED API QUOTA SPAMMING
+// =========================================================================
+interface RateLimitUsage {
+  count: number;
+  lastReset: number;
+}
+const ipUsageStorage = new Map<string, RateLimitUsage>();
+
+// Middleware/inline utility to check and increment daily IP request credits
+function checkAndIncrementUsage(req: express.Request): { allowed: boolean; count: number; limit: number; remaining: number } {
+  // If user has set custom client-side Gemini key, they bypass any rate limits completely (zero server cost)
+  const customGeminiKey = req.headers['x-custom-gemini-api-key'] as string;
+  if (customGeminiKey && customGeminiKey.trim().length > 10) {
+    return { allowed: true, count: 0, limit: 99999, remaining: 99999 };
+  }
+
+  // Check for dynamic Creator Bypass Passcode (VIP Code) supplied via header
+  const clientVipCode = req.headers['x-vip-bypass-code'] as string;
+  const systemVipCode = (process.env.VIP_BYPASS_CODE || 'PROPASS').trim();
+  if (clientVipCode && clientVipCode.trim() === systemVipCode) {
+    return { allowed: true, count: 0, limit: 99999, remaining: 99999 };
+  }
+
+  // Get requester IP address
+  const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
+  const ip = rawIp.split(',')[0].trim();
+
+  // Retrieve limits configured in system (or overridden on the fly by admin headers)
+  const clientLimitHeader = req.headers['x-custom-free-reqs-limit'] ? parseInt(req.headers['x-custom-free-reqs-limit'] as string, 10) : null;
+  const limitSetting = (clientLimitHeader !== null && !isNaN(clientLimitHeader)) ? clientLimitHeader : parseInt(process.env.FREE_REQS_LIMIT || '3', 10);
+  const now = Date.now();
+
+  let usage = ipUsageStorage.get(ip);
+  if (!usage) {
+    usage = { count: 0, lastReset: now };
+  } else if (now - usage.lastReset > 24 * 60 * 60 * 1000) {
+    // Standard 24 hours rate limit cooling cycle
+    usage.count = 0;
+    usage.lastReset = now;
+  }
+
+  if (usage.count >= limitSetting) {
+    return { 
+      allowed: false, 
+      count: usage.count, 
+      limit: limitSetting, 
+      remaining: 0 
+    };
+  }
+
+  // Track request
+  usage.count += 1;
+  ipUsageStorage.set(ip, usage);
+
+  return { 
+    allowed: true, 
+    count: usage.count, 
+    limit: limitSetting, 
+    remaining: Math.max(0, limitSetting - usage.count) 
+  };
+}
+
+
 app.use(express.json({ limit: '10mb' }));
 
 // Helper to extract YouTube ID
@@ -259,6 +339,17 @@ app.post('/api/summarize', async (req, res) => {
     return res.status(400).json({ error: 'Video URL is required.' });
   }
 
+  // Enforce MVP Rate Limits to prevent default server API account exhaustion
+  const usageStatus = checkAndIncrementUsage(req);
+  if (!usageStatus.allowed) {
+    return res.status(429).json({
+      error: `Daily credit limit reached (${usageStatus.limit}/${usageStatus.limit} free queries used). Please insert your custom Gemini API key or Upgrade to PRO to process unlimited video summaries instantly!`,
+      rateLimited: true,
+      limit: usageStatus.limit,
+      count: usageStatus.count,
+    });
+  }
+
   const isYouTube = !!extractVideoId(videoUrl);
   let videoId = '';
   let metadata: { title: string; author: string; thumbnailUrl: string };
@@ -410,13 +501,26 @@ Generate a complete, high-quality summary and promotional asset package matching
       },
     };
 
-    // Enable search grounding as a smart fallback if transcript was missed
-    if (!transcript) {
+    // Enable search grounding as a smart fallback if transcript was missed, or if overridden by admin configuration
+    const requestedSearchGrounding = req.headers['x-custom-search-grounding'] as string;
+    if (requestedSearchGrounding === 'true') {
+      config.tools = [{ googleSearch: {} }];
+    } else if (requestedSearchGrounding === 'false') {
+      delete config.tools;
+    } else if (!transcript) {
       config.tools = [{ googleSearch: {} }];
     }
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
+    // Embed customizable temperature parameter
+    const requestedTemp = req.headers['x-custom-gemini-temperature'] ? parseFloat(req.headers['x-custom-gemini-temperature'] as string) : undefined;
+    if (requestedTemp !== undefined && !isNaN(requestedTemp)) {
+      config.temperature = requestedTemp;
+    }
+
+    const requestedModel = (req.headers['x-custom-gemini-model'] as string) || 'gemini-3.5-flash';
+    const activeAi = getGeminiClient(req);
+    const response = await activeAi.models.generateContent({
+      model: requestedModel,
       contents: prompt,
       config,
     });
@@ -449,7 +553,8 @@ app.post('/api/tts', async (req, res) => {
 
   try {
     // Generate text-to-speech base64 audio
-    const response = await ai.models.generateContent({
+    const activeAi = getGeminiClient(req);
+    const response = await activeAi.models.generateContent({
       model: 'gemini-3.1-flash-tts-preview',
       contents: [{ parts: [{ text: `Read of the following newsletter summary: ${text.slice(0, 1000)}` }] }],
       config: {
@@ -477,19 +582,106 @@ app.post('/api/tts', async (req, res) => {
 });
 
 // Stripe Integration Endpoints
-app.get('/api/stripe-status', (req, res) => {
+app.get('/api/usage-status', (req, res) => {
+  const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
+  const ip = rawIp.split(',')[0].trim();
+  const limitSetting = parseInt(process.env.FREE_REQS_LIMIT || '3', 10);
+
+  let usage = ipUsageStorage.get(ip);
+  const now = Date.now();
+
+  if (!usage) {
+    usage = { count: 0, lastReset: now };
+  } else if (now - usage.lastReset > 24 * 60 * 60 * 1000) {
+    usage.count = 0;
+    usage.lastReset = now;
+    ipUsageStorage.set(ip, usage);
+  }
+
+  // Check if current VIP passcode is active
+  const clientVipCode = req.headers['x-vip-bypass-code'] as string;
+  const systemVipCode = (process.env.VIP_BYPASS_CODE || 'PROPASS').trim();
+  const vipBypassActive = clientVipCode && clientVipCode.trim() === systemVipCode;
+
   res.json({
-    stripeConfigured: !!process.env.STRIPE_SECRET_KEY,
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
+    ip,
+    count: usage.count,
+    limit: limitSetting,
+    remaining: Math.max(0, limitSetting - usage.count),
+    vipBypassActive,
+  });
+});
+
+app.post('/api/admin/auth', (req, res) => {
+  const { username, password } = req.body;
+  const systemUser = (process.env.ADMIN_USER_ID || 'admin').trim();
+  const systemPass = (process.env.ADMIN_PASSWORD || 'SnapSumAdmin2026!').trim();
+
+  if (username === systemUser && password === systemPass) {
+    return res.json({ success: true, token: 'session_token_snapsum_admin_secure' });
+  }
+  return res.status(401).json({ error: 'Invalid admin credentials' });
+});
+
+app.post('/api/admin/ip-tracker', (req, res) => {
+  const { username, password } = req.body;
+  const systemUser = (process.env.ADMIN_USER_ID || 'admin').trim();
+  const systemPass = (process.env.ADMIN_PASSWORD || 'SnapSumAdmin2026!').trim();
+
+  if (username !== systemUser || password !== systemPass) {
+    return res.status(401).json({ error: 'Unauthorized credentials' });
+  }
+
+  const list: any[] = [];
+  ipUsageStorage.forEach((value, key) => {
+    list.push({
+      ip: key,
+      count: value.count,
+      lastResetAt: new Date(value.lastReset).toISOString(),
+    });
+  });
+
+  return res.json({ ips: list });
+});
+
+app.post('/api/admin/ip-reset', (req, res) => {
+  const { username, password, targetIp, clearAll } = req.body;
+  const systemUser = (process.env.ADMIN_USER_ID || 'admin').trim();
+  const systemPass = (process.env.ADMIN_PASSWORD || 'SnapSumAdmin2026!').trim();
+
+  if (username !== systemUser || password !== systemPass) {
+    return res.status(401).json({ error: 'Unauthorized credentials' });
+  }
+
+  if (clearAll) {
+    ipUsageStorage.clear();
+    return res.json({ success: true, message: 'All guest rate-limit history cleared successfully' });
+  }
+
+  if (targetIp) {
+    ipUsageStorage.delete(targetIp);
+    return res.json({ success: true, message: `Guest IP ${targetIp} rate-limit history cleared successfully` });
+  }
+
+  return res.json({ success: false, error: 'No trigger action specified' });
+});
+
+app.get('/api/stripe-status', (req, res) => {
+  const customSecret = req.headers['x-custom-stripe-secret-key'] as string;
+  const customPublishable = req.headers['x-custom-stripe-publishable-key'] as string;
+
+  res.json({
+    stripeConfigured: !!(customSecret || process.env.STRIPE_SECRET_KEY),
+    publishableKey: customPublishable || process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
   });
 });
 
 app.post('/api/create-checkout-session', async (req, res) => {
   const { planCode, billingCycle, returnUrl } = req.body;
-  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  const stripeSecretKey = (req.headers['x-custom-stripe-secret-key'] as string) || process.env.STRIPE_SECRET_KEY;
 
   if (!stripeSecretKey) {
-    return res.status(400).json({ error: 'Stripe is currently running in Sandbox Simulator Mode.' });
+    return res.status(400).json({ error: 'Stripe Secret Key is missing. Connect your live Stripe key via AI Studio settings or direct in-app Developer override.' });
   }
 
   try {
