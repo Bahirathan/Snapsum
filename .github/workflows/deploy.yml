@@ -76,7 +76,9 @@ jobs:
 
       # Deploy Firebase Hosting configuration to activate domain rewrites to Cloud Run
       - name: Deploy Firebase Hosting
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
         run: |
           mkdir -p dist
           echo "Deploying..." > dist/index.html
-          npx firebase-tools deploy --only hosting --project ${{ env.PROJECT_ID }}
+          npx firebase-tools deploy --only hosting --project ${{ env.PROJECT_ID }} --non-interactive
