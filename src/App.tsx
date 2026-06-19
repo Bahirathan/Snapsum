@@ -1155,16 +1155,19 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <Sparkles className="w-4 h-4 fill-[#0071e3]/10" />
                       <span>SnapSum 2.0 AI Engine Active</span>
                     </div>
-                    
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold font-display leading-[1.08] tracking-tight text-[#1d1d1f]">
-                      Stop Watching Videos.<br />
+                           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold font-display leading-[1.08] tracking-tight text-[#1d1d1f]">
+                      Turn Any Video Into<br />
                       <span className="bg-gradient-to-r from-[#0071e3] via-indigo-600 to-violet-600 bg-clip-text text-transparent">
-                        Start Extracting Leverage.
+                        Instant Knowledge.
                       </span>
                     </h1>
                     
-                    <p className="text-gray-500 font-light text-base sm:text-lg leading-relaxed max-w-xl">
-                      Unlock the hidden intellectual gold inside hours of YouTube content, lectures, training courses, and meetings. SnapSum dynamically synthesizes chronologically indexed summaries, professional newsletters, interactive retainment quizzes, and clean mindmaps in under thirty seconds.
+                    <p className="text-gray-900 font-medium text-base sm:text-lg leading-relaxed max-w-xl">
+                      “Stop wasting hours watching videos just to find minutes of useful information.”
+                    </p>
+
+                    <p className="text-gray-550 font-light text-sm sm:text-base leading-relaxed max-w-xl">
+                      SnapSum transforms YouTube videos, lectures, and meetings into structured insights, summaries, and actionable notes in seconds.
                     </p>
                     
                     <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
@@ -1172,7 +1175,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         onClick={() => setCurrentScreen('app')}
                         className="w-full sm:w-auto bg-[#0071e3] hover:bg-[#0077ed] text-white font-semibold text-sm px-8 py-4.5 rounded-full transition-all duration-200 shadow-md shadow-[#0071e3]/10 hover:shadow-lg active:scale-98 flex items-center justify-center gap-2.5 cursor-pointer leading-none"
                       >
-                        <span>Launch Workspace Free</span>
+                        <span>Try Free</span>
                         <ArrowRight className="w-4.5 h-4.5" />
                       </button>
                       <button
@@ -1182,7 +1185,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         className="w-full sm:w-auto bg-neutral-100 hover:bg-neutral-250 text-neutral-800 font-semibold text-sm px-8 py-4.5 rounded-full transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer border border-neutral-300/40 leading-none"
                       >
                         <Play className="w-4 h-4 text-[#1d1d1f] fill-current" />
-                        <span>Interactive Sandbox</span>
+                        <span>Watch Demo</span>
                       </button>
                     </div>
 
@@ -1873,7 +1876,132 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               </div>
             </section>
 
-            {/* 7. REFINED PRICING SECTION */}
+            {/* 7. DIFFERENTIATION SECTION (SnapSum vs ChatGPT) */}
+            <section className="w-full bg-white py-20 sm:py-24 border-t border-slate-200/50 text-left">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+                
+                <div className="text-center max-w-3xl mx-auto space-y-4">
+                  <div className="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 px-3.5 py-1 rounded-full text-xs font-mono font-bold text-indigo-700 uppercase">
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>The SnapSum Advantage</span>
+                  </div>
+                  <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-neutral-900 animate-fadeIn">
+                    Why Not Just Prompt with ChatGPT?
+                  </h2>
+                  <p className="text-gray-500 font-light text-base sm:text-lg">
+                    General chat systems are great for drafting emails, but they fall short for deep, chronological video analysis and rapid knowledge retention.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch pt-2">
+                  
+                  {/* Text Column and Visual Chart */}
+                  <div className="lg:col-span-12 overflow-hidden bg-slate-50 border border-slate-200/60 rounded-3xl p-6 md:p-8 space-y-8">
+                    
+                    <div className="relative overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-200/80">
+                            <th className="py-4.5 px-4 text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">CAPABILITY / WORKFLOW</th>
+                            <th className="py-4.5 px-4 text-xs font-mono font-bold text-indigo-600 bg-indigo-50/50 rounded-t-2xl uppercase tracking-widest text-center w-60">
+                              SNAPSUM ENGINE
+                            </th>
+                            <th className="py-4.5 px-4 text-xs font-mono font-bold text-gray-400 uppercase tracking-widest text-center w-60">
+                              CHATGPT & FREE CHATS
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200/60">
+                          {[
+                            {
+                              feat: 'Automated Speech to Structure Map',
+                              desc: 'Dynamically parses audio nodes and creates beautiful index chapters linked to the seconds timeline with absolutely zero text input required.',
+                              snap: true,
+                              snapText: 'Fully Automatic (1 Click)',
+                              chat: false,
+                              chatText: 'Requires custom transcript extraction & multi-prompt loops'
+                            },
+                            {
+                              feat: 'Timestamp-Aware Navigation',
+                              desc: 'Seek directly to core arguments instantly. No more scrubbing through hours of content to find 30 seconds of context.',
+                              snap: true,
+                              snapText: 'Yes, Chronological Links',
+                              chat: false,
+                              chatText: 'No (No temporal coordinate awareness)'
+                            },
+                            {
+                              feat: 'Interactive Retention Testing',
+                              desc: 'Dynamically builds contextual quizzes mapped to the video content with answers, scores, and deep linguistic explanations.',
+                              snap: true,
+                              snapText: 'Instantly Synthesized',
+                              chat: false,
+                              chatText: 'Requires complex custom prompts & custom grading scripts'
+                            },
+                            {
+                              feat: 'GCC Native Localization (Arabic)',
+                              desc: 'High-fidelity multi-language architecture tuned specifically for regional dialect translations and localized notes.',
+                              snap: true,
+                              snapText: 'Native Translation Engine',
+                              chat: true,
+                              chatText: 'Available, but lacks localized formatting presets'
+                            },
+                            {
+                              feat: 'Newsletter & Essay Generation',
+                              desc: 'Single-click exports that turn long video feeds into beautiful ready-to-publish educational assets and marketing templates.',
+                              snap: true,
+                              snapText: '1-Click Direct Copy',
+                              chat: false,
+                              chatText: 'Lacks native output editors or copying hooks'
+                            }
+                          ].map((row, rIdx) => (
+                            <tr key={rIdx} className="hover:bg-slate-100/50 transition">
+                              <td className="py-5 px-4 space-y-1 pr-6 max-w-md">
+                                <p className="text-xs sm:text-sm font-bold text-neutral-900">{row.feat}</p>
+                                <p className="text-[11px] text-neutral-500 font-light leading-relaxed">{row.desc}</p>
+                              </td>
+                              <td className="py-5 px-4 bg-indigo-50/20 text-center border-x border-indigo-100/50">
+                                <div className="flex flex-col items-center justify-center gap-1.5 p-1">
+                                  <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                                  <span className="text-[11px] font-bold text-neutral-950 font-mono">{row.snapText}</span>
+                                </div>
+                              </td>
+                              <td className="py-5 px-4 text-center">
+                                <div className="flex flex-col items-center justify-center gap-1.5 p-1">
+                                  {row.chat ? (
+                                    <CheckCircle className="w-4 h-4 text-slate-400 shrink-0" />
+                                  ) : (
+                                    <span className="text-rose-500 font-bold shrink-0 font-sans text-lg leading-none">✕</span>
+                                  )}
+                                  <span className="text-[10px] text-neutral-500 font-sans leading-tight max-w-[180px] mx-auto">{row.chatText}</span>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Bottom Micro Pitch box */}
+                    <div className="bg-indigo-50/50 border border-indigo-100 p-4.5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
+                      <span className="text-indigo-950 font-light text-center sm:text-left leading-relaxed">
+                        💡 <strong className="font-semibold text-indigo-900">Why prompt engineer for 15 minutes</strong> when SnapSum designs complete educational dashboards from any video in 15 seconds?
+                      </span>
+                      <button 
+                        onClick={() => setCurrentScreen('app')}
+                        className="bg-[#0071e3] hover:bg-[#0077ed] text-white font-bold px-4 py-2.5 rounded-xl cursor-pointer shadow-xs active:scale-97 transition shrink-0"
+                      >
+                        Launch Free Workspace
+                      </button>
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+            </section>
+
+            {/* 8. REFINED PRICING SECTION */}
             <section className="w-full bg-slate-900 py-20 sm:py-24 border-y border-indigo-950 text-white text-center">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
                 
