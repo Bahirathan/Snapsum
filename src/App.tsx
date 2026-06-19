@@ -88,10 +88,18 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'app' | 'domain' | 'billing' | 'marketing' | 'admin'>(() => {
     try {
       if (typeof window !== 'undefined') {
+        // 1. Prioritize clean pathname (e.g. /admin, /billing)
+        const pathParts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+        const pathScreen = pathParts[0];
+        if (pathScreen && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(pathScreen)) {
+          return pathScreen as any;
+        }
+
+        // 2. Fallback to query params (?screen=admin)
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(qScreen)) {
-          return qScreen as any;
+        if (qScreen && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(qScreen.toLowerCase())) {
+          return qScreen.toLowerCase() as any;
         }
         
         // Also support clean query format like ?admin
@@ -99,7 +107,8 @@ export default function App() {
           return 'admin';
         }
 
-        const hash = window.location.hash.replace('#', '');
+        // 3. Fallback to hash (#admin)
+        const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
         if (hash && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(hash)) {
           return hash as any;
         }
@@ -110,21 +119,32 @@ export default function App() {
     return 'app';
   });
 
-  // Synchronize browser hash and query navigation with active screen tab
+  // Synchronize browser URL navigation with active screen tab
   useEffect(() => {
     const syncScreenFromUrl = () => {
       try {
+        // Check clean pathname
+        const pathParts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+        const pathScreen = pathParts[0];
+        if (pathScreen && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(pathScreen)) {
+          setCurrentScreen(pathScreen as any);
+          return;
+        }
+
+        // Check query
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(qScreen)) {
-          setCurrentScreen(qScreen as any);
+        if (qScreen && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(qScreen.toLowerCase())) {
+          setCurrentScreen(qScreen.toLowerCase() as any);
           return;
         }
         if (params.get('admin') !== null || params.has('admin')) {
           setCurrentScreen('admin');
           return;
         }
-        const hash = window.location.hash.replace('#', '');
+
+        // Check hash
+        const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
         if (hash && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(hash)) {
           setCurrentScreen(hash as any);
         }
@@ -141,20 +161,31 @@ export default function App() {
     };
   }, []);
 
-  // Update hash dynamically as the user navigates tab options
+  // Update address bar dynamically as the user navigates tab options
   useEffect(() => {
     try {
-      const currentHash = window.location.hash.replace('#', '');
-      if (currentScreen === 'app') {
-        // Keep main landing page clean without extra tailing symbols
-        if (currentHash) {
-          window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
-        }
-      } else if (currentHash !== currentScreen) {
-        window.history.replaceState(null, document.title, `#${currentScreen}`);
+      const targetPath = currentScreen === 'app' ? '/' : `/${currentScreen}`;
+      if (window.location.pathname.toLowerCase() !== targetPath.toLowerCase()) {
+        window.history.pushState(null, document.title, targetPath + window.location.search);
       }
     } catch (e) {
       console.warn('Failed to push history status:', e);
+    }
+  }, [currentScreen]);
+
+  // Update document browser tab tab-title dynamically based on screen selection
+  useEffect(() => {
+    try {
+      const titles: Record<string, string> = {
+        app: 'SnapSum - Universal Video Summarizer & AI Hub',
+        domain: 'Domain Configuration | SnapSum',
+        billing: 'Premium Plans & Upgrades | SnapSum',
+        marketing: 'AI Viral Creator Hub | SnapSum',
+        admin: 'Administrative Console | SnapSum'
+      };
+      document.title = titles[currentScreen] || 'SnapSum - Universal Video Summarizer & AI Hub';
+    } catch (err) {
+      console.warn('Failed to set tab title:', err);
     }
   }, [currentScreen]);
 
