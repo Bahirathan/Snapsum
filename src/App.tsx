@@ -52,6 +52,11 @@ import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvent
 export default function App() {
   // Input fields
   const [videoUrl, setVideoUrl] = useState('');
+  const [demoActiveVideo, setDemoActiveVideo] = useState<YouTubeSummaryResponse>(PRELOADED_VIDEOS[0]);
+  const [demoActiveTab, setDemoActiveTab] = useState<'summary' | 'key_insights' | 'chapters' | 'quiz'>('summary');
+  const [demoInputUrl, setDemoInputUrl] = useState('');
+  const [demoSelectedAnswers, setDemoSelectedAnswers] = useState<Record<number, number>>({});
+  const [demoQuizSubmitted, setDemoQuizSubmitted] = useState(false);
   const [customTranscript, setCustomTranscript] = useState('');
   const [showCustomTranscriptField, setShowCustomTranscriptField] = useState(false);
 
@@ -85,20 +90,20 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // MVP Screen navigation state
-  const [currentScreen, setCurrentScreen] = useState<'app' | 'domain' | 'billing' | 'marketing' | 'admin'>(() => {
+  const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin'>(() => {
     try {
       if (typeof window !== 'undefined') {
         // 1. Prioritize clean pathname (e.g. /admin, /billing)
         const pathParts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
         const pathScreen = pathParts[0];
-        if (pathScreen && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(pathScreen)) {
+        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(pathScreen)) {
           return pathScreen as any;
         }
 
         // 2. Fallback to query params (?screen=admin)
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(qScreen.toLowerCase())) {
+        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(qScreen.toLowerCase())) {
           return qScreen.toLowerCase() as any;
         }
         
@@ -109,14 +114,14 @@ export default function App() {
 
         // 3. Fallback to hash (#admin)
         const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
-        if (hash && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(hash)) {
+        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(hash)) {
           return hash as any;
         }
       }
     } catch (e) {
       console.warn('Initial route resolution failed:', e);
     }
-    return 'app';
+    return 'landing';
   });
 
   // Synchronize browser URL navigation with active screen tab
@@ -126,7 +131,7 @@ export default function App() {
         // Check clean pathname
         const pathParts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
         const pathScreen = pathParts[0];
-        if (pathScreen && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(pathScreen)) {
+        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(pathScreen)) {
           setCurrentScreen(pathScreen as any);
           return;
         }
@@ -134,7 +139,7 @@ export default function App() {
         // Check query
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(qScreen.toLowerCase())) {
+        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(qScreen.toLowerCase())) {
           setCurrentScreen(qScreen.toLowerCase() as any);
           return;
         }
@@ -145,7 +150,7 @@ export default function App() {
 
         // Check hash
         const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
-        if (hash && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(hash)) {
+        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(hash)) {
           setCurrentScreen(hash as any);
         }
       } catch (err) {
@@ -164,7 +169,7 @@ export default function App() {
   // Update address bar dynamically as the user navigates tab options
   useEffect(() => {
     try {
-      const targetPath = currentScreen === 'app' ? '/' : `/${currentScreen}`;
+      const targetPath = currentScreen === 'landing' ? '/' : `/${currentScreen}`;
       if (window.location.pathname.toLowerCase() !== targetPath.toLowerCase()) {
         window.history.pushState(null, document.title, targetPath + window.location.search);
       }
@@ -177,13 +182,14 @@ export default function App() {
   useEffect(() => {
     try {
       const titles: Record<string, string> = {
-        app: 'SnapSum - Universal Video Summarizer & AI Hub',
+        landing: 'SnapSum - Instant AI Video Knowledge Engine',
+        app: 'AI Video Knowledge Engine Workspace | SnapSum',
         domain: 'Domain Configuration | SnapSum',
         billing: 'Premium Plans & Upgrades | SnapSum',
         marketing: 'AI Viral Creator Hub | SnapSum',
         admin: 'Administrative Console | SnapSum'
       };
-      document.title = titles[currentScreen] || 'SnapSum - Universal Video Summarizer & AI Hub';
+      document.title = titles[currentScreen] || 'SnapSum - Instant AI Video Knowledge Engine';
     } catch (err) {
       console.warn('Failed to set tab title:', err);
     }
@@ -712,8 +718,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
   };
 
   // Request new AI Summary processing
-  const handleSummarize = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSummarize = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!videoUrl) return;
 
     setLoading(true);
@@ -1029,7 +1035,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       {/* Sleek Apple-Inspired Navigation Header */}
       <header className="sticky top-0 z-35 bg-white/85 backdrop-blur-xl border-b border-black/[0.04] transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => setCurrentScreen('app')}>
+          <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => setCurrentScreen('landing')}>
             <div className="h-8.5 w-8.5 bg-[#1d1d1f] flex items-center justify-center text-white rounded-xl shadow-sm group-hover:bg-[#0071e3] transition duration-300">
               <Video className="w-4.5 h-4.5 text-white" />
             </div>
@@ -1131,8 +1137,882 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        
+      <main className={`${currentScreen === 'landing' ? 'w-full pt-1' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8'}`}>
+
+        {/* 🚀 LANDING PAGE SCREEN */}
+        {currentScreen === 'landing' && (
+          <div className="w-full flex flex-col items-center justify-start text-[#1d1d1f] antialiased bg-slate-50/10">
+            
+            {/* 1. HERO SECTION (Conversion-focused Split Layout) */}
+            <section className="relative w-full overflow-hidden bg-radial from-slate-50 via-white to-slate-100/50 pt-10 sm:pt-16 pb-20 sm:pb-28 border-b border-black/[0.02]">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.01)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]"></div>
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                  
+                  {/* Left Column: Headline, Subheadline, CTAs */}
+                  <div className="lg:col-span-6 space-y-6 text-left">
+                    <div className="inline-flex items-center gap-2 bg-[#0071e3]/5 border border-[#0071e3]/10 px-4 py-1.5 rounded-full text-xs font-semibold text-[#0071e3] shadow-sm animate-pulse">
+                      <Sparkles className="w-4 h-4 fill-[#0071e3]/10" />
+                      <span>SnapSum 2.0 AI Engine Active</span>
+                    </div>
+                    
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold font-display leading-[1.08] tracking-tight text-[#1d1d1f]">
+                      Stop Watching Videos.<br />
+                      <span className="bg-gradient-to-r from-[#0071e3] via-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                        Start Extracting Leverage.
+                      </span>
+                    </h1>
+                    
+                    <p className="text-gray-500 font-light text-base sm:text-lg leading-relaxed max-w-xl">
+                      Unlock the hidden intellectual gold inside hours of YouTube content, lectures, training courses, and meetings. SnapSum dynamically synthesizes chronologically indexed summaries, professional newsletters, interactive retainment quizzes, and clean mindmaps in under thirty seconds.
+                    </p>
+                    
+                    <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
+                      <button
+                        onClick={() => setCurrentScreen('app')}
+                        className="w-full sm:w-auto bg-[#0071e3] hover:bg-[#0077ed] text-white font-semibold text-sm px-8 py-4.5 rounded-full transition-all duration-200 shadow-md shadow-[#0071e3]/10 hover:shadow-lg active:scale-98 flex items-center justify-center gap-2.5 cursor-pointer leading-none"
+                      >
+                        <span>Launch Workspace Free</span>
+                        <ArrowRight className="w-4.5 h-4.5" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          document.getElementById('live-interactive-preview')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="w-full sm:w-auto bg-neutral-100 hover:bg-neutral-250 text-neutral-800 font-semibold text-sm px-8 py-4.5 rounded-full transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer border border-neutral-300/40 leading-none"
+                      >
+                        <Play className="w-4 h-4 text-[#1d1d1f] fill-current" />
+                        <span>Interactive Sandbox</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-6 pt-5 text-gray-400 text-xs font-mono">
+                      <span className="flex items-center gap-1.5"><ShieldCheck className="w-4.5 h-4.5 text-indigo-600" /> No credit card required</span>
+                      <span className="flex items-center gap-1.5"><Activity className="w-4.5 h-4.5 text-emerald-600" /> Unlimited preloaded trials</span>
+                    </div>
+                  </div>
+
+                  {/* Right Column: High Fidelity Interface Mockup */}
+                  <div className="lg:col-span-6 relative">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-[#0071e3]/10 to-violet-500/10 rounded-3xl blur-2xl opacity-60"></div>
+                    <div className="relative bg-white rounded-3xl p-5 md:p-6 border border-black/[0.04] shadow-[0_24px_50px_rgba(0,0,0,0.06)] overflow-hidden text-left">
+                      
+                      {/* Mockup Toolbar Header */}
+                      <div className="flex items-center justify-between pb-4 border-b border-black/[0.04] mb-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-3 h-3 rounded-full bg-rose-400"></span>
+                          <span className="w-3 h-3 rounded-full bg-amber-400"></span>
+                          <span className="w-3 h-3 rounded-full bg-emerald-400"></span>
+                        </div>
+                        <div className="bg-neutral-100/60 px-4 py-1.5 rounded-lg text-[10px] text-[#86868b] font-mono flex items-center gap-1.5 w-60 sm:w-80">
+                          <Lock className="w-3 h-3 text-neutral-400 shrink-0" />
+                          <span className="truncate">https://snapsum.app/dashboard</span>
+                        </div>
+                        <span className="w-3 h-3 rounded-full bg-slate-200"></span>
+                      </div>
+
+                      {/* Mockup Desktop Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+                        {/* Mock Video Aspect Player */}
+                        <div className="sm:col-span-5 bg-slate-900 rounded-2xl p-3 relative aspect-[16/10] sm:aspect-auto flex flex-col justify-between overflow-hidden shadow-sm group">
+                          <img 
+                            src="https://img.youtube.com/vi/CBYhVcOnK8Y/maxresdefault.jpg" 
+                            alt="Lecture Preview" 
+                            className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-luminosity filter blur-xs"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="bg-black/40 text-[8px] text-white px-1.5 py-0.5 rounded-md font-mono self-start relative z-10">
+                            12:15 / 24:00
+                          </div>
+                          <div className="absolute inset-0 flex items-center justify-center relative z-10">
+                            <span className="w-10 h-10 bg-[#0071e3] text-white rounded-full flex items-center justify-center shadow-md animate-pulse">
+                              <Play className="w-4 h-4 fill-current ml-0.5" />
+                            </span>
+                          </div>
+                          <div className="text-[9px] text-neutral-200 truncate font-sans font-medium relative z-10">
+                             Dustin Moskovitz • Startup school
+                          </div>
+                        </div>
+
+                        {/* Mock Synthesized Outlets */}
+                        <div className="sm:col-span-7 space-y-3">
+                          <div className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 font-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                            <Sparkles className="w-3 h-3" />
+                            <span>Synthesized Output</span>
+                          </div>
+                          
+                          <h4 className="text-sm font-bold font-display text-neutral-900 leading-tight">
+                            Evaluating Founder Motivation
+                          </h4>
+                          
+                          <p className="text-[11px] text-neutral-500 leading-normal line-clamp-3 font-light">
+                            Examines why status, quick wealth, and complete flexibility are usually illusions. Moskovitz insists true builders should only proceed if compelled by a problem's extreme urgency.
+                          </p>
+
+                          <div className="space-y-1.5 pt-1">
+                            <div className="flex items-start gap-1.5 text-[10px] text-neutral-700">
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                              <span className="leading-tight">Media romanticizes the operational startup workflow</span>
+                            </div>
+                            <div className="flex items-start gap-1.5 text-[10px] text-neutral-700">
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                              <span className="leading-tight">Founders answer to board, customers, and employees</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Mockup Footer Analytics strip */}
+                      <div className="mt-4 pt-3 border-t border-black/[0.03] flex items-center justify-between text-[9px] font-mono text-gray-400">
+                        <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-[#0071e3]" /> Generated in 1.4s</span>
+                        <span className="text-indigo-600 font-medium">Bypassed Quota Constraints</span>
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </section>
+
+            {/* 2. TRUST STRIP (Badges for compatible feeds) */}
+            <section className="w-full bg-slate-900 overflow-hidden py-11 text-center border-b border-indigo-950/20">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <p className="text-slate-400 text-[10px] sm:text-xs font-mono uppercase tracking-widest mb-6 font-semibold">
+                  COMPATIBLE HIGH-FIDELITY PLATFORMS & MULTIMEDIA
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6">
+                  {[
+                    { label: 'YouTube Lectures', plat: 'YouTube' },
+                    { label: 'Academic Seminars', plat: 'Class' },
+                    { label: 'Vimeo streams', plat: 'Video' },
+                    { label: 'ZOOM Meetings', plat: 'Brief' },
+                    { label: 'Podcast Channels', plat: 'Audio' },
+                    { label: 'Custom TXT Paragraphs', plat: 'Text' }
+                  ].map((tier, idx) => (
+                    <span 
+                      key={idx}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-slate-300 bg-white/[0.05] border border-white/[0.04] text-xs font-mono font-medium hover:bg-white/[0.08] hover:text-white transition duration-200"
+                    >
+                      <Video className="w-3 h-3 text-indigo-400" />
+                      <span>{tier.label}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* 3. HOW IT WORKS SECTION (Simple 3-step timeline) */}
+            <section className="w-full bg-white py-20 sm:py-24">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-16">
+                <div className="space-y-4 max-w-3xl mx-auto">
+                  <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-neutral-900">
+                    The Fast Path to Complete Retention
+                  </h2>
+                  <p className="text-gray-500 font-light text-base sm:text-lg leading-relaxed">
+                    Traditional video research requires tedious clicking, skipping, and note-taking. SnapSum synthesizes perfect conceptual summaries in three simple steps.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                  {/* Decorative guide line */}
+                  <div className="hidden md:block absolute top-1/2 left-10 right-10 h-0.5 bg-neutral-100 z-0 -translate-y-1/2"></div>
+                  
+                  {[
+                    {
+                      step: '01',
+                      title: 'Paste Video URL',
+                      desc: 'Input any YouTube link, lecture address, Vimeo URL, or use a custom speech-to-text transcript paragraph override with ease.',
+                      icon: <Youtube className="w-5 h-5 text-[#0071e3]" />,
+                      color: 'bg-blue-50/70 border-blue-100'
+                    },
+                    {
+                      step: '02',
+                      title: 'Generative Distillation',
+                      desc: 'Our contextual pipeline analyses language intent, indexes temporal milestones, clusters core arguments, and crafts comprehensive takeaways.',
+                      icon: <Sparkles className="w-5 h-5 text-indigo-600 font-bold" />,
+                      color: 'bg-indigo-50/70 border-indigo-100'
+                    },
+                    {
+                      step: '03',
+                      title: 'Extract Leverage',
+                      desc: 'Skim structured takeaways, quiz yourself, generate viral marketing newsletters, or read mindmaps of difficult concepts instantly.',
+                      icon: <CheckCircle className="w-5 h-5 text-emerald-600" />,
+                      color: 'bg-emerald-50/70 border-emerald-100'
+                    }
+                  ].map((card, idx) => (
+                    <div 
+                      key={idx}
+                      className="bg-neutral-50 hover:bg-white rounded-3xl p-6 md:p-8 border border-neutral-200/50 hover:border-black/[0.04] shadow-sm hover:shadow-xl transition-all duration-300 text-left relative z-10 space-y-4 group"
+                    >
+                      <div className={`w-12 h-12 rounded-2xl ${card.color} border flex items-center justify-center shadow-xs group-hover:scale-105 transition`}>
+                        {card.icon}
+                      </div>
+                      <span className="block text-[10px] font-mono text-[#0071e3] tracking-widest font-bold uppercase">
+                        PHASE {card.step}
+                      </span>
+                      <h3 className="text-lg font-bold font-display text-neutral-900">
+                        {card.title}
+                      </h3>
+                      <p className="text-xs text-neutral-500 leading-relaxed font-light">
+                        {card.desc}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* 4. CHRONO-BENTO FEATURE GRID */}
+            <section className="w-full bg-[#f8fafc]/50 py-20 border-y border-slate-200/40">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+                
+                <div className="text-center max-w-3xl mx-auto space-y-4">
+                  <div className="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 px-3.5 py-1 rounded-full text-xs font-mono font-bold text-indigo-700 uppercase">
+                    <Activity className="w-3.5 h-3.5" />
+                    <span>Engine Capabilities</span>
+                  </div>
+                  <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-neutral-900">
+                    Built for Intense Knowledge Extraction
+                  </h2>
+                  <p className="text-gray-500 font-light text-base sm:text-lg">
+                    SnapSum combines multiple layers of semantic context processing to deliver pristine educational assets.
+                  </p>
+                </div>
+
+                {/* Bento Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                  
+                  {/* Big Card 1: Structured Sums */}
+                  <div className="md:col-span-8 bg-white rounded-3xl p-6 md:p-8 border border-black/[0.03] shadow-xs flex flex-col justify-between space-y-6">
+                    <div className="space-y-3">
+                      <div className="p-2.5 w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+                        <BookOpen className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-xl font-bold font-display text-neutral-900">Smart Structured Chronologies</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed max-w-xl font-light">
+                        Instead of massive blocks of prose, SnapSum organizes insights into structured chronologies. Select chapters to instantly seek to timestamp segments or read key takeaways of that specific timestamp. Perfect for reviewing core arguments.
+                      </p>
+                    </div>
+                    
+                    {/* Mock segment */}
+                    <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2.5 text-left text-xs font-mono">
+                      <div className="border-b border-neutral-100 pb-2 flex justify-between text-[10px] text-gray-400">
+                        <span>TIMESTAMPS TRACKED</span>
+                        <span>GCC STANDARD REGION</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-[#0071e3] shrink-0 bg-white border border-[#0071e3]/10 px-2 py-0.5 rounded-md">04:15</span>
+                        <span className="truncated text-neutral-800">Evaluating founder motivations vs media illusions</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-[#0071e3] shrink-0 bg-white border border-[#0071e3]/10 px-2 py-0.5 rounded-md">10:30</span>
+                        <span className="truncated text-neutral-800">The heavy psychological burden of operational failure</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Interactive quizzing */}
+                  <div className="md:col-span-4 bg-white rounded-3xl p-6 md:p-8 border border-black/[0.03] shadow-xs flex flex-col justify-between space-y-6">
+                    <div className="space-y-3">
+                      <div className="p-2.5 w-10 h-10 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-center text-emerald-600">
+                        <Award className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-xl font-bold font-display text-neutral-900">Retention Quizzes</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed font-light">
+                        Automatically gauge your conceptual comprehension with custom AI-conceived multi-choice quizzes mapped directly to video content.
+                      </p>
+                    </div>
+                    <div className="bg-emerald-50/50 rounded-2xl p-4 border border-emerald-100/50 space-y-2 text-xs">
+                      <p className="font-bold text-emerald-950">Comprehension Check:</p>
+                      <p className="text-emerald-900 text-[10px] font-light">"Who is a founder's ultimate boss according to Dustin?"</p>
+                      <div className="bg-white border border-emerald-100 p-1.5 rounded text-[9px] text-emerald-900 font-semibold cursor-default">
+                        ✓ Everyone (Stakeholders, employees, customers)
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Ask Video */}
+                  <div className="md:col-span-4 bg-white rounded-3xl p-6 md:p-8 border border-black/[0.03] shadow-xs flex flex-col justify-between space-y-6">
+                    <div className="space-y-3">
+                      <div className="p-2.5 w-10 h-10 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-center text-amber-600">
+                        <HelpCircle className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-xl font-bold font-display text-neutral-900">Ask the Video Chat</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed font-light">
+                        Chat directly with the video content. Ask questions like "What was the co-founder's exact quote on risk management?" and find immediate answers.
+                      </p>
+                    </div>
+                    <div className="bg-neutral-50 rounded-2xl p-3 border border-neutral-100 flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-ping"></div>
+                      <span className="text-[10px] text-neutral-500 font-mono">Synthesizing audio nodes...</span>
+                    </div>
+                  </div>
+
+                  {/* Big Card 4: GCC Multilingual Support */}
+                  <div className="md:col-span-8 bg-white rounded-3xl p-6 md:p-8 border border-black/[0.03] shadow-xs flex flex-col justify-between space-y-6">
+                    <div className="space-y-3">
+                      <div className="p-2.5 w-10 h-10 bg-violet-50 border border-violet-100 rounded-xl flex items-center justify-center text-violet-600">
+                        <Globe className="w-5 h-5" />
+                      </div>
+                      <h3 className="text-xl font-bold font-display text-neutral-900">Multi-Language Synthesizer (Arabic Support)</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed max-w-xl font-light">
+                        Designed with high-fidelity GCC performance. SnapSum can translate long YouTube transcripts or web addresses immediately into detailed Arabic notes, making it highly effective for regional academic and enterprise study.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs bg-slate-100 font-mono font-medium text-slate-600 px-3 py-1.5 rounded-md border border-slate-200">English (Original)</span>
+                      <span className="text-xs text-neutral-400">⟶</span>
+                      <span className="text-xs bg-violet-50 font-sans font-semibold text-violet-700 px-3 py-1.5 rounded-md border border-violet-100">العربية (Arabic output)</span>
+                      <span className="text-xs bg-indigo-50 font-sans font-semibold text-indigo-700 px-3 py-1.5 rounded-md border border-indigo-100 text-center">اردو (Urdu)</span>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </section>
+
+            {/* 5. LIVE INTERACTIVE DEMO (SUPER IMPORTANT SIDE BY SIDE) */}
+            <section id="live-interactive-preview" className="w-full bg-[#f8fafc] py-20 sm:py-24 border-b border-slate-200/50 scroll-mt-12 text-left">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+                <div className="text-center md:text-left space-y-4 max-w-3xl">
+                  <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/5 border border-[#0071e3]/10 px-3.5 py-1 rounded-full text-xs font-mono font-bold text-[#0071e3] uppercase">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Instant Interactive Demo</span>
+                  </div>
+                  <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-neutral-900">
+                    Operate the Knowledge Engine
+                  </h2>
+                  <p className="text-gray-500 font-light text-base sm:text-lg">
+                    Experience the complete output format in real-time. Choose a premium preloaded lecture below, and explore its conceptual chapters, takeaways, and retention test instantly.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                  
+                  {/* Left Column: Choose Preloads / Input */}
+                  <div className="lg:col-span-4 space-y-6">
+                    
+                    {/* Choose Lecture Buttons */}
+                    <div className="bg-white rounded-3xl p-5 border border-black/[0.04] shadow-sm space-y-4">
+                      <p className="text-xs font-bold text-neutral-400 font-mono uppercase tracking-wider">
+                        Select Sandbox Case
+                      </p>
+                      
+                      <div className="space-y-3">
+                        {PRELOADED_VIDEOS.map((video, idx) => {
+                          const isActive = demoActiveVideo.metadata.videoId === video.metadata.videoId;
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                setDemoActiveVideo(video);
+                                setDemoSelectedAnswers({});
+                                setDemoQuizSubmitted(false);
+                              }}
+                              className={`w-full text-left p-3.5 rounded-2xl border text-xs transition duration-200 flex items-center gap-3 cursor-pointer ${
+                                isActive 
+                                  ? 'bg-[#0071e3]/5 border-[#0071e3] text-neutral-950 font-bold shadow-xs' 
+                                  : 'bg-white hover:bg-neutral-50/80 border-slate-200/80 text-neutral-600'
+                              }`}
+                            >
+                              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                                isActive ? 'bg-[#0071e3] text-white' : 'bg-slate-100 text-slate-500'
+                              }`}>
+                                <Youtube className="w-4 h-4" />
+                              </div>
+                              <div className="truncate flex-1">
+                                <p className="truncate leading-tight">{video.metadata.title}</p>
+                                <p className="text-[10px] text-gray-400 mt-0.5 leading-none font-normal font-mono">{video.metadata.author} • {video.metadata.duration}</p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Try Custom video redirect input box */}
+                    <div className="bg-slate-900 rounded-3xl p-5 border border-slate-800 text-white space-y-4 shadow-sm">
+                      <p className="text-xs font-bold text-indigo-400 font-mono uppercase tracking-wider flex items-center gap-1.5">
+                        <Activity className="w-3.5 h-3.5 animate-pulse" />
+                        <span>Run Custom Video Analysis</span>
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-light leading-relaxed">
+                        Have your own lecture or team meeting URL? Type it below to launch our live processing workspace instantly.
+                      </p>
+                      
+                      <form 
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (demoInputUrl) {
+                            setVideoUrl(demoInputUrl);
+                            setCurrentScreen('app');
+                            setTimeout(() => {
+                              handleSummarize();
+                            }, 400);
+                          }
+                        }}
+                        className="space-y-3"
+                      >
+                        <input
+                          type="url"
+                          required
+                          placeholder="Paste YouTube, mp4 link..."
+                          value={demoInputUrl}
+                          onChange={(e) => setDemoInputUrl(e.target.value)}
+                          className="w-full px-3 py-3 rounded-xl bg-slate-800 text-white text-xs border border-slate-700 focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 outline-none transition placeholder:text-slate-500"
+                        />
+                        <button
+                          type="submit"
+                          className="w-full py-3 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-xl text-xs font-semibold cursor-pointer active:scale-[0.99] transition flex items-center justify-center gap-1"
+                        >
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Launch Live Workspace</span>
+                        </button>
+                      </form>
+                    </div>
+
+                  </div>
+
+                  {/* Right Column: Live Output Simulator */}
+                  <div className="lg:col-span-8 bg-white rounded-3xl border border-black/[0.04] shadow-md p-5 md:p-6 space-y-5">
+                    
+                    {/* Header profile info of active demo video */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/[0.04]">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={demoActiveVideo.metadata.thumbnailUrl} 
+                          alt="Video Thumbnail" 
+                          className="w-16 h-10 object-cover rounded-md border border-black/[0.06] shrink-0"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="text-left">
+                          <h3 className="text-sm font-bold text-neutral-900 max-w-md truncate leading-tight">
+                            {demoActiveVideo.metadata.title}
+                          </h3>
+                          <p className="text-[11px] text-neutral-400 font-mono mt-1 font-light leading-none">
+                            Channel: <strong className="font-medium text-neutral-700">{demoActiveVideo.metadata.author}</strong> • Length: <strong className="font-medium text-[#0071e3]">{demoActiveVideo.metadata.duration}</strong>
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Tabs selector */}
+                      <div className="flex flex-wrap items-center bg-neutral-100 p-0.5 rounded-lg border border-black/[0.02]">
+                        {[
+                          { id: 'summary', label: 'Summary' },
+                          { id: 'key_insights', label: 'Takeaways' },
+                          { id: 'chapters', label: 'Chapters' },
+                          { id: 'quiz', label: 'Self Quiz' }
+                        ].map((tab) => (
+                          <button
+                            key={tab.id}
+                            onClick={() => setDemoActiveTab(tab.id as any)}
+                            className={`px-3 py-1.5 rounded-md text-[10px] font-bold font-mono transition cursor-pointer leading-none ${
+                              demoActiveTab === tab.id 
+                                ? 'bg-white text-neutral-950 shadow-xs' 
+                                : 'text-neutral-500 hover:text-neutral-800'
+                            }`}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Output Inner Panel content */}
+                    <div className="min-h-56 select-text text-left text-neutral-900">
+                      
+                      {/* Tab 1: Summary */}
+                      {demoActiveTab === 'summary' && (
+                        <div className="space-y-4 animate-fadeIn">
+                          <h4 className="text-xs font-bold font-mono text-indigo-600 uppercase tracking-wider">Concept Summary</h4>
+                          <p className="text-xs sm:text-sm text-neutral-700 leading-relaxed font-light">
+                            {demoActiveVideo.summary}
+                          </p>
+                          <div className="bg-neutral-50/80 rounded-2xl p-4 border border-neutral-200/30 text-xs text-neutral-500 font-light space-y-2">
+                            <p className="font-semibold text-neutral-800 font-mono">📢 Social Snippet Preview:</p>
+                            <p className="italic bg-white p-2.5 rounded-lg border border-neutral-100">"{demoActiveVideo.socialSnippet}"</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Tab 2: Key Takeaways */}
+                      {demoActiveTab === 'key_insights' && (
+                        <div className="space-y-4 animate-fadeIn">
+                          <h4 className="text-xs font-bold font-mono text-indigo-600 uppercase tracking-wider">Primary Takeaways</h4>
+                          
+                          <div className="space-y-3">
+                            {demoActiveVideo.takeaways.map((takeaway, tIdx) => (
+                              <div key={tIdx} className="flex items-start gap-3 bg-neutral-50/50 p-3 rounded-2xl border border-neutral-100">
+                                <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                                  {tIdx + 1}
+                                </div>
+                                <p className="text-xs text-neutral-700 leading-relaxed font-sans">{takeaway}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Tab 3: Chapters Timeline */}
+                      {demoActiveTab === 'chapters' && (
+                        <div className="space-y-4 animate-fadeIn">
+                          <h4 className="text-xs font-bold font-mono text-indigo-600 uppercase tracking-wider">Timeline Milestones</h4>
+                          
+                          <div className="space-y-3.5">
+                            {demoActiveVideo.chapters.map((chapter, cIdx) => (
+                              <div key={cIdx} className="flex gap-4 border-l border-neutral-200 pl-4 relative">
+                                <div className="absolute left-[-5px] top-1.5 w-2.5 h-2.5 bg-[#0071e3] rounded-full border-2 border-white"></div>
+                                <span className="text-xs font-bold font-mono text-[#0071e3] hover:underline cursor-pointer bg-[#0071e3]/5 border border-[#0071e3]/10 h-fit px-1.5 py-0.5 rounded leading-none">
+                                  {chapter.timestamp}
+                                </span>
+                                <div className="space-y-1">
+                                  <h5 className="text-xs font-bold text-neutral-900 leading-tight">{chapter.title}</h5>
+                                  <p className="text-[11px] text-neutral-500 font-light leading-relaxed">{chapter.takeaway}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Tab 4: Interactive Quiz Comprehension */}
+                      {demoActiveTab === 'quiz' && (
+                        <div className="space-y-5 animate-fadeIn">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-xs font-bold font-mono text-indigo-600 uppercase tracking-wider">Vocabulary & Retention Quiz</h4>
+                            {demoQuizSubmitted && (
+                              <span className="text-xs font-bold text-emerald-600 font-mono">
+                                SCORED: {
+                                  demoActiveVideo.quiz.reduce((score, q, idx) => {
+                                    return score + (demoSelectedAnswers[idx] === q.answerIndex ? 1 : 0);
+                                  }, 0)
+                                } / {demoActiveVideo.quiz.length} Correct
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                            {demoActiveVideo.quiz.map((q, idx) => {
+                              const selectedOpt = demoSelectedAnswers[idx];
+                              return (
+                                <div key={idx} className="p-4 bg-neutral-50 rounded-2xl border border-neutral-200/50 space-y-3">
+                                  <p className="text-xs font-semibold text-neutral-900">
+                                    {idx + 1}. {q.question}
+                                  </p>
+                                  
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {q.options.map((option, oIdx) => {
+                                      const isOptionSelected = selectedOpt === oIdx;
+                                      const showValidation = demoQuizSubmitted;
+                                      const isCorrectOption = oIdx === q.answerIndex;
+                                      
+                                      let optStyle = "bg-white hover:bg-neutral-100 border-neutral-200 text-neutral-700";
+                                      if (isOptionSelected) {
+                                        optStyle = "bg-indigo-50 border-indigo-500 text-indigo-950 font-medium";
+                                      }
+                                      if (showValidation) {
+                                        if (isCorrectOption) {
+                                          optStyle = "bg-emerald-50 border-emerald-500 text-emerald-950 font-bold";
+                                        } else if (isOptionSelected) {
+                                          optStyle = "bg-rose-50 border-rose-400 text-rose-950 line-through";
+                                        }
+                                      }
+
+                                      return (
+                                        <button
+                                          key={oIdx}
+                                          disabled={demoQuizSubmitted}
+                                          onClick={() => {
+                                            setDemoSelectedAnswers(prev => ({ ...prev, [idx]: oIdx }));
+                                          }}
+                                          className={`text-left p-3 rounded-xl border text-[11px] leading-tight transition cursor-pointer ${optStyle}`}
+                                        >
+                                          {option}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+
+                                  {demoQuizSubmitted && (
+                                    <div className="text-[10px] text-neutral-500 bg-white p-2.5 rounded-lg border border-black/[0.02] leading-relaxed">
+                                      <strong className="text-neutral-700 font-mono font-bold uppercase tracking-wider block mb-0.5">EXPLANATION:</strong>
+                                      {q.explanation}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Submit Quiz actions */}
+                          <div className="pt-2 border-t border-black/[0.04] flex items-center justify-between gap-4">
+                            {!demoQuizSubmitted ? (
+                              <button
+                                onClick={() => setDemoQuizSubmitted(true)}
+                                className="px-6 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-full text-xs font-semibold cursor-pointer active:scale-97 transition"
+                              >
+                                Submit Answers
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setDemoSelectedAnswers({});
+                                  setDemoQuizSubmitted(false);
+                                }}
+                                className="px-6 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-full text-xs font-semibold cursor-pointer transition flex items-center gap-1 border border-neutral-300/40"
+                              >
+                                <RefreshCw className="w-3 h-3" />
+                                <span>Reset Score</span>
+                              </button>
+                            )}
+                            <span className="text-[10px] text-neutral-400 italic">Retainment tracker mock activated</span>
+                          </div>
+
+                        </div>
+                      )}
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+            </section>
+
+            {/* 6. USE CASES BENTO SECTION */}
+            <section className="w-full bg-white py-20 sm:py-24">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+                
+                <div className="text-center max-w-3xl mx-auto space-y-4">
+                  <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-[#1d1d1f]">
+                    Who Uses the Knowledge Engine?
+                  </h2>
+                  <p className="text-gray-500 font-light text-base sm:text-lg">
+                    SnapSum eliminates tedious scrubbing across many industries and goals.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {[
+                    {
+                      role: 'Students & Academics',
+                      icon: <BookOpen className="w-5 h-5 text-indigo-600" />,
+                      points: [
+                        'Distill 2-hour syllabus lectures',
+                        'Generate study review indices',
+                        'Verify retainment with flashcards',
+                        'Export notes in Markdown files'
+                      ],
+                      bg: 'bg-indigo-50/50'
+                    },
+                    {
+                      role: 'Professionals & Teams',
+                      icon: <FileText className="w-5 h-5 text-emerald-600" />,
+                      points: [
+                        'Review recorded corporate ZOOMs',
+                        'Pinpoint exact team deliverables',
+                        'Automate chronology minutes',
+                        'Eliminate meeting overlaps'
+                      ],
+                      bg: 'bg-emerald-50/50'
+                    },
+                    {
+                      role: 'Research Analysts',
+                      icon: <TrendingUp className="w-5 h-5 text-blue-600" />,
+                      points: [
+                        'Study product panels & seminars',
+                        'Extract competitive timelines',
+                        'Compare technical transcripts',
+                        'Collate historical trends fast'
+                      ],
+                      bg: 'bg-blue-50/50'
+                    },
+                    {
+                      role: 'Content Repurposers',
+                      icon: <Megaphone className="w-5 h-5 text-purple-600" />,
+                      points: [
+                        'Write SEO web blog copy quickly',
+                        'Generate visual Twitter threads',
+                        'Segment scripts for micro-videos',
+                        'Design high-conversion lists'
+                      ],
+                      bg: 'bg-purple-50/50'
+                    }
+                  ].map((cohort, idx) => (
+                    <div 
+                      key={idx}
+                      className="bg-neutral-50 rounded-3xl p-6 border border-neutral-200/50 flex flex-col justify-between space-y-6 text-left hover:border-black/[0.04] transition duration-300 hover:shadow-lg"
+                    >
+                      <div className="space-y-4">
+                        <div className={`p-2.5 w-10 h-10 rounded-xl ${cohort.bg} flex items-center justify-center shrink-0`}>
+                          {cohort.icon}
+                        </div>
+                        <h4 className="text-base font-bold font-display text-neutral-900">{cohort.role}</h4>
+                        <ul className="space-y-2.5">
+                          {cohort.points.map((pt, pIdx) => (
+                            <li key={pIdx} className="flex items-start gap-2 text-xs text-neutral-500 font-light">
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                              <span>{pt}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <button
+                        onClick={() => setCurrentScreen('app')}
+                        className="text-[#0071e3] hover:underline font-semibold font-mono text-[11px] text-left cursor-pointer flex items-center gap-1"
+                      >
+                        <span>Start Trial →</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+              </div>
+            </section>
+
+            {/* 7. REFINED PRICING SECTION */}
+            <section className="w-full bg-slate-900 py-20 sm:py-24 border-y border-indigo-950 text-white text-center">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+                
+                <div className="space-y-4 max-w-3xl mx-auto">
+                  <div className="inline-flex items-center gap-1 bg-[#0071e3]/10 border border-[#0071e3]/20 px-3 py-1 rounded-full text-xs font-mono font-bold text-[#0071e3] uppercase">
+                    <CreditCard className="w-3.5 h-3.5" />
+                    <span>Simple Billing Setup</span>
+                  </div>
+                  <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-white">
+                    Predictable Plans for Every Strategist
+                  </h2>
+                  <p className="text-slate-400 font-light text-base sm:text-lg">
+                    Whether diagnosing rapid lectures or conducting intense corporate research, we have plans tailored to your workflow speed.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left">
+                  
+                  {/* Free Plan */}
+                  <div className="bg-white/5 border border-white/[0.08] rounded-3xl p-6 md:p-8 flex flex-col justify-between space-y-8 relative overflow-hidden backdrop-blur-md">
+                    <div className="space-y-6">
+                      <div>
+                        <span className="text-[10px] uppercase font-mono font-semibold tracking-wider text-slate-400">STARTER TIER</span>
+                        <h3 className="text-xl font-bold font-display text-white mt-1">Free Sandbox</h3>
+                        <p className="text-xs text-slate-400 mt-2 font-light">Experience standard video summaries first-hand.</p>
+                      </div>
+
+                      <div className="flex items-baseline gap-1.5 py-2 border-y border-white/[0.05]">
+                        <span className="text-3xl sm:text-4xl font-semibold font-mono text-white">0 AED</span>
+                        <span className="text-xs text-slate-400 font-light lowercase">/ forever</span>
+                      </div>
+
+                      <ul className="space-y-3">
+                        {[
+                          '3 Standard summaries per day limit',
+                          'Direct YouTube & Vimeo feeds',
+                          'Interactive retention quizzes',
+                          'Cached sandbox templates access'
+                        ].map((li, idx) => (
+                          <li key={idx} className="flex items-center gap-2.5 text-xs text-slate-300 font-light">
+                            <CheckCircle className="w-4 h-4 text-[#0071e3]" />
+                            <span>{li}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <button
+                      onClick={() => setCurrentScreen('app')}
+                      className="w-full py-4.5 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-bold font-mono transition text-center cursor-pointer border border-white/[0.05]"
+                    >
+                      Workspace Console
+                    </button>
+                  </div>
+
+                  {/* Pro Plan */}
+                  <div className="bg-white border border-indigo-200 rounded-3xl p-6 md:p-8 flex flex-col justify-between space-y-8 relative overflow-hidden shadow-xl shadow-indigo-950/40">
+                    {/* Corner Tag */}
+                    <div className="absolute top-4 right-[-32px] bg-[#0071e3] text-white text-[9px] font-bold font-mono py-1 px-10 rotate-45 tracking-widest uppercase">
+                      PRO VALUE
+                    </div>
+
+                    <div className="space-y-6">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] uppercase font-mono font-semibold tracking-wider text-[#0071e3]">PROFESSIONAL SCALE</span>
+                          <span className="bg-[#0071e3]/10 text-[#0071e3] font-mono text-[8px] font-bold px-1.5 rounded-sm">POPULAR</span>
+                        </div>
+                        <h3 className="text-xl font-bold font-display text-neutral-900 mt-1">Active Pro Strategist</h3>
+                        <p className="text-xs text-neutral-500 mt-2 font-light text-left">Complete research power with real-time translations.</p>
+                      </div>
+
+                      <div className="flex items-baseline gap-1.5 py-2 border-y border-neutral-100">
+                        <span className="text-3.5xl sm:text-4xl font-semibold font-mono text-neutral-950">29 AED</span>
+                        <span className="text-xs text-neutral-400 font-light lowercase">/ month</span>
+                      </div>
+
+                      <ul className="space-y-3">
+                        {[
+                          'Unlimited high-fidelity video analyses',
+                          'Complete Ask-the-Video interactive chatbot',
+                          'GCC Multilingual Translation (Arabic, English, Urdu)',
+                          'Whitelabel Custom Domain Whitelisting',
+                          'Direct MP3 synthesis vocalization engine',
+                          'Priority Gemini processing bandwidth'
+                        ].map((li, idx) => (
+                          <li key={idx} className="flex items-center gap-2.5 text-xs text-neutral-800 font-light">
+                            <CheckCircle className="w-4 h-4 text-emerald-600" />
+                            <span>{li}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <button
+                      onClick={() => handleCheckoutClick('pro')}
+                      className="w-full py-4.5 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-xl text-xs font-bold font-mono transition text-center cursor-pointer shadow-md shadow-[#0071e3]/10 hover:shadow-lg active:scale-98"
+                    >
+                      Connect Premium (Stripe Gate)
+                    </button>
+                  </div>
+
+                </div>
+
+                <p className="text-[10px] text-slate-500 font-mono italic max-w-xl mx-auto leading-relaxed">
+                  🛡️ Powered by standard sandbox test networks. Connecting our secure Stripe module does not require inputting live, active currencies.
+                </p>
+
+              </div>
+            </section>
+
+            {/* 8. FINAL CALL TO ACTION (CTA) */}
+            <section className="w-full bg-radial from-slate-950 to-slate-900 py-20 sm:py-24 text-white text-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:3rem_3rem] opacity-30"></div>
+              <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 relative z-10">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-display tracking-tight text-white max-w-2xl mx-auto leading-tight">
+                  Ready to Turn Screen Time Into Actual Leverage?
+                </h2>
+                <p className="text-slate-400 font-light text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
+                  Join hundreds of academic scholars, busy corporate executives, and fast content repurposers using SnapSum.
+                </p>
+                <div className="pt-2">
+                  <button
+                    onClick={() => {
+                      setCurrentScreen('app');
+                      window.scrollTo(0, 0);
+                    }}
+                    className="bg-white hover:bg-slate-100 text-slate-950 font-bold px-10 py-5 rounded-full text-sm transition-all duration-200 shadow-xl active:scale-98 cursor-pointer inline-flex items-center gap-2"
+                  >
+                    <span>Launch Free Workspace</span>
+                    <ArrowRight className="w-4.5 h-4.5" />
+                  </button>
+                </div>
+              </div>
+            </section>
+
+          </div>
+        )}
+
         {currentScreen === 'app' && (
           <div className="space-y-8 animate-fadeIn">
             {/* Dynamic Split Action Panel */}
@@ -1329,14 +2209,35 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
                 {/* Technical Error Box */}
                 {error && (
-                  <div className="mt-6 p-5 bg-red-50/50 border border-red-200/50 rounded-2xl text-red-950 animate-fadeIn space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-bold font-mono uppercase tracking-wider text-red-800">
+                  <div className="mt-6 p-5 bg-rose-50/70 border border-rose-200/60 rounded-2xl text-[#1d1d1f] animate-fadeIn space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-bold font-mono uppercase tracking-wider text-rose-800">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                       <span>Server Request Interrupted</span>
                     </div>
-                    <p className="text-xs font-mono leading-relaxed text-red-700">{error}</p>
-                    <p className="text-[11px] text-[#515154] bg-white/60 p-3 rounded-xl leading-relaxed border border-red-100/30 font-light">
-                      💡 Tip: Some videos do not contain public english subtitles. You can simply enable the <strong className="text-[#1d1d1f] font-medium">"Custom Transcript override"</strong> box below, paste any video dialogue paragraph, and Gemini will render the summary of that text!
-                    </p>
+                    {error.includes("RESOURCE_EXHAUSTED") || error.includes("prepayment credits") || error.includes("429") ? (
+                      <div className="space-y-2.5">
+                        <p className="text-sm font-semibold text-rose-950">
+                          Your regional Google AI Studio Prepayment Credits are depleted.
+                        </p>
+                        <p className="text-xs text-neutral-600 leading-relaxed font-sans">
+                          A 429 Exhausted status indicates your Gemini endpoint has run out of tokens. However, don't worry! You can easily continue evaluating and demonstrating SnapSum using any of these options:
+                        </p>
+                        <div className="bg-white/95 p-3.5 rounded-xl border border-rose-100/50 space-y-2">
+                          <p className="text-xs font-semibold text-neutral-800">Available Quick Workarounds:</p>
+                          <ul className="text-xs text-neutral-600 list-disc list-inside space-y-1 bg-neutral-50/50 p-2.5 rounded-lg border border-neutral-100">
+                            <li><strong className="text-neutral-900">Cached Templates:</strong> Select Dustin Moskovitz or Simon Sinek in the side rail for zero-cost, high-fidelity analyses.</li>
+                            <li><strong className="text-neutral-900">Custom API Key:</strong> Provide your own Gemini API key inside the <strong className="text-indigo-600 font-medium">Admin tab</strong> above to bypass billing limits.</li>
+                          </ul>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-xs font-mono leading-relaxed text-rose-800/90">{error}</p>
+                        <p className="text-[11px] text-[#515154] bg-white/60 p-3 rounded-xl leading-relaxed border border-rose-100/30 font-light">
+                          💡 Tip: Some videos do not contain public english subtitles. You can simply enable the <strong className="text-[#1d1d1f] font-medium">"Custom Transcript override"</strong> box below, paste any video dialogue paragraph, and Gemini will render the summary of that text!
+                        </p>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
