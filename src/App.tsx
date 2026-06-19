@@ -41,10 +41,13 @@ import {
   DollarSign,
   Megaphone,
   TrendingUp,
-  Rocket
+  Rocket,
+  Activity,
+  BarChart
 } from 'lucide-react';
 import { PRELOADED_VIDEOS } from './preloadedData';
 import { YouTubeSummaryResponse, SavedSummary } from './types';
+import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
 
 export default function App() {
   // Input fields
@@ -144,6 +147,17 @@ export default function App() {
   });
   const [adminIpList, setAdminIpList] = useState<Array<{ ip: string; count: number; lastResetAt: string }>>([]);
   const [adminIpLoading, setAdminIpLoading] = useState(false);
+
+  // Google Analytics state management & diagnostics
+  const [adminGaMeasurementId, setAdminGaMeasurementId] = useState(() => {
+    try {
+      return localStorage.getItem('admin_ga_measurement_id') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [gaSessionEvents, setGaSessionEvents] = useState<TrackedEvent[]>([]);
+  const [gaTestEventName, setGaTestEventName] = useState('summary_debug_test');
 
   // Developer Override States (Local Cached Overrides for Stripe + VIP + Usage metrics)
   const [customVipCode, setCustomVipCode] = useState(() => {
@@ -269,6 +283,42 @@ export default function App() {
     adminSearchGrounding
   ]);
 
+  // Synchronously initialize and listen for Google Analytics activities
+  useEffect(() => {
+    if (adminGaMeasurementId) {
+      initGA(adminGaMeasurementId);
+    }
+    
+    setGaSessionEvents(getSessionEvents());
+
+    const handleGaDispatcher = (e: Event) => {
+      const customEvent = e as CustomEvent<TrackedEvent | null>;
+      if (customEvent.detail) {
+        setGaSessionEvents((prev) => {
+          // Prevent duplicates if already loaded
+          const exists = prev.some(item => item.id === customEvent.detail!.id);
+          if (exists) return prev;
+          return [customEvent.detail!, ...prev].slice(0, 50);
+        });
+      } else {
+        setGaSessionEvents([]);
+      }
+    };
+
+    window.addEventListener('ga-event-dispatched', handleGaDispatcher);
+    return () => {
+      window.removeEventListener('ga-event-dispatched', handleGaDispatcher);
+    };
+  }, [adminGaMeasurementId]);
+
+  // Dispatch navigation event each time the active screen is changed
+  useEffect(() => {
+    trackGAEvent('screen_change', {
+      screen_id: currentScreen,
+      timestamp: new Date().toISOString()
+    });
+  }, [currentScreen]);
+
   // MVP Premium & billing state
   const [isPremium, setIsPremium] = useState<boolean>(() => {
     try {
@@ -312,6 +362,11 @@ export default function App() {
   // Live Stripe active session creator / dynamic simulator router
   const handleCheckoutClick = async (plan: 'pro' | 'enterprise') => {
     setSelectedPlanCode(plan);
+    trackGAEvent('initiate_checkout', {
+      plan_code: plan,
+      billing_cycle: billingCycle,
+      stripe_configured: stripeConfig.stripeConfigured
+    });
     if (stripeConfig.stripeConfigured) {
       setStripePaymentLoading(true);
       try {
@@ -360,6 +415,9 @@ export default function App() {
       const data = await response.json();
       if (data.result) {
         setOutreachPitch(data.result);
+        trackGAEvent('marketing_outreach_generated', {
+          niche: marketingNiche
+        });
       } else {
         throw new Error(data.error || 'Failed to generate campaign outreach');
       }
@@ -388,6 +446,9 @@ export default function App() {
       const data = await response.json();
       if (data.result) {
         setMarketingShortsScript(data.result);
+        trackGAEvent('shorts_script_generated', {
+          video_title: videoTitle
+        });
       } else {
         throw new Error(data.error || 'Failed to generate viral script');
       }
@@ -595,6 +656,12 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           ];
           saveToShelf(updatedShelf);
         }
+        trackGAEvent('summary_generated', {
+          video_id: matchedPreload.metadata.videoId,
+          video_title: matchedPreload.metadata.title,
+          source: 'preloaded_cache',
+          custom_transcript_used: showCustomTranscriptField
+        });
         setLoading(false);
       }, 700); // Authentic processing delay for micro-animation feel
       return;
@@ -621,6 +688,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       const summaryData = (await response.json()) as YouTubeSummaryResponse;
       
       setActiveSummary(summaryData);
+
+      trackGAEvent('summary_generated', {
+        video_id: summaryData.metadata.videoId,
+        video_title: summaryData.metadata.title,
+        source: 'api_live',
+        model_configured: adminSelectedModel,
+        custom_transcript_used: showCustomTranscriptField
+      });
 
       // Save to shelf
       const alreadySaved = savedSummaries.some((item) => item.id === summaryData.metadata.videoId);
@@ -650,6 +725,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'An unexpected failure occurred while loading the video summary.');
+      trackGAEvent('summary_failed', {
+        video_url: videoUrl,
+        error_message: err.message || 'unknown error'
+      });
       refreshStatus();
     } finally {
       setLoading(false);
@@ -3376,6 +3455,160 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
                     <div className="pt-3 border-t border-neutral-100 text-[10px] text-[#86868b] leading-normal font-light">
                       ℹ️ Limits reset automatically every 24 hours. Rate limits bypass is enabled for active subscribers & custom keys.
+                    </div>
+                  </div>
+
+                  {/* CARD 5: GOOGLE ANALYTICS INTEGRATION & EVENT LOGGER */}
+                  <div className="bg-white p-6 rounded-3xl border border-black/[0.04] space-y-4 shadow-sm text-left font-sans flex flex-col justify-between lg:col-span-2">
+                    <div className="space-y-4">
+                      
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 text-zinc-800">
+                          <Activity className="w-5 h-5 text-indigo-600 animate-pulse" />
+                          <h3 className="font-bold text-sm tracking-tight text-[#1d1d1f]">
+                            Google Analytics 4 (GA4) Integration
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-2 bg-[#f5f5f7] px-2.5 py-1 rounded-full border border-black/[0.03]">
+                          <span className={`h-2 w-2 rounded-full ${adminGaMeasurementId ? 'bg-emerald-500 animate-ping' : 'bg-neutral-300'}`}></span>
+                          <span className={`h-2 w-2 rounded-full -ml-4 ${adminGaMeasurementId ? 'bg-emerald-500' : 'bg-neutral-300'}`}></span>
+                          <span className="text-[10px] font-bold tracking-tight text-neutral-600 font-sans uppercase">
+                            {adminGaMeasurementId ? 'Active & Streamed' : 'Inactive'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-[#515154] font-sans font-light leading-relaxed">
+                        Inject real-time user-engagement metrics into your dashboard. Capture clicks, summaries, checkouts, and navigation pathways straight to your Google Analytics dashboard seamlessly.
+                      </p>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-neutral-100">
+                        {/* INPUT SETTINGS FIELDS */}
+                        <div className="space-y-3">
+                          <div className="space-y-2 font-sans">
+                            <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block">
+                              GA4 Measurement ID
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="G-XXXXXXXXXX"
+                                value={adminGaMeasurementId}
+                                onChange={(e) => {
+                                  const val = e.target.value.trim().toUpperCase();
+                                  setAdminGaMeasurementId(val);
+                                }}
+                                className="flex-1 px-4 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono uppercase"
+                              />
+                              <button
+                                onClick={() => {
+                                  if (adminGaMeasurementId) {
+                                    localStorage.setItem('admin_ga_measurement_id', adminGaMeasurementId);
+                                    initGA(adminGaMeasurementId);
+                                    trackGAEvent('measurement_id_updated', {
+                                      measurement_id: adminGaMeasurementId,
+                                      saved_at: new Date().toISOString()
+                                    });
+                                  } else {
+                                    localStorage.removeItem('admin_ga_measurement_id');
+                                    clearSessionEvents();
+                                    alert("Measurement ID cleared. Please refresh the page to completely unload tracking modules.");
+                                  }
+                                }}
+                                className="bg-black text-white hover:bg-neutral-800 transition text-[10px] uppercase tracking-wider font-bold px-3.5 py-2 rounded-xl cursor-pointer"
+                              >
+                                Save & Bind
+                              </button>
+                            </div>
+                            <span className="block text-[9px] text-[#86868b] leading-tight">
+                              Locate under GA4 Console → Admin → Data Streams → Select Web Stream → Measurement ID.
+                            </span>
+                          </div>
+
+                          {/* SAMPLE TRIGGER TEST MODULES */}
+                          <div className="p-3.5 bg-indigo-50/40 rounded-2xl border border-indigo-100/40 space-y-2">
+                            <span className="text-[11px] font-bold text-indigo-950 block">Analytics Dynamic Test Rig</span>
+                            <span className="text-[9px] text-indigo-800 leading-tight block">Dispatch immediate tracking hits to verify your dashboard live feed connection.</span>
+                            
+                            <div className="flex gap-2 pt-1">
+                              <input
+                                type="text"
+                                placeholder="event_name"
+                                value={gaTestEventName}
+                                onChange={(e) => setGaTestEventName(e.target.value.trim().toLowerCase())}
+                                className="flex-1 px-3 py-1.5 text-[10px] bg-white border border-indigo-200/50 rounded-lg outline-none font-mono"
+                              />
+                              <button
+                                onClick={() => {
+                                  if (!gaTestEventName) return;
+                                  trackGAEvent(gaTestEventName, {
+                                    test_sent_by: 'Platform Sandbox Administrator',
+                                    session_epoch: Date.now()
+                                  });
+                                }}
+                                className="bg-indigo-600 hover:bg-indigo-750 text-white text-[9px] font-bold tracking-wider uppercase px-2.5 py-1.5 rounded-lg cursor-pointer"
+                              >
+                                Dispatch Hit ⚡
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* LIVE LOGGER INSPECTOR */}
+                        <div className="space-y-2 flex flex-col justify-between">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500">
+                              Session Track Logs Feed
+                            </span>
+                            <button
+                              onClick={() => {
+                                clearSessionEvents();
+                              }}
+                              className="text-[9px] text-neutral-400 hover:text-rose-600 font-semibold uppercase font-mono cursor-pointer transition"
+                            >
+                              Clear Logs 🗑️
+                            </button>
+                          </div>
+
+                          <div className="flex flex-col bg-neutral-900 text-neutral-100 rounded-2xl p-4 font-mono text-[10px] h-[190px] overflow-y-auto space-y-2.5 border border-neutral-800 flex-1">
+                            {gaSessionEvents.length === 0 ? (
+                              <div className="h-full flex flex-col items-center justify-center text-center text-neutral-500 italic p-3">
+                                <span>No events dispatched on this session yet.</span>
+                                <span className="text-[8px] mt-1 not-italic text-neutral-600">Events appear live here as soon as you analyze videos, change screens, or tap custom settings.</span>
+                              </div>
+                            ) : (
+                              gaSessionEvents.map((evt) => (
+                                <div key={evt.id} className="border-b border-neutral-800/80 pb-2 last:border-0 last:pb-0 text-left">
+                                  <div className="flex items-center justify-between gap-1 text-[9px]">
+                                    <span className="text-emerald-400 font-bold">● {evt.name}</span>
+                                    <span className="text-neutral-500">{evt.timestamp}</span>
+                                  </div>
+                                  <div className="text-[8px] text-neutral-400 font-light mt-0.5 whitespace-pre-wrap break-all">
+                                    {evt.params && Object.keys(evt.params).length > 0 ? (
+                                      `params: ${JSON.stringify(evt.params)}`
+                                    ) : (
+                                      'params: (none)'
+                                    )}
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    <div className="pt-3.5 border-t border-neutral-100 text-[10px] text-[#86868b] leading-normal font-light flex items-center justify-between mt-2">
+                      <span className="leading-tight">🚀 Real-time page view tracking (e.g. <code>screen_change</code>) activates automatically across user tabs.</span>
+                      <a 
+                        href="https://analytics.google.com/" 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="text-[#0071e3] hover:underline flex items-center gap-0.5 shrink-0"
+                      >
+                        Launch GA Console <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
                     </div>
                   </div>
 
