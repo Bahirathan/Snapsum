@@ -85,7 +85,78 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // MVP Screen navigation state
-  const [currentScreen, setCurrentScreen] = useState<'app' | 'domain' | 'billing' | 'marketing' | 'admin'>('app');
+  const [currentScreen, setCurrentScreen] = useState<'app' | 'domain' | 'billing' | 'marketing' | 'admin'>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const qScreen = params.get('screen');
+        if (qScreen && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(qScreen)) {
+          return qScreen as any;
+        }
+        
+        // Also support clean query format like ?admin
+        if (params.get('admin') !== null || params.has('admin')) {
+          return 'admin';
+        }
+
+        const hash = window.location.hash.replace('#', '');
+        if (hash && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(hash)) {
+          return hash as any;
+        }
+      }
+    } catch (e) {
+      console.warn('Initial route resolution failed:', e);
+    }
+    return 'app';
+  });
+
+  // Synchronize browser hash and query navigation with active screen tab
+  useEffect(() => {
+    const syncScreenFromUrl = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const qScreen = params.get('screen');
+        if (qScreen && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(qScreen)) {
+          setCurrentScreen(qScreen as any);
+          return;
+        }
+        if (params.get('admin') !== null || params.has('admin')) {
+          setCurrentScreen('admin');
+          return;
+        }
+        const hash = window.location.hash.replace('#', '');
+        if (hash && ['app', 'domain', 'billing', 'marketing', 'admin'].includes(hash)) {
+          setCurrentScreen(hash as any);
+        }
+      } catch (err) {
+        console.warn('URL parsing failed:', err);
+      }
+    };
+
+    window.addEventListener('hashchange', syncScreenFromUrl);
+    window.addEventListener('popstate', syncScreenFromUrl);
+    return () => {
+      window.removeEventListener('hashchange', syncScreenFromUrl);
+      window.removeEventListener('popstate', syncScreenFromUrl);
+    };
+  }, []);
+
+  // Update hash dynamically as the user navigates tab options
+  useEffect(() => {
+    try {
+      const currentHash = window.location.hash.replace('#', '');
+      if (currentScreen === 'app') {
+        // Keep main landing page clean without extra tailing symbols
+        if (currentHash) {
+          window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+        }
+      } else if (currentHash !== currentScreen) {
+        window.history.replaceState(null, document.title, `#${currentScreen}`);
+      }
+    } catch (e) {
+      console.warn('Failed to push history status:', e);
+    }
+  }, [currentScreen]);
 
   // Stripe Live Status state
   const [stripeConfig, setStripeConfig] = useState<{ stripeConfigured: boolean; publishableKey: string }>({
