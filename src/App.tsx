@@ -1168,7 +1168,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         placeholder="Paste any video URL (YouTube, Vimeo, mp4, web links...)"
                         value={videoUrl}
                         onChange={(e) => setVideoUrl(e.target.value)}
-                        className="w-full pl-11 pr-4 py-4.5 bg-neutral-100/60 hover:bg-neutral-100/90 focus:bg-white text-[#1d1d1f] rounded-2xl border border-transparent focus:border-[#0071e3]/30 focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
+                        className="w-full pl-11 pr-4 py-4.5 bg-neutral-100/60 hover:bg-neutral-100/90 focus:bg-white text-[#1d1d1f] rounded-2xl border border-neutral-300 hover:border-neutral-400 focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
                       />
                     </div>
                     <button
