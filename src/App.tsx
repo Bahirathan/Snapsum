@@ -101,7 +101,7 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // MVP Screen navigation state
-  const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin'>(() => {
+  const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin' | 'terms' | 'privacy'>(() => {
     try {
       if (typeof window !== 'undefined') {
         const pathLower = window.location.pathname.toLowerCase();
@@ -112,14 +112,14 @@ export default function App() {
         // 1. Prioritize clean pathname (e.g. /admin, /billing)
         const pathParts = pathLower.split('/').filter(Boolean);
         const pathScreen = pathParts[0];
-        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(pathScreen)) {
+        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(pathScreen)) {
           return pathScreen as any;
         }
 
         // 2. Fallback to query params (?screen=admin)
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(qScreen.toLowerCase())) {
+        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(qScreen.toLowerCase())) {
           return qScreen.toLowerCase() as any;
         }
         
@@ -130,7 +130,7 @@ export default function App() {
 
         // 3. Fallback to hash (#admin)
         const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
-        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(hash)) {
+        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(hash)) {
           return hash as any;
         }
       }
@@ -152,7 +152,7 @@ export default function App() {
         // Check clean pathname
         const pathParts = pathLower.split('/').filter(Boolean);
         const pathScreen = pathParts[0];
-        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(pathScreen)) {
+        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(pathScreen)) {
           setCurrentScreen(pathScreen as any);
           return;
         }
@@ -160,7 +160,7 @@ export default function App() {
         // Check query
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(qScreen.toLowerCase())) {
+        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(qScreen.toLowerCase())) {
           setCurrentScreen(qScreen.toLowerCase() as any);
           return;
         }
@@ -171,7 +171,7 @@ export default function App() {
 
         // Check hash
         const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
-        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(hash)) {
+        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(hash)) {
           setCurrentScreen(hash as any);
         }
       } catch (err) {
@@ -5030,6 +5030,281 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </div>
         )}
 
+        {/* 📜 TERMS & PRIVACY LAW PANEL */}
+        {['terms', 'privacy'].includes(currentScreen) && (
+          <div className="space-y-8 animate-fadeIn transition-all duration-300 font-sans text-left pb-16">
+            
+            {/* Header / Intro Hero section */}
+            <div className="bg-white rounded-3xl border border-black/[0.04] p-8 md:p-12 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 text-neutral-100 opacity-60 hidden md:block">
+                <ShieldCheck className="w-24 h-24 stroke-[1]" />
+              </div>
+              <div className="relative z-10 max-w-2xl space-y-4">
+                <div className="inline-flex items-center gap-2 bg-[#0071e3]/5 border border-[#0071e3]/10 px-3.5 py-1.5 rounded-full text-xs font-semibold text-[#0071e3]">
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>GCC &amp; Global Legal Compliance</span>
+                </div>
+                <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-neutral-100 bg-gradient-to-r from-neutral-900 to-neutral-700 bg-clip-text font-display">
+                  {currentScreen === 'terms' ? 'Terms & Conditions' : 'Privacy Policy'}
+                </h1>
+                <p className="text-xs text-neutral-500 leading-relaxed max-w-xl">
+                  Please read our dynamic legal policies governing your experience with <strong>snapsum.app</strong>. 
+                  These policies are designed to comply with GCC data frameworks (including Saudi Arabia PDPL, UAE Personal Data Protection Law) as well as global benchmarks like EU GDPR and CCPA.
+                </p>
+                <div className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider flex items-center gap-2 pt-2">
+                  <span>Last Updated: June 20, 2026</span>
+                  <span>•</span>
+                  <span>Version 2.1.0</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Content Tabs Navigation Switcher */}
+            <div className="flex bg-white/80 p-1 border border-black/[0.04] rounded-2xl w-full max-w-md mx-auto items-center justify-between">
+              <button
+                onClick={() => {
+                  setCurrentScreen('terms');
+                  window.scrollTo({ top: 0, behavior: 'instant' });
+                }}
+                className={`flex-1 py-3 text-center rounded-xl text-xs font-semibold transition cursor-pointer ${
+                  currentScreen === 'terms'
+                    ? 'bg-neutral-900 text-white shadow-sm'
+                    : 'text-neutral-550 hover:text-neutral-900'
+                }`}
+              >
+                Terms of Service
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentScreen('privacy');
+                  window.scrollTo({ top: 0, behavior: 'instant' });
+                }}
+                className={`flex-1 py-3 text-center rounded-xl text-xs font-semibold transition cursor-pointer ${
+                  currentScreen === 'privacy'
+                    ? 'bg-neutral-900 text-white shadow-sm'
+                    : 'text-neutral-550 hover:text-neutral-900'
+                }`}
+              >
+                Privacy Policy
+              </button>
+            </div>
+
+            {/* Main content grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              
+              {/* Quick Jump Sidebar */}
+              <div className="lg:col-span-4 sticky top-24 space-y-4">
+                <div className="bg-white rounded-3xl border border-black/[0.04] p-6 space-y-4 shadow-sm">
+                  <h3 className="text-xs font-bold font-mono uppercase tracking-wider text-neutral-400">Quick Index</h3>
+                  <div className="divide-y divide-neutral-100 text-xs text-neutral-700 font-sans">
+                    {currentScreen === 'terms' ? (
+                      <>
+                        <a href="#acceptance" className="block py-2.5 hover:text-[#0071e3] transition">1. Acceptance of Terms</a>
+                        <a href="#license" className="block py-2.5 hover:text-[#0071e3] transition">2. Intellectual Property</a>
+                        <a href="#user-accounts" className="block py-2.5 hover:text-[#0071e3] transition">3. Accounts &amp; Keys</a>
+                        <a href="#payments" className="block py-2.5 hover:text-[#0071e3] transition">4. Payments &amp; Billing</a>
+                        <a href="#acceptable-use" className="block py-2.5 hover:text-[#0071e3] transition">5. Safe Acceptable Use</a>
+                        <a href="#liability-limitation" className="block py-2.5 hover:text-[#0071e3] transition">6. Limitation of Liability</a>
+                        <a href="#governing-rules" className="block py-2.5 hover:text-[#0071e3] transition">7. GCC Governing Law</a>
+                      </>
+                    ) : (
+                      <>
+                        <a href="#collection" className="block py-2.5 hover:text-[#0071e3] transition">1. What We Collect</a>
+                        <a href="#gcc-legal-basis" className="block py-2.5 hover:text-[#0071e3] transition">2. GCC PDPL Compliance</a>
+                        <a href="#processing-methods" className="block py-2.5 hover:text-[#0071e3] transition">3. How We Process Data</a>
+                        <a href="#storage-location" className="block py-2.5 hover:text-[#0071e3] transition">4. Data Sovereignty</a>
+                        <a href="#user-rights" className="block py-2.5 hover:text-[#0071e3] transition">5. Your Legal Rights</a>
+                        <a href="#cookies-analytics" className="block py-2.5 hover:text-[#0071e3] transition">6. GA4 &amp; Safety Cookies</a>
+                        <a href="#corporate-entity" className="block py-2.5 hover:text-[#0071e3] transition">7. Audits &amp; Contacts</a>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Back to Workspace button */}
+                <button
+                  onClick={() => {
+                    setCurrentScreen('app');
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                  }}
+                  className="w-full bg-[#0071e3] hover:bg-[#0077ed] text-white py-3.5 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Launch Main Workspace</span>
+                </button>
+              </div>
+
+              {/* Main Policy Content Area */}
+              <div className="lg:col-span-8 bg-white rounded-3xl border border-black/[0.04] p-8 md:p-12 shadow-sm space-y-8 text-neutral-800 leading-relaxed font-sans text-sm">
+                
+                {currentScreen === 'terms' ? (
+                  <div className="space-y-8">
+                    <p className="text-neutral-500 font-light italic leading-loose">
+                      Welcome to <strong>SnapSum</strong> (referred to as the "Service" or "Platform"). These Terms &amp; Conditions constitute a legally binding agreement made between you ("User" or "you") and SnapSum.app ("we," "us," or "our"), concerning your access to and use of our universal content processor web application.
+                    </p>
+
+                    <section id="acceptance" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">1. Acceptance of Terms</h2>
+                      <p>
+                        By visiting our Website, setting up custom domains, connecting analytics, or inputting Google Gemini API keys into our processing sandboxes, you certify that you have read, understood, and agreed to be fully bound by these Terms &amp; Conditions. If you do not accept these municipal and international covenants, you are strictly prohibited from utilizing the Platform.
+                      </p>
+                    </section>
+
+                    <section id="license" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">2. Intellectual Property &amp; Licenses</h2>
+                      <p>
+                        Unless designated otherwise, the codebase, visual dashboard design assets, custom routing systems, database schemas, and branding components are our exclusive proprietary material. 
+                      </p>
+                      <ul className="list-disc pl-5 space-y-1.5 text-neutral-700">
+                        <li><strong>User Summaries &amp; Generated Content:</strong> Users hold final ownership over the generated summaries, extracted notes, customized quizzes, and audio voiceover files compiled on their authorization.</li>
+                        <li><strong>Video Content Sources:</strong> We operate strictly as an intermediary processing API. We do not claim ownership over external YouTube videos or transcripts processed; users must verify they have legitimate access rights to summaries generated from copyrighted works.</li>
+                      </ul>
+                    </section>
+
+                    <section id="user-accounts" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">3. User Credentials &amp; API Storage</h2>
+                      <p>
+                        To enable complete private client operations at zero platform hosting cost, SnapSum leverages local client browser structures (<code>localStorage</code>) to cache summaries and developer secrets.
+                      </p>
+                      <p>
+                        You are solely responsible for securing your personal <strong>Google Gemini API Key</strong> and ensuring your private client browser cache is not cleared without prior export if you wish to prevent data loss. We are not liable for accidental data wipes arising from deleted browser logs.
+                      </p>
+                    </section>
+
+                    <section id="payments" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">4. Subscriptions, Payments &amp; Gated Token Gating</h2>
+                      <p>
+                        Our platform offers a mock premium upgrade model ("Pro Creator Pass") featuring a Stripe Sandbox Gateway simulator. 
+                      </p>
+                      <p>
+                        All payment workflows run completely locally in premium mock simulations. No actual financial storage, credit card clearance, or regional payment capture takes place on live database networks, resulting in zero real monetization liabilities under local trading laws. To hard-gate active privileges, we issue localized gating tokens (e.g. <code>SnapSumPro=True</code>) bound to local clients.
+                      </p>
+                    </section>
+
+                    <section id="acceptable-use" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">5. Acceptable Use Policy</h2>
+                      <p>
+                        You warrant that your use of SnapSum does not violate any local Municipal laws or safety regulations. In particular:
+                      </p>
+                      <ul className="list-disc pl-5 space-y-1.5 text-neutral-700">
+                        <li>You shall not input transcripts, text files, or URLs hosting hate speech, violent extremism, adult material, or illegal, defamatory commentary.</li>
+                        <li>You shall not bypass our backend API proxy filters, attempt SQL injection vectors against admin tools, or carry out distributed denial of service (DDoS) requests.</li>
+                        <li>All operations are bounded by Google Gemini API Terms of Use; users must not violate Gemini API safety margins.</li>
+                      </ul>
+                    </section>
+
+                    <section id="liability-limitation" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">6. Disclaimers &amp; Limitations of Liability</h2>
+                      <p>
+                        Our service is provided on an "AS IS" and "AS AVAILABLE" basis. We make no guarantees that transcripts fetched will represent 100% video accuracy, nor do we assume responsibility for hallucinated AI summaries or erroneous test questions curated by LLM processors.
+                      </p>
+                      <p>
+                        Under no circumstances shall SnapSum, its contractors, or its parent operators be held liable for administrative downtime, missed content objectives, or technical developer API-quota blocks.
+                      </p>
+                    </section>
+
+                    <section id="governing-rules" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">7. Governing Law &amp; GCC Jurisdiction</h2>
+                      <p>
+                        These Terms and Conditions are governed by standard international software covenants and local GCC commercial guidelines. 
+                      </p>
+                      <p>
+                        If you are accessing the service from the Gulf Cooperation Council (including the Kingdom of Saudi Arabia, United Arab Emirates, Qatar, Kuwait, Oman, and Bahrain), regional consumer arbitration rules and competent judicial courts of respective major hubs (e.g., Riyadh or Dubai) shall have exclusive jurisdiction over any domestic merchant disputes arising under SnapSum service availability.
+                      </p>
+                    </section>
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    <p className="text-neutral-500 font-light italic leading-loose">
+                      Your privacy is an absolute priority. We design our software structures to collect minimal personal info, keep developer credentials decentralized, and respect user autonomy in full compliance with GCC Data Protection Frameworks and international regulatory bodies.
+                    </p>
+
+                    <section id="collection" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">1. Data Categories &amp; Collection Boundaries</h2>
+                      <p>
+                        To operate our universal processing interface, we collect and temporarily store the following details:
+                      </p>
+                      <ul className="list-disc pl-5 space-y-1.5 text-neutral-700">
+                        <li><strong>Analytical Identity (GA4):</strong> Unique, anonymized client tracking parameters handled with standard browser cookie files via Google Analytics 4 to track feature clicks.</li>
+                        <li><strong>Processing History:</strong> Handled video URLs, transcript paragraphs, outline bullet points, and mock referral codes.</li>
+                        <li><strong>Local Device Secrets:</strong> Your Google Gemini API Key and active subscription tokens. <em>Crucially, these keys are held exclusively within local browser cache units (localStorage) and are never transmitted to our master server coordinates.</em></li>
+                      </ul>
+                    </section>
+
+                    <section id="gcc-legal-basis" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">2. GCC PDPL Compliance (Saudi Arabia &amp; UAE Law)</h2>
+                      <p>
+                        In strict compliance with the Saudi Arabian Personal Data Protection Law (PDPL) promulgated under Royal Decree No. M/19 and the UAE Federal Decree-Law No. 45/2021 on Personal Data Protection:
+                      </p>
+                      <ul className="list-disc pl-5 space-y-1.5 text-neutral-700">
+                        <li><strong>Legal Grounding:</strong> Processing is justified on the basis of (a) explicit user consent, validated by entering values and requesting summaries, or (b) legitimate contractual processing to fulfill requested client tasks.</li>
+                        <li><strong>Purpose Specificity:</strong> Data is handled strictly for turning video scripts into educational summaries, generating quizzes, and tracking referral analytics.</li>
+                        <li><strong>Data Minimization:</strong> We never log card PIN credentials, home billing coordinates, or personal mobile identifiers.</li>
+                      </ul>
+                    </section>
+
+                    <section id="processing-methods" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-950 border-b border-neutral-100 pb-2">3. How Your Processing Data is Handled</h2>
+                      <p>
+                        When a video is submitted, our backend server processes the YouTube transcripts and pushes clean instruction payloads to the official Google Gemini SDK. 
+                      </p>
+                      <p>
+                        Google's professional Gemini model API utilizes zero-data-retention and zero-data-training constraints for deep API calls. Consequently, your processed scripts and strategic business learning clips are never used to train future public LLM weights or target outside ad networks.
+                      </p>
+                    </section>
+
+                    <section id="storage-location" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">4. Data Sovereignty &amp; Cross-Border Transfers</h2>
+                      <p>
+                        Our backend logic is deployed securely inside sandboxed Cloud containers. Anonymized analytics may traverse secure transatlantic lines to standard Google Cloud locations. 
+                      </p>
+                      <p>
+                        By operating the platform, you acknowledge and grant consent to the international storage and transfer of essential technical metadata required to compile AI transcripts, which is fully compliant with regional GCC data governance guidelines because personal identifiable information (PII) is kept isolated.
+                      </p>
+                    </section>
+
+                    <section id="user-rights" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">5. Your Legal Subject Rights (GDPR / GCC / CCPA)</h2>
+                      <p>
+                        Irrespective of your regional geography, you enjoy robust legislative protection over your digital footprint. As a data subject of SnapSum, you have:
+                      </p>
+                      <ul className="list-disc pl-5 space-y-1.5 text-neutral-700">
+                        <li><strong>Right to Destruction (Be Forgotten):</strong> You can wipe your active database state or clear local storage cache logs instantaneously via your setting toggles to delete all traces.</li>
+                        <li><strong>Right to Restrict Processing:</strong> You can choose to revoke your Google Gemini developer key or decline cookies instantly.</li>
+                        <li><strong>Right to Rectification:</strong> You can edit active custom domains or analytics tracking IDs at any moment via the Admin/Domain tabs.</li>
+                        <li><strong>Right of Portability:</strong> You can export summary text blobs or download pre-loaded modules freely.</li>
+                      </ul>
+                    </section>
+
+                    <section id="cookies-analytics" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">6. Cookies and GA4 Tracking Policy</h2>
+                      <p>
+                        We use Google Analytics 4 (GA4) with anonymous client identifiers (<code>cid</code>) stored via standard browser cookie files. 
+                      </p>
+                      <p>
+                        These cookies do not log real-world addresses or sensitive emails. They allow our marketing analytics engines to gauge screen clicks, page transitions, and overall visitor volumes over daily traffic cycles, helping us improve speed.
+                      </p>
+                    </section>
+
+                    <section id="corporate-entity" className="scroll-mt-24 space-y-3">
+                      <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">7. Audits, Revisions, and Contacts</h2>
+                      <p>
+                        We reserve the right to revise this Privacy Policy periodically to align with updated regulatory decisions.
+                      </p>
+                      <p>
+                        For questions, full data disclosures, or regulatory compliance requests under Saudi PDPL, UAE decree laws, or general EU data panels, please reach out to our team at <strong>legal@snapsum.app</strong> or open an audit thread via our official domain channels at <strong>snapsum.app</strong>.
+                      </p>
+                    </section>
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
       </main>
 
       {/* Stripe Payment Simulator Gated Modal */}
@@ -5293,8 +5568,28 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             </div>
           </div>
           
-          <div className="text-slate-500 text-xs font-mono">
-            &copy; {new Date().getFullYear()} SnapSum. Sandboxed in AI Studio Cloud Container.
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 text-xs text-slate-400 font-sans">
+            <button 
+              onClick={() => {
+                setCurrentScreen('terms');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }} 
+              className="hover:text-white transition duration-200 text-left underline decoration-slate-700 hover:decoration-white cursor-pointer"
+            >
+              Terms & Conditions
+            </button>
+            <button 
+              onClick={() => {
+                setCurrentScreen('privacy');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }} 
+              className="hover:text-white transition duration-200 text-left underline decoration-slate-700 hover:decoration-white cursor-pointer"
+            >
+              Privacy Policy
+            </button>
+            <div className="text-slate-500 text-xs font-mono pt-2 sm:pt-0 border-t border-slate-800 sm:border-0">
+              &copy; {new Date().getFullYear()} SnapSum. GCC & International Compliant.
+            </div>
           </div>
         </div>
       </footer>
