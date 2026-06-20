@@ -1165,17 +1165,21 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               <Sparkles className="w-3.5 h-3.5" />
               <span className="hidden xs:inline">Workspace</span>
             </button>
-            <button
-              onClick={() => setCurrentScreen('domain')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
-                currentScreen === 'domain'
-                  ? 'bg-white text-[#1d1d1f] shadow-sm'
-                  : 'text-[#86868b] hover:text-[#1d1d1f]'
-              }`}
-            >
-              <Globe className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">Custom Domain</span>
-            </button>
+            
+            {(isAdminAuthenticated || ['domain', 'marketing', 'admin'].includes(currentScreen)) && (
+              <button
+                onClick={() => setCurrentScreen('domain')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
+                  currentScreen === 'domain'
+                    ? 'bg-white text-[#1d1d1f] shadow-sm'
+                    : 'text-[#86868b] hover:text-[#1d1d1f]'
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline">Custom Domain</span>
+              </button>
+            )}
+
             <button
               onClick={() => setCurrentScreen('billing')}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
@@ -1194,28 +1198,33 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 )}
               </span>
             </button>
-            <button
-              onClick={() => setCurrentScreen('marketing')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
-                currentScreen === 'marketing'
-                  ? 'bg-white text-[#1d1d1f] shadow-sm'
-                  : 'text-[#86868b] hover:text-[#1d1d1f]'
-              }`}
-            >
-              <Megaphone className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">Marketing</span>
-            </button>
-            <button
-              onClick={() => setCurrentScreen('admin')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
-                currentScreen === 'admin'
-                  ? 'bg-zinc-800 text-white shadow-sm'
-                  : 'text-[#86868b] hover:text-[#1d1d1f]'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">Admin</span>
-            </button>
+
+            {(isAdminAuthenticated || ['domain', 'marketing', 'admin'].includes(currentScreen)) && (
+              <>
+                <button
+                  onClick={() => setCurrentScreen('marketing')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
+                    currentScreen === 'marketing'
+                      ? 'bg-white text-[#1d1d1f] shadow-sm'
+                      : 'text-[#86868b] hover:text-[#1d1d1f]'
+                  }`}
+                >
+                  <Megaphone className="w-3.5 h-3.5" />
+                  <span className="hidden xs:inline">Marketing</span>
+                </button>
+                <button
+                  onClick={() => setCurrentScreen('admin')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
+                    currentScreen === 'admin'
+                      ? 'bg-zinc-800 text-white shadow-sm'
+                      : 'text-[#86868b] hover:text-[#1d1d1f]'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span className="hidden xs:inline">Admin</span>
+                </button>
+              </>
+            )}
           </nav>
 
           <div className="flex items-center gap-4">
