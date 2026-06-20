@@ -42,6 +42,7 @@ export interface YouTubeSummaryResponse {
   socialSnippet: string;
   quiz: QuizQuestion[];
   mindmap: MindmapNode[];
+  shareId?: string;
 }
 
 export interface SavedSummary {

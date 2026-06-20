@@ -8,6 +8,9 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import { saveSummary, getSummary, listSummaries } from './server/summaryStore';
+import { getOrCreateReferralCode, recordReferral, getReferralCount, isLockedUnlocked } from './server/referralStore';
 
 dotenv.config();
 
@@ -67,6 +70,11 @@ function checkAndIncrementUsage(req: express.Request): { allowed: boolean; count
   // Get requester IP address
   const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
   const ip = rawIp.split(',')[0].trim();
+
+  // Referral Bypass: if they have referred >= 2 distinct visitors, they bypass rate limiting
+  if (isLockedUnlocked(ip, 2)) {
+    return { allowed: true, count: 0, limit: 99999, remaining: 99999 };
+  }
 
   // Retrieve limits configured in system (or overridden on the fly by admin headers)
   const clientLimitHeader = req.headers['x-custom-free-reqs-limit'] ? parseInt(req.headers['x-custom-free-reqs-limit'] as string, 10) : null;
@@ -331,9 +339,177 @@ async function fetchYouTubeOEmbed(videoId: string): Promise<{ title: string; aut
   };
 }
 
+// OpenGraph Injector Helper
+function injectOGTags(html: string, summary: any, suffix: string = ''): string {
+  const metadata = summary.metadata || {};
+  const cleanTitle = (metadata.title || 'AI Video Summary').replace(/"/g, '&quot;');
+  const title = (cleanTitle + suffix).replace(/"/g, '&quot;');
+  const rawDesc = summary.summary || 'Click to view structured summaries, key insights, chapters, and interactive learning quizzes.';
+  const description = rawDesc.replace(/"/g, '&quot;').slice(0, 150);
+  const imageUrl = metadata.thumbnailUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80';
+  const url = `https://www.snapsum.app/s/${summary.shareId}`;
+
+  const metaHtml = `
+    <title>${title} - SnapSum</title>
+    <meta name="description" content="${description}" />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="${title} - SnapSum" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:image" content="${imageUrl}" />
+    <meta property="og:url" content="${url}" />
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title} - SnapSum" />
+    <meta name="twitter:description" content="${description}" />
+    <meta name="twitter:image" content="${imageUrl}" />
+  `;
+
+  let normalized = html.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
+  normalized = normalized.replace('</head>', `${metaHtml}</head>`);
+  return normalized;
+}
+
+// Robots & Sitemap
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('User-agent: *\nAllow: /\nSitemap: https://www.snapsum.app/sitemap.xml');
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  const summaries = listSummaries();
+  const urls = summaries.map(s => `
+  <url>
+    <loc>https://www.snapsum.app/s/${s.shareId}</loc>
+    <lastmod>${new Date(s.savedAt || Date.now()).toISOString().split('T')[0]}</lastmod>
+    <changefreq>monthly</changefreq>
+  </url>`).join('');
+
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.snapsum.app/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>${urls}
+</urlset>`;
+
+  res.type('application/xml');
+  res.send(sitemap);
+});
+
+// JSON hydration API
+app.get('/api/shared-summary/:id', (req, res) => {
+  const summary = getSummary(req.params.id);
+  if (!summary) {
+    return res.status(404).json({ error: 'Shared summary not found' });
+  }
+  return res.json(summary);
+});
+
+// Referral API
+app.post('/api/referral/register', (req, res) => {
+  const { referralCode } = req.body;
+  const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
+  const ip = rawIp.split(',')[0].trim();
+
+  let registered = false;
+  if (referralCode) {
+    registered = recordReferral(ip, referralCode);
+  }
+
+  const code = getOrCreateReferralCode(ip);
+  const count = getReferralCount(ip);
+  const unlocked = count >= 2;
+
+  return res.json({
+    success: true,
+    ip,
+    referralCode: code,
+    referralCount: count,
+    unlocked,
+    registered,
+  });
+});
+
+// Server-rendered summary routes
+app.get('/s/:id', (req, res) => {
+  const summary = getSummary(req.params.id);
+  if (!summary) {
+    return res.status(404).send('Summary not found');
+  }
+
+  try {
+    const htmlPath = process.env.NODE_ENV === 'production'
+      ? path.join(process.cwd(), 'dist', 'index.html')
+      : path.join(process.cwd(), 'index.html');
+
+    if (!fs.existsSync(htmlPath)) {
+      return res.status(404).send('index.html not found');
+    }
+
+    let html = fs.readFileSync(htmlPath, 'utf-8');
+    html = injectOGTags(html, summary);
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(html);
+  } catch (err) {
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/s/:id/quiz', (req, res) => {
+  const summary = getSummary(req.params.id);
+  if (!summary) {
+    return res.status(404).send('Summary not found');
+  }
+
+  try {
+    const htmlPath = process.env.NODE_ENV === 'production'
+      ? path.join(process.cwd(), 'dist', 'index.html')
+      : path.join(process.cwd(), 'index.html');
+
+    if (!fs.existsSync(htmlPath)) {
+      return res.status(404).send('index.html not found');
+    }
+
+    let html = fs.readFileSync(htmlPath, 'utf-8');
+    html = injectOGTags(html, summary, ' - Interactive Quiz');
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(html);
+  } catch (err) {
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+app.get('/s/:id/quiz/:score', (req, res) => {
+  const summary = getSummary(req.params.id);
+  if (!summary) {
+    return res.status(404).send('Summary not found');
+  }
+
+  try {
+    const htmlPath = process.env.NODE_ENV === 'production'
+      ? path.join(process.cwd(), 'dist', 'index.html')
+      : path.join(process.cwd(), 'index.html');
+
+    if (!fs.existsSync(htmlPath)) {
+      return res.status(404).send('index.html not found');
+    }
+
+    let html = fs.readFileSync(htmlPath, 'utf-8');
+    const totalCount = summary.quiz?.length || 5;
+    const suffix = ` (Quiz Challenge: I scored ${req.params.score}/${totalCount}! Beat me)`;
+    html = injectOGTags(html, summary, suffix);
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(html);
+  } catch (err) {
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
 // REST API endpoint: Video summarizer (YouTube and generic videos/pages)
 app.post('/api/summarize', async (req, res) => {
-  const { videoUrl, customTranscript } = req.body;
+  const { videoUrl, customTranscript, outputLanguage } = req.body;
 
   if (!videoUrl) {
     return res.status(400).json({ error: 'Video URL is required.' });
@@ -385,11 +561,16 @@ app.post('/api/summarize', async (req, res) => {
       transcript = await fetchTranscript(videoId);
     }
 
-    // 3. Draft prompt for Gemini based on availability of transcript
+    // 3. Draft prompt for Gemini based on availability of transcript and output language selection
     let prompt = '';
+    const langInstruction = outputLanguage === 'ar'
+      ? '\nCRITICAL ARABIC INSTRUCTION:\nYou MUST generate all output text fields (including summary, takeaways, chapter titles, chapter takeaways, blogPost markdown structured text, twitterThread tweets, LinkedIn/Instagram socialSnippet, quiz questions/options/explanations, and all mindmap concepts, category names, and descriptions) natively and fully in ARABIC (العربية) language. Do NOT use English for any descriptive text inside the JSON payload. However, please ensure that the JSON structural keys (like "summary", "takeaways", "chapters", "blogPost", "twitterThread", etc.) remain strictly in English as defined below.'
+      : '';
+
     const buildPromptWithTranscript = (videoTitle: string, inputChannel: string, contentSource: string) => `
 You are an expert AI video summaries creator and business consultant representing an elite monetization tool.
 Your goal is to digest the following video and extract highly valuable summaries, actionable chapters, interactive quizzes, standard mindmap nodes, and creator monetization copy.
+${langInstruction}
 
 Video Title: "${videoTitle}"
 Creator / Host: "${inputChannel}"
@@ -413,6 +594,8 @@ Please analyze this transcript and fill out the detailed JSON structure:
     const buildPromptWithoutTranscript = (videoTitle: string, inputChannel: string) => `
 You are an expert AI video summaries creator representing a premium monetization tool.
 The user wants to summarize the video titled "${videoTitle}" by creator "${inputChannel}".
+${langInstruction}
+
 Since direct transcript retrieval is not pre-extracted, use your Google Search tool or historical knowledge index to research and analyze this video, its core message, lessons, and content. If the URL points to a website, discover its content to draft an accurate analysis.
 Provide an extremely detailed, accurate summary, actionable chronological chapters, blog post copy, tweets, an educational quiz, and structured mindmap nodes.
 
@@ -532,10 +715,15 @@ Generate a complete, high-quality summary and promotional asset package matching
 
     const result = JSON.parse(outputText.trim());
 
-    return res.json({
+    // Build saved summary package
+    const richSummary = {
       metadata: fullMetadata,
       ...result,
-    });
+    };
+    const shareId = saveSummary(richSummary);
+    richSummary.shareId = shareId;
+
+    return res.json(richSummary);
   } catch (err: any) {
     console.error('Error generating summary:', err);
     return res.status(500).json({

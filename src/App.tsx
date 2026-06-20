@@ -14,6 +14,7 @@ import {
   CheckCircle,
   HelpCircle,
   Award,
+  Trophy,
   Network,
   ArrowRight,
   History,
@@ -67,6 +68,16 @@ export default function App() {
   const [activeSummary, setActiveSummary] = useState<YouTubeSummaryResponse | null>(null);
   const [savedSummaries, setSavedSummaries] = useState<SavedSummary[]>([]);
   
+  // Is active loaded summary in Arabic RTL language
+  const isRtl = activeSummary && /[\u0600-\u06FF]/.test(activeSummary.summary || '');
+  
+  // Referral, Challenge, and Language States
+  const [outputLanguage, setOutputLanguage] = useState<'en' | 'ar'>('en');
+  const [referralCode, setReferralCode] = useState<string>('');
+  const [referralCount, setReferralCount] = useState<number>(0);
+  const [referralUnlocked, setReferralUnlocked] = useState<boolean>(false);
+  const [quizChallenge, setQuizChallenge] = useState<{ score: number; maxScore: number } | null>(null);
+  
   // Dashboard navigation sub-tabs
   const [activeTab, setActiveTab] = useState<'overview' | 'chapters' | 'mindmap' | 'quiz' | 'monetize'>('overview');
 
@@ -93,8 +104,13 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin'>(() => {
     try {
       if (typeof window !== 'undefined') {
+        const pathLower = window.location.pathname.toLowerCase();
+        if (pathLower.startsWith('/s/')) {
+          return 'app';
+        }
+
         // 1. Prioritize clean pathname (e.g. /admin, /billing)
-        const pathParts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+        const pathParts = pathLower.split('/').filter(Boolean);
         const pathScreen = pathParts[0];
         if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(pathScreen)) {
           return pathScreen as any;
@@ -128,8 +144,13 @@ export default function App() {
   useEffect(() => {
     const syncScreenFromUrl = () => {
       try {
+        const pathLower = window.location.pathname.toLowerCase();
+        if (pathLower.startsWith('/s/')) {
+          setCurrentScreen('app');
+          return;
+        }
         // Check clean pathname
-        const pathParts = window.location.pathname.toLowerCase().split('/').filter(Boolean);
+        const pathParts = pathLower.split('/').filter(Boolean);
         const pathScreen = pathParts[0];
         if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin'].includes(pathScreen)) {
           setCurrentScreen(pathScreen as any);
@@ -169,6 +190,9 @@ export default function App() {
   // Update address bar dynamically as the user navigates tab options
   useEffect(() => {
     try {
+      if (window.location.pathname.toLowerCase().startsWith('/s/')) {
+        return;
+      }
       const targetPath = currentScreen === 'landing' ? '/' : `/${currentScreen}`;
       if (window.location.pathname.toLowerCase() !== targetPath.toLowerCase()) {
         window.history.pushState(null, document.title, targetPath + window.location.search);
@@ -177,6 +201,80 @@ export default function App() {
       console.warn('Failed to push history status:', e);
     }
   }, [currentScreen]);
+
+  // Startup handle for referral code registration & tracking
+  useEffect(() => {
+    const handleInitialBoot = async () => {
+      try {
+        const queryParams = new URLSearchParams(window.location.search);
+        const refCode = queryParams.get('ref');
+
+        const response = await fetch('/api/referral/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referralCode: refCode }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          setReferralCode(data.referralCode || '');
+          setReferralCount(data.referralCount || 0);
+          setReferralUnlocked(data.unlocked || false);
+        }
+      } catch (err) {
+        console.warn('Failed to register or retrieve referral status:', err);
+      }
+    };
+
+    handleInitialBoot();
+  }, []);
+
+  // Shared summary & score-bearing quiz path hydrating router
+  useEffect(() => {
+    const loadSharedSummary = async () => {
+      const pathname = window.location.pathname;
+      if (!pathname.startsWith('/s/')) return;
+
+      const parts = pathname.split('/').filter(Boolean); // e.g., ['s', 'vid_123', 'quiz', '8']
+      const shareId = parts[1];
+      if (!shareId) return;
+
+      setLoading(true);
+      setLoadingStep('Hydrating shared learning assets...');
+      try {
+        const res = await fetch(`/api/shared-summary/${shareId}`);
+        if (!res.ok) {
+          throw new Error('Shared summary not found');
+        }
+        const data = await res.json();
+        setActiveSummary(data);
+        setCurrentScreen('app'); // Route to workspace
+
+        // Deep link to sub-tab
+        if (parts[2] === 'quiz') {
+          setActiveTab('quiz');
+          if (parts[3]) {
+            const scoreNum = parseInt(parts[3], 10);
+            if (!isNaN(scoreNum)) {
+              setQuizChallenge({ score: scoreNum, maxScore: data.quiz?.length || 5 });
+            }
+          }
+        } else if (parts[2]) {
+          // If they shared other routes like chapters or mindmap
+          const allowedSubTabs = ['overview', 'chapters', 'mindmap', 'quiz', 'monetize'];
+          if (allowedSubTabs.includes(parts[2])) {
+            setActiveTab(parts[2] as any);
+          }
+        }
+      } catch (err: any) {
+        console.error('Failed to load shared summary:', err);
+        setError('The shared summary or quiz challenge link is invalid or has expired.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSharedSummary();
+  }, []);
 
   // Update document browser tab tab-title dynamically based on screen selection
   useEffect(() => {
@@ -710,7 +808,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
   // Copy text helper
   const handleCopyText = (text: string, elementId: string) => {
-    navigator.clipboard.writeText(text);
+    let textToCopy = text;
+    if (['blog', 'thread', 'snippet', 'overview', 'summary'].includes(elementId)) {
+      textToCopy = `${text}\n\n---\n⚡ Summarized by SnapSum - AI Video Knowledge Engine (https://www.snapsum.app)`;
+    }
+    navigator.clipboard.writeText(textToCopy);
     setCopiedStates((prev) => ({ ...prev, [elementId]: true }));
     setTimeout(() => {
       setCopiedStates((prev) => ({ ...prev, [elementId]: false }));
@@ -784,6 +886,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         body: JSON.stringify({
           videoUrl,
           customTranscript: customTranscript || undefined,
+          outputLanguage,
         }),
       });
 
@@ -2316,6 +2419,40 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       </div>
                     )}
                   </div>
+
+                  {/* Target Language Selector */}
+                  <div className="space-y-2 pt-2">
+                    <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
+                      Target Output Language (Translational Synthesis)
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setOutputLanguage('en')}
+                        className={`px-3.5 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                          outputLanguage === 'en'
+                            ? 'bg-[#1d1d1f] border-[#1d1d1f] text-white shadow-sm'
+                            : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
+                        }`}
+                      >
+                        <span className="text-sm">🇺🇸</span>
+                        <span>English (Default)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setOutputLanguage('ar')}
+                        className={`px-3.5 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                          outputLanguage === 'ar'
+                            ? 'bg-[#1d1d1f] border-[#1d1d1f] text-white shadow-sm'
+                            : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
+                        }`}
+                      >
+                        <span className="text-sm">🇸🇦</span>
+                        <span>Arabic (العربية)</span>
+                      </button>
+                    </div>
+                  </div>
                 </form>
 
                 {/* Progress Indicators & Steps */}
@@ -2425,6 +2562,85 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               </div>
             </div>
 
+            {/* Viral Referral Program Card Widget */}
+            <div className="bg-gradient-to-br from-indigo-50/60 to-purple-50/40 rounded-3xl p-6 border border-indigo-100/50 shadow-sm space-y-4">
+              <div>
+                <span className="inline-flex items-center gap-1 bg-indigo-100/80 px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold text-indigo-700 uppercase">
+                  ⚡ viral referral invite
+                </span>
+                <h3 className="text-base font-bold font-display text-neutral-900 mt-2">
+                  Unlock Free Premium Access
+                </h3>
+                <p className="text-[#86868b] text-[11px] mt-0.5 font-light leading-relaxed font-sans">
+                  Refer just <strong className="font-semibold text-neutral-800">2 friends</strong> to bypass all guest limitations and unlock daily unlimited processing!
+                </p>
+              </div>
+
+              {/* Progress Milestones */}
+              <div className="bg-white/80 border border-indigo-100 p-3.5 rounded-2xl space-y-2 font-sans">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-neutral-600">Referred Visitors</span>
+                  <span className="font-bold text-indigo-700 font-mono">{referralCount} / 2</span>
+                </div>
+                
+                {/* Milestone Progress bar */}
+                <div className="w-full bg-neutral-100/80 h-2 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min((referralCount / 2) * 100, 100)}%` }}
+                  ></div>
+                </div>
+
+                {referralUnlocked || referralCount >= 2 ? (
+                  <p className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5 fill-emerald-50 text-emerald-600 shrink-0" />
+                    <span>Unlocked! Unlimited summaries active!</span>
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-indigo-600 font-medium">
+                    🎯 Need {Math.max(0, 2 - referralCount)} more referrals to unlock premium status.
+                  </p>
+                )}
+              </div>
+
+              {/* Referral Code Share Action */}
+              <div className="space-y-1.5 font-sans text-left">
+                <label className="block text-[10px] font-mono font-bold text-neutral-500 uppercase">
+                  Your Unique Referral Invite link
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${window.location.origin}?ref=${referralCode}`}
+                    className="flex-1 bg-white/90 border border-neutral-200 rounded-xl px-3 py-2 text-[11px] outline-none font-mono text-[#1d1d1f] shadow-sm select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const link = `${window.location.origin}?ref=${referralCode}`;
+                      const text = `Take a look at SnapSum - Instant AI Video Knowledge Engine! It turns standard YouTube videos into structured guides, timelines, mindmaps, and interactive learning quizzes. Use my link to get unlimited credits: ${link}`;
+                      
+                      if (navigator.share) {
+                        navigator.share({
+                          title: 'SnapSum Video Knowledge Engine',
+                          text: text,
+                          url: link
+                        }).catch(() => {
+                          handleCopyText(link, 'referral');
+                        });
+                      } else {
+                        handleCopyText(link, 'referral');
+                      }
+                    }}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 rounded-xl flex items-center justify-center transition cursor-pointer active:scale-95 shrink-0"
+                  >
+                    {copiedStates['referral'] ? 'Copied' : <Share2 className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {/* Shelf Persistence History Box */}
             <div id="sandbox-library" className="bg-white rounded-3xl p-6 border border-black/[0.04] shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-5">
               <div className="flex items-center justify-between">
@@ -2490,7 +2706,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
         {/* Dynamic Display Board - Generated Output Dashboard */}
         {activeSummary && (
-          <div id="summary-dashboard" className="bg-white rounded-3xl border border-neutral-200/80 shadow-sm overflow-hidden animate-fadeIn">
+          <div id="summary-dashboard" dir={isRtl ? 'rtl' : 'ltr'} className={`bg-white rounded-3xl border border-neutral-200/80 shadow-sm overflow-hidden animate-fadeIn ${isRtl ? 'text-right' : 'text-left'}`}>
             
             {/* Header Content Info Banner */}
             <div className="bg-white/80 backdrop-blur-md p-6 md:p-8 text-[#1d1d1f] border-b border-black/[0.04] flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
@@ -2565,7 +2781,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 
                 {/* 1. Summary & Key Takeaways Tab */}
                 {activeTab === 'overview' && (
-                  <div className="space-y-6 animate-fadeIn text-left">
+                  <div className={`space-y-6 animate-fadeIn ${isRtl ? 'text-right' : 'text-left'}`}>
                     
                     {/* TTS Audio Player Widget */}
                     <div className="bg-[#f5f5f7] border border-black/[0.02] rounded-3xl p-6.5 space-y-4">
@@ -2744,7 +2960,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
                 {/* 3. Concept Mindmap Tab */}
                 {activeTab === 'mindmap' && (
-                  <div className="space-y-6 animate-fadeIn text-left">
+                  <div className={`space-y-6 animate-fadeIn ${isRtl ? 'text-right' : 'text-left'}`}>
                     
                     <div>
                       <h3 className="text-lg font-bold font-display text-neutral-900">
@@ -2796,7 +3012,30 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
                 {/* 4. Interactive Knowledge Quiz */}
                 {activeTab === 'quiz' && (
-                  <div className="space-y-6 animate-fadeIn text-left">
+                  <div className={`space-y-6 animate-fadeIn ${isRtl ? 'text-right' : 'text-left'}`}>
+                    {quizChallenge && (
+                      <div className="bg-amber-50 border border-amber-200/80 p-4 rounded-2xl flex items-center justify-between gap-4 animate-slideDown shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <Trophy className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                          <div>
+                            <h4 className="text-sm font-bold text-neutral-950 font-display">
+                              🔥 Challenge Accepted!
+                            </h4>
+                            <p className="text-xs text-neutral-600 mt-0.5">
+                              A friend completed this quiz and scored <span className="font-bold text-amber-700 bg-amber-100/60 px-1.5 py-0.5 rounded leading-none">{quizChallenge.score} / {quizChallenge.maxScore}</span>. 
+                              Can you outsmart them and achieve a higher score?
+                            </p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => setQuizChallenge(null)}
+                          className="text-neutral-400 hover:text-neutral-650 text-xs shrink-0 font-medium cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between border-b border-neutral-200/80 pb-3">
                       <div>
                         <h3 className="text-lg font-bold font-display text-neutral-900">
@@ -2903,17 +3142,46 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           Submit Core Answers
                         </button>
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedAnswers({});
-                            setQuizSubmitted(false);
-                          }}
-                          className="border border-neutral-300 hover:bg-neutral-50 text-neutral-700 text-xs font-semibold px-6 py-3 rounded-xl transition cursor-pointer flex items-center gap-1.5"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5" />
-                          Retry Quiz Trivia
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const score = calculateQuizScore();
+                              const total = activeSummary?.quiz?.length || 5;
+                              const shareId = activeSummary?.shareId || activeSummary?.metadata.videoId || 'vid';
+                              const link = `${window.location.origin}/s/${shareId}/quiz/${score}`;
+                              const text = `I scored ${score}/${total} on this video's interactive learning quiz on SnapSum! 🎯 Can you beat my score? Take the challenge here:\n\n${link}`;
+                              
+                              if (navigator.share) {
+                                navigator.share({
+                                  title: 'Beat my SnapSum Quiz Score!',
+                                  text: text,
+                                  url: link
+                                }).catch(() => {
+                                  handleCopyText(text, 'quizChallenge');
+                                });
+                              } else {
+                                handleCopyText(text, 'quizChallenge');
+                              }
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-6 py-3 rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Share2 className="w-3.5 h-3.5" />
+                            {copiedStates['quizChallenge'] ? 'Challenge Copied!' : 'Challenge a Friend 🎯'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedAnswers({});
+                              setQuizSubmitted(false);
+                            }}
+                            className="border border-neutral-300 hover:bg-neutral-50 text-neutral-700 text-xs font-semibold px-6 py-3 rounded-xl transition cursor-pointer flex items-center gap-1.5"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5" />
+                            Retry Quiz Trivia
+                          </button>
+                        </div>
                       )}
                     </div>
 
@@ -2922,7 +3190,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
                 {/* 5. Creator monetization Social Assets Hub */}
                 {activeTab === 'monetize' && (
-                  <div className="space-y-6 animate-fadeIn text-left">
+                  <div className={`space-y-6 animate-fadeIn ${isRtl ? 'text-right' : 'text-left'}`}>
                     
                     <div>
                       <span className="text-[10px] uppercase font-bold tracking-widest text-neutral-400 font-mono">
