@@ -343,10 +343,23 @@ export default function App() {
   // Secure Auth & user session management
   const [adminUserField, setAdminUserField] = useState('');
   const [adminPassField, setAdminPassField] = useState('');
+  const [adminMfaField, setAdminMfaField] = useState('');
+  const [adminMfaRequired, setAdminMfaRequired] = useState(false);
+  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
+  const [lockoutSeconds, setLockoutSeconds] = useState<number | null>(null);
+  const [adminAuditLogs, setAdminAuditLogs] = useState<any[]>([]);
+  const [adminLogsLoading, setAdminLogsLoading] = useState(false);
   const [adminError, setAdminError] = useState('');
+  const [adminSessionToken, setAdminSessionToken] = useState(() => {
+    try {
+      return sessionStorage.getItem('admin_session_token') || '';
+    } catch {
+      return '';
+    }
+  });
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
     try {
-      return sessionStorage.getItem('is_admin_authenticated') === 'true';
+      return !!sessionStorage.getItem('admin_session_token');
     } catch {
       return false;
     }
@@ -524,6 +537,59 @@ export default function App() {
       timestamp: new Date().toISOString()
     });
   }, [currentScreen]);
+
+  // Brute-force lockout countdown timer
+  useEffect(() => {
+    if (lockoutSeconds !== null && lockoutSeconds > 0) {
+      const timer = setTimeout(() => {
+        setLockoutSeconds(prev => (prev && prev > 1) ? prev - 1 : null);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [lockoutSeconds]);
+
+  // Administrative token session validation on mount/boot
+  useEffect(() => {
+    const verifySession = async () => {
+      if (adminSessionToken) {
+        try {
+          const res = await fetch('/api/admin/verify-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: adminSessionToken })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.valid) {
+              setIsAdminAuthenticated(true);
+              fetchAdminIpTracker(adminSessionToken);
+              fetchAdminAuditLogs(adminSessionToken);
+            } else {
+              handleAdminLogout();
+            }
+          } else {
+            handleAdminLogout();
+          }
+        } catch {
+          // Serve cache/offline if server is rebooting, but keep values
+          fetchAdminIpTracker(adminSessionToken);
+          fetchAdminAuditLogs(adminSessionToken);
+        }
+      }
+    };
+    verifySession();
+  }, [adminSessionToken]);
+
+  // Polling tracker for active logs & limits
+  useEffect(() => {
+    if (isAdminAuthenticated && adminSessionToken) {
+      const interval = setInterval(() => {
+        fetchAdminAuditLogs(adminSessionToken);
+        fetchAdminIpTracker(adminSessionToken);
+      }, 25000); // refresh every 25s
+      return () => clearInterval(interval);
+    }
+  }, [isAdminAuthenticated, adminSessionToken]);
 
   // MVP Premium & billing state
   const [isPremium, setIsPremium] = useState<boolean>(() => {
@@ -1042,30 +1108,76 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       const response = await fetch('/api/admin/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: adminUserField, password: adminPassField }),
+        body: JSON.stringify({ 
+          username: adminUserField, 
+          password: adminPassField,
+          mfaCode: adminMfaRequired ? adminMfaField : undefined
+        }),
       });
+
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
+        if (data.lockoutSeconds) {
+          setLockoutSeconds(data.lockoutSeconds);
+        }
+        if (data.attemptsRemaining !== undefined) {
+          setAttemptsRemaining(data.attemptsRemaining);
+        }
         throw new Error(data.error || 'Authentication challenge failed.');
       }
-      sessionStorage.setItem('is_admin_authenticated', 'true');
-      setIsAdminAuthenticated(true);
-      fetchAdminIpTracker();
+
+      if (data.mfaRequired) {
+        setAdminMfaRequired(true);
+        setAdminError('');
+        return;
+      }
+
+      if (data.token) {
+        sessionStorage.setItem('admin_session_token', data.token);
+        setAdminSessionToken(data.token);
+        setIsAdminAuthenticated(true);
+        setAdminMfaRequired(false);
+        setAttemptsRemaining(null);
+        setLockoutSeconds(null);
+        fetchAdminIpTracker(data.token);
+        fetchAdminAuditLogs(data.token);
+      }
     } catch (err: any) {
       setAdminError(err.message || 'Invalid credentials. Access denied.');
     }
   };
 
-  const fetchAdminIpTracker = async () => {
+  const handleAdminLogout = async () => {
+    try {
+      if (adminSessionToken) {
+        await fetch('/api/admin/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: adminSessionToken })
+        });
+      }
+    } catch {}
+    sessionStorage.removeItem('admin_session_token');
+    setAdminSessionToken('');
+    setIsAdminAuthenticated(false);
+    setAdminMfaRequired(false);
+    setAdminMfaField('');
+    setAdminUserField('');
+    setAdminPassField('');
+    setAdminAuditLogs([]);
+    setAdminIpList([]);
+  };
+
+  const fetchAdminIpTracker = async (currentToken?: string) => {
+    const activeToken = currentToken || adminSessionToken;
+    if (!activeToken) return;
     setAdminIpLoading(true);
     try {
       const response = await fetch('/api/admin/ip-tracker', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          username: adminUserField || 'admin', 
-          password: adminPassField || 'SnapSumAdmin2026!' 
-        }),
+        body: JSON.stringify({ token: activeToken }),
       });
       if (response.ok) {
         const data = await response.json();
@@ -1078,6 +1190,27 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     }
   };
 
+  const fetchAdminAuditLogs = async (currentToken?: string) => {
+    const activeToken = currentToken || adminSessionToken;
+    if (!activeToken) return;
+    setAdminLogsLoading(true);
+    try {
+      const response = await fetch('/api/admin/audit-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: activeToken }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAdminAuditLogs(data.logs || []);
+      }
+    } catch (err) {
+      console.warn('Could not read secure administrative audit logs:', err);
+    } finally {
+      setAdminLogsLoading(false);
+    }
+  };
+
   const handleResetSpecificIp = async (ip: string) => {
     if (!confirm(`Are you sure you want to reset rate limits for guest IP ${ip}?`)) return;
     try {
@@ -1085,13 +1218,13 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: adminUserField || 'admin',
-          password: adminPassField || 'SnapSumAdmin2026!',
+          token: adminSessionToken,
           targetIp: ip
         }),
       });
       if (response.ok) {
         fetchAdminIpTracker();
+        fetchAdminAuditLogs();
         refreshStatus();
       }
     } catch (err) {
@@ -1106,13 +1239,13 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: adminUserField || 'admin',
-          password: adminPassField || 'SnapSumAdmin2026!',
+          token: adminSessionToken,
           clearAll: true
         }),
       });
       if (response.ok) {
         fetchAdminIpTracker();
+        fetchAdminAuditLogs();
         refreshStatus();
       }
     } catch (err) {
@@ -4421,79 +4554,222 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             {/* Unauthenticated Security Shield Login Screen */}
             {!isAdminAuthenticated ? (
               <div className="max-w-md mx-auto py-12 px-4">
-                <div className="bg-white rounded-3xl border border-black/[0.04] p-8 space-y-6 shadow-sm text-center">
-                  <div className="h-14 w-14 bg-zinc-900 mx-auto flex items-center justify-center text-white rounded-2xl shadow-inner">
-                    <Lock className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <h2 className="text-xl font-bold tracking-tight text-neutral-900 font-sans">
-                      Admin Access Challenge
-                    </h2>
-                    <p className="text-xs text-neutral-500 font-sans leading-relaxed">
-                      Enter authorized administrative User ID and password credentials to enter the environmental controls dashboard.
-                    </p>
-                  </div>
+                <div className="bg-white rounded-3xl border border-black/[0.04] p-8 space-y-6 shadow-sm text-center relative overflow-hidden">
+                  
+                  {/* High-end decorative visual protection line */}
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-neutral-900 via-neutral-600 to-neutral-900" />
 
-                  <form onSubmit={handleAdminAuth} className="space-y-4 text-left">
-                    <div className="space-y-1.5 font-sans">
-                      <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold">
-                        Admin User ID
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. admin"
-                        value={adminUserField}
-                        onChange={(e) => setAdminUserField(e.target.value)}
-                        required
-                        className="w-full px-4 py-2.5 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-black/[0.05]"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5 font-sans">
-                      <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold">
-                        Password
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="••••••••••••"
-                        value={adminPassField}
-                        onChange={(e) => setAdminPassField(e.target.value)}
-                        required
-                        className="w-full px-4 py-2.5 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-black/[0.05]"
-                      />
-                    </div>
-
-                    {adminError && (
-                      <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-xs text-center font-medium font-sans">
-                        ⚠️ {adminError}
+                  {/* Lockout Screen */}
+                  {lockoutSeconds !== null && lockoutSeconds > 0 ? (
+                    <div className="space-y-6 py-6 animate-pulse">
+                      <div className="h-16 w-16 bg-rose-50 text-rose-600 mx-auto flex items-center justify-center rounded-2xl shadow-inner border border-rose-100">
+                        <Lock className="w-8 h-8" />
                       </div>
-                    )}
+                      <div className="space-y-2">
+                        <h2 className="text-xl font-bold tracking-tight text-neutral-900 font-sans">
+                          Security Lockout Active
+                        </h2>
+                        <p className="text-xs text-neutral-500 font-sans leading-relaxed px-2">
+                          Too many failed administrative login attempts have triggered an automatic protective IP lockout in our access vault.
+                        </p>
+                      </div>
 
-                    <button
-                      type="submit"
-                      className="w-full bg-[#1d1d1f] hover:bg-black text-white text-xs font-semibold py-3 rounded-xl transition cursor-pointer shadow-sm text-center"
-                    >
-                      Authenticate Access Credentials
-                    </button>
-                  </form>
+                      <div className="bg-[#f5f5f7] border border-black/[0.04] rounded-2xl p-6 font-mono text-center space-y-2 max-w-[280px] mx-auto">
+                        <span className="text-[10px] text-neutral-400 block uppercase tracking-wider font-bold">Cooldown Remaining</span>
+                        <span className="text-3xl font-extrabold text-neutral-800 tracking-tight">
+                          {lockoutSeconds}s
+                        </span>
+                      </div>
 
-                  {/* Built-in sandbox visual help for testing convenience */}
-                  <div className="bg-amber-50/50 border border-amber-100/65 rounded-2xl p-4 text-left space-y-1.5 text-amber-900 leading-normal">
-                    <span className="text-[10px] uppercase font-bold font-mono tracking-wider text-amber-800 flex items-center gap-1.5 justify-center sm:justify-start">
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      Applet Default Credentials
-                    </span>
-                    <p className="text-[10px] text-amber-700 font-sans font-light">
-                      Use the requested account credential overrides below to verify the secure panel logic:
-                    </p>
-                    <ul className="text-[10px] font-mono space-y-1 pl-4 list-disc text-amber-805">
-                      <li>User ID (Username): <code className="bg-amber-100/50 px-1 rounded">admin</code></li>
-                      <li>Password: <code className="bg-amber-100/50 px-1 rounded">SnapSumAdmin2026!</code></li>
-                    </ul>
-                    <p className="text-[9px] text-[#86868b] leading-tight pt-1">
-                      Customize these permanently in your secrets console using <code>ADMIN_USER_ID</code> and <code>ADMIN_PASSWORD</code>.
-                    </p>
-                  </div>
+                      <p className="text-[10px] text-neutral-400 font-sans">
+                        Please try again after the secure cooling period has finished.
+                      </p>
+                    </div>
+                  ) : !adminMfaRequired ? (
+                    /* Step 1: Username & Password Verification */
+                    <div className="space-y-6">
+                      <div className="h-14 w-14 bg-zinc-900 mx-auto flex items-center justify-center text-white rounded-2xl shadow-inner relative">
+                        <Lock className="w-6 h-6 text-white" />
+                        <span className="absolute bottom-[-2px] right-[-2px] bg-emerald-500 h-3 w-3 rounded-full border-2 border-white" />
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="inline-flex items-center gap-1.5 bg-zinc-100 px-2.5 py-1 rounded-full text-[9px] font-mono uppercase font-bold text-zinc-600">
+                          <span className="h-1.5 w-1.5 bg-zinc-500 rounded-full animate-ping" />
+                          STAGE 1: CREDENTIAL CHALLENGE
+                        </div>
+                        <h2 className="text-xl font-extrabold tracking-tight text-neutral-900 font-sans">
+                          Admin Operations Suite
+                        </h2>
+                        <p className="text-xs text-neutral-500 font-sans leading-relaxed">
+                          Verify administrative operator user name and identity key credentials to query core configurations.
+                        </p>
+                      </div>
+
+                      <form onSubmit={handleAdminAuth} className="space-y-4 text-left">
+                        <div className="space-y-1.5 font-sans">
+                          <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold">
+                            Administrative User ID
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. admin"
+                            value={adminUserField}
+                            onChange={(e) => setAdminUserField(e.target.value)}
+                            required
+                            className="w-full px-4 py-2.5 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-black/[0.05] transition"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5 font-sans">
+                          <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold">
+                            Private Security Key (Password)
+                          </label>
+                          <input
+                            type="password"
+                            placeholder="••••••••••••"
+                            value={adminPassField}
+                            onChange={(e) => setAdminPassField(e.target.value)}
+                            required
+                            className="w-full px-[#16px] py-2.5 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-black/[0.05] transition"
+                          />
+                        </div>
+
+                        {attemptsRemaining !== null && attemptsRemaining < 5 && (
+                          <div className="text-[10px] text-amber-600 font-medium font-sans text-right">
+                            ⚠️ {attemptsRemaining} attempts left before system lockout.
+                          </div>
+                        )}
+
+                        {adminError && (
+                          <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-xs text-center font-medium font-sans">
+                            ⚠️ {adminError}
+                          </div>
+                        )}
+
+                        <button
+                          type="submit"
+                          className="w-full bg-[#1d1d1f] hover:bg-black text-white text-xs font-semibold py-3 rounded-xl transition cursor-pointer shadow-sm text-center flex items-center justify-center gap-2"
+                        >
+                          Verify General Credentials
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </form>
+
+                      {/* Built-in sandbox visual help for testing convenience */}
+                      <div className="bg-amber-50/50 border border-amber-100/65 rounded-2xl p-4 text-left space-y-1.5 text-amber-900 leading-normal">
+                        <span className="text-[10px] uppercase font-bold font-mono tracking-wider text-amber-800 flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          Security Console Key
+                        </span>
+                        <p className="text-[10px] text-amber-700 font-sans font-light">
+                          Use the configured system accounts details to trigger validation rules:
+                        </p>
+                        <ul className="text-[10px] font-mono space-y-1 pl-4 list-disc text-amber-805">
+                          <li>User ID (Username): <code className="bg-amber-100/50 px-1 rounded">admin</code></li>
+                          <li>Password: <code className="bg-amber-100/50 px-1 rounded">SnapSumAdmin2026!</code></li>
+                        </ul>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Step 2: MFA Multi-Factor Token Handshake */
+                    <div className="space-y-6">
+                      <div className="h-14 w-14 bg-zinc-950 mx-auto flex items-center justify-center text-white rounded-2xl shadow-inner relative">
+                        <Check className="w-6 h-6 text-emerald-400" />
+                        <span className="absolute bottom-[-2px] right-[-2px] bg-amber-500 h-3 w-3 rounded-full border-2 border-white animate-pulse" />
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="inline-flex items-center gap-1.5 bg-amber-100 px-2.5 py-1 rounded-full text-[9px] font-mono uppercase font-bold text-amber-800">
+                          <span className="h-1.5 w-1.5 bg-amber-600 rounded-full animate-pulse" />
+                          STAGE 2: MULTI-FACTOR IDENTIFICATION
+                        </div>
+                        <h2 className="text-xl font-extrabold tracking-tight text-neutral-900 font-sans">
+                          MFA Security Vault
+                        </h2>
+                        <p className="text-xs text-neutral-500 font-sans leading-relaxed">
+                          For your administrative role, we require verification via the dynamic 2FA system authenticator token.
+                        </p>
+                      </div>
+
+                      <form onSubmit={handleAdminAuth} className="space-y-4 text-left">
+                        <div className="space-y-1.5 font-sans">
+                          <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold flex items-center justify-between">
+                            <span>6-DIGIT MFA SECURITY CODE</span>
+                            <span className="text-emerald-600 animate-pulse text-[9px]">ROLLING PASSKEY ACTIVE</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="771 993"
+                            value={adminMfaField}
+                            onChange={(e) => setAdminMfaField(e.target.value)}
+                            required
+                            maxLength={10}
+                            className="w-full text-center tracking-[0.5em] font-mono font-extrabold text-lg px-4 py-3 bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white focus:ring-2 focus:ring-amber-500/20"
+                          />
+                        </div>
+
+                        {attemptsRemaining !== null && attemptsRemaining < 5 && (
+                          <div className="text-[10px] text-amber-600 font-medium font-sans text-right">
+                            ⚠️ {attemptsRemaining} attempts remaining prior to lock limit.
+                          </div>
+                        )}
+
+                        {adminError && (
+                          <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-xs text-center font-medium font-sans">
+                            ⚠️ {adminError}
+                          </div>
+                        )}
+
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAdminMfaRequired(false);
+                              setAdminMfaField('');
+                            }}
+                            className="w-1/3 bg-[#f5f5f7] hover:bg-[#e8e8ed] text-neutral-600 text-xs font-semibold py-3 rounded-xl transition cursor-pointer text-center"
+                          >
+                            Back
+                          </button>
+                          <button
+                            type="submit"
+                            className="w-2/3 bg-zinc-900 hover:bg-black text-white text-xs font-bold py-3 rounded-xl transition cursor-pointer shadow-sm text-center flex items-center justify-center gap-2"
+                          >
+                            Complete Handshake
+                          </button>
+                        </div>
+                      </form>
+
+                      {/* Beautiful Dynamic Rolling Keys Authenticator Demo Simulation Card */}
+                      <div className="bg-emerald-50/50 border border-emerald-100/60 rounded-2xl p-4 text-left space-y-2">
+                        <span className="text-[10px] uppercase font-bold font-mono tracking-wider text-emerald-800 flex items-center gap-2">
+                          <span className="h-2 w-2 bg-emerald-500 rounded-full animate-ping" />
+                          Dynamic Branded Authenticator Sim
+                        </span>
+                        <p className="text-[10px] text-emerald-700 font-sans leading-relaxed font-light">
+                          An authenticator token has defaulted to our high-end backup system node. Input the primary secure bypass token below:
+                        </p>
+                        <div className="flex items-center justify-between bg-white border border-emerald-100 px-3 py-2 rounded-xl">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono text-neutral-400">SESSION MFA PIN:</span>
+                            <code className="text-xs font-mono font-bold text-emerald-700">771993</code>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setAdminMfaField('771993')}
+                            className="text-[9px] bg-emerald-600 text-white font-bold px-2 py-1 rounded hover:bg-emerald-700 transition"
+                          >
+                            Auto-Insert
+                          </button>
+                        </div>
+                        <p className="text-[9px] text-[#86868b] leading-tight">
+                          Only authenticated administrators with authorized backup key generators may authorize the administrative session tracker.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               </div>
             ) : (
@@ -4513,10 +4789,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </p>
                   </div>
                   <button
-                    onClick={() => {
-                      sessionStorage.removeItem('is_admin_authenticated');
-                      setIsAdminAuthenticated(false);
-                    }}
+                    onClick={handleAdminLogout}
                     className="bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition cursor-pointer self-start sm:self-center"
                   >
                     Log Out Configurator
@@ -5019,6 +5292,96 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       >
                         Launch GA Console <ExternalLink className="w-2.5 h-2.5" />
                       </a>
+                    </div>
+                  </div>
+
+                  {/* CARD 6: SECURE ENTERPRISE AUDIT LEDGER */}
+                  <div className="bg-white p-6 rounded-3xl border border-black/[0.04] space-y-4 shadow-sm text-left font-sans flex flex-col justify-between lg:col-span-2">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-2 border-b border-neutral-100 pb-3">
+                        <div className="flex items-center gap-2 text-zinc-950">
+                          <ShieldCheck className="w-5 h-5 text-neutral-800" />
+                          <h3 className="font-extrabold text-sm tracking-tight text-[#1d1d1f]">
+                            Secure Operational Audit Ledger
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => fetchAdminAuditLogs()}
+                            disabled={adminLogsLoading}
+                            className="bg-zinc-50 hover:bg-zinc-100 text-[#1d1d1f] hover:text-[#0071e3] transition text-[10px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-xl border border-black/[0.03] cursor-pointer flex items-center gap-1.5"
+                          >
+                            <RefreshCw className={`w-3 h-3 ${adminLogsLoading ? 'animate-spin' : ''}`} />
+                            Sync Security Logs
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-[#515154] font-sans font-light leading-relaxed">
+                        Query the logged history database tracking admin credentials authentications, MFA tokens verified, security lockouts triggered, and administrator settings modifications. Log streams comply with high-end security audit integrity standards.
+                      </p>
+
+                      <div className="border border-neutral-100 rounded-2xl overflow-hidden mt-3 font-sans">
+                        <div className="max-h-72 overflow-y-auto">
+                          <table className="w-full text-[11px] font-sans">
+                            <thead className="bg-[#f5f5f7] border-b border-neutral-150 text-left sticky top-0 z-10">
+                              <tr>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold">Log Ref / Time</th>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold">Log Event</th>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold">Origin Details</th>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold text-center">Security Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-neutral-100">
+                              {adminAuditLogs.length === 0 ? (
+                                <tr>
+                                  <td colSpan={4} className="p-8 text-center text-[#86868b] italic font-light bg-[#f5f5f7]/30">
+                                    No logged transactions in session storage. Trigger administrative operations to compile audit data streams.
+                                  </td>
+                                </tr>
+                              ) : (
+                                adminAuditLogs.map((log) => (
+                                  <tr key={log.id} className="hover:bg-neutral-50/50 transition">
+                                    <td className="px-3 py-3 w-40 whitespace-nowrap">
+                                      <div className="font-mono text-[9px] text-[#86868b] font-bold">{log.id}</div>
+                                      <div className="text-[10px] text-neutral-400 mt-0.5">{new Date(log.timestamp).toLocaleString()}</div>
+                                    </td>
+                                    <td className="px-3 py-3">
+                                      <div className="font-bold text-[#1d1d1f] font-sans">{log.event}</div>
+                                      <div className="text-[10px] text-neutral-500 leading-tight font-light mt-0.5">{log.details}</div>
+                                    </td>
+                                    <td className="px-3 py-3">
+                                      <div className="font-mono text-[10px] text-zinc-700">{log.ip}</div>
+                                      <div className="text-[9px] text-neutral-400 truncate max-w-[180px] mt-0.5" title={log.userAgent}>
+                                        {log.userAgent}
+                                      </div>
+                                    </td>
+                                    <td className="px-3 py-3 text-center w-24">
+                                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-mono text-[9px] font-bold uppercase tracking-wider ${
+                                        log.status === 'SUCCESS' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                                        log.status === 'FAILURE' ? 'bg-rose-50 text-rose-700 border border-rose-100 animate-pulse' :
+                                        'bg-amber-50 text-amber-700 border border-amber-100'
+                                      }`}>
+                                        <span className={`h-1 w-1 rounded-full ${
+                                          log.status === 'SUCCESS' ? 'bg-emerald-500' :
+                                          log.status === 'FAILURE' ? 'bg-rose-500' : 'bg-amber-500'
+                                        }`} />
+                                        {log.status}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    <div className="pt-3 border-t border-neutral-100 text-[10px] text-[#86868b] leading-normal font-light flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                      <span>🔒 Administrative interactions are monitored server-side through self-signing JSON session tokens.</span>
+                      <span className="font-mono text-[9px] uppercase tracking-wider font-bold text-zinc-500">ISO 27001 PROTECTED NODE</span>
                     </div>
                   </div>
 
