@@ -1180,24 +1180,26 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               </button>
             )}
 
-            <button
-              onClick={() => setCurrentScreen('billing')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
-                currentScreen === 'billing'
-                  ? 'bg-white text-[#1d1d1f] shadow-sm'
-                  : 'text-[#86868b] hover:text-[#1d1d1f]'
-              }`}
-            >
-              <CreditCard className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline flex items-center gap-1">
-                <span>Billing</span>
-                {isPremium ? (
-                  <span className="bg-[#0071e3] text-white text-[8px] font-mono leading-none tracking-wider px-1 py-0.5 rounded-sm">PRO</span>
-                ) : (
-                  <span className="bg-black/10 text-[#515154] text-[8px] font-mono leading-none tracking-wider px-1 py-0.5 rounded-sm">Basic</span>
-                )}
-              </span>
-            </button>
+            {(isAdminAuthenticated || currentScreen === 'billing') && (
+              <button
+                onClick={() => setCurrentScreen('billing')}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
+                  currentScreen === 'billing'
+                    ? 'bg-white text-[#1d1d1f] shadow-sm'
+                    : 'text-[#86868b] hover:text-[#1d1d1f]'
+                }`}
+              >
+                <CreditCard className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline flex items-center gap-1">
+                  <span>Billing</span>
+                  {isPremium ? (
+                    <span className="bg-[#0071e3] text-white text-[8px] font-mono leading-none tracking-wider px-1 py-0.5 rounded-sm">PRO</span>
+                  ) : (
+                    <span className="bg-black/10 text-[#515154] text-[8px] font-mono leading-none tracking-wider px-1 py-0.5 rounded-sm">Basic</span>
+                  )}
+                </span>
+              </button>
+            )}
 
             {(isAdminAuthenticated || ['domain', 'marketing', 'admin'].includes(currentScreen)) && (
               <>
