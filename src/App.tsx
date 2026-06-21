@@ -1239,7 +1239,7 @@ export default function App() {
     }
   };
 
-  const [selectedTone, setSelectedTone] = useState<'standard' | 'academic' | 'viral'>('standard');
+  const [selectedTone, setSelectedTone] = useState<'standard' | 'academic' | 'viral' | 'reel'>('standard');
 
   const downloadSummaryAsPDF = () => {
     if (!activeSummary) return;
@@ -1398,6 +1398,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       setLoadingStep('Bypassing API: Loading pre-rendered high-fidelity summary...');
       setTimeout(() => {
         setActiveSummary(matchedPreload);
+        if (selectedTone === 'reel') {
+          setActiveTab('reel');
+        }
 
         // Save to shelf history
         const alreadySaved = savedSummaries.some((item) => item.id === matchedPreload.metadata.videoId);
@@ -1450,6 +1453,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       const summaryData = (await response.json()) as YouTubeSummaryResponse;
       
       setActiveSummary(summaryData);
+      if (selectedTone === 'reel') {
+        setActiveTab('reel');
+      }
 
       trackGAEvent('summary_generated', {
         video_id: summaryData.metadata.videoId,
@@ -1573,6 +1579,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
   // Load stored item
   const handleLoadStoredItem = (summary: YouTubeSummaryResponse) => {
     setActiveSummary(summary);
+    if (selectedTone === 'reel') {
+      setActiveTab('reel');
+    }
     setQuizSubmitted(false);
     setSelectedAnswers({});
     setYtStartSeconds(null);
@@ -2958,11 +2967,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
                       Synthesis Tone Preset (Locked Conversion Module)
                     </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <button
                         type="button"
                         onClick={() => setSelectedTone('standard')}
-                        className={`px-3.5 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                        className={`px-3 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
                           selectedTone === 'standard'
                             ? 'bg-[#1d1d1f] border-[#1d1d1f] text-white shadow-sm'
                             : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
@@ -2983,17 +2992,17 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             setStripePaymentSuccess(false);
                           }
                         }}
-                        className={`px-3.5 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                        className={`px-3 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
                           selectedTone === 'academic' && isPremium
                             ? 'bg-[#1d1d1f] border-[#1d1d1f] text-white shadow-sm'
                             : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
                         }`}
                       >
-                        <span className="flex items-center gap-1.5">
+                        <span className="flex items-center gap-1.5 min-w-0">
                           {!isPremium && <Lock className="w-3 h-3 text-[#86868b] shrink-0" />}
-                          <span>Academic Study</span>
+                          <span className="truncate">Academic Study</span>
                         </span>
-                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded">PRO</span>
+                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">PRO</span>
                       </button>
 
                       <button
@@ -3007,17 +3016,44 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             setStripePaymentSuccess(false);
                           }
                         }}
-                        className={`px-3.5 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                        className={`px-3 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
                           selectedTone === 'viral' && isPremium
                             ? 'bg-[#1d1d1f] border-[#1d1d1f] text-white shadow-sm'
                             : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
                         }`}
                       >
-                        <span className="flex items-center gap-1.5">
+                        <span className="flex items-center gap-1.5 min-w-0">
                           {!isPremium && <Lock className="w-3 h-3 text-[#86868b] shrink-0" />}
-                          <span>Viral Bulletin</span>
+                          <span className="truncate">Viral Bulletin</span>
                         </span>
-                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded">PRO</span>
+                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">PRO</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isPremium) {
+                            setSelectedTone('reel');
+                            if (activeSummary) {
+                              setActiveTab('reel');
+                            }
+                          } else {
+                            setSelectedPlanCode('pro');
+                            setShowStripeModal(true);
+                            setStripePaymentSuccess(false);
+                          }
+                        }}
+                        className={`px-3 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                          selectedTone === 'reel' && isPremium
+                            ? 'bg-[#1d1d1f] border-[#1d1d1f] text-white shadow-sm'
+                            : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
+                        }`}
+                      >
+                        <span className="flex items-center gap-1.5 min-w-0">
+                          {!isPremium && <Lock className="w-3 h-3 text-[#86868b] shrink-0" />}
+                          <span className="truncate">Short Reel Script</span>
+                        </span>
+                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">PRO</span>
                       </button>
                     </div>
                   </div>
