@@ -4655,21 +4655,6 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
                       </form>
-
-                      {/* Built-in sandbox visual help for testing convenience */}
-                      <div className="bg-amber-50/50 border border-amber-100/65 rounded-2xl p-4 text-left space-y-1.5 text-amber-900 leading-normal">
-                        <span className="text-[10px] uppercase font-bold font-mono tracking-wider text-amber-800 flex items-center gap-1.5">
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          Security Console Key
-                        </span>
-                        <p className="text-[10px] text-amber-700 font-sans font-light">
-                          Use the configured system accounts details to trigger validation rules:
-                        </p>
-                        <ul className="text-[10px] font-mono space-y-1 pl-4 list-disc text-amber-805">
-                          <li>User ID (Username): <code className="bg-amber-100/50 px-1 rounded">admin</code></li>
-                          <li>Password: <code className="bg-amber-100/50 px-1 rounded">SnapSumAdmin2026!</code></li>
-                        </ul>
-                      </div>
                     </div>
                   ) : (
                     /* Step 2: MFA Multi-Factor Token Handshake */
@@ -4681,7 +4666,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
                       <div className="space-y-2">
                         <div className="inline-flex items-center gap-1.5 bg-amber-100 px-2.5 py-1 rounded-full text-[9px] font-mono uppercase font-bold text-amber-800">
-                          <span className="h-1.5 w-1.5 bg-amber-600 rounded-full animate-pulse" />
+                          <span className="h-1.5 w-1.5 bg-[#d97706] rounded-full animate-pulse" />
                           STAGE 2: MULTI-FACTOR IDENTIFICATION
                         </div>
                         <h2 className="text-xl font-extrabold tracking-tight text-neutral-900 font-sans">
@@ -4740,33 +4725,6 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           </button>
                         </div>
                       </form>
-
-                      {/* Beautiful Dynamic Rolling Keys Authenticator Demo Simulation Card */}
-                      <div className="bg-emerald-50/50 border border-emerald-100/60 rounded-2xl p-4 text-left space-y-2">
-                        <span className="text-[10px] uppercase font-bold font-mono tracking-wider text-emerald-800 flex items-center gap-2">
-                          <span className="h-2 w-2 bg-emerald-500 rounded-full animate-ping" />
-                          Dynamic Branded Authenticator Sim
-                        </span>
-                        <p className="text-[10px] text-emerald-700 font-sans leading-relaxed font-light">
-                          An authenticator token has defaulted to our high-end backup system node. Input the primary secure bypass token below:
-                        </p>
-                        <div className="flex items-center justify-between bg-white border border-emerald-100 px-3 py-2 rounded-xl">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-mono text-neutral-400">SESSION MFA PIN:</span>
-                            <code className="text-xs font-mono font-bold text-emerald-700">771993</code>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => setAdminMfaField('771993')}
-                            className="text-[9px] bg-emerald-600 text-white font-bold px-2 py-1 rounded hover:bg-emerald-700 transition"
-                          >
-                            Auto-Insert
-                          </button>
-                        </div>
-                        <p className="text-[9px] text-[#86868b] leading-tight">
-                          Only authenticated administrators with authorized backup key generators may authorize the administrative session tracker.
-                        </p>
-                      </div>
                     </div>
                   )}
 
