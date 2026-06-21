@@ -20,6 +20,7 @@ export interface StoredSummary {
   socialSnippet: string;
   quiz: any[];
   mindmap: any[];
+  reelScript?: any;
   savedAt: string;
   quizScoreBests?: { [name: string]: number };
 }

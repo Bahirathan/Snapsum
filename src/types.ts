@@ -32,6 +32,24 @@ export interface MindmapNode {
   description: string;
 }
 
+export interface ReelScene {
+  sceneNumber: number;
+  durationSeconds: number;
+  visualHook: string;
+  voiceover: string;
+  textOverlay: string;
+}
+
+export interface ReelScript {
+  title: string;
+  hookType: string;
+  estimatedDuration: number;
+  themeSuggestion: string;
+  scenes: ReelScene[];
+  readyMadeCaption: string;
+  callToAction: string;
+}
+
 export interface YouTubeSummaryResponse {
   metadata: YouTubeVideoMetadata;
   summary: string;
@@ -42,6 +60,7 @@ export interface YouTubeSummaryResponse {
   socialSnippet: string;
   quiz: QuizQuestion[];
   mindmap: MindmapNode[];
+  reelScript?: ReelScript;
   shareId?: string;
 }
 

@@ -50,6 +50,166 @@ import { PRELOADED_VIDEOS } from './preloadedData';
 import { YouTubeSummaryResponse, SavedSummary } from './types';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
 
+const getOrGenerateReelScript = (summary: YouTubeSummaryResponse | null): any => {
+  if (!summary) return null;
+  if (summary.reelScript) return summary.reelScript;
+  
+  // Deterministic fallback script compiled gracefully from existing insights
+  const title = `Viral Summary: ${summary.metadata.title.slice(0, 45)}...`;
+  const takeaways = summary.takeaways || [] as string[];
+  const baseTitle = summary.metadata.title;
+  const author = summary.metadata.author;
+
+  const scenes = [
+    {
+      sceneNumber: 1,
+      durationSeconds: 5,
+      visualHook: "Extreme close-up zoom. Bold caption overlay flashing in center screen with crisp synth-bass sound.",
+      voiceover: `Have you ever heard of "${baseTitle}"? Here is the ultimate short-form breakdown of ${author}'s viral advice.`,
+      textOverlay: "The Truth Revealed"
+    },
+    {
+      sceneNumber: 2,
+      durationSeconds: 8,
+      visualHook: "Fast vertical pan slide. Cinematic active B-roll with high contrast lines.",
+      voiceover: `Key trap exposed: ${takeaways[0] || 'Stop pursuing shallow metrics and start focused consistency.'}`,
+      textOverlay: "Core Myth Shattered"
+    },
+    {
+      sceneNumber: 3,
+      durationSeconds: 8,
+      visualHook: "Minimalist screen split dynamic slide showing data progression.",
+      voiceover: `Crucial breakthrough: ${takeaways[1] || 'Real performance starts when you cut out are irrelevant meetings.'}`,
+      textOverlay: "Secret To Progress"
+    },
+    {
+      sceneNumber: 4,
+      durationSeconds: 8,
+      visualHook: "Upward camera pan. Modern split panel with highlighted key metrics.",
+      voiceover: `Next big asset: ${takeaways[2] || 'Execution is worth infinitely more than pure strategy without motion.'}`,
+      textOverlay: "Execution > Ideas"
+    },
+    {
+      sceneNumber: 5,
+      durationSeconds: 6,
+      visualHook: "Close focus with visual pulse effects on screen.",
+      voiceover: `In summary: ${summary.summary.split('.')[0] || 'This changes how you approach learning.'}.`,
+      textOverlay: "The Big Lesson"
+    },
+    {
+      sceneNumber: 6,
+      durationSeconds: 5,
+      visualHook: "Branded Call To Action prompt flashing high contrast on charcoal backdrop.",
+      voiceover: "Swipe up or tap link to view the entire interactive concept mindmap tool right now!",
+      textOverlay: "UNCOVER SECRETS"
+    }
+  ];
+
+  const totalDuration = scenes.reduce((sum, s) => sum + s.durationSeconds, 0);
+
+  return {
+    title,
+    hookType: "Inquiry Loop / Myth-Buster",
+    estimatedDuration: totalDuration,
+    themeSuggestion: "Charcoal dark elegant stage, vibrant yellow and bold white centered fonts, ultra-rapid cuts, epic background drone pulse",
+    scenes,
+    readyMadeCaption: `🤯 Ultimate 60-second summary of "${baseTitle}" by ${author}! Tap the link to view complete interactive timeline & quiz tools. \n\n#reels #creative #marketing #${author.replace(/[^a-zA-Z0-9]/g, '')} #viralshorts`,
+    callToAction: "Click the bio to explore the full interactive mastermind summary!"
+  };
+};
+
+const downloadSRT = (script: any) => {
+  if (!script) return;
+  let srtContent = "";
+  let cumulativeSeconds = 0;
+  script.scenes.forEach((scene: any, index: number) => {
+    const startMs = cumulativeSeconds * 1000;
+    const endMs = (cumulativeSeconds + scene.durationSeconds) * 1000;
+    cumulativeSeconds += scene.durationSeconds;
+
+    const formatTime = (ms: number) => {
+      const h = Math.floor(ms / 3600000).toString().padStart(2, '0');
+      const m = Math.floor((ms % 3600000) / 60000).toString().padStart(2, '0');
+      const s = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
+      const msStr = (ms % 1000).toString().padStart(3, '0');
+      return `${h}:${m}:${s},${msStr}`;
+    };
+
+    srtContent += `${index + 1}\n`;
+    srtContent += `${formatTime(startMs)} --> ${formatTime(endMs)}\n`;
+    srtContent += `[${scene.textOverlay.toUpperCase()}]\n`;
+    srtContent += `${scene.voiceover}\n\n`;
+  });
+
+  const blob = new Blob([srtContent], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_captions.srt`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+const downloadVTT = (script: any) => {
+  if (!script) return;
+  let vttContent = "WEBVTT\n\n";
+  let cumulativeSeconds = 0;
+  script.scenes.forEach((scene: any, index: number) => {
+    const startMs = cumulativeSeconds * 1000;
+    const endMs = (cumulativeSeconds + scene.durationSeconds) * 1000;
+    cumulativeSeconds += scene.durationSeconds;
+
+    const formatTime = (ms: number) => {
+      const h = Math.floor(ms / 3600000).toString().padStart(2, '0');
+      const m = Math.floor((ms % 3600000) / 60000).toString().padStart(2, '0');
+      const s = Math.floor((ms % 60000) / 1000).toString().padStart(2, '0');
+      const msStr = (ms % 1000).toString().padStart(3, '0');
+      return `${h}:${m}:${s}.${msStr}`;
+    };
+
+    vttContent += `${index + 1}\n`;
+    vttContent += `${formatTime(startMs)} --> ${formatTime(endMs)}\n`;
+    vttContent += `[${scene.textOverlay.toUpperCase()}]\n`;
+    vttContent += `${scene.voiceover}\n\n`;
+  });
+
+  const blob = new Blob([vttContent], { type: 'text/vtt;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_captions.vtt`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+const downloadMarkdownScript = (script: any) => {
+  if (!script) return;
+  let md = `# SHORT REEL SCRIPT: ${script.title}\n\n`;
+  md += `**Hook Style:** ${script.hookType}\n`;
+  md += `**Estimated Duration:** ${script.estimatedDuration} seconds\n`;
+  md += `**Styling / Theme Direction:** ${script.themeSuggestion}\n\n`;
+  md += `## STORYBOARD TIMELINE SCENES\n\n`;
+  
+  script.scenes.forEach((scene: any) => {
+    md += `### SCENE ${scene.sceneNumber} (${scene.durationSeconds}s)\n`;
+    md += `- **Visual Directions / B-Roll:** ${scene.visualHook}\n`;
+    md += `- **Voiceover Narration:** "${scene.voiceover}"\n`;
+    md += `- **On-Screen Subtitle/Text Overlay:** [${scene.textOverlay}]\n\n`;
+  });
+
+  md += `## ENGAGEMENT CAPTION & CALL TO ACTION\n\n`;
+  md += `**Platform Ready-Made Caption:**\n\`\`\`text\n${script.readyMadeCaption}\n\`\`\`\n\n`;
+  md += `**Call To Action (CTA):** ${script.callToAction}\n`;
+
+  const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_script.md`;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
 export default function App() {
   // Input fields
   const [videoUrl, setVideoUrl] = useState('');
@@ -79,7 +239,44 @@ export default function App() {
   const [quizChallenge, setQuizChallenge] = useState<{ score: number; maxScore: number } | null>(null);
   
   // Dashboard navigation sub-tabs
-  const [activeTab, setActiveTab] = useState<'overview' | 'chapters' | 'mindmap' | 'quiz' | 'monetize'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'chapters' | 'mindmap' | 'quiz' | 'monetize' | 'reel'>('overview');
+  const [simActiveScene, setSimActiveScene] = useState<number>(0);
+  const [simIsPlaying, setSimIsPlaying] = useState<boolean>(false);
+  const [simProgress, setSimProgress] = useState<number>(0);
+
+  useEffect(() => {
+    let interval: any = null;
+    if (simIsPlaying) {
+      interval = setInterval(() => {
+        setSimProgress((prev) => {
+          const currentScript = getOrGenerateReelScript(activeSummary);
+          if (!currentScript) {
+            setSimIsPlaying(false);
+            return 0;
+          }
+          const currentScene = currentScript.scenes[simActiveScene];
+          if (!currentScene) {
+            setSimIsPlaying(false);
+            return 0;
+          }
+          if (prev + 1 >= currentScene.durationSeconds) {
+            if (simActiveScene + 1 < currentScript.scenes.length) {
+              setSimActiveScene(simActiveScene + 1);
+              return 0;
+            } else {
+              setSimIsPlaying(false);
+              setSimActiveScene(0);
+              return 0;
+            }
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [simIsPlaying, simActiveScene, activeSummary]);
 
   // Video embed timestamp control (seconds)
   const [ytStartSeconds, setYtStartSeconds] = useState<number | null>(null);
@@ -2912,6 +3109,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     { id: 'mindmap', label: 'Concept Map', icon: Network },
                     { id: 'quiz', label: 'Interactive Quiz', icon: Award },
                     { id: 'monetize', label: 'Social & Repurposing', icon: Share2 },
+                    { id: 'reel', label: 'Short Reel Maker', icon: Sparkles },
                   ].map((tab) => {
                     const TabIcon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -3462,6 +3660,318 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
                   </div>
                 )}
+
+                {activeTab === 'reel' && (() => {
+                  const script = getOrGenerateReelScript(activeSummary);
+                  if (!script) return <div className="p-6 text-center text-xs text-neutral-500">No active video summary loaded.</div>;
+                  const currentScene = script.scenes[simActiveScene] || script.scenes[0];
+
+                  return (
+                    <div className="space-y-6 animate-fadeIn text-left">
+                      
+                      {/* Reel Header */}
+                      <div className="flex items-start justify-between border-b border-neutral-100 pb-4">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold tracking-widest text-[#0071e3] font-mono flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-amber-500" />
+                            Vertical Media repurposer
+                          </span>
+                          <h3 className="text-lg font-bold font-display text-neutral-900 leading-tight">
+                            Viral Reel & Short Video Script Maker
+                          </h3>
+                          <p className="text-neutral-500 text-xs mt-1">
+                            Repurpose video highlights into highly engaging, downloadable short-form scripts (TikTok, YT Shorts & Instagram Reels).
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Main Interactive Workspace Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                        
+                        {/* 1. Mobile Phone Mock Simulator (Lefthand Column) */}
+                        <div className="flex flex-col items-center justify-center p-4 bg-neutral-50 border border-neutral-150 rounded-2xl relative">
+                          <span className="text-[10px] font-mono font-bold uppercase text-neutral-500 mb-2.5">
+                            Interactive 9:16 Reel Player Simulator
+                          </span>
+
+                          {/* Outer phone container */}
+                          <div className="w-[260px] h-[400px] bg-[#121212] rounded-[36px] border-[8px] border-neutral-800 relative shadow-2xl overflow-hidden flex flex-col justify-between p-4 text-white text-left font-sans select-none">
+                            
+                            {/* Top Speaker/Camera notch */}
+                            <div className="absolute top-2.5 left-1/2 transform -translate-x-1/2 w-20 h-4 bg-black rounded-full z-20 flex items-center justify-center">
+                              <div className="w-2.5 h-2.5 bg-neutral-900 rounded-full border border-neutral-800"></div>
+                            </div>
+
+                            {/* Dynamic Interactive Backdrop changing on active scene */}
+                            <div className={`absolute inset-0 transition-all duration-1000 ease-in-out z-0 opacity-80 ${
+                              simActiveScene % 3 === 0 ? "bg-gradient-to-tr from-violet-950 via-slate-900 to-indigo-950" :
+                              simActiveScene % 3 === 1 ? "bg-gradient-to-tr from-emerald-950 via-slate-900 to-teal-950" :
+                              "bg-gradient-to-tr from-rose-950 via-slate-900 to-orange-950"
+                            }`}>
+                              {/* Grid lines or abstract dots to add flare */}
+                              <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+                              <div className="absolute top-12 left-10 w-32 h-32 bg-sky-500/10 rounded-full filter blur-xl animate-pulse"></div>
+                              <div className="absolute bottom-16 right-10 w-32 h-32 bg-fuchsia-500/10 rounded-full filter blur-xl animate-pulse"></div>
+                            </div>
+
+                            {/* Header Status Items inside Phone */}
+                            <div className="flex justify-between items-center text-[9px] font-mono text-neutral-400 z-10 pt-2 px-1">
+                              <span className="font-semibold">10:42 AM</span>
+                              <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[8px] text-[#34c759] z-10 animate-pulse">
+                                <span className="w-1.5 h-1.5 bg-[#34c759] rounded-full"></span>
+                                Live Sim
+                              </div>
+                            </div>
+
+                            {/* Central Overlay / Scene Details Inside Phone */}
+                            <div className="flex-1 flex flex-col justify-end space-y-3 pb-2 z-10 text-left">
+                              
+                              {/* Glowing Active Scene Subtitles (Large Over-Face captions) */}
+                              <div className="text-center px-2 py-3 bg-black/45 backdrop-blur-xs rounded-xl border border-white/5 mx-auto max-w-[210px] transform scale-100 transition-all">
+                                <span className="text-[9px] text-yellow-400 uppercase tracking-widest font-mono font-black block mb-0.5">
+                                  {script.hookType}
+                                </span>
+                                <p className="text-xs font-black font-display text-white tracking-tight uppercase leading-snug drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                                  "{currentScene.textOverlay}"
+                                </p>
+                              </div>
+
+                              {/* Teleprompter / Vocal Voiceover Script lines */}
+                              <div className="p-3 bg-neutral-950/85 rounded-xl border border-white/5 space-y-1">
+                                <div className="text-[8px] font-mono text-neutral-400 uppercase font-black tracking-widest flex justify-between">
+                                  <span>Scene {currentScene.sceneNumber} Voiceover ({currentScene.durationSeconds}s)</span>
+                                  <span className="text-yellow-400">{simProgress}s / {currentScene.durationSeconds}s</span>
+                                </div>
+                                <p className="text-[10px] text-neutral-200 leading-normal font-medium">
+                                  {currentScene.voiceover}
+                                </p>
+                              </div>
+
+                              {/* Interactive active scene visual helper snippet */}
+                              <div className="px-2 py-1 bg-black/40 rounded-lg text-[8px] text-neutral-300 italic">
+                                🎬 B-Roll: {currentScene.visualHook.slice(0, 60)}...
+                              </div>
+
+                            </div>
+
+                            {/* Footer control panel inside phone */}
+                            <div className="z-10 bg-black/50 backdrop-blur-md rounded-2xl p-2 border border-white/5">
+                              {/* Horizontal progress indicators */}
+                              <div className="flex gap-1 mb-2">
+                                {script.scenes.map((scene: any, idx: number) => {
+                                  const isCompleted = idx < simActiveScene;
+                                  const isCurrent = idx === simActiveScene;
+                                  return (
+                                    <div key={idx} className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                                      {isCompleted && <div className="w-full h-full bg-[#34c759]"></div>}
+                                      {isCurrent && (
+                                        <div 
+                                          className="h-full bg-yellow-400 transition-all duration-1000 ease-linear"
+                                          style={{ width: `${(simProgress / scene.durationSeconds) * 100}%` }}
+                                        ></div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Micro player controls */}
+                              <div className="flex items-center justify-between">
+                                <button 
+                                  onClick={() => {
+                                    if (simActiveScene > 0) {
+                                      setSimActiveScene(simActiveScene - 1);
+                                      setSimProgress(0);
+                                    }
+                                  }}
+                                  disabled={simActiveScene === 0}
+                                  className="p-1 text-white disabled:text-white/40 cursor-pointer hover:bg-white/10 rounded-lg"
+                                >
+                                  <ChevronUp className="w-4 h-4 transform -rotate-90" />
+                                </button>
+
+                                <button 
+                                  onClick={() => setSimIsPlaying(!simIsPlaying)}
+                                  className="w-8 h-8 flex items-center justify-center bg-white text-black active:scale-95 transition rounded-full cursor-pointer hover:bg-neutral-100"
+                                >
+                                  {simIsPlaying ? (
+                                    <Pause className="w-4 h-4 fill-black text-black" />
+                                  ) : (
+                                    <Play className="w-4 h-4 fill-black text-black ml-0.5" />
+                                  )}
+                                </button>
+
+                                <button 
+                                  onClick={() => {
+                                    if (simActiveScene < script.scenes.length - 1) {
+                                      setSimActiveScene(simActiveScene + 1);
+                                      setSimProgress(0);
+                                    } else {
+                                      setSimActiveScene(0);
+                                      setSimProgress(0);
+                                    }
+                                  }}
+                                  className="p-1 text-white cursor-pointer hover:bg-white/10 rounded-lg"
+                                >
+                                  <ChevronDown className="w-4 h-4 transform -rotate-90" />
+                                </button>
+                              </div>
+                            </div>
+
+                          </div>
+                          
+                          <p className="text-[10px] text-neutral-400 text-center mt-3 leading-relaxed max-w-[210px]">
+                            {simIsPlaying ? "Playing and stepping script timeline automatically..." : "Press Play button inside phone to preview the subtitle timings."}
+                          </p>
+                        </div>
+
+                        {/* 2. Interactive Scenes Timeline Details (Righthand Column) */}
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-mono font-bold uppercase text-neutral-500">
+                              Storyboard & Script Timeline
+                            </span>
+                            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 bg-neutral-100 text-neutral-600 rounded-md">
+                              {script.estimatedDuration}s Total Time
+                            </span>
+                          </div>
+
+                          <div className="space-y-2 max-h-[345px] overflow-y-auto pr-1">
+                            {script.scenes.map((scene: any, idx: number) => {
+                              const isActive = simActiveScene === idx;
+                              return (
+                                <button
+                                  key={idx}
+                                  onClick={() => {
+                                    setSimActiveScene(idx);
+                                    setSimProgress(0);
+                                  }}
+                                  className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-start gap-3 cursor-pointer ${
+                                    isActive
+                                      ? 'bg-[#0071e3]/[0.03] border-[#0071e3] shadow-xs'
+                                      : 'bg-white border-neutral-200 hover:border-neutral-350 hover:bg-neutral-50'
+                                  }`}
+                                >
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold font-mono shrink-0 transition ${
+                                    isActive ? 'bg-[#0071e3] text-white' : 'bg-neutral-100 text-neutral-600'
+                                  }`}>
+                                    {scene.sceneNumber}
+                                  </div>
+
+                                  <div className="space-y-1 flex-1">
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-xs font-bold text-neutral-850">
+                                        Scene {scene.sceneNumber}
+                                      </span>
+                                      <span className="text-[10px] font-mono text-neutral-450 font-medium">
+                                        Duration: {scene.durationSeconds}s
+                                      </span>
+                                    </div>
+
+                                    <div className="text-[11px] text-neutral-700 leading-normal">
+                                      <span className="font-semibold text-[#1d1d1f]">Captions Overlay: </span>
+                                      <span className="bg-yellow-100 font-bold px-1 py-0.5 rounded text-neutral-800">
+                                        "{scene.textOverlay}"
+                                      </span>
+                                    </div>
+
+                                    <div className="text-[10px] text-neutral-500 leading-relaxed italic">
+                                      <span className="font-semibold tracking-wide text-neutral-650 font-mono not-italic uppercase text-[8px]">Visual Cue:</span> {scene.visualHook}
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                      {/* Download Assets Toolbar & Details */}
+                      <div className="border border-neutral-200/80 rounded-2xl p-5 bg-white shadow-sm space-y-4">
+                        <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                          <span className="text-xs font-bold text-neutral-800 flex items-center gap-1.5 font-sans">
+                            <Download className="w-4 h-4 text-neutral-850" />
+                            Download & Export Creator Subtitles / Video Scripts
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          
+                          <button
+                            onClick={() => downloadSRT(script)}
+                            className="flex items-center justify-center gap-2 px-4 py-3 border border-neutral-200/80 hover:border-neutral-900 bg-neutral-50 hover:bg-neutral-900 hover:text-white transition rounded-xl text-xs font-bold font-sans cursor-pointer group"
+                          >
+                            <FileText className="w-4 h-4 text-[#0071e3] group-hover:text-amber-400 transition" />
+                            <div className="text-left">
+                              <span className="block">Download Subtitles (SRT)</span>
+                              <span className="block text-[8px] opacity-75 font-mono font-normal">Timed Adobe / CapCut captions</span>
+                            </div>
+                          </button>
+
+                          <button
+                            onClick={() => downloadVTT(script)}
+                            className="flex items-center justify-center gap-2 px-4 py-3 border border-neutral-200/80 hover:border-neutral-900 bg-neutral-50 hover:bg-neutral-900 hover:text-white transition rounded-xl text-xs font-bold font-sans cursor-pointer group"
+                          >
+                            <FileText className="w-4 h-4 text-emerald-600 group-hover:text-amber-400 transition" />
+                            <div className="text-left">
+                              <span className="block">Download WebVTT (VTT)</span>
+                              <span className="block text-[8px] opacity-75 font-mono font-normal">Timed HTML5 track/Wand</span>
+                            </div>
+                          </button>
+
+                          <button
+                            onClick={() => downloadMarkdownScript(script)}
+                            className="flex items-center justify-center gap-2 px-4 py-3 border border-neutral-200/80 hover:border-neutral-900 bg-neutral-50 hover:bg-neutral-900 hover:text-white transition rounded-xl text-xs font-bold font-sans cursor-pointer group"
+                          >
+                            <Download className="w-4 h-4 text-amber-600 group-hover:text-amber-400 transition" />
+                            <div className="text-left">
+                              <span className="block">Download Full Script (MD)</span>
+                              <span className="block text-[8px] opacity-75 font-mono font-normal">Storyboard copy & metadata Markdown</span>
+                            </div>
+                          </button>
+
+                        </div>
+
+                        <p className="text-[10px] text-neutral-450 italic leading-normal">
+                          💡 <strong>How to use timed subtitles:</strong> Download the `.srt` or `.vtt` file, then import it inside CapCut, Canva, Premiere, or DaVinci Resolve. The captions will automatically align with the storyboard narration times!
+                        </p>
+                      </div>
+
+                      {/* Ready-made Viral Social Post Caption Copy */}
+                      <div className="border border-neutral-200/80 rounded-2xl p-5 bg-white shadow-sm space-y-3.5">
+                        <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                          <span className="text-xs font-bold text-neutral-800 flex items-center gap-1.5 font-sans">
+                            <Share2 className="w-4 h-4 text-neutral-750" />
+                            Complementary Viral Reel Caption Description
+                          </span>
+                          <button
+                            onClick={() => handleCopyText(script.readyMadeCaption, 'reel_caption')}
+                            className="text-xs text-neutral-950 hover:text-black cursor-pointer font-bold inline-flex items-center gap-1.5"
+                          >
+                            {copiedStates['reel_caption'] ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" />
+                                Copy Caption
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-xl text-xs text-neutral-700 leading-relaxed text-left whitespace-pre-wrap font-sans">
+                          {script.readyMadeCaption}
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })()}
 
               </div>
 

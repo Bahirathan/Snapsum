@@ -570,7 +570,7 @@ app.post('/api/summarize', async (req, res) => {
 
     const buildPromptWithTranscript = (videoTitle: string, inputChannel: string, contentSource: string) => `
 You are an expert AI video summaries creator and business consultant representing an elite monetization tool.
-Your goal is to digest the following video and extract highly valuable summaries, actionable chapters, interactive quizzes, standard mindmap nodes, and creator monetization copy.
+Your goal is to digest the following video and extract highly valuable summaries, actionable chapters, interactive quizzes, standard mindmap nodes, creator monetization copy, and a viral Reel / Short video script.
 ${langInstruction}
 
 Video Title: "${videoTitle}"
@@ -590,6 +590,7 @@ Please analyze this transcript and fill out the detailed JSON structure:
 6. socialSnippet: A highly engaging promotional description for LinkedIn or Instagram featuring powerful quote triggers and tags.
 7. quiz: Create 3-5 multiple-choice questions testing key video content. Include 4 options, the 0-based index of the correct option, and a helpful, educational explanation.
 8. mindmap: Create a structured concept map of ideas representing topics covered. Use "concept" (label of node), "category" (the parent group it belongs to), and "description" (a mini note).
+9. reelScript: Create a structured 30-60 second viral script specifically designed to summarize the main subject in a bite-sized video (TikTok, Shorts, IG Reels). The scenes must be precise chronological story steps. Make visualHook descriptions extremely punchy and voiceover sentences highly memorable.
 `;
 
     const buildPromptWithoutTranscript = (videoTitle: string, inputChannel: string) => `
@@ -598,7 +599,7 @@ The user wants to summarize the video titled "${videoTitle}" by creator "${input
 ${langInstruction}
 
 Since direct transcript retrieval is not pre-extracted, use your Google Search tool or historical knowledge index to research and analyze this video, its core message, lessons, and content. If the URL points to a website, discover its content to draft an accurate analysis.
-Provide an extremely detailed, accurate summary, actionable chronological chapters, blog post copy, tweets, an educational quiz, and structured mindmap nodes.
+Provide an extremely detailed, accurate summary, actionable chronological chapters, blog post copy, tweets, an educational quiz, structured mindmap nodes, and a viral short Reel script summarizing the main subject.
 
 Video Title: "${videoTitle}"
 Creator / Host: "${inputChannel}"
@@ -671,6 +672,32 @@ Generate a complete, high-quality summary and promotional asset package matching
               required: ['concept', 'category', 'description'],
             },
           },
+          reelScript: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              hookType: { type: Type.STRING },
+              estimatedDuration: { type: Type.INTEGER },
+              themeSuggestion: { type: Type.STRING },
+              scenes: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    sceneNumber: { type: Type.INTEGER },
+                    durationSeconds: { type: Type.INTEGER },
+                    visualHook: { type: Type.STRING },
+                    voiceover: { type: Type.STRING },
+                    textOverlay: { type: Type.STRING },
+                  },
+                  required: ['sceneNumber', 'durationSeconds', 'visualHook', 'voiceover', 'textOverlay'],
+                },
+              },
+              readyMadeCaption: { type: Type.STRING },
+              callToAction: { type: Type.STRING },
+            },
+            required: ['title', 'hookType', 'estimatedDuration', 'themeSuggestion', 'scenes', 'readyMadeCaption', 'callToAction'],
+          },
         },
         required: [
           'summary',
@@ -681,6 +708,7 @@ Generate a complete, high-quality summary and promotional asset package matching
           'socialSnippet',
           'quiz',
           'mindmap',
+          'reelScript',
         ],
       },
     };
