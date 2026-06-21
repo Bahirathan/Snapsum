@@ -489,6 +489,15 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('checkout_success') === 'true') {
       savePremiumStatus(true);
+      fetch('/api/save-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'R_Bahirathan@gmail.com',
+          plan: 'pro',
+          status: 'active'
+        })
+      }).catch(e => console.warn(e));
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, document.title, cleanUrl);
     }
@@ -625,6 +634,7 @@ export default function App() {
   // Stripe Checkout Simulator dialog
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [selectedPlanCode, setSelectedPlanCode] = useState<'pro' | 'enterprise' | null>(null);
+  const [subscriptionEmail, setSubscriptionEmail] = useState('R_Bahirathan@gmail.com');
   const [cardName, setCardName] = useState('');
   const [cardNumber, setCardNumber] = useState('4242 4242 4242 4242');
   const [cardExpiry, setCardExpiry] = useState('12/28');
@@ -5803,14 +5813,28 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 </div>
 
                 {!stripePaymentSuccess ? (
-                  <form onSubmit={(e) => {
+                  <form onSubmit={async (e) => {
                     e.preventDefault();
                     setStripePaymentLoading(true);
+                    try {
+                      // Save to Firestore through backend subscription endpoint
+                      await fetch('/api/save-subscription', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          email: subscriptionEmail,
+                          plan: selectedPlanCode || 'pro',
+                          status: 'active'
+                        })
+                      });
+                    } catch (err) {
+                      console.warn('Backend save subscription failed:', err);
+                    }
                     setTimeout(() => {
                       setStripePaymentLoading(false);
                       setStripePaymentSuccess(true);
                       savePremiumStatus(true);
-                    }, 2500);
+                    }, 2000);
                   }} className="pt-6 space-y-4">
                     
                     {/* User email */}
@@ -5819,7 +5843,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <input
                         type="email"
                         required
-                        defaultValue="R_Bahirathan@gmail.com"
+                        value={subscriptionEmail}
+                        onChange={(e) => setSubscriptionEmail(e.target.value)}
                         className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs focus:border-neutral-900 outline-none transition"
                       />
                     </div>

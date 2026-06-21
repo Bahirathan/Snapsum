@@ -1,10 +1,7 @@
-import fs from 'fs';
-import path from 'path';
+import { db } from './firestore';
 import { YouTubeSummaryResponse } from '../src/types';
 
-const STORE_FILE = path.join(process.cwd(), 'summaries.json');
-
-// Interface to wrap stored summaries
+// Stored Summary Interface
 export interface StoredSummary {
   shareId: string;
   metadata: {
@@ -24,39 +21,14 @@ export interface StoredSummary {
   quiz: any[];
   mindmap: any[];
   savedAt: string;
-  // B) Challenge data: support score-bearing challenges
-  quizScoreBests?: { [name: string]: number }; // tracks guest challenges later
+  quizScoreBests?: { [name: string]: number };
 }
 
-// Read helper
-export function readSummaries(): Record<string, StoredSummary> {
-  try {
-    if (!fs.existsSync(STORE_FILE)) {
-      fs.writeFileSync(STORE_FILE, JSON.stringify({}), 'utf-8');
-      return {};
-    }
-    const raw = fs.readFileSync(STORE_FILE, 'utf-8');
-    return JSON.parse(raw || '{}');
-  } catch (error) {
-    console.error('Failed to read summaries.json:', error);
-    return {};
-  }
-}
-
-// Write helper
-export function writeSummaries(data: Record<string, StoredSummary>) {
-  try {
-    fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('Failed to write to summaries.json:', error);
-  }
-}
+// In-memory fallback
+const fallbackSummaries: Record<string, StoredSummary> = {};
 
 // Save summary of video with a unique shareId
-export function saveSummary(summary: YouTubeSummaryResponse): string {
-  const store = readSummaries();
-  // We can use videoId as the template, combined with a unique suffix or just videoId itself
-  // But let's generate a unique share ID (like 8-char random alphanumeric) so separate shares exist
+export async function saveSummary(summary: YouTubeSummaryResponse): Promise<string> {
   const randomSuffix = Math.random().toString(36).substring(2, 10);
   const shareId = `${summary.metadata.videoId || 'vid'}_${randomSuffix}`;
 
@@ -66,19 +38,51 @@ export function saveSummary(summary: YouTubeSummaryResponse): string {
     savedAt: new Date().toISOString(),
   };
 
-  store[shareId] = stored;
-  writeSummaries(store);
+  if (!db) {
+    fallbackSummaries[shareId] = stored;
+    return shareId;
+  }
+
+  try {
+    await db.collection('summaries').doc(shareId).set(stored);
+    console.log(`Saved summary successfully to Firestore with shareId: ${shareId}`);
+  } catch (err) {
+    console.error('Firestore saveSummary failed, saving to fallback:', err);
+    fallbackSummaries[shareId] = stored;
+  }
+
   return shareId;
 }
 
 // Retrieve by shareId
-export function getSummary(shareId: string): StoredSummary | null {
-  const store = readSummaries();
-  return store[shareId] || null;
+export async function getSummary(shareId: string): Promise<StoredSummary | null> {
+  if (!db) {
+    return fallbackSummaries[shareId] || null;
+  }
+
+  try {
+    const doc = await db.collection('summaries').doc(shareId).get();
+    if (doc.exists) {
+      return doc.data() as StoredSummary;
+    }
+  } catch (err) {
+    console.error('Firestore getSummary failed, returning fallback if any:', err);
+  }
+
+  return fallbackSummaries[shareId] || null;
 }
 
-// List all (for sitemap / debug)
-export function listSummaries(): StoredSummary[] {
-  const store = readSummaries();
-  return Object.values(store);
+// List all (for sitemap / sitemap generation)
+export async function listSummaries(): Promise<StoredSummary[]> {
+  if (!db) {
+    return Object.values(fallbackSummaries);
+  }
+
+  try {
+    const snapshot = await db.collection('summaries').get();
+    return snapshot.docs.map(doc => doc.data() as StoredSummary);
+  } catch (err) {
+    console.error('Firestore listSummaries failed, returning fallback summaries:', err);
+    return Object.values(fallbackSummaries);
+  }
 }

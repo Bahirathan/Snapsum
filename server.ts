@@ -11,6 +11,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import { saveSummary, getSummary, listSummaries } from './server/summaryStore';
 import { getOrCreateReferralCode, recordReferral, getReferralCount, isLockedUnlocked } from './server/referralStore';
+import { saveSubscription, getSubscription } from './server/subscriptionStore';
 
 dotenv.config();
 
@@ -53,7 +54,7 @@ interface RateLimitUsage {
 const ipUsageStorage = new Map<string, RateLimitUsage>();
 
 // Middleware/inline utility to check and increment daily IP request credits
-function checkAndIncrementUsage(req: express.Request): { allowed: boolean; count: number; limit: number; remaining: number } {
+async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: boolean; count: number; limit: number; remaining: number }> {
   // If user has set custom client-side Gemini key, they bypass any rate limits completely (zero server cost)
   const customGeminiKey = req.headers['x-custom-gemini-api-key'] as string;
   if (customGeminiKey && customGeminiKey.trim().length > 10) {
@@ -72,7 +73,7 @@ function checkAndIncrementUsage(req: express.Request): { allowed: boolean; count
   const ip = rawIp.split(',')[0].trim();
 
   // Referral Bypass: if they have referred >= 2 distinct visitors, they bypass rate limiting
-  if (isLockedUnlocked(ip, 2)) {
+  if (await isLockedUnlocked(ip, 2)) {
     return { allowed: true, count: 0, limit: 99999, remaining: 99999 };
   }
 
@@ -376,8 +377,8 @@ app.get('/robots.txt', (req, res) => {
   res.send('User-agent: *\nAllow: /\nSitemap: https://www.snapsum.app/sitemap.xml');
 });
 
-app.get('/sitemap.xml', (req, res) => {
-  const summaries = listSummaries();
+app.get('/sitemap.xml', async (req, res) => {
+  const summaries = await listSummaries();
   const urls = summaries.map(s => `
   <url>
     <loc>https://www.snapsum.app/s/${s.shareId}</loc>
@@ -399,8 +400,8 @@ app.get('/sitemap.xml', (req, res) => {
 });
 
 // JSON hydration API
-app.get('/api/shared-summary/:id', (req, res) => {
-  const summary = getSummary(req.params.id);
+app.get('/api/shared-summary/:id', async (req, res) => {
+  const summary = await getSummary(req.params.id);
   if (!summary) {
     return res.status(404).json({ error: 'Shared summary not found' });
   }
@@ -408,18 +409,18 @@ app.get('/api/shared-summary/:id', (req, res) => {
 });
 
 // Referral API
-app.post('/api/referral/register', (req, res) => {
+app.post('/api/referral/register', async (req, res) => {
   const { referralCode } = req.body;
   const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
   const ip = rawIp.split(',')[0].trim();
 
   let registered = false;
   if (referralCode) {
-    registered = recordReferral(ip, referralCode);
+    registered = await recordReferral(ip, referralCode);
   }
 
-  const code = getOrCreateReferralCode(ip);
-  const count = getReferralCount(ip);
+  const code = await getOrCreateReferralCode(ip);
+  const count = await getReferralCount(ip);
   const unlocked = count >= 2;
 
   return res.json({
@@ -433,8 +434,8 @@ app.post('/api/referral/register', (req, res) => {
 });
 
 // Server-rendered summary routes
-app.get('/s/:id', (req, res) => {
-  const summary = getSummary(req.params.id);
+app.get('/s/:id', async (req, res) => {
+  const summary = await getSummary(req.params.id);
   if (!summary) {
     return res.status(404).send('Summary not found');
   }
@@ -457,8 +458,8 @@ app.get('/s/:id', (req, res) => {
   }
 });
 
-app.get('/s/:id/quiz', (req, res) => {
-  const summary = getSummary(req.params.id);
+app.get('/s/:id/quiz', async (req, res) => {
+  const summary = await getSummary(req.params.id);
   if (!summary) {
     return res.status(404).send('Summary not found');
   }
@@ -481,8 +482,8 @@ app.get('/s/:id/quiz', (req, res) => {
   }
 });
 
-app.get('/s/:id/quiz/:score', (req, res) => {
-  const summary = getSummary(req.params.id);
+app.get('/s/:id/quiz/:score', async (req, res) => {
+  const summary = await getSummary(req.params.id);
   if (!summary) {
     return res.status(404).send('Summary not found');
   }
@@ -516,7 +517,7 @@ app.post('/api/summarize', async (req, res) => {
   }
 
   // Enforce MVP Rate Limits to prevent default server API account exhaustion
-  const usageStatus = checkAndIncrementUsage(req);
+  const usageStatus = await checkAndIncrementUsage(req);
   if (!usageStatus.allowed) {
     return res.status(429).json({
       error: `Daily credit limit reached (${usageStatus.limit}/${usageStatus.limit} free queries used). Please insert your custom Gemini API key or Upgrade to PRO to process unlimited video summaries instantly!`,
@@ -720,7 +721,7 @@ Generate a complete, high-quality summary and promotional asset package matching
       metadata: fullMetadata,
       ...result,
     };
-    const shareId = saveSummary(richSummary);
+    const shareId = await saveSummary(richSummary);
     richSummary.shareId = shareId;
 
     return res.json(richSummary);
@@ -1060,6 +1061,24 @@ app.get('/api/stripe-status', (req, res) => {
     stripeConfigured: !!(customSecret || process.env.STRIPE_SECRET_KEY),
     publishableKey: customPublishable || process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
   });
+});
+
+app.post('/api/save-subscription', async (req, res) => {
+  const { email, plan, status } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+  const success = await saveSubscription(email, plan || 'pro', status || 'active');
+  return res.json({ success });
+});
+
+app.get('/api/subscription-status', async (req, res) => {
+  const email = req.query.email as string;
+  if (!email) {
+    return res.status(400).json({ error: 'Email parameter is required' });
+  }
+  const subscription = await getSubscription(email);
+  return res.json({ subscription });
 });
 
 app.post('/api/create-checkout-session', async (req, res) => {

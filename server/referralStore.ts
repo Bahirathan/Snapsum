@@ -1,88 +1,123 @@
-import fs from 'fs';
-import path from 'path';
+import { db } from './firestore';
 
-const STORE_FILE = path.join(process.cwd(), 'referrals.json');
-
-interface ReferralData {
-  // Maps code to the owner"s IP address
-  codes: { [code: string]: string };
-  // Maps IP address to their assigned referral code
-  ipToCode: { [ip: string]: string };
-  // Maps owner"s IP address to referred IP addresses list (distinct visitors)
-  referrals: { [referrerIp: string]: string[] };
-}
-
-function readStore(): ReferralData {
-  try {
-    if (!fs.existsSync(STORE_FILE)) {
-      const initial: ReferralData = { codes: {}, ipToCode: {}, referrals: {} };
-      fs.writeFileSync(STORE_FILE, JSON.stringify(initial), 'utf-8');
-      return initial;
-    }
-    const raw = fs.readFileSync(STORE_FILE, 'utf-8');
-    return JSON.parse(raw || '{"codes":{},"ipToCode":{},"referrals":{}}');
-  } catch (err) {
-    console.error('Failed to read referrals.json:', err);
-    return { codes: {}, ipToCode: {}, referrals: {} };
-  }
-}
-
-function writeStore(data: ReferralData) {
-  try {
-    fs.writeFileSync(STORE_FILE, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('Failed to write referrals.json:', err);
-  }
-}
+// In-memory fallback if Firestore is not initialized/ready
+const fallbackIpToCode: Record<string, string> = {};
+const fallbackCodes: Record<string, string> = {};
+const fallbackReferrals: Record<string, string[]> = {};
 
 // Generate or get unique short referral code for an IP
-export function getOrCreateReferralCode(ip: string): string {
-  const store = readStore();
-  if (store.ipToCode[ip]) {
-    return store.ipToCode[ip];
+export async function getOrCreateReferralCode(ip: string): Promise<string> {
+  if (!db) {
+    if (fallbackIpToCode[ip]) {
+      return fallbackIpToCode[ip];
+    }
+    const code = 'ref_' + Math.random().toString(36).substring(2, 8);
+    fallbackIpToCode[ip] = code;
+    fallbackCodes[code] = ip;
+    fallbackReferrals[ip] = [];
+    return code;
   }
-  
-  // Generate random 6 characters code
-  const code = 'ref_' + Math.random().toString(36).substring(2, 8);
-  store.ipToCode[ip] = code;
-  store.codes[code] = ip;
-  if (!store.referrals[ip]) {
-    store.referrals[ip] = [];
+
+  try {
+    const refDoc = db.collection('referrals').doc(ip);
+    const doc = await refDoc.get();
+    
+    if (doc.exists) {
+      const data = doc.data();
+      if (data?.referralCode) {
+        return data.referralCode;
+      }
+    }
+    
+    const code = 'ref_' + Math.random().toString(36).substring(2, 8);
+    await refDoc.set({
+      referralCode: code,
+      referredIps: []
+    }, { merge: true });
+    return code;
+  } catch (err) {
+    console.error('Firestore getOrCreateReferralCode failed, using fallback:', err);
+    if (fallbackIpToCode[ip]) return fallbackIpToCode[ip];
+    const code = 'ref_' + Math.random().toString(36).substring(2, 8);
+    fallbackIpToCode[ip] = code;
+    fallbackCodes[code] = ip;
+    fallbackReferrals[ip] = [];
+    return code;
   }
-  writeStore(store);
-  return code;
 }
 
 // Record a new referral: visitorIp was referred by the owner of referralCode
-export function recordReferral(visitorIp: string, referralCode: string): boolean {
+export async function recordReferral(visitorIp: string, referralCode: string): Promise<boolean> {
   if (!referralCode) return false;
-  
-  const store = readStore();
-  const referrerIp = store.codes[referralCode];
-  
-  // Cannot refer oneself, and referrer must exist
-  if (!referrerIp || referrerIp === visitorIp) {
+
+  if (!db) {
+    const referrerIp = fallbackCodes[referralCode];
+    if (!referrerIp || referrerIp === visitorIp) {
+      return false;
+    }
+    fallbackReferrals[referrerIp] = fallbackReferrals[referrerIp] || [];
+    if (!fallbackReferrals[referrerIp].includes(visitorIp)) {
+      fallbackReferrals[referrerIp].push(visitorIp);
+      return true;
+    }
     return false;
   }
-  
-  const existingRefs = store.referrals[referrerIp] || [];
-  if (!existingRefs.includes(visitorIp)) {
-    existingRefs.push(visitorIp);
-    store.referrals[referrerIp] = existingRefs;
-    writeStore(store);
-    return true;
+
+  try {
+    const snapshot = await db.collection('referrals').where('referralCode', '==', referralCode).limit(1).get();
+    if (snapshot.empty) {
+      return false;
+    }
+    
+    const referrerDoc = snapshot.docs[0];
+    const referrerIp = referrerDoc.id;
+    
+    if (referrerIp === visitorIp) {
+      return false;
+    }
+    
+    const referredIps = referrerDoc.data()?.referredIps || [];
+    if (!referredIps.includes(visitorIp)) {
+      referredIps.push(visitorIp);
+      await referrerDoc.ref.update({ referredIps });
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error('Firestore recordReferral failed, using fallback:', err);
+    const referrerIp = fallbackCodes[referralCode];
+    if (!referrerIp || referrerIp === visitorIp) {
+      return false;
+    }
+    fallbackReferrals[referrerIp] = fallbackReferrals[referrerIp] || [];
+    if (!fallbackReferrals[referrerIp].includes(visitorIp)) {
+      fallbackReferrals[referrerIp].push(visitorIp);
+      return true;
+    }
+    return false;
   }
-  return false;
 }
 
 // Check referred count for an IP
-export function getReferralCount(ip: string): number {
-  const store = readStore();
-  return (store.referrals[ip] || []).length;
+export async function getReferralCount(ip: string): Promise<number> {
+  if (!db) {
+    return (fallbackReferrals[ip] || []).length;
+  }
+
+  try {
+    const doc = await db.collection('referrals').doc(ip).get();
+    if (doc.exists) {
+      return (doc.data()?.referredIps || []).length;
+    }
+    return 0;
+  } catch (err) {
+    console.error('Firestore getReferralCount failed, using fallback:', err);
+    return (fallbackReferrals[ip] || []).length;
+  }
 }
 
 // Check if rate limit is bypassed (N referred users)
-export function isLockedUnlocked(ip: string, requiredReferrals: number = 2): boolean {
-  const count = getReferralCount(ip);
+export async function isLockedUnlocked(ip: string, requiredReferrals: number = 2): Promise<boolean> {
+  const count = await getReferralCount(ip);
   return count >= requiredReferrals;
 }
