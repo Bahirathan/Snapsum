@@ -350,6 +350,7 @@ export default function App() {
   const [adminAuditLogs, setAdminAuditLogs] = useState<any[]>([]);
   const [adminLogsLoading, setAdminLogsLoading] = useState(false);
   const [adminError, setAdminError] = useState('');
+  const [showSandboxHelper, setShowSandboxHelper] = useState(false);
   const [adminSessionToken, setAdminSessionToken] = useState(() => {
     try {
       return sessionStorage.getItem('admin_session_token') || '';
@@ -4558,6 +4559,85 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   
                   {/* High-end decorative visual protection line */}
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-neutral-900 via-neutral-600 to-neutral-900" />
+
+                  {/* Sandbox Environment Toggle Block */}
+                  <div className="flex justify-end pr-1 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowSandboxHelper(!showSandboxHelper)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[10px] font-mono font-bold uppercase tracking-wider text-[#515154] rounded-full border border-black/[0.03] transition duration-200 cursor-pointer text-left hover:text-[#1d1d1f]"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                      {showSandboxHelper ? "Hide Sandbox Guide" : "Sandbox Guide"}
+                    </button>
+                  </div>
+
+                  {showSandboxHelper && (
+                    <div className="bg-amber-50/50 border border-amber-200/60 rounded-2xl p-4 text-left space-y-3 animate-fadeIn">
+                      <div className="flex items-center gap-1.5 text-amber-800">
+                        <ShieldCheck className="w-4 h-4 text-amber-600" />
+                        <span className="text-[10px] uppercase font-bold font-mono tracking-wider">
+                          SANDBOX INSTRUCTION MANUAL
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-amber-700 font-sans leading-normal font-light">
+                        Use these credentials to log in and inspect the secure systems in this preview context:
+                      </p>
+                      
+                      <div className="grid grid-cols-2 gap-3 text-[11px] font-sans">
+                        <div className="bg-white border border-amber-100 p-2.5 rounded-xl space-y-1">
+                          <span className="text-[9px] font-mono font-bold text-neutral-400 block uppercase">STAGE 1: LOGIN ID</span>
+                          <div className="flex items-center justify-between gap-1.5">
+                            <code className="bg-neutral-50 px-1 rounded font-mono font-bold text-neutral-800">admin</code>
+                            <button
+                              type="button"
+                              onClick={() => setAdminUserField('admin')}
+                              className="text-[9px] text-[#0071e3] font-bold hover:underline cursor-pointer"
+                            >
+                              Insert
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="bg-white border border-amber-100 p-2.5 rounded-xl space-y-1">
+                          <span className="text-[9px] font-mono font-bold text-neutral-400 block uppercase">STAGE 1: PASSWORD</span>
+                          <div className="flex items-center justify-between gap-1.5">
+                            <code className="bg-neutral-50 px-0.5 rounded font-mono font-bold text-neutral-800 text-[10px]">SnapSumAdmin2026!</code>
+                            <button
+                              type="button"
+                              onClick={() => setAdminPassField('SnapSumAdmin2026!')}
+                              className="text-[9px] text-[#0071e3] font-bold hover:underline cursor-pointer"
+                            >
+                              Insert
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="bg-white border border-amber-100 p-2.5 rounded-xl space-y-1 col-span-2">
+                          <span className="text-[9px] font-mono font-bold text-neutral-400 block uppercase">STAGE 2: MFA PASSCODE</span>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <code className="bg-[#f5f5f7] px-2 py-0.5 rounded font-mono font-extrabold text-[#d97706]">771 993</code>
+                              <span className="text-[9px] text-amber-600 font-medium font-sans">Verification PIN</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAdminMfaField('771993');
+                              }}
+                              className="text-[9px] bg-[#d97706]/10 text-[#d97706] px-2 py-1 rounded font-bold hover:bg-[#d97706]/20 transition cursor-pointer"
+                            >
+                              Insert Key
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="text-[9px] text-neutral-400 font-sans leading-tight">
+                        Note: In production deployments, user IDs, passwords, and authenticators are secured via customized secrets.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Lockout Screen */}
                   {lockoutSeconds !== null && lockoutSeconds > 0 ? (
