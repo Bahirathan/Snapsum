@@ -243,6 +243,283 @@ export default function App() {
   const [simActiveScene, setSimActiveScene] = useState<number>(0);
   const [simIsPlaying, setSimIsPlaying] = useState<boolean>(false);
   const [simProgress, setSimProgress] = useState<number>(0);
+  const [isRenderingVideo, setIsRenderingVideo] = useState<boolean>(false);
+  const [renderingProgress, setRenderingProgress] = useState<number>(0);
+
+  const downloadReelAsVideo = async (script: any) => {
+    if (!script || !script.scenes) return;
+    setIsRenderingVideo(true);
+    setRenderingProgress(0);
+
+    const width = 540;
+    const height = 960;
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      setIsRenderingVideo(false);
+      return;
+    }
+
+    let stream: MediaStream;
+    try {
+      stream = (canvas as any).captureStream(30); // Capture 30 FPS stream from canvas
+    } catch (err) {
+      console.error("Canvas stream capture is not supported by this browser.", err);
+      setIsRenderingVideo(false);
+      alert("Video generation is not supported in this browser environment. Please try Chrome, Firefox, or Safari!");
+      return;
+    }
+
+    const recordedChunks: Blob[] = [];
+    let options = { mimeType: 'video/webm;codecs=vp9' };
+    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+      options = { mimeType: 'video/webm;codecs=vp8' };
+    }
+    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+      options = { mimeType: 'video/webm' };
+    }
+
+    let mediaRecorder: MediaRecorder;
+    try {
+      mediaRecorder = new MediaRecorder(stream, options);
+    } catch (e) {
+      try {
+        mediaRecorder = new MediaRecorder(stream);
+      } catch (e2) {
+        setIsRenderingVideo(false);
+        alert("Failed to initialize video encoder on your browser.");
+        return;
+      }
+    }
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        recordedChunks.push(event.data);
+      }
+    };
+
+    const scenes = script.scenes;
+    const sceneDuration = 3.0; // 3 seconds per scene for great legibility
+    const totalDuration = scenes.length * sceneDuration;
+    const totalFrames = Math.floor(totalDuration * 30);
+    let currentFrame = 0;
+
+    mediaRecorder.start();
+
+    const drawFrame = () => {
+      if (currentFrame >= totalFrames) {
+        mediaRecorder.stop();
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_compiled_reel.webm`;
+          a.click();
+          URL.revokeObjectURL(url);
+          setIsRenderingVideo(false);
+          setRenderingProgress(100);
+        };
+        return;
+      }
+
+      // Calculate progress percentage
+      const progressPercent = Math.min(100, Math.round((currentFrame / totalFrames) * 100));
+      setRenderingProgress(progressPercent);
+
+      const secondsElapsed = currentFrame / 30;
+      const currentSceneIndex = Math.min(
+        Math.floor(secondsElapsed / sceneDuration),
+        scenes.length - 1
+      );
+      const scene = scenes[currentSceneIndex];
+      const sceneTimeElapsed = secondsElapsed % sceneDuration;
+      const sceneProgress = sceneTimeElapsed / sceneDuration; // 0 to 1
+
+      // 1. Shifting ambient color gradient backgrounds based on active scene index
+      const gradients = [
+        ['#0f172a', '#1e1b4b'], // Dark Slate -> Indigo
+        ['#022c22', '#064e3b'], // Deep Emerald -> Teal
+        ['#1c1917', '#44403c'], // Charcoal -> Stone
+        ['#1e1b4b', '#311042'], // Violet -> Deep Purple
+        ['#3c0712', '#18000a'], // Crimson maroon -> Dark rose
+        ['#082f49', '#0c4a6e']  // Deep ocean slate -> Blue
+      ];
+      const activeGrad = gradients[currentSceneIndex % gradients.length];
+      
+      const grad = ctx.createLinearGradient(0, 0, 0, height);
+      grad.addColorStop(0, activeGrad[0]);
+      grad.addColorStop(1, activeGrad[1]);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, width, height);
+
+      // 2. Techno grid overlay
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
+      ctx.lineWidth = 1;
+      const gs = 40;
+      for (let x = 0; x < width; x += gs) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < height; y += gs) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+
+      // 3. Central Radial Glow
+      const glowRad = 260 + Math.sin(currentFrame / 10) * 20;
+      const cGlow = ctx.createRadialGradient(
+        width / 2, height / 2 - 100, 20, 
+        width / 2, height / 2 - 100, glowRad
+      );
+      cGlow.addColorStop(0, 'rgba(255, 255, 255, 0.045)');
+      cGlow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = cGlow;
+      ctx.beginPath();
+      ctx.arc(width / 2, height / 2 - 100, glowRad, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4. Status Metadata Overlays (Simulating live studio feed)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = 'bold 11px "JetBrains Mono", Courier, monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('🔴 MULTIMEDIA EXPORT', 40, 50);
+
+      ctx.textAlign = 'right';
+      ctx.fillText(`SCENE ${scene.sceneNumber}/${scenes.length} (${Math.round(sceneDuration)}s)`, width - 40, 50);
+
+      // Top decorative line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(30, 65);
+      ctx.lineTo(width - 30, 65);
+      ctx.stroke();
+
+      // Top label
+      ctx.fillStyle = '#ff7b00'; // high intensity orange
+      ctx.font = '900 11px "Inter", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('• SNAPSUM AI REPURPOSER •', width / 2, 95);
+
+      // 5. Draw Central Captions with high contrast card backing
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = 'rgba(10, 10, 10, 0.82)';
+
+      const cw = width - 80;
+      const ch = 160;
+      const cx = 40;
+      const cy = height / 2 - 140;
+      const radius = 16;
+      
+      // Draw rounded card
+      ctx.beginPath();
+      ctx.moveTo(cx + radius, cy);
+      ctx.lineTo(cx + cw - radius, cy);
+      ctx.quadraticCurveTo(cx + cw, cy, cx + cw, cy + radius);
+      ctx.lineTo(cx + cw, cy + ch - radius);
+      ctx.quadraticCurveTo(cx + cw, cy + ch, cx + cw - radius, cy + ch);
+      ctx.lineTo(cx + radius, cy + ch);
+      ctx.quadraticCurveTo(cx, cy + ch, cx, cy + ch - radius);
+      ctx.lineTo(cx, cy + radius);
+      ctx.quadraticCurveTo(cx, cy, cx + radius, cy);
+      ctx.closePath();
+      ctx.fill();
+
+      // Disable shadow for text/lines
+      ctx.shadowBlur = 0;
+
+      // Card bright accent border
+      ctx.strokeStyle = 'rgba(255, 235, 59, 0.5)'; // vibrant yellow
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Draw hook title inside card
+      ctx.fillStyle = '#ffeb3b';
+      ctx.font = '900 11px "JetBrains Mono", Courier, monospace';
+      ctx.fillText(script.hookType.toUpperCase(), width / 2, cy + 35);
+
+      // Draw active dynamic overlay words
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '900 24px "Inter", sans-serif';
+      
+      const textOverlay = scene.textOverlay.toUpperCase();
+      const wrapText = (text: string, x: number, y: number, maxWidth: number, lineHeight: number) => {
+        const wordsArr = text.split(' ');
+        let currentLine = '';
+        let currentY = y;
+        for (let n = 0; n < wordsArr.length; n++) {
+          const testLine = currentLine + wordsArr[n] + ' ';
+          const metrics = ctx.measureText(testLine);
+          if (metrics.width > maxWidth && n > 0) {
+            ctx.fillText(currentLine, x, currentY);
+            currentLine = wordsArr[n] + ' ';
+            currentY += lineHeight;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        ctx.fillText(currentLine, x, currentY);
+      };
+
+      wrapText(textOverlay, width / 2, cy + 75, cw - 40, 28);
+
+      // 6. Voiceover captions backing box at lower screen
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.beginPath();
+      if ((ctx as any).roundRect) {
+        (ctx as any).roundRect(40, height - 320, width - 80, 120, 16);
+      } else {
+        ctx.rect(40, height - 320, width - 80, 120);
+      }
+      ctx.fill();
+
+      // Subtle border for captions
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+      ctx.font = 'medium 14px "Inter", sans-serif';
+      ctx.textAlign = 'center';
+      wrapText(scene.voiceover, width / 2, height - 285, width - 120, 22);
+
+      // 7. Active duration visual timing progress indicators at bottom
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.fillRect(50, height - 150, width - 100, 6);
+
+      ctx.fillStyle = '#0071e3'; // smart blue loader
+      ctx.fillRect(50, height - 150, (width - 100) * sceneProgress, 6);
+
+      // Brand/Call To Action tagline
+      ctx.fillStyle = '#a1a1a6';
+      ctx.font = '11px "Inter", sans-serif';
+      ctx.fillText('Tap screen or link to unlock complete mindmaps & challenges', width / 2, height - 90);
+
+      // Scene dots
+      const dotsY = height - 50;
+      const dotSpacing = 16;
+      const dotStartX = (width - (scenes.length - 1) * dotSpacing) / 2;
+      for (let i = 0; i < scenes.length; i++) {
+        ctx.fillStyle = i === currentSceneIndex ? '#ffffff' : 'rgba(255, 255, 255, 0.28)';
+        ctx.beginPath();
+        ctx.arc(dotStartX + i * dotSpacing, dotsY, i === currentSceneIndex ? 4.5 : 3.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      currentFrame++;
+      requestAnimationFrame(drawFrame);
+    };
+
+    drawFrame();
+  };
 
   useEffect(() => {
     let interval: any = null;
@@ -3897,7 +4174,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                           
                           <button
                             onClick={() => downloadSRT(script)}
@@ -3932,10 +4209,50 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             </div>
                           </button>
 
+                          <button
+                            onClick={() => downloadReelAsVideo(script)}
+                            disabled={isRenderingVideo}
+                            className={`flex items-center justify-center gap-2 px-4 py-3 border transition rounded-xl text-xs font-bold font-sans cursor-pointer group select-none ${
+                              isRenderingVideo 
+                              ? "border-amber-500 bg-amber-50 text-amber-800 animate-pulse" 
+                              : "border-[#0071e3] hover:border-[#0071e3] bg-[#0071e3]/[0.05] hover:bg-[#0071e3] hover:text-white text-[#0071e3]"
+                            }`}
+                          >
+                            {isRenderingVideo ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
+                            ) : (
+                              <Sparkles className="w-4 h-4 text-[#0071e3] group-hover:text-amber-400 transition" />
+                            )}
+                            <div className="text-left text-neutral-850 group-hover:text-white">
+                              <span className="block text-inherit">{isRenderingVideo ? `Compiling: ${renderingProgress}%` : "Download Compiled Video"}</span>
+                              <span className="block text-[8px] opacity-75 font-mono font-normal text-neutral-500 group-hover:text-neutral-200">
+                                {isRenderingVideo ? "Encoding canvas frames..." : "Get vertical MP4/WebM clip"}
+                              </span>
+                            </div>
+                          </button>
+
                         </div>
 
+                        {isRenderingVideo && (
+                          <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-2 animate-pulse mt-2 text-left">
+                            <div className="flex justify-between text-xs font-semibold text-amber-900">
+                              <span className="flex items-center gap-1.5 font-sans">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                Interactive Frame Synthesizer Active
+                              </span>
+                              <span className="font-mono">{renderingProgress}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-amber-200/50 rounded-full overflow-hidden">
+                              <div className="h-full bg-amber-500 transition-all duration-300" style={{ width: `${renderingProgress}%` }}></div>
+                            </div>
+                            <p className="text-[10px] text-amber-750 font-sans leading-relaxed">
+                              Drawing gradients, text overlay captions, visual cues, and encoding the 9:16 vertical stream directly in your browser. This takes about 10 seconds of high-speed composition!
+                            </p>
+                          </div>
+                        )}
+
                         <p className="text-[10px] text-neutral-450 italic leading-normal">
-                          💡 <strong>How to use timed subtitles:</strong> Download the `.srt` or `.vtt` file, then import it inside CapCut, Canva, Premiere, or DaVinci Resolve. The captions will automatically align with the storyboard narration times!
+                          💡 <strong>How to use timed subtitles:</strong> Download the `.srt` or `.vtt` file, then import it inside CapCut, Canva, Premiere, or DaVinci Resolve. The captions will automatically align with the storyboard narration times! Or click <strong>Download Compiled Video</strong> to download the real pre-animated 9:16 video directly!
                         </p>
                       </div>
 
