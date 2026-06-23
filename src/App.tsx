@@ -1261,6 +1261,68 @@ export default function App() {
   // State for interactive flashcards
   const [revealedFlashcards, setRevealedFlashcards] = useState<Record<number, boolean>>({});
 
+  // Dynamic user learning stats & memory states
+  const [userXp, setUserXp] = useState<number>(() => {
+    return parseInt(localStorage.getItem('snapsum_user_xp') || '450', 10);
+  });
+  const [userLevel, setUserLevel] = useState<number>(() => {
+    return parseInt(localStorage.getItem('snapsum_user_level') || '3', 10);
+  });
+  const [userStreak, setUserStreak] = useState<number>(() => {
+    return parseInt(localStorage.getItem('snapsum_user_streak') || '5', 10);
+  });
+  const [adaptiveDifficulty, setAdaptiveDifficulty] = useState<'Easy' | 'Medium' | 'Hard'>(() => {
+    return (localStorage.getItem('snapsum_adaptive_diff') as any) || 'Medium';
+  });
+  const [quizHistory, setQuizHistory] = useState<Array<{ videoId: string, title: string, score: number, total: number, date: string }>>(() => {
+    try {
+      const stored = localStorage.getItem('snapsum_quiz_history');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return [
+      { videoId: 'YCo78gA8_V0', title: 'Startups & Core Dedication', score: 3, total: 3, date: '21 Jun' },
+      { videoId: 'u4ZoJKF_VuA', title: 'Sinek: Leverage the Limbic System', score: 2, total: 3, date: '22 Jun' }
+    ];
+  });
+  const [weakTopics, setWeakTopics] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('snapsum_weak_topics');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return ['Early Stage Delegation', 'Limbic Brain Physiology', 'Founder Equity Vesting'];
+  });
+  const [strongTopics, setStrongTopics] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('snapsum_strong_topics');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return ['Emotional Action Driver', 'Target Audience Alignment', 'Uncopyable Product Hooks'];
+  });
+  const [challengeCompletedToday, setChallengeCompletedToday] = useState<boolean>(() => {
+    return localStorage.getItem('snapsum_challenge_completed_today') === 'true';
+  });
+
+  // Highlighted concept node in Personal Memory Graph
+  const [selectedGraphNode, setSelectedGraphNode] = useState<{ concept: string; source: string; status: 'Weak' | 'Strong'; description: string; analogy: string } | null>(null);
+  // Selected choice in Daily Challenge widget
+  const [activeDailyQuizOption, setActiveDailyQuizOption] = useState<number | null>(null);
+
+  const awardXp = (amount: number) => {
+    setUserXp((prev) => {
+      const nextXp = prev + amount;
+      localStorage.setItem('snapsum_user_xp', String(nextXp));
+      const nextLevel = Math.floor(nextXp / 500) + 1;
+      setUserLevel((curLevel) => {
+        if (nextLevel > curLevel) {
+          localStorage.setItem('snapsum_user_level', String(nextLevel));
+          return nextLevel;
+        }
+        return curLevel;
+      });
+      return nextXp;
+    });
+  };
+
   // Stats or reports loaded from endpoints
   const [analyticsStats, setAnalyticsStats] = useState<any>(null);
   const [showExperimentConsole, setShowExperimentConsole] = useState<boolean>(false);
@@ -4053,6 +4115,63 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                   setQuizSubmitted(true);
                                   const finalScore = calculateQuizScore();
                                   handleTrackQuizCompleted(finalScore, activeSummary.quiz.length);
+
+                                  // Award XP
+                                  const pct = (finalScore / activeSummary.quiz.length) * 100;
+                                  const baseEarned = finalScore * 50;
+                                  const bonus = finalScore === activeSummary.quiz.length ? 150 : 0;
+                                  awardXp(baseEarned + bonus);
+
+                                  // Adjust difficulty dynamically
+                                  let nextDiff: 'Easy' | 'Medium' | 'Hard' = 'Medium';
+                                  if (pct >= 90) nextDiff = 'Hard';
+                                  else if (pct < 50) nextDiff = 'Easy';
+                                  setAdaptiveDifficulty(nextDiff);
+                                  localStorage.setItem('snapsum_adaptive_diff', nextDiff);
+
+                                  // Categorize strong & weak concepts
+                                  activeSummary.quiz.forEach((q, idx) => {
+                                    const rawTopic = q.question.split('?')[0].replace(/Why|What|How|Explain/gi, '').trim();
+                                    const topicStr = rawTopic.length > 30 ? rawTopic.slice(0, 30) + '...' : rawTopic;
+
+                                    if (selectedAnswers[idx] === q.answerIndex) {
+                                      setStrongTopics(prev => {
+                                        const next = [topicStr, ...prev.filter(t => t !== topicStr)].slice(0, 6);
+                                        localStorage.setItem('snapsum_strong_topics', JSON.stringify(next));
+                                        return next;
+                                      });
+                                      setWeakTopics(prev => {
+                                        const next = prev.filter(t => t !== topicStr);
+                                        localStorage.setItem('snapsum_weak_topics', JSON.stringify(next));
+                                        return next;
+                                      });
+                                    } else {
+                                      setWeakTopics(prev => {
+                                        const next = [topicStr, ...prev.filter(t => t !== topicStr)].slice(0, 6);
+                                        localStorage.setItem('snapsum_weak_topics', JSON.stringify(next));
+                                        return next;
+                                      });
+                                      setStrongTopics(prev => {
+                                        const next = prev.filter(t => t !== topicStr);
+                                        localStorage.setItem('snapsum_strong_topics', JSON.stringify(next));
+                                        return next;
+                                      });
+                                    }
+                                  });
+
+                                  // Update quiz history
+                                  const hist = {
+                                    videoId: activeSummary.metadata.videoId,
+                                    title: activeSummary.metadata.title,
+                                    score: finalScore,
+                                    total: activeSummary.quiz.length,
+                                    date: new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+                                  };
+                                  setQuizHistory(prev => {
+                                    const next = [hist, ...prev.filter(x => x.videoId !== hist.videoId)].slice(0, 8);
+                                    localStorage.setItem('snapsum_quiz_history', JSON.stringify(next));
+                                    return next;
+                                  });
                                 }}
                                 disabled={Object.keys(selectedAnswers).length < activeSummary.quiz.length}
                                 className="bg-[#1d1d1f] hover:bg-[#2d2d2f] text-white text-xs font-semibold px-6 py-3 rounded-xl transition cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
@@ -5048,22 +5167,357 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 </div>
 
                 {/* Info Card outlining custom app concept */}
-                <div className="bg-white border border-black/[0.04] rounded-2xl p-5 shadow-sm space-y-3.5 text-xs text-[#515154] leading-relaxed font-sans text-left">
-                  <h4 className="font-bold text-[#1d1d1f] flex items-center gap-1.5 text-sm">
-                    🚀 Creator Monetization Blueprint
-                  </h4>
-                  <p>
-                    This application translates lengthy digital broadcasts into ready-for-market content streams. By pairing summaries with newsletters, tweet threads, flash quizzes, and conceptual outlines:
-                  </p>
-                  <ul className="list-disc pl-4 space-y-1 text-[#86868b]">
-                    <li><strong className="text-[#515154]">Ad-revenue streams</strong> by embedding affiliate offers adjacent to text digests.</li>
-                    <li><strong className="text-[#515154]">Digital products</strong> like study maps or trivia certifications for course creators.</li>
-                    <li><strong className="text-[#515154]">Email directories</strong> built by locking TTS files of key briefings behind a subscription block.</li>
-                  </ul>
-                  <div className="pt-2 border-t border-black/[0.04] text-[9px] text-[#86868b] font-mono leading-none">
-                    Created for the Google AI Studio Builders Challenge.
+                {learnMode ? (
+                  <div className="space-y-6 animate-fadeIn text-left">
+                    
+                    {/* SECTION D: LEARNING PROGRESS PANEL */}
+                    <div className="bg-gradient-to-br from-[#1d1d1f] to-[#2d2d2f] text-white rounded-3xl p-5 border border-white/10 shadow-xl space-y-4 font-sans">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Trophy className="w-5 h-5 text-amber-400" />
+                          <h4 className="font-bold font-display text-sm text-white">Learning Memory Operating Core</h4>
+                        </div>
+                        <div className="flex items-center gap-1 bg-amber-400/10 text-amber-400 border border-amber-400/20 px-2.5 py-1 rounded-full text-[10px] font-bold font-mono">
+                          🔥 {userStreak} DAY STREAK
+                        </div>
+                      </div>
+
+                      {/* Level & XP progression gauge */}
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex justify-between items-end text-xs">
+                          <span className="text-neutral-400 font-mono">LEVEL {userLevel} COMPREHENSION APPRENTICE</span>
+                          <span className="text-amber-400 font-bold font-mono">{userXp % 500} / 500 XP to next level</span>
+                        </div>
+                        <div className="w-full bg-white/10 rounded-full h-2.5 overflow-hidden border border-white/5">
+                          <div 
+                            className="bg-gradient-to-r from-amber-400 to-amber-500 h-full transition-all duration-500"
+                            style={{ width: `${((userXp % 500) / 500) * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3.5 pt-1 text-xs">
+                        <div className="bg-white/5 border border-white/5 p-3 rounded-2xl">
+                          <span className="text-neutral-400 text-[10px] uppercase font-mono block mb-0.5">Total Gained XP</span>
+                          <strong className="text-base text-white font-mono">{userXp} XP</strong>
+                        </div>
+                        <div className="bg-white/5 border border-white/5 p-3 rounded-2xl">
+                          <span className="text-neutral-400 text-[10px] uppercase font-mono block mb-0.5">Adaptive Difficulty</span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <strong className="text-xs text-white uppercase font-mono">{adaptiveDifficulty} mode</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Streak Daily Check claiming */}
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          if (localStorage.getItem('streak_collected_today') === 'true') {
+                            alert('Streak already locked in for today! Return tomorrow to keep climbing.');
+                            return;
+                          }
+                          localStorage.setItem('streak_collected_today', 'true');
+                          setUserStreak(prev => prev + 1);
+                          awardXp(50);
+                          alert('🔥 Streak claimed! +50 XP and +1 day added back to your learning calendar.');
+                        }}
+                        className="w-full bg-[#30d158] hover:bg-[#24a142] text-white py-2.5 rounded-xl text-xs font-bold transition duration-200 cursor-pointer text-center"
+                      >
+                        Claim Daily Learning Reward (+50 XP)
+                      </button>
+                    </div>
+
+                    {/* BRAIN MEMORY NETWORK GRAPH */}
+                    <div className="bg-white border border-black/[0.04] p-5 rounded-3xl shadow-sm space-y-4">
+                      <div>
+                        <h4 className="text-sm font-bold text-[#1d1d1f] font-display flex items-center gap-1.5">
+                          🧠 Personal Learning Memory Graph
+                        </h4>
+                        <p className="text-[11px] text-neutral-500">
+                          Active cognitive lattice connecting parsed sessions to concepts. Green items are Mastered, Red items require recall review. Click any node to open.
+                        </p>
+                      </div>
+
+                      <div className="border border-neutral-150 bg-neutral-50 p-4.5 rounded-2xl min-h-48 relative overflow-hidden flex flex-col justify-between">
+                        {/* Interactive Node Map */}
+                        <div className="grid grid-cols-3 gap-y-6 gap-x-2">
+                          
+                          {/* Centered Master Node */}
+                          <div className="col-span-3 flex justify-center">
+                            <div className="bg-indigo-600 shadow-md text-white text-[10px] font-extrabold px-3.5 py-2 rounded-xl flex items-center gap-1.5 font-display border border-indigo-500 relative z-10 animate-pulse">
+                              <Network className="w-3.5 h-3.5" />
+                              <span>COGNITIVE CORE</span>
+                            </div>
+                          </div>
+
+                          {/* Level 1 branches */}
+                          <div className="flex flex-col items-center col-span-1">
+                            <div className="w-0.5 h-4 bg-indigo-200"></div>
+                            <span className="text-[9px] font-bold text-neutral-400 uppercase font-mono mb-1">SEGMENT A</span>
+                            <div className="h-2.5 w-2.5 rounded-full bg-indigo-400 mb-1 border border-white"></div>
+                            {strongTopics.slice(0, 2).map((st, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => setSelectedGraphNode({
+                                  concept: st,
+                                  source: activeSummary.metadata.title,
+                                  status: 'Strong',
+                                  description: 'Fundamental concept mapped and verified with active recall feedback checks.',
+                                  analogy: `Refers to ${st} which provides highly leveraged structural intelligence reducing analytical friction.`
+                                })}
+                                className="w-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 font-semibold border border-emerald-500/15 py-1 px-1 rounded-lg text-[9px] mt-1 transition cursor-pointer text-center truncate"
+                                title={st}
+                              >
+                                ✓ {st}
+                              </button>
+                            ))}
+                          </div>
+
+                          <div className="flex flex-col items-center col-span-1 border-x border-neutral-250 py-1 px-1">
+                            <div className="w-0.5 h-4 bg-indigo-200"></div>
+                            <span className="text-[9px] font-bold text-neutral-400 uppercase font-mono mb-1">ACTIVE VIDEO</span>
+                            <div className="h-2.5 w-2.5 rounded-full bg-indigo-600 mb-1 border border-white"></div>
+                            <div className="text-[8px] bg-indigo-50 text-indigo-700 font-bold border border-indigo-150 py-1 px-1 rounded-lg truncate text-center max-w-full font-mono">
+                              {activeSummary.metadata.videoId}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-center col-span-1">
+                            <div className="w-0.5 h-4 bg-indigo-200"></div>
+                            <span className="text-[9px] font-bold text-neutral-400 uppercase font-mono mb-1">SEGMENT B</span>
+                            <div className="h-2.5 w-2.5 rounded-full bg-indigo-400 mb-1 border border-white"></div>
+                            {weakTopics.slice(0, 2).map((wt, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => setSelectedGraphNode({
+                                  concept: wt,
+                                  source: activeSummary.metadata.title,
+                                  status: 'Weak',
+                                  description: 'Concept requires recall check due to quiz mis-responses.',
+                                  analogy: `High priority item where strategic deliberate practice converts ${wt} into active memory assets.`
+                                })}
+                                className="w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-800 font-semibold border border-rose-500/15 py-1 px-1 rounded-lg text-[9px] mt-1 transition cursor-pointer text-center truncate"
+                                title={wt}
+                              >
+                                ⚠ {wt}
+                              </button>
+                            ))}
+                          </div>
+
+                        </div>
+
+                        {/* Node inspection details card */}
+                        {selectedGraphNode ? (
+                          <div className="mt-4 bg-white border border-neutral-200 p-3.5 rounded-2xl space-y-2.5 text-xs text-neutral-700 relative animate-fadeIn shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-[#1d1d1f] font-sans block max-w-[70%] truncate">{selectedGraphNode.concept}</span>
+                              <span className={`text-[8px] font-bold font-mono px-2 py-0.5 rounded-full ${
+                                selectedGraphNode.status === 'Strong' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
+                              }`}>
+                                {selectedGraphNode.status === 'Strong' ? 'MASTERED' : 'NEEDS STUDY'}
+                              </span>
+                            </div>
+                            <p className="text-[11px] leading-relaxed text-neutral-500">{selectedGraphNode.description}</p>
+                            <div className="bg-amber-50 p-2.5 rounded-xl border border-amber-100 text-[11px] leading-relaxed text-amber-900 animate-slideUp">
+                              <strong className="block text-amber-950 font-bold mb-0.5">💡 Plain-English Analogy:</strong>
+                              {selectedGraphNode.analogy}
+                            </div>
+                            <div className="flex gap-2 justify-end pt-1">
+                              {selectedGraphNode.status === 'Weak' && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setWeakTopics(prev => prev.filter(t => t !== selectedGraphNode.concept));
+                                    setStrongTopics(prev => [selectedGraphNode.concept, ...prev].slice(0, 6));
+                                    awardXp(60);
+                                    setSelectedGraphNode(null);
+                                    alert(`🧠 Metacognition Complete! Concept fully re-integrated. +60 XP earned.`);
+                                  }}
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] px-3 py-1.5 rounded-lg transition cursor-pointer"
+                                >
+                                  Practice Node (+60 XP)
+                                </button>
+                              )}
+                              <button 
+                                type="button"
+                                onClick={() => setSelectedGraphNode(null)}
+                                className="text-[10px] font-bold text-neutral-400 hover:text-[#1d1d1f] px-2.5 py-1.5 cursor-pointer"
+                              >
+                                Close Node Map
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-2 text-center text-[10px] text-neutral-400 pt-2 border-t border-neutral-200">
+                            (Hint: Click any segment concept node above to inspect or practice recall!)
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* INTERACTIVE RETENTION LOOP HUB */}
+                    <div className="bg-white border border-black/[0.04] p-5 rounded-3xl shadow-sm space-y-4">
+                      <div>
+                        <h4 className="text-sm font-bold text-[#1d1d1f] font-display flex items-center gap-1.5">
+                          🔄 Study Cycle Retention Engine
+                        </h4>
+                        <p className="text-[11px] text-[#86868b]">
+                          Adaptive actions designed to secure long-term active recall behaviors.
+                        </p>
+                      </div>
+
+                      <div className="space-y-3.5">
+                        
+                        {/* 1. Continue Studying selection */}
+                        {savedSummaries.length > 0 && (
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-wide block">Continue Other Video Courses</label>
+                            <select 
+                              onChange={(e) => {
+                                const found = savedSummaries.find(s => s.id === e.target.value);
+                                if (found) {
+                                  setActiveSummary(found.response);
+                                  trackGAEvent?.('retention_loop_swap', { videoId: found.id });
+                                }
+                              }}
+                              className="w-full bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-xs text-[#1d1d1f] font-medium py-2.5 px-3 rounded-xl cursor-pointer transition focus:outline-none"
+                            >
+                              <option value="">-- Swap Active Syllabus Content --</option>
+                              {savedSummaries.map((stored) => (
+                                <option key={stored.id} value={stored.id}>
+                                  {stored.response.metadata.title} ({stored.response.metadata.author})
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        {/* 2. Weak Topics review list */}
+                        {weakTopics.length > 0 && (
+                          <div className="space-y-1 pt-1 font-sans">
+                            <label className="text-[10px] font-bold text-neutral-455 uppercase tracking-wide block">Review Weak Knowledge Nodes ({weakTopics.length})</label>
+                            <div className="divide-y divide-neutral-100 border border-neutral-150 rounded-2xl overflow-hidden bg-neutral-50/20 text-xs">
+                              {weakTopics.map((topic, i) => (
+                                <div key={i} className="p-3 flex items-center justify-between gap-3 text-left">
+                                  <span className="font-semibold text-neutral-850 truncate max-w-[65%]" title={topic}>{topic}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setWeakTopics(prev => prev.filter(t => t !== topic));
+                                      setStrongTopics(prev => [topic, ...prev].slice(0, 6));
+                                      awardXp(50);
+                                      alert(`✨ Recalled perfectly! "${topic}" has been saved back to strong topics. +50 XP claimed.`);
+                                    }}
+                                    className="bg-indigo-50 hover:bg-indigo-100 border border-indigo-150 text-indigo-700 font-bold px-2 py-1 rounded-lg text-[9px] transition shrink-0 cursor-pointer"
+                                  >
+                                    Re-test Node (+50 XP)
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* 3. Daily Learning Challenge */}
+                        <div className="bg-gradient-to-r from-[#0071e3]/5 via-indigo-500/5 to-purple-500/5 border border-indigo-500/10 p-4 rounded-2xl space-y-3 pt-3">
+                          <strong className="text-xs font-bold text-indigo-950 flex items-center gap-1.5 font-display">
+                            ⚡ Daily Cognitive Challenge
+                          </strong>
+                          {!challengeCompletedToday ? (
+                            <div className="space-y-2.5 text-xs text-neutral-700">
+                              <p className="leading-relaxed font-semibold text-neutral-800">
+                                Which neural physiology controls primal motivational action drivers before analytical logic is computed?
+                              </p>
+                              <div className="space-y-2">
+                                {[
+                                  { idx: 0, text: 'A) The Limbic Brain structure (Sinek Why)' },
+                                  { idx: 1, text: 'B) The Pre-frontal visual neocortex region' },
+                                  { idx: 2, text: 'C) The Cerebellar balance motor pathways' }
+                                ].map((choice) => (
+                                  <button
+                                    key={choice.idx}
+                                    type="button"
+                                    onClick={() => setActiveDailyQuizOption(choice.idx)}
+                                    className={`w-full text-left p-2.5 rounded-xl border transition cursor-pointer ${
+                                      activeDailyQuizOption === choice.idx 
+                                        ? 'border-indigo-650 bg-indigo-50 text-indigo-950 font-semibold border-indigo-600' 
+                                        : 'border-neutral-250 bg-white hover:bg-neutral-50 text-neutral-700 border-neutral-200'
+                                    }`}
+                                  >
+                                    {choice.text}
+                                  </button>
+                                ))}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (activeDailyQuizOption === null) return;
+                                  if (activeDailyQuizOption === 0) {
+                                    setChallengeCompletedToday(true);
+                                    localStorage.setItem('snapsum_challenge_completed_today', 'true');
+                                    awardXp(120);
+                                    alert('🎯 CORRECT! The Limbic Brain drives emotional decision-making. You earned +120 XP!');
+                                  } else {
+                                    alert('❌ That choice was incorrect. The Limbic Brain is what drives emotion before logic. Review Simon Sinek`s syllabus to master this concept!');
+                                  }
+                                }}
+                                disabled={activeDailyQuizOption === null}
+                                className="w-full bg-[#1d1d1f] hover:bg-[#2d2d2f] text-white py-2 rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer"
+                              >
+                                Lock in Answer (+120 XP)
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-150 p-3 rounded-xl flex items-center gap-2">
+                              <span>✓ You have crushed today`s daily challenge. You scored a perfect match and earned +120 XP!</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 4. Recommended Next Video */}
+                        <div className="bg-slate-50 border border-slate-205 p-3.5 rounded-2xl flex items-center justify-between gap-3 text-xs pt-3 text-left">
+                          <div className="space-y-0.5">
+                            <span className="text-[10px] uppercase font-bold text-neutral-400 font-mono block">Suggested Syllabus Track</span>
+                            <p className="font-bold text-neutral-800 truncate max-w-44">Sinek: Understand the Why</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const sinek = PRELOADED_VIDEOS.find(p => p.metadata.videoId === 'u4ZoJKF_VuA');
+                              if (sinek) setActiveSummary(sinek);
+                            }}
+                            className="bg-neutral-900 hover:bg-neutral-800 text-white font-bold px-3 py-2 rounded-lg text-[10px] transition cursor-pointer"
+                          >
+                            Load Series
+                          </button>
+                        </div>
+
+                      </div>
+                    </div>
+
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-white border border-black/[0.04] rounded-2xl p-5 shadow-sm space-y-3.5 text-xs text-[#515154] leading-relaxed font-sans text-left">
+                    <h4 className="font-bold text-[#1d1d1f] flex items-center gap-1.5 text-sm">
+                      🚀 Creator Monetization Blueprint
+                    </h4>
+                    <p>
+                      This application translates lengthy digital broadcasts into ready-for-market content streams. By pairing summaries with newsletters, tweet threads, flash quizzes, and conceptual outlines:
+                    </p>
+                    <ul className="list-disc pl-4 space-y-1 text-[#86868b]">
+                      <li><strong className="text-[#515154]">Ad-revenue streams</strong> by embedding affiliate offers adjacent to text digests.</li>
+                      <li><strong className="text-[#515154]">Digital products</strong> like study maps or trivia certifications for course creators.</li>
+                      <li><strong className="text-[#515154]">Email directories</strong> built by locking TTS files of key briefings behind a subscription block.</li>
+                    </ul>
+                    <div className="pt-2 border-t border-black/[0.04] text-[9px] text-[#86868b] font-mono leading-none">
+                      Created for the Google AI Studio Builders Challenge.
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
