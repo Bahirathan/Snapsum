@@ -84,3 +84,59 @@ export interface SavedSummary {
   savedAt: string;
   response: YouTubeSummaryResponse;
 }
+
+// =========================================================================
+// LEARNING PLATFORM & RETENTION ENGINE STRUCTURAL INTERFACES
+// =========================================================================
+
+export interface MemoryConcept {
+  id: string;
+  concept: string;
+  sourceVideoId: string;
+  sourceTitle: string;
+  definition: string;
+  analogy: string;
+  masteryLevel: number; // 0 to 100%
+  status: 'Weak' | 'Strong' | 'New';
+  lastTestedAt?: string;
+}
+
+export interface VideoLearningSession {
+  videoId: string;
+  title: string;
+  thumbnailUrl: string;
+  processedAt: string;
+  duration?: string;
+  progressPercent: number; // For resuming later
+  completed: boolean;
+  score?: number;
+  totalQuestions?: number;
+}
+
+export interface DailyChallengeQuestion {
+  question: string;
+  options: string[];
+  answerIndex: number;
+  explanation: string;
+  conceptName: string;
+}
+
+export interface LearningMemoryGraph {
+  concepts: Record<string, MemoryConcept>;
+  sessions: Record<string, VideoLearningSession>;
+  quizHistory: Array<{
+    videoId: string;
+    title: string;
+    score: number;
+    total: number;
+    date: string;
+    difficulty: 'Easy' | 'Medium' | 'Hard';
+  }>;
+  weakTopics: string[];
+  strongTopics: string[];
+  xp: number;
+  level: number;
+  streak: number;
+  lastActiveDate?: string;
+}
+

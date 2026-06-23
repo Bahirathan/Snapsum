@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { PRELOADED_VIDEOS } from './preloadedData';
 import { YouTubeSummaryResponse, SavedSummary } from './types';
+import { LearningProgressDashboard, ActiveLearningDashboard } from './components/LearningDashboard';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
 
 const getOrGenerateReelScript = (summary: YouTubeSummaryResponse | null): any => {
@@ -1903,6 +1904,20 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     document.getElementById('summary-dashboard')?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleLoadVideoById = (videoId: string, isSummary: boolean) => {
+    const demoMatched = PRELOADED_VIDEOS.find(v => v.metadata.videoId === videoId);
+    if (demoMatched) {
+      handleLoadStoredItem(demoMatched);
+      return;
+    }
+    const shelfMatched = savedSummaries.find(s => s.id === videoId);
+    if (shelfMatched) {
+      handleLoadStoredItem(shelfMatched.response);
+      return;
+    }
+    setVideoUrl(`https://www.youtube.com/watch?v=${videoId}`);
+  };
+
   // Admin Dashboard API Handler utilities:
   const handleAdminAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -3285,7 +3300,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <button
                       type="submit"
                       disabled={loading || !videoUrl}
-                      className="bg-[#0071e3] hover:bg-[#0077ed] text-white font-medium text-sm px-8 py-4 px-8 rounded-full active:scale-98 transition-all duration-200 flex items-center justify-center gap-2 h-13.5 disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-sm shadow-[#0071e3]/10"
+                      className={`font-semibold text-sm px-8 py-4 px-8 rounded-full active:scale-98 transition-all duration-200 flex items-center justify-center gap-2 h-13.5 disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-sm ${
+                        learnMode 
+                          ? 'bg-gradient-to-r from-teal-500 to-indigo-600 hover:opacity-90 text-white shadow-teal-500/10'
+                          : 'bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-[#0071e3]/10'
+                      }`}
                     >
                       {loading ? (
                         <>
@@ -3294,8 +3313,17 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         </>
                       ) : (
                         <>
-                          <Sparkles className="w-4 h-4" />
-                          Summarize Video
+                          {learnMode ? (
+                            <>
+                              <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
+                              <span>👉 Start Learning</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-4 h-4" />
+                              <span>Summarize Video</span>
+                            </>
+                          )}
                         </>
                       )}
                     </button>
@@ -3484,19 +3512,81 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
                 {/* Progress Indicators & Steps */}
                 {loading && (
-                  <div className="mt-6 p-5 bg-neutral-100/30 border border-black/[0.04] rounded-2xl animate-pulse space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Loader2 className="w-4 h-4 text-[#1d1d1f] animate-spin" />
-                      <span className="text-[10px] font-mono tracking-wider text-[#86868b] font-bold uppercase">Executing Gemini Sequence</span>
+                  learnMode ? (
+                    <div className="mt-6 p-6 bg-gradient-to-br from-indigo-50/40 to-purple-50/20 border border-indigo-100 rounded-3xl space-y-4 animate-fadeIn">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-4.5 h-4.5 text-indigo-600 animate-spin" />
+                          <span className="text-[10px] font-mono tracking-widest text-indigo-700 font-bold uppercase">AI Learning Compilation Core</span>
+                        </div>
+                        <span className="text-[10px] font-bold font-mono text-[#bf5af2] animate-pulse">BUILDING COGNITIVE PATHWAY</span>
+                      </div>
+                      
+                      <div className="space-y-2.5 pt-1 text-xs">
+                        {[
+                          { step: 1, label: "Transcribing audio frequencies and speech tracks...", active: true, done: loadingStep.includes('mapping') || loadingStep.includes('concepts') || loadingStep.includes('quiz') || loadingStep.includes('flashcard') },
+                          { step: 2, label: "Synthesizing full visual syllabus and chapters...", active: loadingStep.includes('chapters') || loadingStep.includes('mapping') || loadingStep.includes('concepts') || loadingStep.includes('quiz'), done: loadingStep.includes('concepts') || loadingStep.includes('quiz') },
+                          { step: 3, label: "Extracting core concepts and Plain-English metaphors...", active: loadingStep.includes('concepts') || loadingStep.includes('concept') || loadingStep.includes('quiz'), done: loadingStep.includes('quiz') },
+                          { step: 4, label: "Generating adaptive recall diagnostic verification quizzes...", active: loadingStep.includes('quiz') || loadingStep.includes('diagnostics'), done: false }
+                        ].map((s) => {
+                          const isDone = s.done;
+                          const isCurrent = s.active && !isDone;
+                          return (
+                            <div key={s.step} className="flex items-center gap-3 text-left">
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold font-mono ${
+                                isDone 
+                                  ? 'bg-[#30d158] text-white' 
+                                  : isCurrent 
+                                    ? 'bg-indigo-600 text-white animate-pulse' 
+                                    : 'bg-neutral-100 text-neutral-400 border border-neutral-205'
+                              }`}>
+                                {isDone ? '✓' : s.step}
+                              </div>
+                              <span className={`font-sans ${
+                                isDone 
+                                  ? 'text-neutral-400 line-through' 
+                                  : isCurrent 
+                                    ? 'text-indigo-950 font-bold' 
+                                    : 'text-neutral-400'
+                              }`}>
+                                {s.label}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="w-full bg-neutral-200/80 rounded-full h-1.5 overflow-hidden">
+                        <div 
+                          className="bg-indigo-600 h-1.5 rounded-full transition-all duration-750" 
+                          style={{ 
+                            width: loadingStep.includes('quiz') 
+                              ? '95%' 
+                              : loadingStep.includes('concepts') 
+                                ? '70%' 
+                                : loadingStep.includes('chapters') 
+                                  ? '45%' 
+                                  : '20%' 
+                          }}
+                        ></div>
+                      </div>
+                      <p className="text-[10px] text-indigo-605 italic font-medium text-left">🤖 Sync telemetry: {loadingStep}</p>
                     </div>
-                    <p className="text-xs text-[#1d1d1f] font-medium">{loadingStep}</p>
-                    <div className="w-full bg-black/[0.04] rounded-full h-1">
-                      <div 
-                        className="bg-[#0071e3] h-1 rounded-full transition-all duration-1000" 
-                        style={{ width: loadingStep.includes('reasoning') ? '75%' : '35%' }}
-                      ></div>
+                  ) : (
+                    <div className="mt-6 p-5 bg-neutral-100/30 border border-black/[0.04] rounded-2xl animate-pulse space-y-3">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="w-4 h-4 text-[#1d1d1f] animate-spin" />
+                        <span className="text-[10px] font-mono tracking-wider text-[#86868b] font-bold uppercase">Executing Gemini Sequence</span>
+                      </div>
+                      <p className="text-xs text-[#1d1d1f] font-medium">{loadingStep}</p>
+                      <div className="w-full bg-black/[0.04] rounded-full h-1">
+                        <div 
+                          className="bg-[#0071e3] h-1 rounded-full transition-all duration-1000" 
+                          style={{ width: loadingStep.includes('reasoning') ? '75%' : '35%' }}
+                        ></div>
+                      </div>
                     </div>
-                  </div>
+                  )
                 )}
 
                 {/* Technical Error Box */}
@@ -3534,6 +3624,16 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 )}
               </div>
             </div>
+
+            {learnMode && !activeSummary && (
+              <div className="animate-slideUp">
+                <LearningProgressDashboard 
+                  onLoadVideo={handleLoadVideoById}
+                  onActivateDemo={handleLoadStoredItem}
+                />
+              </div>
+            )}
+
           </div>
 
           {/* Quick Demo Preloads Drawer side rail */}
@@ -3777,6 +3877,15 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               <div className="xl:col-span-7 p-6 md:p-8 space-y-6 border-b xl:border-b-0 xl:border-r border-black/[0.04]">
                 
                 {learnMode ? (
+                  <ActiveLearningDashboard 
+                    activeSummary={activeSummary}
+                    onBackToCenter={() => setActiveSummary(null)}
+                    ytStartSeconds={ytStartSeconds}
+                    onJumpToTimestamp={handleJumpToTimestamp}
+                    onResetJump={() => setYtStartSeconds(null)}
+                    experimentGroup={experimentGroup}
+                  />
+                ) : false ? (
                   <div className="space-y-6 animate-fadeIn">
                     
                     {/* Course / Video Master Header Progress */}
