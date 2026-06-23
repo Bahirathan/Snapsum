@@ -26,6 +26,17 @@ export interface QuizQuestion {
   explanation: string;
 }
 
+export interface KeyConcept {
+  concept: string;
+  definition: string;
+  simplifiedExplanation: string;
+}
+
+export interface Flashcard {
+  question: string;
+  answer: string;
+}
+
 export interface MindmapNode {
   concept: string;
   category: string;
@@ -61,6 +72,10 @@ export interface YouTubeSummaryResponse {
   quiz: QuizQuestion[];
   mindmap: MindmapNode[];
   reelScript?: ReelScript;
+  keyConcepts?: KeyConcept[];
+  flashcards?: Flashcard[];
+  rememberSummary?: string;
+  learnModeEnabled?: boolean;
   shareId?: string;
 }
 

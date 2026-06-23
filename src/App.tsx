@@ -1241,6 +1241,246 @@ export default function App() {
 
   const [selectedTone, setSelectedTone] = useState<'standard' | 'academic' | 'viral' | 'reel'>('standard');
 
+  // State for Learn Mode
+  const [learnMode, setLearnMode] = useState<boolean>(() => {
+    return localStorage.getItem('snapsum_learn_mode') === 'true';
+  });
+
+  // A/B Testing state
+  const [experimentGroup, setExperimentGroup] = useState<'A' | 'B'>(() => {
+    const stored = localStorage.getItem('snapsum_ab_group');
+    if (stored === 'A' || stored === 'B') return stored;
+    const group = Math.random() < 0.5 ? 'A' : 'B';
+    localStorage.setItem('snapsum_ab_group', group);
+    return group;
+  });
+
+  // Selected subtab within Learn Mode workspace
+  const [learnActiveTab, setLearnActiveTab] = useState<'syllabus' | 'flashcards' | 'quiz'>('syllabus');
+
+  // State for interactive flashcards
+  const [revealedFlashcards, setRevealedFlashcards] = useState<Record<number, boolean>>({});
+
+  // Stats or reports loaded from endpoints
+  const [analyticsStats, setAnalyticsStats] = useState<any>(null);
+  const [showExperimentConsole, setShowExperimentConsole] = useState<boolean>(false);
+
+  // Load A/B Testing Telemetry dynamically from API
+  const refreshAnalyticsStats = () => {
+    fetch('/api/learn/analytics')
+      .then((res) => {
+        if (res.ok) return res.json();
+        throw new Error();
+      })
+      .then((data) => setAnalyticsStats(data))
+      .catch((err) => console.log('Error fetching analytics:', err));
+  };
+
+  useEffect(() => {
+    refreshAnalyticsStats();
+  }, [activeSummary]);
+
+  // Track background engagement time
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (activeSummary) {
+        const key = `snapsum_eng_${activeSummary.metadata.videoId}`;
+        const currentSecs = parseInt(localStorage.getItem(key) || '0', 10) + 10;
+        localStorage.setItem(key, String(currentSecs));
+
+        fetch('/api/learn/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            videoId: activeSummary.metadata.videoId,
+            experimentGroup,
+            eventName: 'engagement_update',
+            metadata: { seconds: 10 }
+          })
+        }).then(() => {
+          refreshAnalyticsStats();
+        }).catch(console.error);
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [activeSummary, experimentGroup]);
+
+  // Event telemetry triggers
+  const handleTrackActivation = (mo: boolean, vidId: string) => {
+    fetch('/api/learn/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        videoId: vidId,
+        experimentGroup,
+        eventName: mo ? 'learn_mode_activated' : 'summary_mode_activated',
+        metadata: { timestamp: new Date().toISOString() }
+      })
+    }).then(() => refreshAnalyticsStats()).catch(console.error);
+  };
+
+  const handleTrackRevisit = (vidId: string) => {
+    fetch('/api/learn/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        videoId: vidId,
+        experimentGroup,
+        eventName: 'content_revisited',
+        metadata: { timestamp: new Date().toISOString() }
+      })
+    }).then(() => refreshAnalyticsStats()).catch(console.error);
+  };
+
+  const handleTrackQuizCompleted = (score: number, max: number) => {
+    if (!activeSummary) return;
+    fetch('/api/learn/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        videoId: activeSummary.metadata.videoId,
+        experimentGroup,
+        eventName: 'quiz_completed',
+        metadata: { score, maxScore: max }
+      })
+    }).then(() => refreshAnalyticsStats()).catch(console.error);
+  };
+
+  // Helper to ensure Learn Mode structural inputs exist, with optimized fallbacks for caching or preload assets
+  const ensureLearnModeStructures = (summary: YouTubeSummaryResponse | null): any => {
+    if (!summary) return null;
+    
+    // Customized fine-tuned content for preloaded lecture #1: Dustin Moskovitz
+    if (summary.metadata.videoId === 'CBYhVcOnK8Y') {
+      const concepts = [
+        {
+          concept: 'The Founder Illusions',
+          definition: 'The romanticized myths about startup life propagated by media, including absolute status, immense, effortlessly built wealth, and total leisure.',
+          simplifiedExplanation: 'Movies like "The Social Network" make building a startup look like a constant party. In reality, it involves constant high-tension hours, sleeping under desks, and extreme risk.'
+        },
+        {
+          concept: 'Compelling Motivation (The Obsession)',
+          definition: 'The deep, highly persistent intrinsic obsession that compels a founder to solve a problem because its existing pain simply cannot be tolerated.',
+          simplifiedExplanation: "Don't start a startup for fame or money. Real longevity comes when you are so obsessed with a user's problem that you physically can't rest until you build its absolute solution."
+        },
+        {
+          concept: 'Severe Stress Carrier',
+          definition: 'The psychological burden of carrying absolute responsibility for the livelihoods, salaries, health insurance, and focus of your employees.',
+          simplifiedExplanation: "As a boss, you don't just relax. When things go wrong, you are the final shield carrying the heavy burden of making payroll and preventing team burnout."
+        }
+      ];
+
+      const cards = [
+        {
+          question: 'According to Dustin Moskovitz, who does a startup founder report to?',
+          answer: 'Everyone! The employees, customers, partners, and investors. You are the ultimate servant leader.'
+        },
+        {
+          question: 'What is the most sustainable reason to start a company?',
+          answer: 'An urgent, real obsession with solving an intolerable problem that the world needs.'
+        },
+        {
+          question: 'Why is starting a startup to gain "status" or "wealth" a trap?',
+          answer: "Because the workload is so extreme and stressful that financial reward alone won't sustain you through hard times."
+        }
+      ];
+
+      const rem = `- **Rethink Boss Myths**: You are not your own master; you are a primary servant to your team.\n- **Intrinsic obsessions**: Chase a burning user agony, not a generic market trend.\n- **Prepare for the carrying burden**: Build high psychological resilience before diving in.`;
+
+      return {
+        ...summary,
+        keyConcepts: concepts,
+        flashcards: cards,
+        rememberSummary: rem,
+        learnModeEnabled: true
+      };
+    }
+
+    // Customized fine-tuned content for preloaded lecture #2: Simon Sinek
+    if (summary.metadata.videoId === 'qp0HIF3SfI4') {
+      const concepts = [
+        {
+          concept: 'The Golden Circle',
+          definition: 'A three-tiered structural model consisting of Why (purpose), How (process), and What (result) explaining how legendary leaders inspire action.',
+          simplifiedExplanation: 'Normal companies market WHAT they do and HOW they do it. Exceptional ones communicate "Why" we exist first, hooking deep loyalty before listing products.'
+        },
+        {
+          concept: 'Neurological Inside-Out Match',
+          definition: 'The physiological fact that the layouts of the Golden Circle correspond directly to divisions of the human brain (neocortex vs. limbic system).',
+          simplifiedExplanation: 'The "What" layer speaks to the analytical neocortex (language, logic). The "Why" speaks directly to the emotional limbic brain which governs decisions but has zero language.'
+        },
+        {
+          concept: 'The Believers Magnet',
+          definition: 'The law of diffusion of innovations stating that business growth relies on securing innovators who share your passion first.',
+          simplifiedExplanation: "You don't want to sell to everyone who needs a widget. You want to attract the early believers who align with your values and advocate for you organically."
+        }
+      ];
+
+      const cards = [
+        {
+          question: 'What is the neurological correlation of the "What" layer?',
+          answer: 'The neocortex, which processes rational details, numbers, features, and verbal language.'
+        },
+        {
+          question: 'What brain region controls feelings, loyalty, and gut decisions?',
+          answer: 'The Limbic System, which corresponds perfectly to the "Why" and "How" layers.'
+        },
+        {
+          question: 'Why do emotional believers matter more than simple transaction shoppers?',
+          answer: 'Because believers will pay a premium, stay loyal through setbacks, and champion your brand organically.'
+        }
+      ];
+
+      const rem = `- **Inside-Out Focus**: Anchor every campaign to your core beliefs (Why) before detailing features.\n- **Neurological alignment**: Frame messages to appeal to emotions (limbic brain) first, then justify with logic.\n- **Diffusion Law**: Target people who share your values to anchor a solid, recurring organic audience.`;
+
+      return {
+        ...summary,
+        keyConcepts: concepts,
+        flashcards: cards,
+        rememberSummary: rem,
+        learnModeEnabled: true
+      };
+    }
+
+    // Dynamic procedural backfills for user-generated summaries
+    const concepts = summary.keyConcepts || (summary.takeaways && summary.takeaways.length > 0 ? summary.takeaways.map((takeaway) => {
+      const split = takeaway.split('—');
+      const conceptName = split[0] ? split[0].trim() : 'Core Principle';
+      const expl = split[1] ? split[1].trim() : takeaway;
+      return {
+        concept: conceptName.slice(0, 40),
+        definition: expl,
+        simplifiedExplanation: `This concept emphasizes applying ${conceptName.toLowerCase()} directly to the core video context to maximize outcomes.`
+      };
+    }).slice(0, 4) : [
+      {
+        concept: 'High-Velocity Focus',
+        definition: 'Devoting complete cognitive resources to a single, high-leverage task to accelerate project delivery.',
+        simplifiedExplanation: 'Like a laser beam, focus on doing one thing extremely well instead of scattering your energy over multiple features.'
+      }
+    ]);
+
+    const cards = summary.flashcards || (summary.quiz && summary.quiz.length > 0 ? summary.quiz.map((q) => ({
+      question: q.question,
+      answer: q.explanation || `The correct answer is indeed option index ${q.answerIndex + 1}: ${q.options[q.answerIndex] || ''}`
+    })).slice(0, 4) : [
+      {
+        question: 'What is the main takeaway regarding optimization of study workflows?',
+        answer: 'Iterate on structured, digestible micro-lessons daily rather than giant studying cram sessions.'
+      }
+    ]);
+
+    const rem = summary.rememberSummary || (summary.summary ? `- **Syllabus Baseline**: ${summary.summary.split('.')[0] || ''}.\n- **Strategic Value**: Focus heavily on interactive retention milestones weekly.\n- **Action Checklist**: Answer all self-quizzes to lock in core definitions.` : `- **Primary lesson**: Master the concept definitions.\n- **Active recall**: Flip flashcards repeatedly to embed memories.\n- **Comprehension check**: Finish the interactive quiz session with perfect marks.`);
+
+    return {
+      ...summary,
+      keyConcepts: concepts,
+      flashcards: cards,
+      rememberSummary: rem,
+      learnModeEnabled: true
+    };
+  };
+
   const downloadSummaryAsPDF = () => {
     if (!activeSummary) return;
     const contents = `---
@@ -1397,7 +1637,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     if (matchedPreload) {
       setLoadingStep('Bypassing API: Loading pre-rendered high-fidelity summary...');
       setTimeout(() => {
-        setActiveSummary(matchedPreload);
+        const hydratedMock = ensureLearnModeStructures(matchedPreload);
+        setActiveSummary(hydratedMock);
         if (selectedTone === 'reel') {
           setActiveTab('reel');
         }
@@ -1414,7 +1655,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 hour: '2-digit',
                 minute: '2-digit',
               }),
-              response: matchedPreload,
+              response: hydratedMock,
             },
             ...savedSummaries,
           ];
@@ -1426,6 +1667,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           source: 'preloaded_cache',
           custom_transcript_used: showCustomTranscriptField
         });
+        handleTrackActivation(learnMode, matchedPreload.metadata.videoId);
         setLoading(false);
       }, 700); // Authentic processing delay for micro-animation feel
       return;
@@ -1441,6 +1683,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           videoUrl,
           customTranscript: customTranscript || undefined,
           outputLanguage,
+          learnMode: learnMode,
         }),
       });
 
@@ -1451,19 +1694,21 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
       setLoadingStep('Applying advanced reasoning structures with Gemini...');
       const summaryData = (await response.json()) as YouTubeSummaryResponse;
+      const hydratedData = ensureLearnModeStructures(summaryData);
       
-      setActiveSummary(summaryData);
+      setActiveSummary(hydratedData);
       if (selectedTone === 'reel') {
         setActiveTab('reel');
       }
 
       trackGAEvent('summary_generated', {
-        video_id: summaryData.metadata.videoId,
-        video_title: summaryData.metadata.title,
+        video_id: hydratedData.metadata.videoId,
+        video_title: hydratedData.metadata.title,
         source: 'api_live',
         model_configured: adminSelectedModel,
         custom_transcript_used: showCustomTranscriptField
       });
+      handleTrackActivation(learnMode, hydratedData.metadata.videoId);
 
       // Save to shelf
       const alreadySaved = savedSummaries.some((item) => item.id === summaryData.metadata.videoId);
@@ -1578,7 +1823,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
   // Load stored item
   const handleLoadStoredItem = (summary: YouTubeSummaryResponse) => {
-    setActiveSummary(summary);
+    const hydratedSummary = ensureLearnModeStructures(summary);
+    setActiveSummary(hydratedSummary);
     if (selectedTone === 'reel') {
       setActiveTab('reel');
     }
@@ -1590,6 +1836,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     }
     setAudioUrl(null);
     setIsPlaying(false);
+    handleTrackRevisit(hydratedSummary.metadata.videoId);
 
     document.getElementById('summary-dashboard')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -2906,6 +3153,59 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
                 {/* Form Input Engine */}
                 <form id="url-submit-form" onSubmit={handleSummarize} className="space-y-4 pt-2">
+                  
+                  {/* Mode Selector Toggle (Summary Mode vs Learn Mode) */}
+                  <div className="flex flex-col gap-2 pt-1 pb-2">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#86868b] block text-left">
+                      Select Workspace Mode
+                    </span>
+                    <div className="flex bg-[#f2f2f7] p-1 items-center rounded-2xl w-full max-w-sm gap-1 border border-black/[0.04]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLearnMode(false);
+                          localStorage.setItem('snapsum_learn_mode', 'false');
+                          trackGAEvent?.('mode_switched', { mode: 'summary' });
+                          if (activeSummary) {
+                            handleTrackActivation(false, activeSummary.metadata.videoId);
+                          }
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-xl transition duration-200 cursor-pointer ${
+                          !learnMode
+                            ? 'bg-white text-neutral-900 shadow-sm'
+                            : 'text-[#86868b] hover:text-[#1d1d1f]'
+                        }`}
+                      >
+                        <FileText className="w-3.5 h-3.5 text-neutral-500" />
+                        <span>Summary Mode</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (experimentGroup === 'A') {
+                            alert("🧪 Note: You are currently assigned to A/B Test Group A (Summary-only mode). To unlock and test the pristine Learn Mode experience, please switch your test group to 'Group B' in the Floating Experiment Console at the bottom-right of the page!");
+                            return;
+                          }
+                          setLearnMode(true);
+                          localStorage.setItem('snapsum_learn_mode', 'true');
+                          trackGAEvent?.('mode_switched', { mode: 'learn' });
+                          if (activeSummary) {
+                            handleTrackActivation(true, activeSummary.metadata.videoId);
+                          }
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-xl transition duration-200 cursor-pointer ${
+                          learnMode
+                            ? 'bg-gradient-to-r from-teal-500 to-indigo-600 text-white shadow-sm font-bold'
+                            : 'text-[#86868b] hover:text-[#1d1d1f]'
+                        }`}
+                      >
+                        <Zap className="w-3.5 h-3.5 text-[#bf5af2] fill-[#bf5af2]" />
+                        <span>Learn Mode</span>
+                        <span className="bg-[#bf5af2]/20 text-[#bf5af2] text-[8px] font-bold px-1.5 py-0.5 rounded uppercase font-mono tracking-wide">AI</span>
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="flex flex-col md:flex-row gap-3">
                     <div className="relative flex-1">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#86868b]">
@@ -3414,8 +3714,389 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               {/* Content Panel: Left Column (Subtabs and deep assets) */}
               <div className="xl:col-span-7 p-6 md:p-8 space-y-6 border-b xl:border-b-0 xl:border-r border-black/[0.04]">
                 
-                {/* Secondary Horizontal Interactive Tabs Menu styled as slider */}
-                <div className="flex bg-black/[0.04] p-1 items-center rounded-2xl overflow-x-auto gap-1 mb-6 scrollbar-none border border-black/[0.01]">
+                {learnMode ? (
+                  <div className="space-y-6 animate-fadeIn">
+                    
+                    {/* Course / Video Master Header Progress */}
+                    <div className="bg-gradient-to-r from-teal-500/10 to-indigo-500/10 border border-teal-500/20 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-teal-500 text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Live Courseware Group {experimentGroup}
+                          </span>
+                          <span className="text-[#86868b] text-xs">•</span>
+                          <span className="text-[#1d1d1f] text-xs font-semibold">Tuned for Deep Comprehension</span>
+                        </div>
+                        <h3 className="text-base font-bold font-display text-neutral-900">
+                          🎓 Interactive Learning System
+                        </h3>
+                        <p className="text-neutral-500 text-xs">
+                          Turn streaming broadcasts into long-term actionable memory assets.
+                        </p>
+                      </div>
+
+                      {/* Course Progress Gauge */}
+                      <div className="min-w-44 space-y-1.5 self-center">
+                        <div className="flex justify-between text-xs font-medium">
+                          <span className="text-neutral-600">Course Progress</span>
+                          <span className="text-indigo-600 font-bold">
+                            {(() => {
+                              let tasksDone = 0;
+                              let totalTasks = 3;
+                              if (quizSubmitted) tasksDone++;
+                              const revealedCount = Object.keys(revealedFlashcards).length;
+                              if (revealedCount > 0) tasksDone++;
+                              if (ytStartSeconds !== null) tasksDone++;
+                              const percentage = Math.round((tasksDone / totalTasks) * 100);
+                              return `${percentage}%`;
+                            })()}
+                          </span>
+                        </div>
+                        <div className="w-full bg-neutral-200/80 rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="bg-indigo-600 h-full transition-all duration-500"
+                            style={{ 
+                              width: (() => {
+                                let tasksDone = 0;
+                                let totalTasks = 3;
+                                if (quizSubmitted) tasksDone++;
+                                const revealedCount = Object.keys(revealedFlashcards).length;
+                                if (revealedCount > 0) tasksDone++;
+                                if (ytStartSeconds !== null) tasksDone++;
+                                return `${Math.round((tasksDone / totalTasks) * 100)}%`;
+                              })()
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sliding Segment Workspace Selector Tabs */}
+                    <div className="flex bg-[#f2f2f7] p-1.5 items-center rounded-2xl gap-1">
+                      {[
+                        { id: 'syllabus', label: '1. Syllabus & Concepts', icon: BookOpen },
+                        { id: 'flashcards', label: '2. Recall Flashcards', icon: Network },
+                        { id: 'quiz', label: '3. Quiz & Remember', icon: Trophy }
+                      ].map((subTab) => {
+                        const Icon = subTab.icon;
+                        const active = learnActiveTab === subTab.id;
+                        return (
+                          <button
+                            key={subTab.id}
+                            type="button"
+                            onClick={() => {
+                              setLearnActiveTab(subTab.id as any);
+                              trackGAEvent?.('learn_subtab_clicked', { tab: subTab.id });
+                            }}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-xl transition duration-200 cursor-pointer ${
+                              active
+                                ? 'bg-white text-indigo-700 shadow-sm font-bold border border-black/[0.02]'
+                                : 'text-neutral-500 hover:text-neutral-800'
+                            }`}
+                          >
+                            <Icon className={`w-3.5 h-3.5 ${active ? 'text-indigo-600' : 'text-neutral-450'}`} />
+                            <span className="text-xs">{subTab.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Sub Tab Panel - 1. Syllabus & Concepts */}
+                    {learnActiveTab === 'syllabus' && (
+                      <div className="space-y-6 animate-fadeIn text-left">
+                        
+                        {/* Chapter timeline component (from activeSummary.chapters) */}
+                        <div className="space-y-4">
+                          <div className="border-b border-slate-100 pb-2">
+                            <h4 className="text-sm font-bold text-neutral-800 font-display flex items-center gap-1.5">
+                              ⏱️ Smart Visual Timeline
+                            </h4>
+                            <p className="text-xs text-neutral-500 mt-0.5">
+                              Interactive video segments. Click a timestamp to jump exactly to that moment.
+                            </p>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 gap-2.5">
+                            {activeSummary.chapters.map((chap, chapIdx) => (
+                              <button
+                                key={chapIdx}
+                                type="button"
+                                onClick={() => handleJumpToTimestamp(chap.secondsCount)}
+                                className="w-full text-left p-3.5 rounded-xl border border-neutral-200/80 hover:border-indigo-500 hover:bg-neutral-50/50 transition duration-150 flex gap-3 group cursor-pointer"
+                              >
+                                <div className="font-mono text-[10px] font-bold text-[#0071e3] bg-[#0071e3]/5 group-hover:bg-[#0071e3]/10 px-2.5 py-1 rounded-md h-fit w-fit whitespace-nowrap">
+                                  ⏱️ {chap.timestamp}
+                                </div>
+                                <div className="space-y-0.5">
+                                  <h5 className="text-xs font-bold text-neutral-800 font-display group-hover:text-neutral-950 leading-tight">
+                                    {chap.title}
+                                  </h5>
+                                  <p className="text-neutral-[#86868b] text-xs leading-relaxed">
+                                    {chap.takeaway}
+                                  </p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Concept Breakdown component (from activeSummary.keyConcepts) */}
+                        <div className="space-y-4 pt-2">
+                          <div className="border-b border-slate-100 pb-2">
+                            <h4 className="text-sm font-bold text-neutral-800 font-display flex items-center gap-1.5">
+                              🧠 Key Concepts Breakdown
+                            </h4>
+                            <p className="text-xs text-neutral-500 mt-0.5">
+                              Complex ideas demystified with plain-English analogies.
+                            </p>
+                          </div>
+
+                          <div className="space-y-4">
+                            {activeSummary.keyConcepts?.map((item: any, itemIdx: number) => (
+                              <div 
+                                key={itemIdx}
+                                className="bg-slate-50 rounded-2xl border border-slate-200 p-4.5 space-y-2.5 hover:shadow-sm transition"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-bold font-display text-slate-900 bg-white border border-slate-200 px-2.5 py-1 rounded-lg">
+                                    {item.concept}
+                                  </span>
+                                  <span className="text-[10px] text-indigo-600 font-mono font-bold tracking-wider uppercase">
+                                    Concept #{itemIdx + 1}
+                                  </span>
+                                </div>
+                                
+                                <div className="space-y-1.5 text-xs text-slate-700">
+                                  <p className="leading-relaxed">
+                                    <strong className="text-slate-800 font-semibold">Academic Definition: </strong>
+                                    {item.definition}
+                                  </p>
+                                  <div className="bg-[#0071e3]/5 border border-[#0071e3]/10 rounded-xl p-3.5 text-xs text-indigo-950 leading-relaxed text-left">
+                                    <strong className="text-indigo-950 font-bold block mb-1 font-display">💡 Plain-English Analogy:</strong>
+                                    {item.simplifiedExplanation}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                      </div>
+                    )}
+
+                    {/* Sub Tab Panel - 2. Active Recall Flashcards */}
+                    {learnActiveTab === 'flashcards' && (
+                      <div className="space-y-5 animate-fadeIn text-left">
+                        <div className="border-b border-neutral-100 pb-2">
+                          <h4 className="text-sm font-bold text-neutral-800 font-display">
+                            ⚡ Active Recall Flashcards
+                          </h4>
+                          <p className="text-xs text-neutral-500 mt-0.5">
+                            Quiz yourself! Try repeating the answer in your mind, then click the card to flip it and reveal the explanation.
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                          {activeSummary.flashcards?.map((card: any, cardIdx: number) => {
+                            const revealed = revealedFlashcards[cardIdx];
+                            return (
+                              <div 
+                                key={cardIdx}
+                                onClick={() => {
+                                  setRevealedFlashcards(prev => {
+                                    const next = { ...prev, [cardIdx]: !prev[cardIdx] };
+                                    trackGAEvent?.('flashcard_flipped', { index: cardIdx, status: next[cardIdx] });
+                                    return next;
+                                  });
+                                }}
+                                className="h-44 w-full cursor-pointer perspective"
+                              >
+                                <div className={`relative w-full h-full text-center transition-transform duration-500 transform-style ${revealed ? 'rotate-y-180' : ''}`}>
+                                  
+                                  {/* FRONT of the card */}
+                                  <div className="absolute w-full h-full backface-hidden bg-white hover:bg-neutral-50 border-2 border-dashed border-neutral-300 rounded-2xl p-5 flex flex-col justify-between text-left shadow-sm">
+                                    <div>
+                                      <span className="text-[9px] font-mono font-bold text-neutral-400 uppercase tracking-widest block mb-1">
+                                        Question #{cardIdx + 1}
+                                      </span>
+                                      <h5 className="text-[12px] font-bold text-neutral-800 line-clamp-4 leading-relaxed font-sans">
+                                        {card.question}
+                                      </h5>
+                                    </div>
+                                    <span className="text-[10px] text-[#0071e3] font-bold font-mono tracking-wide mt-2 block hover:underline">
+                                      Tap to Flip (Reveal Answer)
+                                    </span>
+                                  </div>
+
+                                  {/* BACK of the card */}
+                                  <div className="absolute w-full h-full backface-hidden bg-gradient-to-br from-[#1d1d1f] to-indigo-950 text-white text-left rotate-y-180 shadow-md rounded-2xl p-5 flex flex-col justify-between">
+                                    <div>
+                                      <span className="text-[9px] font-mono font-bold text-[#bf5af2] uppercase tracking-widest block mb-1">
+                                        Answer Details
+                                      </span>
+                                      <p className="text-xs leading-relaxed text-indigo-100 font-sans max-h-24 overflow-y-auto">
+                                        {card.answer}
+                                      </p>
+                                    </div>
+                                    <span className="text-[10px] text-gray-400 font-semibold font-mono block">
+                                      ↩ Tap to flip back
+                                    </span>
+                                  </div>
+
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sub Tab Panel - 3. Quiz & Remember */}
+                    {learnActiveTab === 'quiz' && (
+                      <div className="space-y-6 animate-fadeIn text-left">
+                        
+                        {/* Render existing trivia component for perfect alignment */}
+                        <div className="space-y-4">
+                          <div className="border-b border-slate-100 pb-2">
+                            <h4 className="text-sm font-bold text-neutral-800 font-display">
+                              🧠 Contextual Comprehension Check
+                            </h4>
+                            <p className="text-xs text-neutral-500 mt-0.5">
+                              Answer the questions below to test your mastery of this video lecture's content!
+                            </p>
+                          </div>
+
+                          {/* Quiz Section */}
+                          <div className="space-y-4">
+                            {activeSummary.quiz.map((q, qIdx) => {
+                              const submitted = quizSubmitted;
+                              const selectedOpt = selectedAnswers[qIdx];
+                              const isCorrect = selectedOpt === q.answerIndex;
+                              
+                              return (
+                                <div
+                                  key={qIdx}
+                                  className={`p-4 rounded-xl border transition duration-200 ${
+                                    submitted
+                                      ? isCorrect
+                                        ? 'bg-emerald-50/50 border-emerald-200'
+                                        : 'bg-red-50/40 border-red-100'
+                                      : 'bg-neutral-50 border-neutral-200'
+                                  }`}
+                                >
+                                  <h5 className="text-xs font-bold text-neutral-850 font-display flex gap-2">
+                                    <span className="text-neutral-900 font-mono">Q{qIdx + 1}.</span>
+                                    <span>{q.question}</span>
+                                  </h5>
+
+                                  <div className="grid grid-cols-1 gap-2 mt-3 text-left">
+                                    {q.options.map((option, optIdx) => {
+                                      const isSelected = selectedOpt === optIdx;
+                                      const isCorrectOpt = optIdx === q.answerIndex;
+                                      
+                                      let btnStyle = 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50';
+                                      if (isSelected) {
+                                        btnStyle = 'border-[#0071e3] bg-[#0071e3]/5 text-[#0071e3] font-semibold';
+                                      }
+
+                                      if (submitted) {
+                                        if (isCorrectOpt) {
+                                          btnStyle = 'border-emerald-600 bg-emerald-100 text-emerald-950 font-semibold';
+                                        } else if (isSelected) {
+                                          btnStyle = 'border-red-400 bg-red-100 text-red-950';
+                                        } else {
+                                          btnStyle = 'border-neutral-100 bg-white/70 text-neutral-400 pointer-events-none';
+                                        }
+                                      }
+
+                                      return (
+                                        <button
+                                          key={optIdx}
+                                          type="button"
+                                          disabled={submitted}
+                                          onClick={() => {
+                                            setSelectedAnswers((prev) => ({
+                                              ...prev,
+                                              [qIdx]: optIdx,
+                                            }));
+                                          }}
+                                          className={`w-full text-left px-3.5 py-2.5 rounded-xl border text-xs font-medium transition cursor-pointer flex items-center justify-between ${btnStyle}`}
+                                        >
+                                          <span>{option}</span>
+                                          {isSelected && !submitted && <Check className="w-3.5 h-3.5 text-[#0071e3]" />}
+                                          {submitted && isCorrectOpt && <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+
+                                  {submitted && (
+                                    <div className="mt-3 p-3.5 bg-white border border-neutral-200 rounded-xl text-xs leading-relaxed text-neutral-600 font-sans shadow-sm flex gap-2 mb-1">
+                                      <HelpCircle className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                                      <div>
+                                        <span className="font-semibold text-neutral-800 block">Explanation Details:</span>
+                                        <span>{q.explanation}</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Submit Actions */}
+                          <div className="flex gap-3 justify-end pt-2 border-t border-neutral-150">
+                            {!quizSubmitted ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setQuizSubmitted(true);
+                                  const finalScore = calculateQuizScore();
+                                  handleTrackQuizCompleted(finalScore, activeSummary.quiz.length);
+                                }}
+                                disabled={Object.keys(selectedAnswers).length < activeSummary.quiz.length}
+                                className="bg-[#1d1d1f] hover:bg-[#2d2d2f] text-white text-xs font-semibold px-6 py-3 rounded-xl transition cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                              >
+                                Submit Learning Answers
+                              </button>
+                            ) : (
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-150 px-3.5 py-1.5 rounded-lg flex items-center gap-1 font-mono">
+                                  🏆 Score: {calculateQuizScore()} / {activeSummary.quiz.length}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setQuizSubmitted(false);
+                                    setSelectedAnswers({});
+                                  }}
+                                  className="text-xs text-neutral-500 hover:text-neutral-850 font-semibold cursor-pointer"
+                                >
+                                  Restart Quiz
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* What You Should Remember Summary Section */}
+                        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-250 rounded-2xl p-5 space-y-2.5 pt-3">
+                          <h4 className="text-xs font-bold text-amber-950 flex items-center gap-1.5 font-display uppercase tracking-wider">
+                            🌟 What You Should Remember Summary
+                          </h4>
+                          <div className="text-xs leading-relaxed text-amber-900 font-sans text-left ml-2 whitespace-pre-line">
+                            {activeSummary.rememberSummary}
+                          </div>
+                        </div>
+
+                      </div>
+                    )}
+
+                  </div>
+                ) : (
+                  <>
+                    {/* Secondary Horizontal Interactive Tabs Menu styled as slider */}
+                    <div className="flex bg-black/[0.04] p-1 items-center rounded-2xl overflow-x-auto gap-1 mb-6 scrollbar-none border border-black/[0.01]">
                   {[
                     { id: 'overview', label: 'Summary', icon: BookOpen },
                     { id: 'chapters', label: 'Timeline & Chapters', icon: Video },
@@ -4325,6 +5006,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </div>
                   );
                 })()}
+
+                  </>
+                )}
 
               </div>
 
@@ -6882,6 +7566,152 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </div>
         </div>
       </footer>
+
+      {/* Dynamic Floating A/B Testing Experiment Console */}
+      <div className="fixed bottom-6 right-6 z-50 font-sans">
+        {!showExperimentConsole ? (
+          <button
+            onClick={() => {
+              setShowExperimentConsole(true);
+              refreshAnalyticsStats();
+            }}
+            className="bg-[#1d1d1f] hover:bg-[#2d2d2f] text-white rounded-full p-3.5 shadow-xl border border-white/10 flex items-center gap-2 transition duration-200 cursor-pointer shadow-black/20 group scale-100 hover:scale-102"
+            title="A/B Experiment Telemetry Console"
+          >
+            <BarChart className="w-5 h-5 text-[#30d158] animate-pulse" />
+            <span className="text-xs font-semibold pr-1.5">A/B Testing Console</span>
+            <span className="bg-[#30d158] text-black font-bold font-mono text-[9px] px-1.5 py-0.5 rounded-full uppercase leading-none">
+              Live
+            </span>
+          </button>
+        ) : (
+          <div className="bg-white border border-neutral-200/80 rounded-2xl w-80 md:w-96 shadow-2xl overflow-hidden animate-fadeIn text-left flex flex-col max-h-[500px]">
+            {/* Console Header */}
+            <div className="bg-[#1d1d1f] text-white p-4 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-[#bf5af2]" />
+                <h4 className="text-xs font-bold tracking-wider uppercase font-mono">
+                  Experiment Telemetry Hub
+                </h4>
+              </div>
+              <button
+                onClick={() => setShowExperimentConsole(false)}
+                className="text-neutral-400 hover:text-white font-mono text-xs cursor-pointer p-1 rounded hover:bg-neutral-800 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Console Information Body */}
+            <div className="p-4 space-y-4 overflow-y-auto">
+              
+              {/* Cohort selection override */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono font-bold uppercase text-neutral-400 tracking-wider">
+                  🧪 Simulated Cohort Identity
+                </label>
+                <div className="flex bg-neutral-100 p-1 rounded-xl items-center w-full border border-neutral-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExperimentGroup('A');
+                      localStorage.setItem('snapsum_ab_group', 'A');
+                      setLearnMode(false);
+                      localStorage.setItem('snapsum_learn_mode', 'false');
+                      trackGAEvent?.('cohort_swapped_a', {});
+                      refreshAnalyticsStats();
+                    }}
+                    className={`flex-1 py-1.5 text-center text-[10px] font-bold rounded-lg cursor-pointer transition ${
+                      experimentGroup === 'A'
+                        ? 'bg-neutral-800 text-white shadow-sm'
+                        : 'text-neutral-500 hover:text-neutral-800'
+                    }`}
+                  >
+                    Cohort A (Summary)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExperimentGroup('B');
+                      localStorage.setItem('snapsum_ab_group', 'B');
+                      trackGAEvent?.('cohort_swapped_b', {});
+                      refreshAnalyticsStats();
+                    }}
+                    className={`flex-1 py-1.5 text-center text-[10px] font-bold rounded-lg cursor-pointer transition ${
+                      experimentGroup === 'B'
+                        ? 'bg-[#0071e3] text-white shadow-sm'
+                        : 'text-neutral-500 hover:text-neutral-700'
+                    }`}
+                  >
+                    Cohort B (Full Learn)
+                  </button>
+                </div>
+                <p className="text-[9px] text-[#86868b] leading-tight">
+                  {experimentGroup === 'B' 
+                    ? "✓ You have full access to Interactive Timelines, Key Analogies, Flashcards and Retention Summaries." 
+                    : "✕ Learn mode is locked. Switching it on will prompt you to join Cohort B."}
+                </p>
+              </div>
+
+              {/* Real-time metrics comparing A vs B */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono font-bold uppercase text-neutral-400 tracking-wider">
+                    📊 Live Telemetry Indexes
+                  </span>
+                  <button 
+                    onClick={refreshAnalyticsStats}
+                    className="text-[9px] font-semibold text-[#0071e3] hover:underline"
+                  >
+                    Refresh Index
+                  </button>
+                </div>
+
+                <div className="border border-neutral-200 rounded-xl overflow-hidden text-xs">
+                  <div className="grid grid-cols-3 bg-neutral-50 font-mono text-[9px] text-neutral-500 p-2 border-b border-neutral-200 uppercase font-bold tracking-wider">
+                    <span>Metric</span>
+                    <span className="text-center font-mono">Group A</span>
+                    <span className="text-right font-mono">Group B</span>
+                  </div>
+
+                  <div className="divide-y divide-neutral-150">
+                    <div className="grid grid-cols-3 p-2 text-neutral-700 font-medium">
+                      <span className="font-sans">Cohort Size</span>
+                      <span className="text-center font-mono">{analyticsStats?.totalA ?? 0}</span>
+                      <span className="text-right font-mono">{analyticsStats?.totalB ?? 0}</span>
+                    </div>
+
+                    <div className="grid grid-cols-3 p-2 text-neutral-700 font-medium">
+                      <span className="font-sans">Toggles Swapped</span>
+                      <span className="text-center font-mono">{analyticsStats?.activationsA ?? 0}</span>
+                      <span className="text-right font-mono text-indigo-600 font-bold">{analyticsStats?.activationsB ?? 0}</span>
+                    </div>
+
+                    <div className="grid grid-cols-3 p-2 text-neutral-700 font-medium">
+                      <span className="font-sans">Quiz Runs</span>
+                      <span className="text-center font-mono">{analyticsStats?.quizCompletionsA ?? 0}</span>
+                      <span className="text-right font-mono text-emerald-600 font-bold">{analyticsStats?.quizCompletionsB ?? 0}</span>
+                    </div>
+
+                    <div className="grid grid-cols-3 p-2 text-neutral-700 font-medium">
+                      <span className="font-sans">Avg Session time</span>
+                      <span className="text-center font-mono">{Math.round(analyticsStats?.avgEngagementSecsA ?? 0)}s</span>
+                      <span className="text-right font-mono text-orange-600 font-bold">{Math.round(analyticsStats?.avgEngagementSecsB ?? 0)}s</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hypothesis callout statement */}
+              <div className="bg-gradient-to-r from-purple-500/5 to-indigo-500/5 border border-purple-500/10 p-3 rounded-xl text-[10px] leading-relaxed text-indigo-950 font-sans">
+                <strong className="font-semibold block text-[#bf5af2] mb-0.5 font-display">💡 Core Metric Assumption</strong>
+                Our team assumes that introducing the structured learn Mode (Group B) will boost average active recall engagement session times by upwards of 150% and double quiz completion percentages over simple summary models (Group A).
+              </div>
+
+            </div>
+          </div>
+        )}
+      </div>
 
     </div>
   );

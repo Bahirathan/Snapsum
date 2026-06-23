@@ -12,6 +12,7 @@ import fs from 'fs';
 import { saveSummary, getSummary, listSummaries } from './server/summaryStore';
 import { getOrCreateReferralCode, recordReferral, getReferralCount, isLockedUnlocked } from './server/referralStore';
 import { saveSubscription, getSubscription } from './server/subscriptionStore';
+import { db } from './server/firestore';
 
 dotenv.config();
 
@@ -510,7 +511,7 @@ app.get('/s/:id/quiz/:score', async (req, res) => {
 
 // REST API endpoint: Video summarizer (YouTube and generic videos/pages)
 app.post('/api/summarize', async (req, res) => {
-  const { videoUrl, customTranscript, outputLanguage } = req.body;
+  const { videoUrl, customTranscript, outputLanguage, learnMode } = req.body;
 
   if (!videoUrl) {
     return res.status(400).json({ error: 'Video URL is required.' });
@@ -568,10 +569,25 @@ app.post('/api/summarize', async (req, res) => {
       ? '\nCRITICAL ARABIC INSTRUCTION:\nYou MUST generate all output text fields (including summary, takeaways, chapter titles, chapter takeaways, blogPost markdown structured text, twitterThread tweets, LinkedIn/Instagram socialSnippet, quiz questions/options/explanations, and all mindmap concepts, category names, and descriptions) natively and fully in ARABIC (العربية) language. Do NOT use English for any descriptive text inside the JSON payload. However, please ensure that the JSON structural keys (like "summary", "takeaways", "chapters", "blogPost", "twitterThread", etc.) remain strictly in English as defined below.'
       : '';
 
+    const learnModeInstruction = learnMode
+      ? `
+CRITICAL AI LEARNING PLATFORM - LEARN MODE ACTIVE INSTRUCTION:
+This request is evaluated under "Learn Mode – AI Structured Learning System". Integrate these properties in the JSON response:
+- "keyConcepts": An array of 3-6 core educational concepts from the video. Provide a "concept" label name, a precise academic/factual "definition", and a "simplifiedExplanation" (analogies, everyday examples, and clear language) that makes the concept easy to digest.
+- "flashcards": An array of 4-8 question/answer pairs (each card has a "question" and "answer") focusing on core mental models, definitions, or procedural steps for active recall.
+- "rememberSummary": A short, powerful summarized section ("What you should remember" / "Final Retention Checklist") for long-term retention.
+Customize the "quiz" to test conceptual understanding, critical thinking and deep comprehension rather than simple rote memory or trivia. Provide extremely educational and verbose explanations for answer choices.`
+      : `
+Since this is Summary Mode (Learn Mode inactive), you should:
+- Set "keyConcepts" to an empty array.
+- Set "flashcards" to an empty array.
+- Set "rememberSummary" to an empty string.`;
+
     const buildPromptWithTranscript = (videoTitle: string, inputChannel: string, contentSource: string) => `
 You are an expert AI video summaries creator and business consultant representing an elite monetization tool.
 Your goal is to digest the following video and extract highly valuable summaries, actionable chapters, interactive quizzes, standard mindmap nodes, creator monetization copy, and a viral Reel / Short video script.
 ${langInstruction}
+${learnModeInstruction}
 
 Video Title: "${videoTitle}"
 Creator / Host: "${inputChannel}"
@@ -597,6 +613,7 @@ Please analyze this transcript and fill out the detailed JSON structure:
 You are an expert AI video summaries creator representing a premium monetization tool.
 The user wants to summarize the video titled "${videoTitle}" by creator "${inputChannel}".
 ${langInstruction}
+${learnModeInstruction}
 
 Since direct transcript retrieval is not pre-extracted, use your Google Search tool or historical knowledge index to research and analyze this video, its core message, lessons, and content. If the URL points to a website, discover its content to draft an accurate analysis.
 Provide an extremely detailed, accurate summary, actionable chronological chapters, blog post copy, tweets, an educational quiz, structured mindmap nodes, and a viral short Reel script summarizing the main subject.
@@ -698,6 +715,30 @@ Generate a complete, high-quality summary and promotional asset package matching
             },
             required: ['title', 'hookType', 'estimatedDuration', 'themeSuggestion', 'scenes', 'readyMadeCaption', 'callToAction'],
           },
+          keyConcepts: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                concept: { type: Type.STRING },
+                definition: { type: Type.STRING },
+                simplifiedExplanation: { type: Type.STRING },
+              },
+              required: ['concept', 'definition', 'simplifiedExplanation'],
+            },
+          },
+          flashcards: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                question: { type: Type.STRING },
+                answer: { type: Type.STRING },
+              },
+              required: ['question', 'answer'],
+            },
+          },
+          rememberSummary: { type: Type.STRING },
         },
         required: [
           'summary',
@@ -709,6 +750,9 @@ Generate a complete, high-quality summary and promotional asset package matching
           'quiz',
           'mindmap',
           'reelScript',
+          'keyConcepts',
+          'flashcards',
+          'rememberSummary',
         ],
       },
     };
@@ -748,6 +792,7 @@ Generate a complete, high-quality summary and promotional asset package matching
     const richSummary = {
       metadata: fullMetadata,
       ...result,
+      learnModeEnabled: !!learnMode,
     };
     const shareId = await saveSummary(richSummary);
     richSummary.shareId = shareId;
@@ -759,6 +804,75 @@ Generate a complete, high-quality summary and promotional asset package matching
       error: 'Failed to generate summary. Details: ' + (err.message || String(err)),
     });
   }
+});
+
+// Learning tracking & analytics storage (in-memory fallback + firestore)
+const fallbackAnalytics: any[] = [];
+
+app.post('/api/learn/track', async (req, res) => {
+  const { videoId, experimentGroup, eventName, metadata } = req.body;
+  
+  const eventPayload = {
+    videoId,
+    experimentGroup: experimentGroup || 'B',
+    eventName,
+    metadata: metadata || {},
+    timestamp: new Date().toISOString(),
+    ip: req.ip || req.headers['x-forwarded-for'] || 'unknown',
+  };
+
+  if (db) {
+    try {
+      await db.collection('learn_analytics').add(eventPayload);
+      console.log(`Saved learn analytic event ${eventName} to Firestore.`);
+    } catch (err) {
+      console.error('Firestore learn_analytics failed, using fallback:', err);
+      fallbackAnalytics.push(eventPayload);
+    }
+  } else {
+    fallbackAnalytics.push(eventPayload);
+  }
+
+  return res.json({ success: true, event: eventPayload });
+});
+
+app.get('/api/learn/analytics', async (req, res) => {
+  let events = [];
+  if (db) {
+    try {
+      const snapshot = await db.collection('learn_analytics').get();
+      events = snapshot.docs.map(doc => doc.data());
+    } catch (err) {
+      console.error('Firestore get analytics failed, using fallback:', err);
+      events = fallbackAnalytics;
+    }
+  } else {
+    events = fallbackAnalytics;
+  }
+
+  const groupA = events.filter((e: any) => e.experimentGroup === 'A');
+  const groupB = events.filter((e: any) => e.experimentGroup === 'B');
+
+  const calcStats = (groupEvents: any[]) => {
+    const activations = groupEvents.filter((e: any) => e.eventName === 'learn_mode_activated' || e.eventName === 'summary_mode_activated');
+    const totalSessions = new Set(activations.map((e: any) => e.videoId)).size || 1;
+    const completedQuizzes = groupEvents.filter((e: any) => e.eventName === 'quiz_completed').length;
+    const engagementUpdates = groupEvents.filter((e: any) => e.eventName === 'engagement_update');
+    const totalEngagementSeconds = engagementUpdates.reduce((sum: number, e: any) => sum + (e.metadata?.seconds || 10), 0);
+    
+    return {
+      sessionsCount: totalSessions,
+      totalQuizCompleted: completedQuizzes,
+      totalEngagementMinutes: parseFloat((totalEngagementSeconds / 60).toFixed(1)),
+      averageEngagementSecondsPerSession: parseFloat((totalEngagementSeconds / totalSessions).toFixed(0)) || 0,
+    };
+  };
+
+  return res.json({
+    totalEvents: events.length,
+    groupAStats: calcStats(groupA),
+    groupBStats: calcStats(groupB),
+  });
 });
 
 // REST API endpoint: Text-to-Speech service using gemini-3.1-flash-tts-preview

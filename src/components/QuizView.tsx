@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QuizQuestion } from '../types';
 import { Check, X, RotateCcw, Award, Lightbulb, HelpCircle } from 'lucide-react';
 
 interface QuizViewProps {
   quiz: QuizQuestion[];
+  onComplete?: (score: number, maxScore: number) => void;
 }
 
 export default function QuizView(props: QuizViewProps) {
@@ -17,6 +18,17 @@ export default function QuizView(props: QuizViewProps) {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [showExplanation, setShowExplanation] = useState<boolean>(false);
   const [quizFinished, setQuizFinished] = useState<boolean>(false);
+
+  // Score count
+  const score = quiz.reduce((acc, q, index) => {
+    return acc + (selectedAnswers[index] === q.answerIndex ? 1 : 0);
+  }, 0);
+
+  useEffect(() => {
+    if (quizFinished) {
+      props.onComplete?.(score, quiz.length);
+    }
+  }, [quizFinished, score, quiz.length]);
 
   if (!quiz || quiz.length === 0) {
     return (
@@ -54,11 +66,6 @@ export default function QuizView(props: QuizViewProps) {
     setShowExplanation(false);
     setQuizFinished(false);
   };
-
-  // Score count
-  const score = quiz.reduce((acc, q, index) => {
-    return acc + (selectedAnswers[index] === q.answerIndex ? 1 : 0);
-  }, 0);
 
   if (quizFinished) {
     const passed = score >= quiz.length * 0.7;
