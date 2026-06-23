@@ -9,6 +9,7 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import dotenv from 'dotenv';
 import fs from 'fs';
+import crypto from 'crypto';
 import { saveSummary, getSummary, listSummaries } from './server/summaryStore';
 import { getOrCreateReferralCode, recordReferral, getReferralCount, isLockedUnlocked } from './server/referralStore';
 import { saveSubscription, getSubscription } from './server/subscriptionStore';
@@ -29,19 +30,12 @@ const ai = new GoogleGenAI({
   },
 });
 
-// Helper to get active Gemini client (with on-the-fly client-supplied custom API key header fallback to avoid billing blockages)
-function getGeminiClient(req: express.Request): GoogleGenAI {
-  const customKey = req.headers['x-custom-gemini-api-key'] as string;
-  if (customKey && customKey.trim().length > 10) {
-    return new GoogleGenAI({
-      apiKey: customKey.trim(),
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build-custom',
-        },
-      },
-    });
-  }
+// Helper to get active Gemini client.
+// SECURITY: previously this trusted a client-supplied 'x-custom-gemini-api-key' header
+// and would also bypass all rate limiting whenever that header was present. That allowed
+// any visitor to get unlimited free usage just by sending a header. Removed entirely —
+// the server always uses its own server-side configured API key.
+function getGeminiClient(_req: express.Request): GoogleGenAI {
   return ai;
 }
 
@@ -56,16 +50,15 @@ const ipUsageStorage = new Map<string, RateLimitUsage>();
 
 // Middleware/inline utility to check and increment daily IP request credits
 async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: boolean; count: number; limit: number; remaining: number }> {
-  // If user has set custom client-side Gemini key, they bypass any rate limits completely (zero server cost)
-  const customGeminiKey = req.headers['x-custom-gemini-api-key'] as string;
-  if (customGeminiKey && customGeminiKey.trim().length > 10) {
-    return { allowed: true, count: 0, limit: 99999, remaining: 99999 };
-  }
+  // SECURITY: removed the 'x-custom-gemini-api-key' bypass — a client could previously
+  // send any >10-char header value and get unlimited free usage at zero cost to them.
 
-  // Check for dynamic Creator Bypass Passcode (VIP Code) supplied via header
+  // VIP bypass code: this is a legitimate feature (give trusted creators/partners a code
+  // for unlimited access), but it must be configured server-side via VIP_BYPASS_CODE and
+  // must NOT have a hardcoded default — otherwise the bypass is effectively public.
+  const systemVipCode = (process.env.VIP_BYPASS_CODE || '').trim();
   const clientVipCode = req.headers['x-vip-bypass-code'] as string;
-  const systemVipCode = (process.env.VIP_BYPASS_CODE || 'PROPASS').trim();
-  if (clientVipCode && clientVipCode.trim() === systemVipCode) {
+  if (systemVipCode && clientVipCode && clientVipCode.trim() === systemVipCode) {
     return { allowed: true, count: 0, limit: 99999, remaining: 99999 };
   }
 
@@ -78,9 +71,9 @@ async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: 
     return { allowed: true, count: 0, limit: 99999, remaining: 99999 };
   }
 
-  // Retrieve limits configured in system (or overridden on the fly by admin headers)
-  const clientLimitHeader = req.headers['x-custom-free-reqs-limit'] ? parseInt(req.headers['x-custom-free-reqs-limit'] as string, 10) : null;
-  const limitSetting = (clientLimitHeader !== null && !isNaN(clientLimitHeader)) ? clientLimitHeader : parseInt(process.env.FREE_REQS_LIMIT || '3', 10);
+  // SECURITY: removed the 'x-custom-free-reqs-limit' header override — a client could
+  // previously tell the server what its own rate limit should be (e.g. 99999).
+  const limitSetting = parseInt(process.env.FREE_REQS_LIMIT || '3', 10);
   const now = Date.now();
 
   let usage = ipUsageStorage.get(ip);
@@ -767,13 +760,12 @@ Generate a complete, high-quality summary and promotional asset package matching
       config.tools = [{ googleSearch: {} }];
     }
 
-    // Embed customizable temperature parameter
-    const requestedTemp = req.headers['x-custom-gemini-temperature'] ? parseFloat(req.headers['x-custom-gemini-temperature'] as string) : undefined;
-    if (requestedTemp !== undefined && !isNaN(requestedTemp)) {
-      config.temperature = requestedTemp;
-    }
-
-    const requestedModel = (req.headers['x-custom-gemini-model'] as string) || 'gemini-3.5-flash';
+    // SECURITY/COST: previously a client could pick its own temperature AND model via
+    // headers ('x-custom-gemini-temperature' / 'x-custom-gemini-model'), with no
+    // validation — meaning anyone could direct your billed API key at an arbitrary,
+    // potentially far more expensive model. Both are now fixed server-side (temperature
+    // left at the Gemini API default, model pinned to a known value).
+    const requestedModel = 'gemini-3.5-flash';
     const activeAi = getGeminiClient(req);
     const response = await activeAi.models.generateContent({
       model: requestedModel,
@@ -931,8 +923,8 @@ app.get('/api/usage-status', (req, res) => {
 
   // Check if current VIP passcode is active
   const clientVipCode = req.headers['x-vip-bypass-code'] as string;
-  const systemVipCode = (process.env.VIP_BYPASS_CODE || 'PROPASS').trim();
-  const vipBypassActive = clientVipCode && clientVipCode.trim() === systemVipCode;
+  const systemVipCode = (process.env.VIP_BYPASS_CODE || '').trim();
+  const vipBypassActive = !!(systemVipCode && clientVipCode && clientVipCode.trim() === systemVipCode);
 
   res.json({
     ip,
@@ -1016,8 +1008,16 @@ app.post('/api/admin/auth', (req, res) => {
     });
   }
 
-  const systemUser = (process.env.ADMIN_USER_ID || 'admin').trim();
-  const systemPass = (process.env.ADMIN_PASSWORD || 'SnapSumAdmin2026!').trim();
+  const systemUser = (process.env.ADMIN_USER_ID || '').trim();
+  const systemPass = (process.env.ADMIN_PASSWORD || '').trim();
+
+  // SECURITY: fail closed if admin credentials aren't configured server-side.
+  // Previously this fell back to a hardcoded 'admin' / 'SnapSumAdmin2026!' pair,
+  // which meant the admin panel was openly accessible to anyone if the env vars
+  // were ever missing in production.
+  if (!systemUser || !systemPass) {
+    return res.status(503).json({ error: 'Admin login is not configured on this server.' });
+  }
 
   // 2. Validate Credentials
   const usernameMatch = username === systemUser;
@@ -1047,10 +1047,15 @@ app.post('/api/admin/auth', (req, res) => {
     });
   }
 
-  // 3. Multi-Factor Authentication Verification (High-end challenge)
-  // We support an optional secure MFA passcode: "771993" as the secure backup key
-  // or a system-wide developer standard code. If not provided or wrong:
-  if (mfaCode && mfaCode.trim().replace(/\s+/g, '') !== '771993') {
+  // Multi-Factor Authentication Verification (High-end challenge)
+  // SECURITY: the MFA code must come from server config — it was previously hardcoded
+  // as "771993" directly in source (and even duplicated into the frontend bundle as an
+  // "autofill" convenience), which defeats the purpose of MFA entirely.
+  const systemMfaCode = (process.env.ADMIN_MFA_CODE || '').trim();
+  if (!systemMfaCode) {
+    return res.status(503).json({ error: 'Admin MFA is not configured on this server.' });
+  }
+  if (mfaCode && mfaCode.trim().replace(/\s+/g, '') !== systemMfaCode) {
     const attempts = lockout ? lockout.attempts + 1 : 1;
     const lockedUntil = attempts >= 5 ? now + 180000 : 0;
     adminLockouts.set(ip, { attempts, lockedUntil });
@@ -1083,7 +1088,7 @@ app.post('/api/admin/auth', (req, res) => {
 
   // 4. Auth Success -> Reset lockout state
   adminLockouts.delete(ip);
-  const secureToken = `sess_adm_${Buffer.from(Math.random().toString() + Date.now()).toString('base64').replace(/[^a-zA-Z0-9]/g, '').substring(0, 32)}`;
+  const secureToken = `sess_adm_${crypto.randomBytes(32).toString('hex')}`;
   activeAdminSessions.add(secureToken);
 
   adminAuditLogs.unshift({
@@ -1196,12 +1201,12 @@ app.post('/api/admin/ip-reset', (req, res) => {
 });
 
 app.get('/api/stripe-status', (req, res) => {
-  const customSecret = req.headers['x-custom-stripe-secret-key'] as string;
-  const customPublishable = req.headers['x-custom-stripe-publishable-key'] as string;
-
+  // SECURITY: previously trusted client-supplied 'x-custom-stripe-secret-key' /
+  // 'x-custom-stripe-publishable-key' headers. Stripe keys must only ever come from
+  // server-side env vars — a client should never be able to inject its own.
   res.json({
-    stripeConfigured: !!(customSecret || process.env.STRIPE_SECRET_KEY),
-    publishableKey: customPublishable || process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
+    stripeConfigured: !!process.env.STRIPE_SECRET_KEY,
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
   });
 });
 
@@ -1225,7 +1230,8 @@ app.get('/api/subscription-status', async (req, res) => {
 
 app.post('/api/create-checkout-session', async (req, res) => {
   const { planCode, billingCycle, returnUrl } = req.body;
-  const stripeSecretKey = (req.headers['x-custom-stripe-secret-key'] as string) || process.env.STRIPE_SECRET_KEY;
+  // SECURITY: Stripe secret key must only come from server env — never from a client header.
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
   if (!stripeSecretKey) {
     return res.status(400).json({ error: 'Stripe Secret Key is missing. Connect your live Stripe key via AI Studio settings or direct in-app Developer override.' });
