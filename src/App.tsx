@@ -49,6 +49,7 @@ import {
 import { PRELOADED_VIDEOS } from './preloadedData';
 import { YouTubeSummaryResponse, SavedSummary } from './types';
 import { LearningProgressDashboard, ActiveLearningDashboard } from './components/LearningDashboard';
+import { CinematicExplainer } from './components/CinematicExplainer';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
 
 const getOrGenerateReelScript = (summary: YouTubeSummaryResponse | null): any => {
@@ -2245,7 +2246,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       </button>
                       <button
                         onClick={() => {
-                          document.getElementById('live-interactive-preview')?.scrollIntoView({ behavior: 'smooth' });
+                          document.getElementById('cinematic-theater')?.scrollIntoView({ behavior: 'smooth' });
                         }}
                         className="w-full sm:w-auto bg-neutral-100 hover:bg-neutral-250 text-neutral-800 font-semibold text-sm px-8 py-4.5 rounded-full transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer border border-neutral-300/40 leading-none"
                       >
@@ -2339,6 +2340,30 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </div>
                   </div>
 
+                </div>
+              </div>
+            </section>
+
+            {/* 🎬 CINEMATIC THEATER SECTION */}
+            <section id="cinematic-theater" className="w-full bg-[#f5f5f7] py-16 sm:py-20 border-b border-black/[0.03] scroll-mt-20 text-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-radial-gradient from-indigo-500/[0.02] via-transparent to-transparent pointer-events-none"></div>
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+                
+                <div className="space-y-4 max-w-3xl mx-auto">
+                  <div className="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-150 px-3.5 py-1 rounded-full text-xs font-mono font-bold text-indigo-700 uppercase shadow-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-600 fill-indigo-600/10" />
+                    <span>60-Second Apple-Style Cinematic Tour</span>
+                  </div>
+                  <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-neutral-900 leading-tight">
+                    Turn Any Video Into Structured Knowledge
+                  </h2>
+                  <p className="text-neutral-500 font-light text-base sm:text-lg max-w-2xl mx-auto">
+                    Experience how SnapSum compiles raw multimedia streams into interactive chapters, high-clarity conceptual notes, and retention test quizzes. Watch our live-rendered spec explainer block below.
+                  </p>
+                </div>
+
+                <div className="transition duration-500 hover:shadow-xl rounded-3xl">
+                  <CinematicExplainer onStartLearning={() => setCurrentScreen('app')} />
                 </div>
               </div>
             </section>
