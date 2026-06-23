@@ -31,11 +31,21 @@ const ai = new GoogleGenAI({
 });
 
 // Helper to get active Gemini client.
-// SECURITY: previously this trusted a client-supplied 'x-custom-gemini-api-key' header
-// and would also bypass all rate limiting whenever that header was present. That allowed
-// any visitor to get unlimited free usage just by sending a header. Removed entirely —
-// the server always uses its own server-side configured API key.
-function getGeminiClient(_req: express.Request): GoogleGenAI {
+// SECURITY: Support client-supplied 'x-custom-gemini-api-key' securely so that users
+// can pay for their own API usage. If and only if a valid custom key is specified, we
+// instantiate a new Gemini client with that key, letting them securely bypass server rate limits at zero cost to us.
+function getGeminiClient(req: express.Request): GoogleGenAI {
+  const customKey = req.headers['x-custom-gemini-api-key'] as string;
+  if (customKey && customKey.trim().length > 10) {
+    return new GoogleGenAI({
+      apiKey: customKey.trim(),
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build-custom',
+        },
+      },
+    });
+  }
   return ai;
 }
 
@@ -50,8 +60,12 @@ const ipUsageStorage = new Map<string, RateLimitUsage>();
 
 // Middleware/inline utility to check and increment daily IP request credits
 async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: boolean; count: number; limit: number; remaining: number }> {
-  // SECURITY: removed the 'x-custom-gemini-api-key' bypass — a client could previously
-  // send any >10-char header value and get unlimited free usage at zero cost to them.
+  // If the user has supplied a valid custom Gemini key, they run on their own quota
+  // so we bypass local server rate limits completely (zero server cost).
+  const customGeminiKey = req.headers['x-custom-gemini-api-key'] as string;
+  if (customGeminiKey && customGeminiKey.trim().length > 10) {
+    return { allowed: true, count: 0, limit: 99999, remaining: 99999 };
+  }
 
   // VIP bypass code: this is a legitimate feature (give trusted creators/partners a code
   // for unlimited access), but it must be configured server-side via VIP_BYPASS_CODE and
