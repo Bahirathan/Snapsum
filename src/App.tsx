@@ -6445,28 +6445,30 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               )}
 
               {/* Real Developer integration tutorial footer */}
-              <div className="mt-6 p-6 bg-[#1d1d1f] text-neutral-300 rounded-2xl space-y-3 text-left font-sans">
-                <h4 className="text-xs font-bold font-mono text-neutral-200 uppercase tracking-widest flex items-center gap-1.5 border-b border-white/[0.08] pb-3 select-none">
-                  <Lock className="w-4 h-4 text-[#86868b]" />
-                  Real Payment Setup Blueprint for MVP Release
-                </h4>
-                <p className="text-xs leading-relaxed text-neutral-305 font-light">
-                  To transition this MVP to collect active customer funds, connect the server-side API proxy to a live <strong className="text-white">Stripe Checkout session</strong>. Using our structure:
-                </p>
-                <div className="bg-black/35 rounded-xl p-4 font-mono text-[11px] text-slate-300 space-y-2.5 overflow-x-auto text-left leading-relaxed border border-white/[0.03]">
-                  <div><span className="text-amber-400 font-semibold">// 1. Server API endpoint (Express)</span></div>
-                  <div><code className="text-emerald-400 font-medium">app.post('/api/create-checkout', async (req, res) =&gt; &#123;</code></div>
-                  <div className="pl-4"><code className="text-slate-300">const session = await stripe.checkout.sessions.create(&#123;</code></div>
-                  <div className="pl-8"><code className="text-slate-300">payment_method_types: ['card'],</code></div>
-                  <div className="pl-8"><code className="text-slate-300">line_items: [&#123; price: 'price_H4kd9eK...', quantity: 1 &#125;],</code></div>
-                  <div className="pl-8"><code className="text-slate-300">mode: 'subscription',</code></div>
-                  <div className="pl-8"><code className="text-slate-300">success_url: '$&#123;YOUR_WEBSITE_DOMAIN&#125;/billing?session_id=&#123;CHECKOUT_SESSION_ID&#125;',</code></div>
-                  <div className="pl-8"><code className="text-slate-300">cancel_url: '$&#123;YOUR_WEBSITE_DOMAIN&#125;/billing',</code></div>
-                  <div className="pl-4"><code className="text-slate-300">&#125;);</code></div>
-                  <div className="pl-4"><code className="text-slate-300">res.json(&#123; url: session.url &#125;);</code></div>
-                  <div><code className="text-emerald-400 font-medium">&#125;);</code></div>
+              {isAdminAuthenticated && (
+                <div className="mt-6 p-6 bg-[#1d1d1f] text-neutral-300 rounded-2xl space-y-3 text-left font-sans">
+                  <h4 className="text-xs font-bold font-mono text-neutral-200 uppercase tracking-widest flex items-center gap-1.5 border-b border-white/[0.08] pb-3 select-none">
+                    <Lock className="w-4 h-4 text-[#86868b]" />
+                    Real Payment Setup Blueprint for MVP Release
+                  </h4>
+                  <p className="text-xs leading-relaxed text-neutral-305 font-light">
+                    To transition this MVP to collect active customer funds, connect the server-side API proxy to a live <strong className="text-white">Stripe Checkout session</strong>. Using our structure:
+                  </p>
+                  <div className="bg-black/35 rounded-xl p-4 font-mono text-[11px] text-slate-300 space-y-2.5 overflow-x-auto text-left leading-relaxed border border-white/[0.03]">
+                    <div><span className="text-amber-400 font-semibold">// 1. Server API endpoint (Express)</span></div>
+                    <div><code className="text-emerald-400 font-medium">app.post('/api/create-checkout', async (req, res) =&gt; &#123;</code></div>
+                    <div className="pl-4"><code className="text-slate-300">const session = await stripe.checkout.sessions.create(&#123;</code></div>
+                    <div className="pl-8"><code className="text-slate-300">payment_method_types: ['card'],</code></div>
+                    <div className="pl-8"><code className="text-slate-300">line_items: [&#123; price: 'price_H4kd9eK...', quantity: 1 &#125;],</code></div>
+                    <div className="pl-8"><code className="text-slate-300">mode: 'subscription',</code></div>
+                    <div className="pl-8"><code className="text-slate-300">success_url: '$&#123;YOUR_WEBSITE_DOMAIN&#125;/billing?session_id=&#123;CHECKOUT_SESSION_ID&#125;',</code></div>
+                    <div className="pl-8"><code className="text-slate-300">cancel_url: '$&#123;YOUR_WEBSITE_DOMAIN&#125;/billing',</code></div>
+                    <div className="pl-4"><code className="text-slate-300">&#125;);</code></div>
+                    <div className="pl-4"><code className="text-slate-300">res.json(&#123; url: session.url &#125;);</code></div>
+                    <div><code className="text-emerald-400 font-medium">&#125;);</code></div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
