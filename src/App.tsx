@@ -5943,10 +5943,12 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <span>Monetization & Billing Dashboard</span>
                   </div>
                   <h2 className="text-2xl font-bold text-[#1d1d1f] tracking-tight font-sans">
-                    Professional Revenue Generation Model
+                    {isAdminAuthenticated ? "Professional Revenue Generation Model" : "Premium Upgrade Options"}
                   </h2>
                   <p className="text-[#86868b] text-sm max-w-xl leading-relaxed font-light">
-                    Manage your subscriptions, view pricing packages, and simulate Stripe gateway integrations to validate MVP customer billing instantly.
+                    {isAdminAuthenticated 
+                      ? "Manage your subscriptions, view pricing packages, and simulate Stripe gateway integrations to validate MVP customer billing instantly."
+                      : "Unlock unlimited processing, premium voiceovers, custom summary presets, and high-quality document downloads."}
                   </p>
                 </div>
 
@@ -6245,8 +6247,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               {/* Monthly / Yearly Billing Cycle Switcher */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 text-left">
                 <div>
-                  <h3 className="text-sm font-semibold text-[#1d1d1f]">Choose a package for your MVP testing</h3>
-                  <p className="text-[#86868b] text-xs font-light">Mock transactions will securely simulate real customer handshakes.</p>
+                  <h3 className="text-sm font-semibold text-[#1d1d1f]">
+                    {isAdminAuthenticated ? "Choose a package for your MVP testing" : "Choose the perfect plan for you"}
+                  </h3>
+                  <p className="text-[#86868b] text-xs font-light">
+                    {isAdminAuthenticated 
+                      ? "Mock transactions will securely simulate real customer handshakes."
+                      : "Find a flexible plan that aligns with your scale and requirements."}
+                  </p>
                 </div>
                 
                 {/* Toggle Switch */}
@@ -6281,8 +6289,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   <div className="space-y-4">
                     <div className="space-y-1">
                       <span className="text-[10px] font-mono font-bold uppercase text-[#86868b] tracking-widest block">Tier 01</span>
-                      <h4 className="text-lg font-bold text-[#1d1d1f]">Free Explorer Sandbox</h4>
-                      <p className="text-[#86868b] text-xs font-light leading-relaxed">Perfect to let prospective leads sample basic capabilities.</p>
+                      <h4 className="text-lg font-bold text-[#1d1d1f]">
+                        {isAdminAuthenticated ? "Free Explorer Sandbox" : "Basic Starter"}
+                      </h4>
+                      <p className="text-[#86868b] text-xs font-light leading-relaxed">
+                        {isAdminAuthenticated 
+                          ? "Perfect to let prospective leads sample basic capabilities." 
+                          : "Explore standard summaries and get acquainted with our core engine."}
+                      </p>
                     </div>
                     
                     <div className="py-2">
@@ -6377,7 +6391,12 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         className="w-full bg-[#0071e3] hover:bg-[#0077ed] text-white py-3 rounded-xl text-xs font-semibold block text-center transition cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
                       >
                         <Zap className="w-3.5 h-3.5 fill-white" />
-                        <span>{stripeConfig.stripeConfigured ? 'Subscribe Now (Secure Stripe)' : 'Simulate checkout (Stripe)'}</span>
+                        <span>
+                          {isAdminAuthenticated 
+                            ? (stripeConfig.stripeConfigured ? 'Subscribe Now (Secure Stripe)' : 'Simulate checkout (Stripe)')
+                            : 'Subscribe Now'
+                          }
+                        </span>
                       </button>
                     )}
                   </div>
@@ -6425,7 +6444,12 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       onClick={() => handleCheckoutClick('enterprise')}
                       className="w-full bg-[#1d1d1f] hover:bg-black text-white py-3 rounded-xl text-xs font-semibold block text-center transition cursor-pointer"
                     >
-                      <span>{stripeConfig.stripeConfigured ? 'Start Enterprise Pass (Stripe)' : 'Simulate checkout (Stripe)'}</span>
+                      <span>
+                        {isAdminAuthenticated 
+                          ? (stripeConfig.stripeConfigured ? 'Start Enterprise Pass (Stripe)' : 'Simulate checkout (Stripe)')
+                          : 'Upgrade to Enterprise'
+                        }
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -6433,7 +6457,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               </div>
 
               {/* Developer Sandbox downgrader button */}
-              {isPremium && (
+              {isPremium && isAdminAuthenticated && (
                 <div className="pt-4 text-center">
                   <button
                     onClick={() => savePremiumStatus(false)}
