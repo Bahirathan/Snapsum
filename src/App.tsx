@@ -5970,271 +5970,277 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               </div>
 
               {/* Stripe Connection Real-Time Status Badge */}
-              <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-left ${
-                stripeConfig.stripeConfigured 
-                  ? 'bg-emerald-500/[0.02] border-emerald-500/20' 
-                  : 'bg-[#f5f5f7]/60 border-black/[0.03]'
-              }`}>
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="relative flex h-2.5 w-2.5">
-                      {stripeConfig.stripeConfigured && (
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      )}
-                      <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${stripeConfig.stripeConfigured ? 'bg-emerald-500' : 'bg-[#86868b]'}`}></span>
-                    </span>
-                    <h4 className="text-[11px] font-extrabold text-[#1d1d1f] uppercase tracking-wider font-mono">
-                      {stripeConfig.stripeConfigured ? 'Stripe Gateway STATUS: LIVE INTEGRATION' : 'Stripe Gateway STATUS: LOCAL SANDBOX'}
-                    </h4>
+              {isAdminAuthenticated && (
+                <div className={`p-5 rounded-2xl border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-left ${
+                  stripeConfig.stripeConfigured 
+                    ? 'bg-emerald-500/[0.02] border-emerald-500/20' 
+                    : 'bg-[#f5f5f7]/60 border-black/[0.03]'
+                }`}>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="relative flex h-2.5 w-2.5">
+                        {stripeConfig.stripeConfigured && (
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        )}
+                        <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${stripeConfig.stripeConfigured ? 'bg-emerald-500' : 'bg-[#86868b]'}`}></span>
+                      </span>
+                      <h4 className="text-[11px] font-extrabold text-[#1d1d1f] uppercase tracking-wider font-mono">
+                        {stripeConfig.stripeConfigured ? 'Stripe Gateway STATUS: LIVE INTEGRATION' : 'Stripe Gateway STATUS: LOCAL SANDBOX'}
+                      </h4>
+                    </div>
+                    <p className="text-[11px] text-[#86868b] leading-relaxed max-w-xl font-light">
+                      {stripeConfig.stripeConfigured 
+                        ? 'Secure bank connections are established! Clicking subscribe buttons will forward clients to secure Stripe invoice lines so credit card funds deposit into your financial entity.'
+                        : 'Mock transactions are running on the client browser. To connect live payments and receive credit card funds to your bank account, configure STRIPE_SECRET_KEY in your AI Studio settings.'}
+                    </p>
                   </div>
-                  <p className="text-[11px] text-[#86868b] leading-relaxed max-w-xl font-light">
-                    {stripeConfig.stripeConfigured 
-                      ? 'Secure bank connections are established! Clicking subscribe buttons will forward clients to secure Stripe invoice lines so credit card funds deposit into your financial entity.'
-                      : 'Mock transactions are running on the client browser. To connect live payments and receive credit card funds to your bank account, configure STRIPE_SECRET_KEY in your AI Studio settings.'}
-                  </p>
-                </div>
-                
-                <div className="text-[11px] font-mono shrink-0">
-                  {stripeConfig.stripeConfigured ? (
-                    <span className="font-bold text-emerald-600 bg-emerald-500/5 px-3 py-1.5 rounded-xl border border-emerald-500/10 whitespace-nowrap">
-                      🟢 Live Mode Connected
-                    </span>
-                  ) : (
-                    <span className="font-semibold text-[#86868b] bg-black/[0.03] px-3 py-1.5 rounded-xl border border-black/[0.02] whitespace-nowrap">
-                      🟡 Sandbox Simulator
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* ZERO-COST MVP DEV SANDBOX: CUSTOM GEMINI API KEY */}
-              <div className="p-6 rounded-3xl border border-blue-100 bg-blue-50/20 text-left space-y-4 font-sans">
-                <div className="flex items-center gap-2 text-blue-800">
-                  <Server className="w-5 h-5 text-blue-700" />
-                  <h3 className="font-bold text-sm tracking-tight text-blue-950">Zero-Cost MVP Launchpad & Developer Sandbox</h3>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed max-w-4xl font-light">
-                  To get real market validation, run your SnapSum MVP at <strong>$0 hosting and API costs</strong>! By pasting your personal <strong>Google Gemini API Key</strong> below, it will be saved securely in your browser's private <code>localStorage</code>. All summaries and premium audio voiceovers will execute utilizing your personal free-tier sandbox. This completely bypasses server quota blocks and costs you absolutely nothing!
-                </p>
-
-                <div className="max-w-xl space-y-2">
-                  <div className="flex gap-2.5">
-                    <input
-                      type="password"
-                      placeholder="Paste your private personal Gemini API key here (AI_...) or leave blank to use the default"
-                      value={customApiKey}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setCustomApiKey(val);
-                        if (val.trim()) {
-                          localStorage.setItem('custom_gemini_api_key', val.trim());
-                        } else {
-                          localStorage.removeItem('custom_gemini_api_key');
-                        }
-                      }}
-                      className="flex-1 px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-blue-500 font-mono shadow-sm"
-                    />
-                    {customApiKey && (
-                      <button
-                        onClick={() => {
-                          setCustomApiKey('');
-                          localStorage.removeItem('custom_gemini_api_key');
-                        }}
-                        className="px-3.5 py-2 text-xs hover:bg-neutral-100/60 text-neutral-600 rounded-xl border border-black/[0.08] transition whitespace-nowrap font-medium cursor-pointer"
-                      >
-                        Clear Key
-                      </button>
+                  
+                  <div className="text-[11px] font-mono shrink-0">
+                    {stripeConfig.stripeConfigured ? (
+                      <span className="font-bold text-emerald-600 bg-emerald-500/5 px-3 py-1.5 rounded-xl border border-emerald-500/10 whitespace-nowrap">
+                        🟢 Live Mode Connected
+                      </span>
+                    ) : (
+                      <span className="font-semibold text-[#86868b] bg-black/[0.03] px-3 py-1.5 rounded-xl border border-black/[0.02] whitespace-nowrap">
+                        🟡 Sandbox Simulator
+                      </span>
                     )}
                   </div>
-                  <span className="block text-[10px] text-slate-500 font-light">
-                    🔑 Security: Your API key is cached locally inside your browser's private state, keeping it completely immune to leaking over open servers.
-                  </span>
                 </div>
+              )}
 
-                <div className="pt-3.5 border-t border-blue-100/50 space-y-2">
-                  <h4 className="text-xs font-bold text-blue-950 leading-none">🚀 How to host this full-stack MVP entirely for free:</h4>
-                  <ul className="text-[11px] text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed font-light">
-                    <li>
-                      <strong>Avoid Google Cloud Run for $0 Budgets</strong>: Cloud Run & GCP Artifact Registry require linking an active payment billing profile, which is why your GitHub Actions push errored with <code>BILLING_DISABLED</code>.
-                    </li>
-                    <li>
-                      <strong>Use Render.com or Koyeb instead</strong>: These platforms feature robust <strong>Free Tiers for Node.js</strong> servers which require no credit cards or billing setup to deploy! This Express + Vite project will compile and deploy on them out-of-the-box.
-                    </li>
-                    <li>
-                      <strong>Try Static Hosting like Vercel or Netlify</strong>: By relying on your custom Gemini API key above, you can export this React project as a purely static site and deploy it instantly for $0.
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Dynamic Rate Control Center & Stripe Integration Hub */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2 text-left">
-                
-                {/* CARD 1: RATE LIMITS & ACCESS PROTECTION */}
-                <div className="p-6 rounded-3xl border border-rose-100 bg-rose-50/10 text-left space-y-4 font-sans">
-                  <div className="flex items-center gap-2 text-rose-800">
-                    <Lock className="w-5 h-5 text-rose-700" />
-                    <h3 className="font-bold text-sm tracking-tight text-rose-950">
-                      Rate Limiting & Guest Control Suite
-                    </h3>
+              {/* ZERO-COST MVP DEV SANDBOX: CUSTOM GEMINI API KEY */}
+              {isAdminAuthenticated && (
+                <div className="p-6 rounded-3xl border border-blue-100 bg-blue-50/20 text-left space-y-4 font-sans">
+                  <div className="flex items-center gap-2 text-blue-800">
+                    <Server className="w-5 h-5 text-blue-700" />
+                    <h3 className="font-bold text-sm tracking-tight text-blue-950">Zero-Cost MVP Launchpad & Developer Sandbox</h3>
                   </div>
-                  <p className="text-xs text-[#515154] leading-relaxed font-light">
-                    Prevent guest users from spamming your default server credits! This engine automatically rate-limits individual guest IP addresses to a max daily allowance.
+                  <p className="text-xs text-slate-600 leading-relaxed max-w-4xl font-light">
+                    To get real market validation, run your SnapSum MVP at <strong>$0 hosting and API costs</strong>! By pasting your personal <strong>Google Gemini API Key</strong> below, it will be saved securely in your browser's private <code>localStorage</code>. All summaries and premium audio voiceovers will execute utilizing your personal free-tier sandbox. This completely bypasses server quota blocks and costs you absolutely nothing!
                   </p>
 
-                  {/* Active meter badge or status */}
-                  <div className="bg-white p-4 rounded-2xl border border-rose-100/60 shadow-sm space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-semibold text-rose-950">Your Guest IP Limit Profile:</span>
-                      {usageTracker.vipBypassActive || isPremium ? (
-                        <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider">
-                          Unlocked (VIP Bypass)
-                        </span>
-                      ) : (
-                        <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold">
-                          Standard Guest Limit
-                        </span>
+                  <div className="max-w-xl space-y-2">
+                    <div className="flex gap-2.5">
+                      <input
+                        type="password"
+                        placeholder="Paste your private personal Gemini API key here (AI_...) or leave blank to use the default"
+                        value={customApiKey}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCustomApiKey(val);
+                          if (val.trim()) {
+                            localStorage.setItem('custom_gemini_api_key', val.trim());
+                          } else {
+                            localStorage.removeItem('custom_gemini_api_key');
+                          }
+                        }}
+                        className="flex-1 px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-blue-500 font-mono shadow-sm"
+                      />
+                      {customApiKey && (
+                        <button
+                          onClick={() => {
+                            setCustomApiKey('');
+                            localStorage.removeItem('custom_gemini_api_key');
+                          }}
+                          className="px-3.5 py-2 text-xs hover:bg-neutral-100/60 text-neutral-600 rounded-xl border border-black/[0.08] transition whitespace-nowrap font-medium cursor-pointer"
+                        >
+                          Clear Key
+                        </button>
                       )}
                     </div>
+                    <span className="block text-[10px] text-slate-500 font-light">
+                      🔑 Security: Your API key is cached locally inside your browser's private state, keeping it completely immune to leaking over open servers.
+                    </span>
+                  </div>
 
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between text-[11px] text-slate-500 font-mono">
-                        <span>Daily Credit Allocation:</span>
-                        <span className="font-bold text-slate-800">
-                          {usageTracker.vipBypassActive || isPremium ? 'Unlimited' : `${usageTracker.count} / ${usageTracker.limit} used`}
+                  <div className="pt-3.5 border-t border-blue-100/50 space-y-2">
+                    <h4 className="text-xs font-bold text-blue-950 leading-none">🚀 How to host this full-stack MVP entirely for free:</h4>
+                    <ul className="text-[11px] text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed font-light">
+                      <li>
+                        <strong>Avoid Google Cloud Run for $0 Budgets</strong>: Cloud Run & GCP Artifact Registry require linking an active payment billing profile, which is why your GitHub Actions push errored with <code>BILLING_DISABLED</code>.
+                      </li>
+                      <li>
+                        <strong>Use Render.com or Koyeb instead</strong>: These platforms feature robust <strong>Free Tiers for Node.js</strong> servers which require no credit cards or billing setup to deploy! This Express + Vite project will compile and deploy on them out-of-the-box.
+                      </li>
+                      <li>
+                        <strong>Try Static Hosting like Vercel or Netlify</strong>: By relying on your custom Gemini API key above, you can export this React project as a purely static site and deploy it instantly for $0.
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* Dynamic Rate Control Center & Stripe Integration Hub */}
+              {isAdminAuthenticated && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2 text-left">
+                  
+                  {/* CARD 1: RATE LIMITS & ACCESS PROTECTION */}
+                  <div className="p-6 rounded-3xl border border-rose-100 bg-rose-50/10 text-left space-y-4 font-sans">
+                    <div className="flex items-center gap-2 text-rose-800">
+                      <Lock className="w-5 h-5 text-rose-700" />
+                      <h3 className="font-bold text-sm tracking-tight text-rose-950">
+                        Rate Limiting & Guest Control Suite
+                      </h3>
+                    </div>
+                    <p className="text-xs text-[#515154] leading-relaxed font-light">
+                      Prevent guest users from spamming your default server credits! This engine automatically rate-limits individual guest IP addresses to a max daily allowance.
+                    </p>
+
+                    {/* Active meter badge or status */}
+                    <div className="bg-white p-4 rounded-2xl border border-rose-100/60 shadow-sm space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-semibold text-rose-950">Your Guest IP Limit Profile:</span>
+                        {usageTracker.vipBypassActive || isPremium ? (
+                          <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider">
+                            Unlocked (VIP Bypass)
+                          </span>
+                        ) : (
+                          <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold">
+                            Standard Guest Limit
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-[11px] text-slate-500 font-mono">
+                          <span>Daily Credit Allocation:</span>
+                          <span className="font-bold text-slate-800">
+                            {usageTracker.vipBypassActive || isPremium ? 'Unlimited' : `${usageTracker.count} / ${usageTracker.limit} used`}
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full transition-all duration-300 ${usageTracker.vipBypassActive || isPremium ? 'bg-emerald-500 w-full' : 'bg-rose-500'}`} 
+                            style={{ width: usageTracker.vipBypassActive || isPremium ? '100%' : `${Math.min(100, (usageTracker.count / usageTracker.limit) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="block text-[10px] text-[#86868b] font-light pt-0.5">
+                          🔄 Limit automatically resets every 24 hours back to full credits.
                         </span>
                       </div>
-                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full transition-all duration-300 ${usageTracker.vipBypassActive || isPremium ? 'bg-emerald-500 w-full' : 'bg-rose-500'}`} 
-                          style={{ width: usageTracker.vipBypassActive || isPremium ? '100%' : `${Math.min(100, (usageTracker.count / usageTracker.limit) * 100)}%` }}
+                    </div>
+
+                    {/* VIP Access Code input */}
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-bold text-rose-950 uppercase tracking-wider font-mono">
+                        VIP Access Passcode (Creator Bypass)
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="password"
+                          placeholder="Enter VIP code (e.g. PROPASS)"
+                          value={customVipCode}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setCustomVipCode(val);
+                            if (val.trim()) {
+                              localStorage.setItem('custom_vip_code', val.trim());
+                              if (val.trim() === 'PROPASS') {
+                                setIsPremium(true);
+                              }
+                            } else {
+                              localStorage.removeItem('custom_vip_code');
+                              localStorage.removeItem('youtube_summarizer_premium');
+                              setIsPremium(false);
+                            }
+                          }}
+                          className="flex-1 px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-rose-500 font-mono shadow-sm"
                         />
+                        {customVipCode && (
+                          <button
+                            onClick={() => {
+                              setCustomVipCode('');
+                              localStorage.removeItem('custom_vip_code');
+                              localStorage.removeItem('youtube_summarizer_premium');
+                              setIsPremium(false);
+                            }}
+                            className="px-3.5 py-2 text-xs hover:bg-neutral-100/60 text-neutral-600 rounded-xl border border-black/[0.08] transition whitespace-nowrap font-medium cursor-pointer"
+                          >
+                            Clear
+                          </button>
+                        )}
                       </div>
-                      <span className="block text-[10px] text-[#86868b] font-light pt-0.5">
-                        🔄 Limit automatically resets every 24 hours back to full credits.
+                      <span className="block text-[10px] text-slate-500 leading-normal font-light">
+                        🔑 Host instructions: Provide VIPs with the <code>VIP_BYPASS_CODE</code> (default: <code>PROPASS</code>) to grant premium access instantly without payment!
                       </span>
                     </div>
                   </div>
 
-                  {/* VIP Access Code input */}
-                  <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold text-rose-950 uppercase tracking-wider font-mono">
-                      VIP Access Passcode (Creator Bypass)
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="password"
-                        placeholder="Enter VIP code (e.g. PROPASS)"
-                        value={customVipCode}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setCustomVipCode(val);
-                          if (val.trim()) {
-                            localStorage.setItem('custom_vip_code', val.trim());
-                            if (val.trim() === 'PROPASS') {
-                              setIsPremium(true);
-                            }
-                          } else {
-                            localStorage.removeItem('custom_vip_code');
-                            localStorage.removeItem('youtube_summarizer_premium');
-                            setIsPremium(false);
-                          }
-                        }}
-                        className="flex-1 px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-rose-500 font-mono shadow-sm"
-                      />
-                      {customVipCode && (
-                        <button
-                          onClick={() => {
-                            setCustomVipCode('');
-                            localStorage.removeItem('custom_vip_code');
-                            localStorage.removeItem('youtube_summarizer_premium');
-                            setIsPremium(false);
-                          }}
-                          className="px-3.5 py-2 text-xs hover:bg-neutral-100/60 text-neutral-600 rounded-xl border border-black/[0.08] transition whitespace-nowrap font-medium cursor-pointer"
-                        >
-                          Clear
-                        </button>
-                      )}
+                  {/* CARD 2: STRIPE ACCOUNT CONNECTOR */}
+                  <div className="p-6 rounded-3xl border border-emerald-100 bg-emerald-50/10 text-left space-y-4 font-sans">
+                    <div className="flex items-center gap-2 text-emerald-800">
+                      <CreditCard className="w-5 h-5 text-emerald-700" />
+                      <h3 className="font-bold text-sm tracking-tight text-emerald-950">
+                        Stripe Direct Account Integration
+                      </h3>
                     </div>
-                    <span className="block text-[10px] text-slate-500 leading-normal font-light">
-                      🔑 Host instructions: Provide VIPs with the <code>VIP_BYPASS_CODE</code> (default: <code>PROPASS</code>) to grant premium access instantly without payment!
-                    </span>
-                  </div>
-                </div>
-
-                {/* CARD 2: STRIPE ACCOUNT CONNECTOR */}
-                <div className="p-6 rounded-3xl border border-emerald-100 bg-emerald-50/10 text-left space-y-4 font-sans">
-                  <div className="flex items-center gap-2 text-emerald-800">
-                    <CreditCard className="w-5 h-5 text-emerald-700" />
-                    <h3 className="font-bold text-sm tracking-tight text-emerald-950">
-                      Stripe Direct Account Integration
-                    </h3>
-                  </div>
-                  <p className="text-xs text-[#515154] leading-relaxed font-light">
-                    Direct your subscription receipts to your bank! To transition from local simulating sandbox mode, setup active credentials here:
-                  </p>
-
-                  <div className="space-y-2.5">
-                    {/* Secret Key Input */}
-                    <div className="space-y-1">
-                      <label className="block text-[9px] font-mono font-bold text-emerald-950 uppercase tracking-widest leading-none">
-                        Stripe Secret Key (sk_test_...)
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="sk_test_..."
-                        value={customStripeSecret}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setCustomStripeSecret(val);
-                          if (val.trim()) {
-                            localStorage.setItem('custom_stripe_secret', val.trim());
-                          } else {
-                            localStorage.removeItem('custom_stripe_secret');
-                          }
-                        }}
-                        className="w-full px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-emerald-500 font-mono shadow-sm"
-                      />
-                    </div>
-
-                    {/* Publishable Key Input */}
-                    <div className="space-y-1">
-                      <label className="block text-[9px] font-mono font-bold text-emerald-950 uppercase tracking-widest leading-none">
-                        Stripe Publishable Key (pk_test_...)
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="pk_test_..."
-                        value={customStripePublishable}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setCustomStripePublishable(val);
-                          if (val.trim()) {
-                            localStorage.setItem('custom_stripe_publishable', val.trim());
-                          } else {
-                            localStorage.removeItem('custom_stripe_publishable');
-                          }
-                        }}
-                        className="w-full px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-emerald-500 font-mono shadow-sm"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-2.5 border-t border-emerald-100/50 space-y-1.5">
-                    <h4 className="text-[10px] font-extrabold text-[#1d1d1f] uppercase tracking-wider font-mono">
-                      🔒 SECURE PERMANENT INTEGRATION GUIDE:
-                    </h4>
-                    <p className="text-[10px] text-slate-500 leading-normal font-light font-sans">
-                      To roll this secure integration to all users permanently, define these parameters in your **AI Studio Settings** secrets dashboard:
+                    <p className="text-xs text-[#515154] leading-relaxed font-light">
+                      Direct your subscription receipts to your bank! To transition from local simulating sandbox mode, setup active credentials here:
                     </p>
-                    <ul className="text-[10px] text-slate-500 space-y-1 list-disc pl-4 font-mono leading-normal">
-                      <li>Name: <code className="bg-slate-100 px-1 rounded text-neutral-800">STRIPE_SECRET_KEY</code></li>
-                      <li>Name: <code className="bg-slate-100 px-1 rounded text-neutral-800">STRIPE_PUBLISHABLE_KEY</code></li>
-                    </ul>
-                  </div>
-                </div>
 
-              </div>
+                    <div className="space-y-2.5">
+                      {/* Secret Key Input */}
+                      <div className="space-y-1">
+                        <label className="block text-[9px] font-mono font-bold text-emerald-950 uppercase tracking-widest leading-none">
+                          Stripe Secret Key (sk_test_...)
+                        </label>
+                        <input
+                          type="password"
+                          placeholder="sk_test_..."
+                          value={customStripeSecret}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setCustomStripeSecret(val);
+                            if (val.trim()) {
+                              localStorage.setItem('custom_stripe_secret', val.trim());
+                            } else {
+                              localStorage.removeItem('custom_stripe_secret');
+                            }
+                          }}
+                          className="w-full px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-emerald-500 font-mono shadow-sm"
+                        />
+                      </div>
+
+                      {/* Publishable Key Input */}
+                      <div className="space-y-1">
+                        <label className="block text-[9px] font-mono font-bold text-emerald-950 uppercase tracking-widest leading-none">
+                          Stripe Publishable Key (pk_test_...)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="pk_test_..."
+                          value={customStripePublishable}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setCustomStripePublishable(val);
+                            if (val.trim()) {
+                              localStorage.setItem('custom_stripe_publishable', val.trim());
+                            } else {
+                              localStorage.removeItem('custom_stripe_publishable');
+                            }
+                          }}
+                          className="w-full px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-emerald-500 font-mono shadow-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-2.5 border-t border-emerald-100/50 space-y-1.5">
+                      <h4 className="text-[10px] font-extrabold text-[#1d1d1f] uppercase tracking-wider font-mono">
+                        🔒 SECURE PERMANENT INTEGRATION GUIDE:
+                      </h4>
+                      <p className="text-[10px] text-slate-500 leading-normal font-light font-sans">
+                        To roll this secure integration to all users permanently, define these parameters in your **AI Studio Settings** secrets dashboard:
+                      </p>
+                      <ul className="text-[10px] text-slate-500 space-y-1 list-disc pl-4 font-mono leading-normal">
+                        <li>Name: <code className="bg-slate-100 px-1 rounded text-neutral-800">STRIPE_SECRET_KEY</code></li>
+                        <li>Name: <code className="bg-slate-100 px-1 rounded text-neutral-800">STRIPE_PUBLISHABLE_KEY</code></li>
+                      </ul>
+                    </div>
+                  </div>
+
+                </div>
+              )}
 
               {/* Monthly / Yearly Billing Cycle Switcher */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 text-left">
