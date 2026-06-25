@@ -186,7 +186,7 @@ const downloadVTT = (script: any) => {
 
 const downloadMarkdownScript = (script: any) => {
   if (!script) return;
-  let md = `# SHORT REEL SCRIPT: ${script.title}\n\n`;
+  let md = `# SHORTENED VIDEO STORYBOARD: ${script.title}\n\n`;
   md += `**Hook Style:** ${script.hookType}\n`;
   md += `**Estimated Duration:** ${script.estimatedDuration} seconds\n`;
   md += `**Styling / Theme Direction:** ${script.themeSuggestion}\n\n`;
@@ -318,7 +318,7 @@ export default function App() {
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_compiled_reel.webm`;
+          a.download = `${script.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_shortened_video.webm`;
           a.click();
           URL.revokeObjectURL(url);
           setIsRenderingVideo(false);
@@ -3466,7 +3466,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       >
                         <span className="flex items-center gap-1.5 min-w-0">
                           {!isPremium && <Lock className="w-3 h-3 text-[#86868b] shrink-0" />}
-                          <span className="truncate">Short Reel Script</span>
+                          <span className="truncate">Shortened Video</span>
                         </span>
                         <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">PRO</span>
                       </button>
@@ -4356,7 +4356,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     { id: 'mindmap', label: 'Concept Map', icon: Network },
                     { id: 'quiz', label: 'Interactive Quiz', icon: Award },
                     { id: 'monetize', label: 'Social & Repurposing', icon: Share2 },
-                    { id: 'reel', label: 'Short Reel Maker', icon: Sparkles },
+                    { id: 'reel', label: 'Shortened Video', icon: Sparkles },
                   ].map((tab) => {
                     const TabIcon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -4921,13 +4921,13 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <div>
                           <span className="text-[10px] uppercase font-bold tracking-widest text-[#0071e3] font-mono flex items-center gap-1">
                             <Sparkles className="w-3 h-3 text-amber-500" />
-                            Vertical Media repurposer
+                            Shortened Video Repurposer
                           </span>
                           <h3 className="text-lg font-bold font-display text-neutral-900 leading-tight">
-                            Viral Reel & Short Video Script Maker
+                            Shortened, Downloadable Video
                           </h3>
                           <p className="text-neutral-500 text-xs mt-1">
-                            Repurpose video highlights into highly engaging, downloadable short-form scripts (TikTok, YT Shorts & Instagram Reels).
+                            Compile and export shortened summaries as playable, high-fidelity media or download the webm instantly.
                           </p>
                         </div>
                       </div>
@@ -4938,7 +4938,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         {/* 1. Mobile Phone Mock Simulator (Lefthand Column) */}
                         <div className="flex flex-col items-center justify-center p-4 bg-neutral-50 border border-neutral-150 rounded-2xl relative">
                           <span className="text-[10px] font-mono font-bold uppercase text-neutral-500 mb-2.5">
-                            Interactive 9:16 Reel Player Simulator
+                            Interactive Video Player
                           </span>
 
                           {/* Outer phone container */}
@@ -5231,7 +5231,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                           <span className="text-xs font-bold text-neutral-800 flex items-center gap-1.5 font-sans">
                             <Share2 className="w-4 h-4 text-neutral-750" />
-                            Complementary Viral Reel Caption Description
+                            Complementary Viral Post Caption & Description
                           </span>
                           <button
                             onClick={() => handleCopyText(script.readyMadeCaption, 'reel_caption')}
@@ -8086,7 +8086,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         ) : (
                           <>
                             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                            <span>Authorize Secure Mock Payment</span>
+                            <span>{isAdminAuthenticated ? "Authorize Secure Mock Payment" : "Authorize Secure Payment"}</span>
                           </>
                         )}
                       </button>
@@ -8136,7 +8136,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               </div>
 
               <div className="pt-6 border-t border-neutral-100 text-center text-[10px] text-neutral-400 font-mono leading-relaxed">
-                🛡️ Stripe mock connection runs inside Sandbox client. No actual currencies will be processed or stored.
+                {isAdminAuthenticated ? (
+                  "🛡️ Stripe mock connection runs inside Sandbox client. No actual currencies will be processed or stored."
+                ) : (
+                  "🛡️ Protected by Stripe secure checkout. Standard SSL 256-bit encryption covers all data transmissions."
+                )}
               </div>
             </div>
 
