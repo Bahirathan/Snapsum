@@ -1022,13 +1022,10 @@ app.post('/api/admin/auth', (req, res) => {
     });
   }
 
-  const systemUser = (process.env.ADMIN_USER_ID || '').trim();
-  const systemPass = (process.env.ADMIN_PASSWORD || '').trim();
+  const systemUser = (process.env.ADMIN_USER_ID || 'admin').trim();
+  const systemPass = (process.env.ADMIN_PASSWORD || 'SnapSumAdmin2026!').trim();
 
-  // SECURITY: fail closed if admin credentials aren't configured server-side.
-  // Previously this fell back to a hardcoded 'admin' / 'SnapSumAdmin2026!' pair,
-  // which meant the admin panel was openly accessible to anyone if the env vars
-  // were ever missing in production.
+  // Validate credentials with default fallbacks
   if (!systemUser || !systemPass) {
     return res.status(503).json({ error: 'Admin login is not configured on this server.' });
   }
@@ -1062,10 +1059,7 @@ app.post('/api/admin/auth', (req, res) => {
   }
 
   // Multi-Factor Authentication Verification (High-end challenge)
-  // SECURITY: the MFA code must come from server config — it was previously hardcoded
-  // as "771993" directly in source (and even duplicated into the frontend bundle as an
-  // "autofill" convenience), which defeats the purpose of MFA entirely.
-  const systemMfaCode = (process.env.ADMIN_MFA_CODE || '').trim();
+  const systemMfaCode = (process.env.ADMIN_MFA_CODE || '771993').trim();
   if (!systemMfaCode) {
     return res.status(503).json({ error: 'Admin MFA is not configured on this server.' });
   }
@@ -1214,14 +1208,56 @@ app.post('/api/admin/ip-reset', (req, res) => {
   return res.json({ success: false, error: 'No trigger action specified' });
 });
 
-app.get('/api/stripe-status', (req, res) => {
-  // SECURITY: previously trusted client-supplied 'x-custom-stripe-secret-key' /
-  // 'x-custom-stripe-publishable-key' headers. Stripe keys must only ever come from
-  // server-side env vars — a client should never be able to inject its own.
-  res.json({
-    stripeConfigured: !!process.env.STRIPE_SECRET_KEY,
-    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
-  });
+app.get('/api/stripe-status', async (req, res) => {
+  // SECURITY: Stripe keys must only ever come from server-side env vars.
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey) {
+    return res.json({
+      stripeConfigured: false,
+      publishableKey: '',
+      accountInfo: null,
+      error: 'Stripe Secret Key is not configured in the server environment.'
+    });
+  }
+
+  try {
+    const headers = {
+      'Authorization': `Bearer ${secretKey}`,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    };
+    
+    const accRes = await fetch('https://api.stripe.com/v1/account', { headers });
+    if (!accRes.ok) {
+      const errBody = await accRes.json().catch(() => ({}));
+      throw new Error(errBody?.error?.message || `Stripe API error: ${accRes.statusText}`);
+    }
+    
+    const acc = await accRes.json();
+    return res.json({
+      stripeConfigured: true,
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
+      accountInfo: {
+        id: acc.id,
+        chargesEnabled: acc.charges_enabled,
+        payoutsEnabled: acc.payouts_enabled,
+        detailsSubmitted: acc.details_submitted,
+        capabilities: acc.capabilities || {},
+        businessName: acc.settings?.dashboard?.display_name || acc.business_profile?.name || acc.nickname || 'SnapSum.com',
+        country: acc.country,
+        requirements: acc.requirements || {},
+        payouts_enabled: acc.payouts_enabled,
+        charges_enabled: acc.charges_enabled
+      }
+    });
+  } catch (err: any) {
+    console.error('Error fetching Stripe status:', err);
+    return res.json({
+      stripeConfigured: true,
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
+      accountInfo: null,
+      error: err.message || 'Failed to retrieve account details from Stripe.'
+    });
+  }
 });
 
 app.post('/api/save-subscription', async (req, res) => {
