@@ -6282,35 +6282,35 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               </div>
 
               {/* Stripe Connection Real-Time Status Banner & $1 Test Button */}
-              {stripeConfig.stripeConfigured && (
-                <div className="mb-6 bg-gradient-to-r from-emerald-500/[0.04] to-teal-500/[0.02] border border-emerald-500/20 p-5 rounded-3xl text-left flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm font-sans">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-emerald-500 text-white uppercase tracking-wider">
-                        Live Stripe Connected
-                      </span>
-                      <h4 className="text-sm font-bold text-[#1d1d1f]">Secure Live Payment Verification ($1.00 USD)</h4>
-                    </div>
-                    <p className="text-xs text-[#515154] font-light max-w-2xl leading-relaxed">
-                      Your Stripe credentials are authenticated! Click below to perform a real **$1.00 USD** secure test payment using your card to verify full end-to-end checkout routing.
-                    </p>
+              <div className="mb-6 bg-gradient-to-r from-emerald-500/[0.04] to-teal-500/[0.02] border border-emerald-500/20 p-5 rounded-3xl text-left flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm font-sans">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold font-mono ${stripeConfig.stripeConfigured ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'} uppercase tracking-wider`}>
+                      {stripeConfig.stripeConfigured ? 'Live Stripe Connected' : 'Stripe Key Config Required'}
+                    </span>
+                    <h4 className="text-sm font-bold text-[#1d1d1f]">Secure Live Payment Verification ($1.00 USD)</h4>
                   </div>
-                  <button
-                    onClick={() => handleCheckoutClick('test')}
-                    disabled={stripePaymentLoading}
-                    className="shrink-0 w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-5 py-3 rounded-2xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {stripePaymentLoading ? (
-                      <span>Loading Checkout...</span>
-                    ) : (
-                      <>
-                        <ShieldCheck className="w-4 h-4" />
-                        <span>Pay $1.00 USD & Check Live</span>
-                      </>
-                    )}
-                  </button>
+                  <p className="text-xs text-[#515154] font-light max-w-2xl leading-relaxed">
+                    {stripeConfig.stripeConfigured 
+                      ? 'Your Stripe credentials are authenticated! Click below to perform a real **$1.00 USD** secure test payment using your card to verify full end-to-end checkout routing.'
+                      : 'To perform a real live payment check, make sure you have added your Stripe keys to your environment secrets in AI Studio. Currently showing simulator fallback.'}
+                  </p>
                 </div>
-              )}
+                <button
+                  onClick={() => handleCheckoutClick('test')}
+                  disabled={stripePaymentLoading}
+                  className="shrink-0 w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-5 py-3 rounded-2xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {stripePaymentLoading ? (
+                    <span>Loading Checkout...</span>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Pay $1.00 USD & Check Live</span>
+                    </>
+                  )}
+                </button>
+              </div>
 
               {/* Plans Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 text-left">
