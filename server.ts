@@ -14,6 +14,7 @@ import { saveSummary, getSummary, listSummaries } from './server/summaryStore';
 import { getOrCreateReferralCode, recordReferral, getReferralCount, isLockedUnlocked } from './server/referralStore';
 import { saveSubscription, getSubscription } from './server/subscriptionStore';
 import { db } from './server/firestore';
+import { authenticator } from 'otplib';
 
 dotenv.config();
 
@@ -993,7 +994,7 @@ function getClientIp(req: express.Request): string {
   return req.socket.remoteAddress || '127.0.0.1';
 }
 
-app.post('/api/admin/auth', (req, res) => {
+app.post('/api/admin/auth', async (req, res) => {
   const { username, password, mfaCode } = req.body;
   const ip = getClientIp(req);
   const userAgent = req.headers['user-agent'] || 'Unknown Agent';
@@ -1022,17 +1023,35 @@ app.post('/api/admin/auth', (req, res) => {
     });
   }
 
-  const systemUser = (process.env.ADMIN_USER_ID || 'admin').trim();
-  const systemPass = (process.env.ADMIN_PASSWORD || 'SnapSumAdmin2026!').trim();
+  // Set default fallbacks
+  let finalAdminUser = (process.env.ADMIN_USER_ID || 'admin').trim();
+  let finalAdminPass = (process.env.ADMIN_PASSWORD || 'SnapSumAdmin2026!').trim();
+  let mfaSecret = '';
 
-  // Validate credentials with default fallbacks
-  if (!systemUser || !systemPass) {
-    return res.status(503).json({ error: 'Admin login is not configured on this server.' });
+  // Attempt to load settings from Firebase Database
+  if (db) {
+    try {
+      const adminDoc = await db.collection('admin_settings').doc('config').get();
+      if (adminDoc.exists) {
+        const data = adminDoc.data();
+        if (data?.adminUser) {
+          finalAdminUser = data.adminUser.trim();
+        }
+        if (data?.adminPassword) {
+          finalAdminPass = data.adminPassword.trim();
+        }
+        if (data?.mfaSecret) {
+          mfaSecret = data.mfaSecret.trim();
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load admin settings from Firestore:', err);
+    }
   }
 
   // 2. Validate Credentials
-  const usernameMatch = username === systemUser;
-  const passwordMatch = password === systemPass;
+  const usernameMatch = username === finalAdminUser;
+  const passwordMatch = password === finalAdminPass;
 
   if (!usernameMatch || !passwordMatch) {
     // Increment or initialize lockout
@@ -1058,40 +1077,73 @@ app.post('/api/admin/auth', (req, res) => {
     });
   }
 
-  // Multi-Factor Authentication Verification (High-end challenge)
-  const systemMfaCode = (process.env.ADMIN_MFA_CODE || '771993').trim();
-  if (!systemMfaCode) {
-    return res.status(503).json({ error: 'Admin MFA is not configured on this server.' });
-  }
-  if (mfaCode && mfaCode.trim().replace(/\s+/g, '') !== systemMfaCode) {
-    const attempts = lockout ? lockout.attempts + 1 : 1;
-    const lockedUntil = attempts >= 5 ? now + 180000 : 0;
-    adminLockouts.set(ip, { attempts, lockedUntil });
+  // 3. Multi-Factor Authentication Verification (High-end challenge)
+  if (mfaSecret) {
+    if (mfaCode) {
+      const cleanMfaCode = mfaCode.trim().replace(/\s+/g, '');
+      const isValid = authenticator.verify({ token: cleanMfaCode, secret: mfaSecret });
+      if (!isValid) {
+        const attempts = lockout ? lockout.attempts + 1 : 1;
+        const lockedUntil = attempts >= 5 ? now + 180000 : 0;
+        adminLockouts.set(ip, { attempts, lockedUntil });
 
-    adminAuditLogs.unshift({
-      id: `log_fal_mfa_${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: new Date().toISOString(),
-      ip,
-      userAgent,
-      user: username,
-      event: 'MFA Verification Failure',
-      status: 'FAILURE',
-      details: `Valid User/Pass, but invalid 2FA Multi-Factor Token value.`
-    });
+        adminAuditLogs.unshift({
+          id: `log_fal_mfa_${Math.random().toString(36).substr(2, 9)}`,
+          timestamp: new Date().toISOString(),
+          ip,
+          userAgent,
+          user: username,
+          event: 'MFA Verification Failure',
+          status: 'FAILURE',
+          details: `Valid User/Pass, but invalid Google Authenticator TOTP token value.`
+        });
 
-    return res.status(403).json({
-      error: 'Security challenge failed: Invalid Multi-Factor Authentication token.',
-      mfaRequired: true,
-      attemptsRemaining: Math.max(0, 5 - attempts)
-    });
-  }
+        return res.status(403).json({
+          error: 'Security challenge failed: Invalid Multi-Factor Authentication token.',
+          mfaRequired: true,
+          attemptsRemaining: Math.max(0, 5 - attempts)
+        });
+      }
+    } else {
+      // Prompt for MFA Code
+      return res.json({
+        mfaRequired: true,
+        message: 'MFA validation challenge generated successfully.'
+      });
+    }
+  } else {
+    // Fallback static MFA Code if Google Authenticator is not yet configured
+    const systemMfaCode = (process.env.ADMIN_MFA_CODE || '771993').trim();
+    if (mfaCode) {
+      if (mfaCode.trim().replace(/\s+/g, '') !== systemMfaCode) {
+        const attempts = lockout ? lockout.attempts + 1 : 1;
+        const lockedUntil = attempts >= 5 ? now + 180000 : 0;
+        adminLockouts.set(ip, { attempts, lockedUntil });
 
-  // If correct password but first time log in without mfaCode parameter, ask for the MFA challenge step
-  if (!mfaCode) {
-    return res.json({
-      mfaRequired: true,
-      message: 'MFA validation challenge generated successfully.'
-    });
+        adminAuditLogs.unshift({
+          id: `log_fal_mfa_${Math.random().toString(36).substr(2, 9)}`,
+          timestamp: new Date().toISOString(),
+          ip,
+          userAgent,
+          user: username,
+          event: 'MFA Verification Failure',
+          status: 'FAILURE',
+          details: `Valid User/Pass, but invalid static 2FA Multi-Factor Token value.`
+        });
+
+        return res.status(403).json({
+          error: 'Security challenge failed: Invalid Multi-Factor Authentication token.',
+          mfaRequired: true,
+          attemptsRemaining: Math.max(0, 5 - attempts)
+        });
+      }
+    } else {
+      // Prompt for MFA Code
+      return res.json({
+        mfaRequired: true,
+        message: 'MFA validation challenge generated successfully.'
+      });
+    }
   }
 
   // 4. Auth Success -> Reset lockout state
@@ -1111,10 +1163,87 @@ app.post('/api/admin/auth', (req, res) => {
   });
 
   return res.json({
-    success: true,
     token: secureToken,
-    expiresIn: 3600 // 1 hour session token lifespan
+    user: username
   });
+});
+
+// Endpoint: Generate a new 2FA secret and QR code URL
+app.post('/api/admin/generate-2fa', (req, res) => {
+  const { token } = req.body;
+  if (!token || !activeAdminSessions.has(token)) {
+    return res.status(401).json({ error: 'Access denied: Valid administrative session required.' });
+  }
+
+  try {
+    const secret = authenticator.generateSecret();
+    const otpauthUrl = authenticator.keyuri('admin', 'SnapSum', secret);
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`;
+
+    return res.json({ secret, qrCodeUrl });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Failed to generate 2FA credentials.' });
+  }
+});
+
+// Endpoint: Verify a 2FA code during the setup flow to prevent lockouts
+app.post('/api/admin/verify-2fa-setup', (req, res) => {
+  const { token, mfaSecret, mfaCode } = req.body;
+  if (!token || !activeAdminSessions.has(token)) {
+    return res.status(401).json({ error: 'Access denied: Valid administrative session required.' });
+  }
+
+  if (!mfaSecret || !mfaCode) {
+    return res.status(400).json({ error: 'Missing secret or code.' });
+  }
+
+  try {
+    const cleanCode = mfaCode.trim().replace(/\s+/g, '');
+    const isValid = authenticator.verify({ token: cleanCode, secret: mfaSecret });
+    return res.json({ valid: isValid });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Verification failed.' });
+  }
+});
+
+// Endpoint: Save Admin Credentials & Settings to Firebase
+app.post('/api/admin/save-settings', async (req, res) => {
+  const { token, adminUser, adminPassword, mfaSecret } = req.body;
+  if (!token || !activeAdminSessions.has(token)) {
+    return res.status(401).json({ error: 'Access denied: Valid administrative session required.' });
+  }
+
+  if (!adminUser || !adminPassword) {
+    return res.status(400).json({ error: 'Username and password are required.' });
+  }
+
+  try {
+    if (db) {
+      await db.collection('admin_settings').doc('config').set({
+        adminUser: adminUser.trim(),
+        adminPassword: adminPassword.trim(),
+        mfaSecret: mfaSecret ? mfaSecret.trim() : null,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+
+      adminAuditLogs.unshift({
+        id: `log_set_${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: new Date().toISOString(),
+        ip: getClientIp(req),
+        userAgent: req.headers['user-agent'] || 'Unknown Agent',
+        user: 'admin',
+        event: 'Admin Settings Updated',
+        status: 'SUCCESS',
+        details: `Credentials and 2FA settings securely updated in Firestore. MFA: ${mfaSecret ? 'ENABLED (Google Authenticator)' : 'DISABLED (Static)'}`
+      });
+
+      return res.json({ success: true });
+    } else {
+      return res.status(503).json({ error: 'Database service unavailable.' });
+    }
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Failed to save admin settings.' });
+  }
 });
 
 app.post('/api/admin/verify-token', (req, res) => {

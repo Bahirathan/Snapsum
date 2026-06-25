@@ -48,6 +48,15 @@ import {
 } from 'lucide-react';
 import { PRELOADED_VIDEOS } from './preloadedData';
 import { YouTubeSummaryResponse, SavedSummary } from './types';
+import { auth } from './firebase';
+import { 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut, 
+  User 
+} from 'firebase/auth';
+import { KeyRound, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 import { LearningProgressDashboard, ActiveLearningDashboard } from './components/LearningDashboard';
 import { CinematicExplainer } from './components/CinematicExplainer';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
@@ -213,6 +222,18 @@ const downloadMarkdownScript = (script: any) => {
 };
 
 export default function App() {
+  // Firebase Auth Visitor state
+  const [visitorUser, setVisitorUser] = useState<User | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setVisitorUser(user);
+      setAuthInitialized(true);
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Input fields
   const [videoUrl, setVideoUrl] = useState('');
   const [demoActiveVideo, setDemoActiveVideo] = useState<YouTubeSummaryResponse>(PRELOADED_VIDEOS[0]);
@@ -824,6 +845,16 @@ export default function App() {
   });
 
   // Secure Auth & user session management
+  const [vaultUsername, setVaultUsername] = useState('admin');
+  const [vaultPassword, setVaultPassword] = useState('');
+  const [vaultPasswordVisible, setVaultPasswordVisible] = useState(false);
+  const [vault2faSecret, setVault2faSecret] = useState('');
+  const [vault2faQrUrl, setVault2faQrUrl] = useState('');
+  const [vault2faSetupCode, setVault2faSetupCode] = useState('');
+  const [vault2faVerified, setVault2faVerified] = useState(false);
+  const [vaultSetupLoading, setVaultSetupLoading] = useState(false);
+  const [vaultSaveStatus, setVaultSaveStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' });
+
   const [adminUserField, setAdminUserField] = useState('');
   const [adminPassField, setAdminPassField] = useState('');
   const [adminMfaField, setAdminMfaField] = useState('');
@@ -2001,6 +2032,107 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     setAdminIpList([]);
   };
 
+  // Helper: generate highly secured password
+  const generateSecurePassword = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+    let pass = '';
+    // Use window.crypto for secure random values
+    const array = new Uint32Array(20);
+    window.crypto.getRandomValues(array);
+    for (let i = 0; i < 20; i++) {
+      pass += chars[array[i] % chars.length];
+    }
+    setVaultPassword(pass);
+    setVaultPasswordVisible(true);
+  };
+
+  // Helper: trigger 2FA generation
+  const handleGenerate2FA = async () => {
+    setVaultSetupLoading(true);
+    setVaultSaveStatus({ type: 'idle', message: '' });
+    try {
+      const response = await fetch('/api/admin/generate-2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: adminSessionToken })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setVault2faSecret(data.secret);
+        setVault2faQrUrl(data.qrCodeUrl);
+        setVault2faVerified(false);
+      } else {
+        setVaultSaveStatus({ type: 'error', message: data.error || 'Failed to initialize 2FA.' });
+      }
+    } catch (err: any) {
+      setVaultSaveStatus({ type: 'error', message: err.message || 'Network error initializing 2FA.' });
+    } finally {
+      setVaultSetupLoading(false);
+    }
+  };
+
+  // Helper: verify TOTP code before saving settings
+  const handleVerify2FASetup = async () => {
+    if (!vault2faSetupCode.trim()) return;
+    setVaultSetupLoading(true);
+    setVaultSaveStatus({ type: 'idle', message: '' });
+    try {
+      const response = await fetch('/api/admin/verify-2fa-setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: adminSessionToken,
+          mfaSecret: vault2faSecret,
+          mfaCode: vault2faSetupCode
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.valid) {
+        setVault2faVerified(true);
+        setVaultSaveStatus({ type: 'success', message: 'Authenticator App token verified successfully!' });
+      } else {
+        setVaultSaveStatus({ type: 'error', message: 'MFA pin is incorrect. Please verify your authenticator app clock synchronization.' });
+      }
+    } catch (err: any) {
+      setVaultSaveStatus({ type: 'error', message: err.message || 'Error verifying setup.' });
+    } finally {
+      setVaultSetupLoading(false);
+    }
+  };
+
+  // Helper: Save administrative vault credentials and settings to Firestore Database
+  const handleSaveVaultSettings = async () => {
+    if (!vaultUsername.trim() || !vaultPassword.trim()) {
+      setVaultSaveStatus({ type: 'error', message: 'Username and password fields cannot be empty.' });
+      return;
+    }
+    setVaultSetupLoading(true);
+    setVaultSaveStatus({ type: 'idle', message: '' });
+    try {
+      const response = await fetch('/api/admin/save-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: adminSessionToken,
+          adminUser: vaultUsername,
+          adminPassword: vaultPassword,
+          mfaSecret: vault2faVerified ? vault2faSecret : null
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setVaultSaveStatus({ type: 'success', message: 'Admin login credentials & security parameters successfully saved to Firestore Database!' });
+        fetchAdminAuditLogs();
+      } else {
+        setVaultSaveStatus({ type: 'error', message: data.error || 'Failed to save administrative settings.' });
+      }
+    } catch (err: any) {
+      setVaultSaveStatus({ type: 'error', message: err.message || 'Network error saving settings.' });
+    } finally {
+      setVaultSetupLoading(false);
+    }
+  };
+
   const fetchAdminIpTracker = async (currentToken?: string) => {
     const activeToken = currentToken || adminSessionToken;
     if (!activeToken) return;
@@ -2195,6 +2327,66 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </nav>
 
           <div className="flex items-center gap-4">
+            {/* Google Sign In Widget for Site Visitors */}
+            {authInitialized && (
+              <div className="flex items-center gap-2">
+                {visitorUser ? (
+                  <div className="flex items-center gap-2 bg-[#f5f5f7] border border-black/[0.04] p-1 pr-3 rounded-full">
+                    {visitorUser.photoURL ? (
+                      <img 
+                        src={visitorUser.photoURL} 
+                        alt={visitorUser.displayName || 'Visitor'} 
+                        referrerPolicy="no-referrer"
+                        className="w-7 h-7 rounded-full shadow-sm object-cover animate-fade-in"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs font-sans">
+                        {visitorUser.displayName ? visitorUser.displayName.charAt(0).toUpperCase() : 'V'}
+                      </div>
+                    )}
+                    <div className="text-[10px] text-zinc-800 font-medium hidden sm:block">
+                      {visitorUser.displayName || 'Visitor'}
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await signOut(auth);
+                        } catch (err) {
+                          console.error('Failed to sign out visitor user:', err);
+                        }
+                      }}
+                      className="text-[9px] font-bold text-rose-600 hover:text-rose-805 transition uppercase font-mono pl-1.5 border-l border-zinc-200 cursor-pointer"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      const provider = new GoogleAuthProvider();
+                      try {
+                        await signInWithPopup(auth, provider);
+                      } catch (err: any) {
+                        console.error('Google login failed:', err);
+                        if (err.code !== 'auth/popup-closed-by-user') {
+                          alert(`Google Sign-In Error: ${err.message}`);
+                        }
+                      }
+                    }}
+                    className="flex items-center gap-1.5 bg-[#f5f5f7] hover:bg-[#e8e8ed] text-zinc-800 hover:text-black border border-black/[0.04] px-3.5 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer shadow-sm"
+                  >
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
+                    </svg>
+                    <span>Google Sign In</span>
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className="hidden lg:flex items-center gap-3">
               {isPremium ? (
                 <div className="flex items-center gap-1.5 bg-[#0071e3]/5 text-[#0071e3] border border-[#0071e3]/10 px-3 py-1.5 rounded-full text-xs font-bold font-mono">
@@ -7108,6 +7300,196 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                  {/* CARD 7: ADMINISTRATIVE CREDENTIALS & MULTI-FACTOR KEY VAULT */}
+                  <div className="bg-white p-6 rounded-3xl border border-black/[0.04] space-y-4 shadow-sm text-left font-sans lg:col-span-2">
+                    <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                      <div className="flex items-center gap-2 text-zinc-950">
+                        <KeyRound className="w-5 h-5 text-amber-500 animate-pulse" />
+                        <h3 className="font-bold text-sm tracking-tight text-[#1d1d1f]">
+                          Administrative Credentials & Multi-Factor Security (Google Authenticator)
+                        </h3>
+                      </div>
+                      <span className="bg-amber-50 text-amber-700 text-[9px] font-mono font-bold leading-none uppercase px-2 py-1 rounded-sm border border-amber-100">
+                        Secure Vault Active
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-[#515154] font-sans font-light leading-relaxed">
+                      Configure custom administration credentials. Secure your operations by generating cryptographically strong, system-backed passwords and saving them securely to your Firebase Cloud Firestore database. Enable 2FA Google Authenticator protection to defend against brute force attempts.
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                      
+                      {/* Left: Account Credentials Creator */}
+                      <div className="space-y-4">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400 block border-b border-neutral-50 pb-1">
+                          1. Setup Login Credentials
+                        </span>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block">
+                            Admin Username
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. administrator"
+                            value={vaultUsername}
+                            onChange={(e) => setVaultUsername(e.target.value)}
+                            className="w-full px-4 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block">
+                            Admin Password
+                          </label>
+                          <div className="flex gap-2">
+                            <div className="relative flex-1">
+                              <input
+                                type={vaultPasswordVisible ? 'text' : 'password'}
+                                placeholder="Enter custom password or generate one"
+                                value={vaultPassword}
+                                onChange={(e) => setVaultPassword(e.target.value)}
+                                className="w-full pl-4 pr-10 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setVaultPasswordVisible(!vaultPasswordVisible)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 cursor-pointer"
+                              >
+                                {vaultPasswordVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={generateSecurePassword}
+                              className="bg-zinc-100 hover:bg-zinc-200 text-[#1d1d1f] hover:text-[#0071e3] transition text-[10px] uppercase tracking-wider font-bold px-3 py-2 rounded-xl border border-black/[0.03] cursor-pointer flex items-center gap-1 shrink-0"
+                            >
+                              Generate Secure ⚡
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Authenticator App (2FA) */}
+                      <div className="space-y-4">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-400 block border-b border-neutral-50 pb-1">
+                          2. Configure Authenticator App 2FA
+                        </span>
+
+                        {!vault2faQrUrl ? (
+                          <div className="p-4 bg-zinc-50 border border-neutral-100 rounded-2xl flex flex-col items-center justify-center text-center space-y-3">
+                            <ShieldAlert className="w-8 h-8 text-neutral-400" />
+                            <div className="space-y-1">
+                              <span className="text-[11px] font-bold text-zinc-800 block">MFA App Connection Pending</span>
+                              <p className="text-[10px] text-zinc-500 leading-normal max-w-xs font-sans font-light">
+                                To activate 2FA for the administrative console using Google Authenticator, tap the button below.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleGenerate2FA}
+                              disabled={vaultSetupLoading}
+                              className="bg-[#0071e3] hover:bg-[#0077ed] text-white text-[10px] font-bold tracking-wider uppercase px-4 py-2 rounded-xl transition disabled:opacity-40 cursor-pointer shadow-sm mx-auto"
+                            >
+                              {vaultSetupLoading ? 'Initializing...' : 'Initialize 2FA Secret Key'}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="p-4 bg-amber-50/20 border border-amber-100 rounded-2xl space-y-4">
+                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                              <div className="bg-white p-2 rounded-xl border border-amber-100 shadow-sm shrink-0">
+                                <img
+                                  src={vault2faQrUrl}
+                                  alt="Google Authenticator QR Code"
+                                  className="w-24 h-24 mx-auto"
+                                />
+                              </div>
+                              <div className="space-y-2 text-left font-sans">
+                                <span className="text-[11px] font-bold text-amber-950 block">Scan with Google Authenticator</span>
+                                <p className="text-[10px] text-amber-900 leading-relaxed font-sans font-light">
+                                  Open Google Authenticator app on your phone, tap the "+" button, choose "Scan QR code", and scan the QR block here.
+                                </p>
+                                <div className="space-y-0.5">
+                                  <span className="text-[8px] font-mono uppercase text-amber-800 font-bold tracking-wide block">Manual Base32 Secret Key</span>
+                                  <code className="text-[9px] bg-white border border-amber-200/50 px-2 py-0.5 rounded font-mono text-zinc-800 font-semibold select-all block break-all">
+                                    {vault2faSecret}
+                                  </code>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Verification Form */}
+                            <div className="space-y-2 border-t border-amber-100 pt-3">
+                              <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block">
+                                Enter 6-Digit Authenticator Code
+                              </label>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  placeholder="e.g. 123456"
+                                  maxLength={6}
+                                  value={vault2faSetupCode}
+                                  onChange={(e) => setVault2faSetupCode(e.target.value.replace(/\D/g, ''))}
+                                  className="w-full px-4 py-1.5 text-xs bg-white border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono text-center tracking-widest text-base font-bold"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleVerify2FASetup}
+                                  disabled={vaultSetupLoading || vault2faVerified || vault2faSetupCode.length < 6}
+                                  className={`text-[10px] font-bold uppercase tracking-wider px-4 py-1.5 rounded-xl transition cursor-pointer flex items-center gap-1 shrink-0 ${vault2faVerified ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-black text-white hover:bg-neutral-800'}`}
+                                >
+                                  {vault2faVerified ? 'Verified ✓' : vaultSetupLoading ? 'Checking...' : 'Verify Pin'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Footer / Status Message & Save button */}
+                    <div className="pt-4 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-4 mt-2">
+                      <div className="text-left flex-1">
+                        {vaultSaveStatus.type !== 'idle' ? (
+                          <span className={`text-[11px] font-medium leading-relaxed block ${vaultSaveStatus.type === 'success' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {vaultSaveStatus.type === 'success' ? '✓ ' : '⚠️ '} {vaultSaveStatus.message}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-[#86868b] leading-normal font-light block">
+                            Note: Verification of the 2FA authenticator app is required before settings can be fully committed to prevent lockout.
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+                        {vault2faQrUrl && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setVault2faQrUrl('');
+                              setVault2faSecret('');
+                              setVault2faSetupCode('');
+                              setVault2faVerified(false);
+                              setVaultSaveStatus({ type: 'idle', message: '' });
+                            }}
+                            className="w-full sm:w-auto text-zinc-500 hover:text-black bg-zinc-50 hover:bg-zinc-100 border border-black/[0.03] text-[10px] font-bold tracking-wider uppercase px-4 py-2.5 rounded-xl transition cursor-pointer"
+                          >
+                            Reset Setup Flow
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleSaveVaultSettings}
+                          disabled={vaultSetupLoading || (!vault2faVerified && vault2faQrUrl !== '')}
+                          className="w-full sm:w-auto bg-black text-white hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed text-[10px] font-bold tracking-wider uppercase px-6 py-2.5 rounded-xl transition cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
+                        >
+                          {vaultSetupLoading ? 'Processing...' : 'Save Settings to Firestore'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                   
                   {/* CARD 1: ENVIRONMENTAL SETTINGS */}
                   <div className="bg-white p-6 rounded-3xl border border-black/[0.04] space-y-4 shadow-sm text-left font-sans">
