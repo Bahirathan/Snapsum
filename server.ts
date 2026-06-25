@@ -1254,11 +1254,16 @@ app.post('/api/create-checkout-session', async (req, res) => {
   try {
     const isYearly = billingCycle === 'yearly';
     let planName = 'Pro Creator Pass';
-    let unitAmount = isYearly ? 1400 : 1900; // $14.00/mo or $19.00/mo
-    
-    if (planCode === 'enterprise') {
+    let unitAmount = isYearly ? 14 : 19; // $14.00/mo or $19.00/mo
+    let isSubscription = true;
+
+    if (planCode === 'test' || planCode === 'test_1usd') {
+      planName = 'Stripe Live Verification (One-Time)';
+      unitAmount = 1; // $1.00 USD
+      isSubscription = false;
+    } else if (planCode === 'enterprise') {
       planName = 'Enterprise Agency Hub';
-      unitAmount = isYearly ? 3900 : 4900;
+      unitAmount = isYearly ? 39 : 49; // $39.00/mo or $49.00/mo
     }
 
     // Convert prices to cents for Stripe
@@ -1269,9 +1274,13 @@ app.post('/api/create-checkout-session', async (req, res) => {
     payload.append('line_items[0][price_data][currency]', 'usd');
     payload.append('line_items[0][price_data][product_data][name]', planName);
     payload.append('line_items[0][price_data][unit_amount]', String(unitAmount));
-    payload.append('line_items[0][price_data][recurring][interval]', 'month');
+    if (isSubscription) {
+      payload.append('line_items[0][price_data][recurring][interval]', 'month');
+      payload.append('mode', 'subscription');
+    } else {
+      payload.append('mode', 'payment');
+    }
     payload.append('line_items[0][quantity]', '1');
-    payload.append('mode', 'subscription');
     payload.append('success_url', `${returnUrl || 'http://localhost:3000'}?checkout_success=true&session_id={CHECKOUT_SESSION_ID}`);
     payload.append('cancel_url', `${returnUrl || 'http://localhost:3000'}?checkout_cancel=true`);
 
