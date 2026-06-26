@@ -1173,7 +1173,7 @@ export default function App() {
       try {
         const response = await fetch('/api/create-checkout-session', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getHeaders(),
           body: JSON.stringify({
             planCode: plan,
             billingCycle,

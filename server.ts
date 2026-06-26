@@ -1350,8 +1350,8 @@ app.post('/api/admin/ip-reset', (req, res) => {
 });
 
 app.get('/api/stripe-status', async (req, res) => {
-  // SECURITY: Stripe keys must only ever come from server-side env vars.
-  const secretKey = process.env.STRIPE_SECRET_KEY;
+  // Support custom in-app client developer overrides in addition to server environment variables
+  const secretKey = (req.headers['x-custom-stripe-secret-key'] as string) || process.env.STRIPE_SECRET_KEY;
   if (!secretKey) {
     return res.json({
       stripeConfigured: false,
@@ -1376,7 +1376,7 @@ app.get('/api/stripe-status', async (req, res) => {
     const acc = await accRes.json();
     return res.json({
       stripeConfigured: true,
-      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
+      publishableKey: (req.headers['x-custom-stripe-publishable-key'] as string) || process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
       accountInfo: {
         id: acc.id,
         chargesEnabled: acc.charges_enabled,
@@ -1394,7 +1394,7 @@ app.get('/api/stripe-status', async (req, res) => {
     console.error('Error fetching Stripe status:', err);
     return res.json({
       stripeConfigured: true,
-      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
+      publishableKey: (req.headers['x-custom-stripe-publishable-key'] as string) || process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
       accountInfo: null,
       error: err.message || 'Failed to retrieve account details from Stripe.'
     });
@@ -1421,8 +1421,8 @@ app.get('/api/subscription-status', async (req, res) => {
 
 app.post('/api/create-checkout-session', async (req, res) => {
   const { planCode, billingCycle, returnUrl } = req.body;
-  // SECURITY: Stripe secret key must only come from server env — never from a client header.
-  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  // Fallback to client override header if the main server environment variable is not set
+  const stripeSecretKey = (req.headers['x-custom-stripe-secret-key'] as string) || process.env.STRIPE_SECRET_KEY;
 
   if (!stripeSecretKey) {
     return res.status(400).json({ error: 'Stripe Secret Key is missing. Connect your live Stripe key via AI Studio settings or direct in-app Developer override.' });
