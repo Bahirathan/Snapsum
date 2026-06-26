@@ -2237,7 +2237,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => setCurrentScreen('landing')}>
             <div className="h-8.5 w-8.5 bg-[#1d1d1f] flex items-center justify-center rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition duration-300">
-              <img src="/logo.jpg" alt="SnapSum Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="/logo.svg" alt="SnapSum Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </div>
             <div className="hidden sm:block">
               <span className="text-base font-bold font-display tracking-tight text-[#1d1d1f] group-hover:text-neutral-800 transition">
@@ -8670,7 +8670,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg overflow-hidden flex items-center justify-center bg-slate-900 border border-slate-800">
-              <img src="/logo.jpg" alt="SnapSum Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="/logo.svg" alt="SnapSum Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </div>
             <div>
               <span className="text-sm font-bold font-display tracking-tight text-white">

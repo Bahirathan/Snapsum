@@ -4,6 +4,7 @@
  */
 
 import express from 'express';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
@@ -121,6 +122,17 @@ async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: 
   };
 }
 
+
+// Proxy Firebase Auth helper requests directly to Firebase's official server domain.
+// This allows Google Auth popups to recognize and display 'www.snapsum.app' (or 'snapsum.app')
+// under the custom brand domain rather than the default firebaseapp.com domain.
+app.use(
+  '/__/auth',
+  createProxyMiddleware({
+    target: 'https://gen-lang-client-0003754495.firebaseapp.com',
+    changeOrigin: true,
+  })
+);
 
 app.use(express.json({ limit: '10mb' }));
 
