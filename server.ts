@@ -1347,6 +1347,44 @@ app.post('/api/admin/google-users', async (req, res) => {
   }
 });
 
+app.post('/api/admin/db-diagnostic', async (req, res) => {
+  const { token } = req.body;
+  if (!token || !activeAdminSessions.has(token)) {
+    return res.status(401).json({ error: 'Access denied.' });
+  }
+
+  try {
+    if (!db) {
+      return res.json({ success: false, error: 'Database variable is null or undefined.' });
+    }
+
+    // Try a test write
+    const testDocRef = db.collection('google_users').doc('connection_test_doc');
+    await testDocRef.set({
+      test: true,
+      timestamp: new Date().toISOString(),
+      message: 'This is a secure connection test from SnapSum backend.'
+    });
+
+    // Try a test read
+    const docSnap = await testDocRef.get();
+    const data = docSnap.exists ? docSnap.data() : null;
+
+    return res.json({
+      success: true,
+      databaseInitialized: true,
+      data,
+      projectId: db ? (db as any)._projectId || 'Unknown' : 'N/A'
+    });
+  } catch (err: any) {
+    return res.json({
+      success: false,
+      error: err.message || 'Unknown Firestore Error',
+      stack: err.stack || ''
+    });
+  }
+});
+
 app.post('/api/customer-support', async (req, res) => {
   const { messages } = req.body;
   if (!messages || !Array.isArray(messages)) {

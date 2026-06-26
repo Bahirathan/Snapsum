@@ -899,6 +899,8 @@ export default function App() {
   const [adminIpLoading, setAdminIpLoading] = useState(false);
   const [adminGoogleUsers, setAdminGoogleUsers] = useState<any[]>([]);
   const [adminGoogleUsersLoading, setAdminGoogleUsersLoading] = useState(false);
+  const [adminDbDiagnosticLoading, setAdminDbDiagnosticLoading] = useState(false);
+  const [adminDbDiagnosticResult, setAdminDbDiagnosticResult] = useState<any | null>(null);
 
   // AI Support Bot States
   const [isSupportOpen, setIsSupportOpen] = useState(false);
@@ -2228,6 +2230,29 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       console.warn('Could not read secure administrative google users logs:', err);
     } finally {
       setAdminGoogleUsersLoading(false);
+    }
+  };
+
+  const runDbDiagnostic = async () => {
+    if (!adminSessionToken) return;
+    setAdminDbDiagnosticLoading(true);
+    setAdminDbDiagnosticResult(null);
+    try {
+      const response = await fetch('/api/admin/db-diagnostic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: adminSessionToken }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAdminDbDiagnosticResult(data);
+      } else {
+        setAdminDbDiagnosticResult({ success: false, error: 'Failed to query database diagnostic API.' });
+      }
+    } catch (err: any) {
+      setAdminDbDiagnosticResult({ success: false, error: err.message || 'Network diagnostic failure' });
+    } finally {
+      setAdminDbDiagnosticLoading(false);
     }
   };
 
@@ -8199,6 +8224,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         </div>
                         <div className="flex items-center gap-2">
                           <button
+                            onClick={runDbDiagnostic}
+                            disabled={adminDbDiagnosticLoading}
+                            className="bg-zinc-50 hover:bg-zinc-100 text-[#1d1d1f] hover:text-[#0071e3] transition text-[10px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-xl border border-black/[0.03] cursor-pointer flex items-center gap-1.5"
+                          >
+                            <Activity className={`w-3 h-3 ${adminDbDiagnosticLoading ? 'animate-spin' : ''}`} />
+                            Test Connection
+                          </button>
+                          <button
                             onClick={() => fetchAdminGoogleUsers()}
                             disabled={adminGoogleUsersLoading}
                             className="bg-zinc-50 hover:bg-zinc-100 text-[#1d1d1f] hover:text-[#0071e3] transition text-[10px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-xl border border-black/[0.03] cursor-pointer flex items-center gap-1.5"
@@ -8212,6 +8245,25 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <p className="text-xs text-[#515154] font-sans font-light leading-relaxed">
                         This table showcases real-time authenticated details of visitors logging in using Google Firebase Single Sign-On (SSO) on the client application. Logged fields are automatically stored and mapped securely in the Google Cloud Firestore collection.
                       </p>
+
+                      {adminDbDiagnosticResult && (
+                        <div className={`p-3.5 rounded-2xl text-xs font-sans border transition-all ${
+                          adminDbDiagnosticResult.success 
+                            ? 'bg-emerald-50/60 border-emerald-100 text-emerald-800' 
+                            : 'bg-rose-50/60 border-rose-100 text-rose-900'
+                        }`}>
+                          <div className="flex items-center gap-2 font-bold mb-1">
+                            <span className={`h-2 w-2 rounded-full ${adminDbDiagnosticResult.success ? 'bg-emerald-500' : 'bg-rose-500 animate-pulse'}`} />
+                            <span>Firestore DB Status: {adminDbDiagnosticResult.success ? 'Connected & Verified' : 'Connection Error'}</span>
+                          </div>
+                          <p className="text-[11px] leading-relaxed opacity-90">
+                            {adminDbDiagnosticResult.success 
+                              ? `Successfully performed automated read/write tests on project: "${adminDbDiagnosticResult.projectId}". Write payload verified: ${JSON.stringify(adminDbDiagnosticResult.data)}.`
+                              : `Failed connection: ${adminDbDiagnosticResult.error}. Please ensure your Firebase credentials and Cloud Firestore collection security settings match.`
+                            }
+                          </p>
+                        </div>
+                      )}
 
                       <div className="border border-neutral-100 rounded-2xl overflow-hidden mt-3 font-sans">
                         <div className="max-h-72 overflow-y-auto">
