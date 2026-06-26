@@ -15,6 +15,7 @@ import { saveSummary, getSummary, listSummaries } from './server/summaryStore';
 import { getOrCreateReferralCode, recordReferral, getReferralCount, isLockedUnlocked } from './server/referralStore';
 import { saveSubscription, getSubscription } from './server/subscriptionStore';
 import { db } from './server/firestore';
+// @ts-ignore
 import { authenticator } from 'otplib';
 
 dotenv.config();
@@ -1354,14 +1355,38 @@ app.post('/api/customer-support', async (req, res) => {
 
   try {
     const client = getGeminiClient(req);
-    const contents = messages.map((m: any) => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
+    let contents = messages.map((m: any) => ({
+      role: m.role === 'assistant' || m.role === 'model' ? 'model' : 'user',
       parts: [{ text: m.content || m.text || '' }]
     }));
 
+    // Find the first user message, since the API history must start with a user message
+    const firstUserIndex = contents.findIndex(c => c.role === 'user');
+    if (firstUserIndex !== -1) {
+      contents = contents.slice(firstUserIndex);
+    } else {
+      // Fallback if no user message found
+      contents = [{ role: 'user', parts: [{ text: 'Hello' }] }];
+    }
+
+    // Merge consecutive messages of the same role to strictly alternate
+    const alternatingContents: any[] = [];
+    let lastRole: string | null = null;
+    for (const c of contents) {
+      if (c.role !== lastRole) {
+        alternatingContents.push(c);
+        lastRole = c.role;
+      } else {
+        const lastMsg = alternatingContents[alternatingContents.length - 1];
+        if (lastMsg && lastMsg.parts && lastMsg.parts[0]) {
+          lastMsg.parts[0].text += "\n" + (c.parts[0]?.text || '');
+        }
+      }
+    }
+
     const response = await client.models.generateContent({
       model: 'gemini-3.5-flash',
-      contents: contents,
+      contents: alternatingContents,
       config: {
         systemInstruction: `You are SnapSum's dedicated Elite AI Customer Support Agent. You represent SnapSum, the ultimate AI-powered Universal Video Summarizer and Knowledge Engine.
 Your goal is to answer user questions about SnapSum's features, pricing, troubleshooting, and operations.
