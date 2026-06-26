@@ -1284,6 +1284,110 @@ app.post('/api/admin/logout', (req, res) => {
   return res.json({ success: true });
 });
 
+app.post('/api/log-google-user', async (req, res) => {
+  const { uid, email, displayName, photoURL } = req.body;
+  if (!uid) {
+    return res.status(400).json({ error: 'User UID is required.' });
+  }
+
+  try {
+    if (db) {
+      const userRef = db.collection('google_users').doc(uid);
+      const docSnap = await userRef.get();
+      const now = new Date().toISOString();
+
+      if (!docSnap.exists) {
+        await userRef.set({
+          uid,
+          email: email || '',
+          displayName: displayName || '',
+          photoURL: photoURL || '',
+          createdAt: now,
+          lastLoginAt: now,
+        });
+      } else {
+        await userRef.update({
+          email: email || '',
+          displayName: displayName || '',
+          photoURL: photoURL || '',
+          lastLoginAt: now,
+        });
+      }
+      return res.json({ success: true });
+    } else {
+      return res.status(503).json({ error: 'Database service unavailable.' });
+    }
+  } catch (err: any) {
+    console.error('Error logging Google user details:', err);
+    return res.status(500).json({ error: err.message || 'Failed to save Google user.' });
+  }
+});
+
+app.post('/api/admin/google-users', async (req, res) => {
+  const { token } = req.body;
+  if (!token || !activeAdminSessions.has(token)) {
+    return res.status(401).json({ error: 'Access denied: Valid administrative session required.' });
+  }
+
+  try {
+    if (db) {
+      const snapshot = await db.collection('google_users').orderBy('lastLoginAt', 'desc').get();
+      const users: any[] = [];
+      snapshot.forEach(doc => {
+        users.push(doc.data());
+      });
+      return res.json({ users });
+    } else {
+      return res.status(503).json({ error: 'Database service unavailable.' });
+    }
+  } catch (err: any) {
+    console.error('Error fetching Google logged users:', err);
+    return res.status(500).json({ error: err.message || 'Failed to fetch Google logged users.' });
+  }
+});
+
+app.post('/api/customer-support', async (req, res) => {
+  const { messages } = req.body;
+  if (!messages || !Array.isArray(messages)) {
+    return res.status(400).json({ error: 'Messages array is required.' });
+  }
+
+  try {
+    const client = getGeminiClient(req);
+    const contents = messages.map((m: any) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content || m.text || '' }]
+    }));
+
+    const response = await client.models.generateContent({
+      model: 'gemini-3.5-flash',
+      contents: contents,
+      config: {
+        systemInstruction: `You are SnapSum's dedicated Elite AI Customer Support Agent. You represent SnapSum, the ultimate AI-powered Universal Video Summarizer and Knowledge Engine.
+Your goal is to answer user questions about SnapSum's features, pricing, troubleshooting, and operations.
+
+Key facts about SnapSum to guide your replies:
+1. SnapSum transforms YouTube videos, lectures, and custom uploads into elegant structured summaries, key takeaways, quizzes, interactive mindmaps, and premium audio voiceovers (TTS).
+2. Pricing and Billing:
+   - Basic Starter Plan: $9/month, offering standard summaries (up to 30 mins videos), basic quizzes, and standard voiceovers.
+   - Pro Creator Pass: $29/month, offering unlimited processing, premium high-fidelity voiceovers, interactive mindmaps, dynamic flashcards, and priority queueing.
+   - Enterprise Tier: Custom pricing for teams requiring high volume API access, customized LLM fine-tuning, and dedicated SLA support.
+3. Sandbox Environment: SnapSum features a secure simulated sandbox environment. Connecting a Stripe test key or simulating Pro checkout allows developers/users to test the entire premium subscription flow at zero cost. No actual credit card is charged.
+4. Custom Gemini API Key Override: Users can paste their own Google Gemini API key in the Developer Settings tab (in-app or in the Admin panel). This allows users to completely bypass server daily credit quotas and utilize their personal free-tier API quotas.
+5. Other Features: Referrals (refer 2 visitors to unlock premium features), 2FA Security in Admin, IP tracker rate limit controls, Cinematic explainers, Active Recall quizzing, and audio transcription.
+
+Always be warm, polite, highly professional, concise, and incredibly helpful. If a question is unrelated to SnapSum, answer it politely but always loop back or offer assistance regarding SnapSum's features.`,
+        temperature: 0.7,
+      }
+    });
+
+    return res.json({ reply: response.text });
+  } catch (err: any) {
+    console.error('Customer support error:', err);
+    return res.status(500).json({ error: err.message || 'Customer Support assistant encountered an issue.' });
+  }
+});
+
 app.post('/api/admin/audit-logs', (req, res) => {
   const { token } = req.body;
   if (!token || !activeAdminSessions.has(token)) {

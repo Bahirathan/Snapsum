@@ -56,7 +56,7 @@ import {
   signOut, 
   User 
 } from 'firebase/auth';
-import { KeyRound, ShieldAlert, Eye, EyeOff } from 'lucide-react';
+import { KeyRound, ShieldAlert, Eye, EyeOff, MessageSquare, Headphones, Users } from 'lucide-react';
 import { LearningProgressDashboard, ActiveLearningDashboard } from './components/LearningDashboard';
 import { CinematicExplainer } from './components/CinematicExplainer';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
@@ -227,9 +227,25 @@ export default function App() {
   const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setVisitorUser(user);
       setAuthInitialized(true);
+      if (user) {
+        try {
+          await fetch('/api/log-google-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              uid: user.uid,
+              email: user.email || '',
+              displayName: user.displayName || '',
+              photoURL: user.photoURL || ''
+            })
+          });
+        } catch (err) {
+          console.error('Error logging Google user details to firestore:', err);
+        }
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -881,6 +897,20 @@ export default function App() {
   });
   const [adminIpList, setAdminIpList] = useState<Array<{ ip: string; count: number; lastResetAt: string }>>([]);
   const [adminIpLoading, setAdminIpLoading] = useState(false);
+  const [adminGoogleUsers, setAdminGoogleUsers] = useState<any[]>([]);
+  const [adminGoogleUsersLoading, setAdminGoogleUsersLoading] = useState(false);
+
+  // AI Support Bot States
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [supportMessages, setSupportMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string; timestamp: string }>>([
+    {
+      role: 'assistant',
+      text: "Hello! I am your SnapSum Elite AI Support Assistant. Ask me anything about our video summaries, subscription plans, Google API setups, and features!",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+  ]);
+  const [supportInput, setSupportInput] = useState('');
+  const [isSupportTyping, setIsSupportTyping] = useState(false);
 
   // Google Analytics state management & diagnostics
   const [adminGaMeasurementId, setAdminGaMeasurementId] = useState(() => {
@@ -1090,6 +1120,7 @@ export default function App() {
               setIsAdminAuthenticated(true);
               fetchAdminIpTracker(adminSessionToken);
               fetchAdminAuditLogs(adminSessionToken);
+              fetchAdminGoogleUsers(adminSessionToken);
             } else {
               handleAdminLogout();
             }
@@ -1100,6 +1131,7 @@ export default function App() {
           // Serve cache/offline if server is rebooting, but keep values
           fetchAdminIpTracker(adminSessionToken);
           fetchAdminAuditLogs(adminSessionToken);
+          fetchAdminGoogleUsers(adminSessionToken);
         }
       }
     };
@@ -1112,6 +1144,7 @@ export default function App() {
       const interval = setInterval(() => {
         fetchAdminAuditLogs(adminSessionToken);
         fetchAdminIpTracker(adminSessionToken);
+        fetchAdminGoogleUsers(adminSessionToken);
       }, 25000); // refresh every 25s
       return () => clearInterval(interval);
     }
@@ -2005,6 +2038,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         setLockoutSeconds(null);
         fetchAdminIpTracker(data.token);
         fetchAdminAuditLogs(data.token);
+        fetchAdminGoogleUsers(data.token);
       }
     } catch (err: any) {
       setAdminError(err.message || 'Invalid credentials. Access denied.');
@@ -2030,6 +2064,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     setAdminPassField('');
     setAdminAuditLogs([]);
     setAdminIpList([]);
+    setAdminGoogleUsers([]);
   };
 
   // Helper: generate highly secured password
@@ -2172,6 +2207,80 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       console.warn('Could not read secure administrative audit logs:', err);
     } finally {
       setAdminLogsLoading(false);
+    }
+  };
+
+  const fetchAdminGoogleUsers = async (currentToken?: string) => {
+    const activeToken = currentToken || adminSessionToken;
+    if (!activeToken) return;
+    setAdminGoogleUsersLoading(true);
+    try {
+      const response = await fetch('/api/admin/google-users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: activeToken }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAdminGoogleUsers(data.users || []);
+      }
+    } catch (err) {
+      console.warn('Could not read secure administrative google users logs:', err);
+    } finally {
+      setAdminGoogleUsersLoading(false);
+    }
+  };
+
+  const handleSendSupportMessage = async (overrideText?: string) => {
+    const textToSend = overrideText || supportInput;
+    if (!textToSend.trim() || isSupportTyping) return;
+
+    // Clear input
+    setSupportInput('');
+
+    // Add user message immediately
+    const userMsg = {
+      role: 'user' as const,
+      text: textToSend.trim(),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setSupportMessages(prev => [...prev, userMsg]);
+    setIsSupportTyping(true);
+    trackGAEvent?.('support_message_sent', { text_length: textToSend.length });
+
+    try {
+      const response = await fetch('/api/customer-support', {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          messages: [
+            ...supportMessages.map(m => ({ role: m.role, content: m.text })),
+            { role: 'user', content: textToSend.trim() }
+          ]
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const botMsg = {
+          role: 'assistant' as const,
+          text: data.reply || "I am here to assist you. Let me know if you need help with subscriptions, custom API keys, or sandbox settings!",
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        setSupportMessages(prev => [...prev, botMsg]);
+      } else {
+        throw new Error('Support service issues.');
+      }
+    } catch (err) {
+      const errorMsg = {
+        role: 'assistant' as const,
+        text: "I am experiencing brief technical difficulties processing your prompt. Please ensure your backend container is initialized and try again shortly!",
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setSupportMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setIsSupportTyping(false);
     }
   };
 
@@ -8078,6 +8187,98 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </div>
                   </div>
 
+                  {/* CARD 8: GOOGLE AUTHENTICATED USER REGISTRY */}
+                  <div className="bg-white p-6 rounded-3xl border border-black/[0.04] space-y-4 shadow-sm text-left font-sans flex flex-col justify-between lg:col-span-2 animate-fadeIn">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-2 border-b border-neutral-100 pb-3">
+                        <div className="flex items-center gap-2 text-zinc-950">
+                          <Users className="w-5 h-5 text-indigo-600 animate-pulse" />
+                          <h3 className="font-extrabold text-sm tracking-tight text-[#1d1d1f]">
+                            Google Logged Details & Visitor Registry
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => fetchAdminGoogleUsers()}
+                            disabled={adminGoogleUsersLoading}
+                            className="bg-zinc-50 hover:bg-zinc-100 text-[#1d1d1f] hover:text-[#0071e3] transition text-[10px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-xl border border-black/[0.03] cursor-pointer flex items-center gap-1.5"
+                          >
+                            <RefreshCw className={`w-3 h-3 ${adminGoogleUsersLoading ? 'animate-spin' : ''}`} />
+                            Sync User Records
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-[#515154] font-sans font-light leading-relaxed">
+                        This table showcases real-time authenticated details of visitors logging in using Google Firebase Single Sign-On (SSO) on the client application. Logged fields are automatically stored and mapped securely in the Google Cloud Firestore collection.
+                      </p>
+
+                      <div className="border border-neutral-100 rounded-2xl overflow-hidden mt-3 font-sans">
+                        <div className="max-h-72 overflow-y-auto">
+                          <table className="w-full text-[11px] font-sans">
+                            <thead className="bg-[#f5f5f7] border-b border-neutral-150 text-left sticky top-0 z-10">
+                              <tr>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold">User Photo</th>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold">UID / Email</th>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold">Display Name</th>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold">Created At</th>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold text-center">Last Login</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-neutral-100">
+                              {adminGoogleUsers.length === 0 ? (
+                                <tr>
+                                  <td colSpan={5} className="p-8 text-center text-[#86868b] italic font-light bg-[#f5f5f7]/30">
+                                    No authenticated Google users detected in Firestore. When users sign in with Google, their metadata records will compile here.
+                                  </td>
+                                </tr>
+                              ) : (
+                                adminGoogleUsers.map((gUser) => (
+                                  <tr key={gUser.uid} className="hover:bg-neutral-50/50 transition">
+                                    <td className="px-3 py-3 w-16">
+                                      {gUser.photoURL ? (
+                                        <img 
+                                          src={gUser.photoURL} 
+                                          alt={gUser.displayName || 'Google User'} 
+                                          referrerPolicy="no-referrer"
+                                          className="w-8 h-8 rounded-full border border-neutral-200 object-cover shadow-sm"
+                                        />
+                                      ) : (
+                                        <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+                                          {(gUser.displayName || 'G')[0].toUpperCase()}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="px-3 py-3">
+                                      <div className="font-bold text-[#1d1d1f]">{gUser.email || '(No Email Provided)'}</div>
+                                      <div className="font-mono text-[9px] text-neutral-400 mt-0.5">{gUser.uid}</div>
+                                    </td>
+                                    <td className="px-3 py-3 font-sans text-neutral-700 font-medium">
+                                      {gUser.displayName || <span className="text-neutral-400 italic font-light">Unnamed Google Visitor</span>}
+                                    </td>
+                                    <td className="px-3 py-3 text-neutral-500">
+                                      {gUser.createdAt ? new Date(gUser.createdAt).toLocaleString() : 'N/A'}
+                                    </td>
+                                    <td className="px-3 py-3 text-center">
+                                      <span className="inline-flex items-center bg-[#f5f5f7] px-2 py-0.5 rounded text-[10px] font-mono text-neutral-700 border border-black/[0.03]">
+                                        {gUser.lastLoginAt ? new Date(gUser.lastLoginAt).toLocaleDateString() : 'N/A'}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-neutral-100 text-[10px] text-[#86868b] leading-normal font-light flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                      <span>🔒 Google user details are synchronized securely via authenticated admin API calls.</span>
+                      <span className="font-mono text-[9px] uppercase tracking-wider font-bold text-zinc-500">GOOGLE CLOUD PLATFORM</span>
+                    </div>
+                  </div>
+
                 </div>
 
               </div>
@@ -8709,24 +8910,24 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       </footer>
 
       {/* Dynamic Floating A/B Testing Experiment Console */}
-      <div className="fixed bottom-6 right-6 z-50 font-sans">
+      <div className="fixed bottom-24 right-6 z-40 font-sans">
         {!showExperimentConsole ? (
           <button
             onClick={() => {
               setShowExperimentConsole(true);
               refreshAnalyticsStats();
             }}
-            className="bg-[#1d1d1f] hover:bg-[#2d2d2f] text-white rounded-full p-3.5 shadow-xl border border-white/10 flex items-center gap-2 transition duration-200 cursor-pointer shadow-black/20 group scale-100 hover:scale-102"
+            className="bg-[#1d1d1f] hover:bg-[#2d2d2f] text-white rounded-full p-3 shadow-xl border border-white/10 flex items-center gap-2 transition duration-200 cursor-pointer shadow-black/20 group scale-100 hover:scale-102"
             title="A/B Experiment Telemetry Console"
           >
-            <BarChart className="w-5 h-5 text-[#30d158] animate-pulse" />
+            <BarChart className="w-4 h-4 text-[#30d158] animate-pulse" />
             <span className="text-xs font-semibold pr-1.5">A/B Testing Console</span>
             <span className="bg-[#30d158] text-black font-bold font-mono text-[9px] px-1.5 py-0.5 rounded-full uppercase leading-none">
               Live
             </span>
           </button>
         ) : (
-          <div className="bg-white border border-neutral-200/80 rounded-2xl w-80 md:w-96 shadow-2xl overflow-hidden animate-fadeIn text-left flex flex-col max-h-[500px]">
+          <div className="bg-white border border-neutral-200/80 rounded-2xl w-80 md:w-96 shadow-2xl overflow-hidden animate-fadeIn text-left flex flex-col max-h-[400px]">
             {/* Console Header */}
             <div className="bg-[#1d1d1f] text-white p-4 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
@@ -8850,6 +9051,130 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               </div>
 
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* 💬 SnapSum Elite AI Customer Support Hub */}
+      <div className="fixed bottom-6 right-6 z-50 font-sans text-left">
+        {!isSupportOpen ? (
+          <button
+            onClick={() => {
+              setIsSupportOpen(true);
+              trackGAEvent?.('support_chat_opened', { timestamp: new Date().toISOString() });
+            }}
+            className="bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full p-3.5 shadow-xl flex items-center gap-2 transition duration-200 cursor-pointer scale-100 hover:scale-105 shadow-blue-500/10 border border-blue-400/20"
+            title="SnapSum AI Customer Support"
+          >
+            <MessageSquare className="w-5 h-5 text-white animate-bounce" />
+            <span className="text-xs font-semibold pr-1.5">AI Customer Support</span>
+            <span className="bg-emerald-500 text-black font-bold font-mono text-[9px] px-1.5 py-0.5 rounded-full uppercase leading-none animate-pulse">
+              Online
+            </span>
+          </button>
+        ) : (
+          <div className="bg-white border border-neutral-200/80 rounded-3xl w-80 sm:w-96 shadow-2xl overflow-hidden animate-fadeIn flex flex-col h-[520px]">
+            {/* Header */}
+            <div className="bg-[#0071e3] text-white p-4 flex items-center justify-between shrink-0 shadow-md">
+              <div className="flex items-center gap-2.5">
+                <div className="bg-white/15 p-1.5 rounded-xl">
+                  <Headphones className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold tracking-wider uppercase font-mono">
+                    SnapSum AI Support
+                  </h4>
+                  <span className="text-[10px] text-blue-100 block -mt-0.5">Elite Knowledge Agent</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsSupportOpen(false)}
+                className="text-white/80 hover:text-white font-mono text-xs cursor-pointer p-1.5 rounded-full hover:bg-white/10 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Support Messages List */}
+            <div className="p-4 flex-1 overflow-y-auto space-y-3.5 bg-neutral-50/50">
+              {supportMessages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-1`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs shadow-sm leading-relaxed ${
+                      msg.role === 'user'
+                        ? 'bg-[#0071e3] text-white rounded-tr-none'
+                        : 'bg-white text-zinc-800 border border-neutral-200/60 rounded-tl-none'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                  <span className="text-[8px] text-neutral-400 font-mono px-1">
+                    {msg.timestamp}
+                  </span>
+                </div>
+              ))}
+              {isSupportTyping && (
+                <div className="flex items-center space-x-1.5 bg-white border border-neutral-200/60 rounded-2xl px-3.5 py-2.5 text-xs text-neutral-500 w-24">
+                  <span className="h-1.5 w-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="h-1.5 w-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="h-1.5 w-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              )}
+            </div>
+
+            {/* Quick Suggestions Pills */}
+            <div className="p-3 bg-white border-t border-neutral-100 shrink-0">
+              <span className="text-[9px] font-mono font-bold text-neutral-400 uppercase tracking-wider block mb-2 px-1">
+                Suggested Questions
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  "What is SnapSum?",
+                  "How does the Pro Pass work?",
+                  "Is there a sandbox mode?",
+                  "Can I use my own Gemini key?"
+                ].map((q, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setSupportInput(q);
+                      handleSendSupportMessage(q);
+                    }}
+                    className="bg-neutral-100 hover:bg-neutral-200/80 text-zinc-700 text-[10px] px-2.5 py-1.5 rounded-full transition cursor-pointer font-medium"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Input Footer */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendSupportMessage();
+              }}
+              className="p-3 bg-[#f5f5f7] border-t border-neutral-200/60 flex gap-2 shrink-0 items-center"
+            >
+              <input
+                type="text"
+                placeholder="Ask our Support Agent anything..."
+                value={supportInput}
+                onChange={(e) => setSupportInput(e.target.value)}
+                className="flex-1 bg-white border border-neutral-200 px-3.5 py-2 rounded-xl text-xs outline-none focus:border-blue-500 font-sans shadow-inner"
+              />
+              <button
+                type="submit"
+                disabled={!supportInput.trim() || isSupportTyping}
+                className="bg-[#0071e3] hover:bg-[#0077ed] text-white px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+              >
+                Send
+              </button>
+            </form>
           </div>
         )}
       </div>
