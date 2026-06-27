@@ -1391,7 +1391,92 @@ app.post('/api/customer-support', async (req, res) => {
     return res.status(400).json({ error: 'Messages array is required.' });
   }
 
+  // Define a helpful rules-based fallback answer generator
+  const getRuleBasedResponse = (userQuery: string): string => {
+    const q = userQuery.toLowerCase();
+    
+    let answer = `👋 **Welcome to SnapSum Elite Support!**\n\n`;
+    
+    // Check if the API key itself is missing to add a diagnostic tip
+    const customKey = req.headers['x-custom-gemini-api-key'] as string;
+    const serverKey = process.env.GEMINI_API_KEY;
+    const isApiKeyMissing = (!customKey || !customKey.trim()) && (!serverKey || !serverKey.trim() || serverKey === 'MY_GEMINI_API_KEY');
+    
+    if (isApiKeyMissing) {
+      answer += `⚠️ *Note: Your workspace GEMINI_API_KEY is currently unconfigured. I am running in Offline Smart Fallback Mode to help you right away! To get full conversational AI, please add your \`GEMINI_API_KEY\` in Settings > Secrets or enter a Custom Key Override in the Developer Settings panel below.*\n\n`;
+    }
+
+    if (q.includes('price') || q.includes('pricing') || q.includes('plan') || q.includes('pro') || q.includes('cost') || q.includes('subscription') || q.includes('premium') || q.includes('billing') || q.includes('buy') || q.includes('upgrade') || q.includes('starter')) {
+      answer += `**SnapSum offers three flexible, high-value plans tailored for creators and learners:**\n\n` +
+                `1. 🌟 **Basic Starter Plan ($9/month)**:\n` +
+                `   - Standard summaries for videos up to 30 minutes long.\n` +
+                `   - Access to standard Active Recall quizzing & study tools.\n` +
+                `   - Standard text-to-speech voiceovers.\n\n` +
+                `2. 🔥 **Pro Creator Pass ($29/month)**:\n` +
+                `   - **Unlimited video processing** (no daily quota limits).\n` +
+                `   - Premium, high-fidelity humanlike voiceovers (TTS).\n` +
+                `   - Fully interactive concept mindmaps and dynamic study flashcards.\n` +
+                `   - High-contrast vertical viral reels & script exports.\n` +
+                `   - Priority queueing (blazing-fast generation).\n\n` +
+                `3. 🏢 **Enterprise Tier (Custom pricing)**:\n` +
+                `   - Custom LLM fine-tuning, high-volume API access, custom integrations, and dedicated SLA support.\n\n` +
+                `*Tip: You can test the entire Pro checkout flow at zero cost in our Sandbox Environment!*`;
+    } else if (q.includes('sandbox') || q.includes('test') || q.includes('stripe') || q.includes('card') || q.includes('payment') || q.includes('checkout') || q.includes('simulate') || q.includes('charge')) {
+      answer += `**SnapSum's Interactive Sandbox Environment** allows you to safely test our premium checkout flow with zero real charges!\n\n` +
+                `- **How it works**: When you click "Upgrade to Pro" or navigate to the Pricing section, the app detects if you are in sandbox developer mode.\n` +
+                `- **Stripe Test Mode**: You can enter any custom Stripe test credentials (or use our pre-configured sandbox environment) to trigger a simulated Stripe checkout.\n` +
+                `- **Zero Cost**: No real credit card is ever charged, and you instantly unlock Pro premium capabilities for testing!`;
+    } else if (q.includes('key') || q.includes('api') || q.includes('gemini') || q.includes('override') || q.includes('quota') || q.includes('limit') || q.includes('setting')) {
+      answer += `**Custom Gemini API Key Override & Quotas:**\n\n` +
+                `- **What it is**: To avoid daily server quota limits and enjoy 100% free processing, you can supply your own Google Gemini API key.\n` +
+                `- **Where to enter it**: Go to the **Developer Settings** panel (or look for the "Sandbox Keys" drawer in the bottom corner of your screen).\n` +
+                `- **Security**: Your custom key is stored safely inside your local browser storage and sent directly to the Gemini API securely server-side. It is never shared or persisted elsewhere.`;
+    } else if (q.includes('referral') || q.includes('refer') || q.includes('invite') || q.includes('unlocked') || q.includes('code') || q.includes('friend')) {
+      answer += `👥 **SnapSum Referral Program:**\n\n` +
+                `- You can unlock premium Pro Creator Pass features completely for free by inviting friends!\n` +
+                `- **How**: Share your unique referral link (found on the main workspace dashboard).\n` +
+                `- **Goal**: When **2 visitors** click your link and sign in using Google SSO, your account is instantly upgraded to premium status!`;
+    } else if (q.includes('feature') || q.includes('summar') || q.includes('tts') || q.includes('audio') || q.includes('chapter') || q.includes('mindmap') || q.includes('quiz') || q.includes('reel') || q.includes('video') || q.includes('transcript')) {
+      answer += `🚀 **SnapSum is packed with elite knowledge-engine features:**\n\n` +
+                `- **Universal Summaries**: Turns any YouTube video or long-form transcript into structured summaries, key takeaways, and visual timelines.\n` +
+                `- **Chapters**: Auto-segments long videos into concise chapters with clickable timestamps.\n` +
+                `- **Active Recall Quizzes**: Staggers dynamic multiple-choice quizzes to test your understanding.\n` +
+                `- **Interactive Mindmaps**: Renders dynamic, node-based responsive mindmaps for active visual learning.\n` +
+                `- **AI Audio Voiceovers (TTS)**: Listens to summaries in high-quality speech with real-time controls.\n` +
+                `- **Viral Video Repurposer**: Auto-generates vertical TikTok/Reels storyboards, captions, and compiles them directly into downloadable WebM short video clips!`;
+    } else if (q.includes('hi') || q.includes('hello') || q.includes('hey') || q.includes('greetings') || q.includes('who are you') || q.includes('help')) {
+      answer += `I am **SnapSum's Elite AI Customer Support Agent**!\n\n` +
+                `I can help you understand our video summaries, subscription plans, Google API configurations, or sandbox mechanics. How can I assist you today? Feel free to ask me about:\n` +
+                `- **SnapSum Plans & Pricing** 💳\n` +
+                `- **Sandbox Mode & Checkout Simulation** 🧪\n` +
+                `- **How to bypass quotas with your own Gemini API Key** 🔑\n` +
+                `- **Unlocking Premium via Referrals** 👥\n` +
+                `- **Our core video repurposing & mindmapping features** 🎬`;
+    } else {
+      answer += `I am the **SnapSum Elite AI Support Assistant**.\n\n` +
+                `SnapSum is the ultimate universal video summarizer and knowledge engine. It transforms YouTube videos, lectures, and documents into elegant structured summaries, quizzes, audio, and visual mindmaps.\n\n` +
+                `I can assist you with:\n` +
+                `- **Plans & Pricing** ($9 Starter, $29 Pro)\n` +
+                `- **Sandbox mode** to simulate payments and test the app for free\n` +
+                `- **Custom Gemini Key overrides** in Developer Settings\n` +
+                `- **Unlocking premium** via our 2-friend referral program\n\n` +
+                `How can I help you today? Please feel free to ask a specific question!`;
+    }
+    
+    return answer;
+  };
+
   try {
+    const customKey = req.headers['x-custom-gemini-api-key'] as string;
+    const serverKey = process.env.GEMINI_API_KEY;
+
+    // Check if key is unconfigured, if so return smart fallback directly
+    if ((!customKey || !customKey.trim()) && (!serverKey || !serverKey.trim() || serverKey === 'MY_GEMINI_API_KEY')) {
+      const lastMessage = messages[messages.length - 1];
+      const userText = lastMessage ? (lastMessage.content || lastMessage.text || '') : 'Hello';
+      return res.json({ reply: getRuleBasedResponse(userText) });
+    }
+
     const client = getGeminiClient(req);
     let contents = messages.map((m: any) => ({
       role: m.role === 'assistant' || m.role === 'model' ? 'model' : 'user',
@@ -1403,7 +1488,6 @@ app.post('/api/customer-support', async (req, res) => {
     if (firstUserIndex !== -1) {
       contents = contents.slice(firstUserIndex);
     } else {
-      // Fallback if no user message found
       contents = [{ role: 'user', parts: [{ text: 'Hello' }] }];
     }
 
@@ -1446,8 +1530,11 @@ Always be warm, polite, highly professional, concise, and incredibly helpful. If
 
     return res.json({ reply: response.text });
   } catch (err: any) {
-    console.error('Customer support error:', err);
-    return res.status(500).json({ error: err.message || 'Customer Support assistant encountered an issue.' });
+    console.error('Customer support error, falling back to smart rule-based response:', err);
+    // If Gemini call fails for ANY reason (API key expired, rate limited, etc.), fallback to smart rules!
+    const lastMessage = messages[messages.length - 1];
+    const userText = lastMessage ? (lastMessage.content || lastMessage.text || '') : 'Hello';
+    return res.json({ reply: getRuleBasedResponse(userText) });
   }
 });
 

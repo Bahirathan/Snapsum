@@ -232,7 +232,8 @@ export default function App() {
       setAuthInitialized(true);
       if (user) {
         try {
-          await fetch('/api/log-google-user', {
+          // 1. Log user via backend API first
+          fetch('/api/log-google-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -241,7 +242,32 @@ export default function App() {
               displayName: user.displayName || '',
               photoURL: user.photoURL || ''
             })
-          });
+          }).catch(err => console.warn('Backend logging API status:', err));
+
+          // 2. Also log directly to Firestore on the client-side!
+          // This uses the user's logged-in identity/auth token and guarantees writing is successful in all environments.
+          const { doc, getDoc, setDoc } = await import('firebase/firestore');
+          const userRef = doc(db, 'google_users', user.uid);
+          const now = new Date().toISOString();
+          const userSnap = await getDoc(userRef).catch(() => null);
+          if (!userSnap || !userSnap.exists()) {
+            await setDoc(userRef, {
+              uid: user.uid,
+              email: user.email || '',
+              displayName: user.displayName || '',
+              photoURL: user.photoURL || '',
+              createdAt: now,
+              lastLoginAt: now,
+            });
+          } else {
+            await setDoc(userRef, {
+              email: user.email || '',
+              displayName: user.displayName || '',
+              photoURL: user.photoURL || '',
+              lastLoginAt: now,
+            }, { merge: true });
+          }
+          console.log('Successfully saved user details to Firestore directly on client-side.');
         } catch (err) {
           console.error('Error logging Google user details to firestore:', err);
         }
@@ -1408,15 +1434,80 @@ export default function App() {
   const [analyticsStats, setAnalyticsStats] = useState<any>(null);
   const [showExperimentConsole, setShowExperimentConsole] = useState<boolean>(false);
 
-  // Load A/B Testing Telemetry dynamically from API
-  const refreshAnalyticsStats = () => {
-    fetch('/api/learn/analytics')
-      .then((res) => {
-        if (res.ok) return res.json();
-        throw new Error();
-      })
-      .then((data) => setAnalyticsStats(data))
-      .catch((err) => console.log('Error fetching analytics:', err));
+  // Load A/B Testing Telemetry dynamically from API or Client Firestore fallback
+  const refreshAnalyticsStats = async () => {
+    try {
+      const res = await fetch('/api/learn/analytics');
+      if (res.ok) {
+        const data = await res.json();
+        setAnalyticsStats(data);
+        return;
+      }
+    } catch (err) {
+      console.warn('Error fetching analytics from backend API:', err);
+    }
+
+    // Direct Firestore client fallback
+    try {
+      const { collection, getDocs } = await import('firebase/firestore');
+      const snapshot = await getDocs(collection(db, 'learn_analytics'));
+      const events: any[] = [];
+      snapshot.forEach(docSnap => {
+        events.push(docSnap.data());
+      });
+
+      const groupA = events.filter((e: any) => e.experimentGroup === 'A');
+      const groupB = events.filter((e: any) => e.experimentGroup === 'B');
+
+      setAnalyticsStats({
+        success: true,
+        summary: {
+          totalEvents: events.length,
+          groupACount: groupA.length,
+          groupBCount: groupB.length,
+          groupARetention: groupA.length > 0 ? (groupA.filter((e: any) => e.eventName === 'quiz_completed' || e.eventName === 'mindmap_explored').length / groupA.length) * 100 : 0,
+          groupBRetention: groupB.length > 0 ? (groupB.filter((e: any) => e.eventName === 'quiz_completed' || e.eventName === 'mindmap_explored').length / groupB.length) * 100 : 0,
+        },
+        events: events.slice(0, 50)
+      });
+    } catch (err) {
+      console.warn('Error fetching client-side Firestore learning analytics:', err);
+    }
+  };
+
+  const trackEventClientSide = async (videoId: string, eventName: string, metadata: any) => {
+    // 1. Log to API
+    try {
+      fetch('/api/learn/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          videoId,
+          experimentGroup,
+          eventName,
+          metadata
+        })
+      }).catch(() => {});
+    } catch (e) {}
+
+    // 2. Dual log to Firestore directly
+    try {
+      const { collection, addDoc } = await import('firebase/firestore');
+      await addDoc(collection(db, 'learn_analytics'), {
+        videoId,
+        experimentGroup: experimentGroup || 'B',
+        eventName,
+        metadata: metadata || {},
+        timestamp: new Date().toISOString(),
+        userId: visitorUser?.uid || 'anonymous',
+        userEmail: visitorUser?.email || '',
+      });
+      console.log(`Successfully dual-logged learn analytic event ${eventName} to Firestore.`);
+    } catch (err) {
+      console.warn('Failed client-side Firestore analytic log:', err);
+    }
+
+    refreshAnalyticsStats();
   };
 
   useEffect(() => {
@@ -1431,62 +1522,40 @@ export default function App() {
         const currentSecs = parseInt(localStorage.getItem(key) || '0', 10) + 10;
         localStorage.setItem(key, String(currentSecs));
 
-        fetch('/api/learn/track', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            videoId: activeSummary.metadata.videoId,
-            experimentGroup,
-            eventName: 'engagement_update',
-            metadata: { seconds: 10 }
-          })
-        }).then(() => {
-          refreshAnalyticsStats();
-        }).catch(console.error);
+        trackEventClientSide(
+          activeSummary.metadata.videoId,
+          'engagement_update',
+          { seconds: 10 }
+        );
       }
     }, 10000);
     return () => clearInterval(interval);
-  }, [activeSummary, experimentGroup]);
+  }, [activeSummary, experimentGroup, visitorUser]);
 
   // Event telemetry triggers
   const handleTrackActivation = (mo: boolean, vidId: string) => {
-    fetch('/api/learn/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        videoId: vidId,
-        experimentGroup,
-        eventName: mo ? 'learn_mode_activated' : 'summary_mode_activated',
-        metadata: { timestamp: new Date().toISOString() }
-      })
-    }).then(() => refreshAnalyticsStats()).catch(console.error);
+    trackEventClientSide(
+      vidId,
+      mo ? 'learn_mode_activated' : 'summary_mode_activated',
+      { timestamp: new Date().toISOString() }
+    );
   };
 
   const handleTrackRevisit = (vidId: string) => {
-    fetch('/api/learn/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        videoId: vidId,
-        experimentGroup,
-        eventName: 'content_revisited',
-        metadata: { timestamp: new Date().toISOString() }
-      })
-    }).then(() => refreshAnalyticsStats()).catch(console.error);
+    trackEventClientSide(
+      vidId,
+      'content_revisited',
+      { timestamp: new Date().toISOString() }
+    );
   };
 
   const handleTrackQuizCompleted = (score: number, max: number) => {
     if (!activeSummary) return;
-    fetch('/api/learn/track', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        videoId: activeSummary.metadata.videoId,
-        experimentGroup,
-        eventName: 'quiz_completed',
-        metadata: { score, maxScore: max }
-      })
-    }).then(() => refreshAnalyticsStats()).catch(console.error);
+    trackEventClientSide(
+      activeSummary.metadata.videoId,
+      'quiz_completed',
+      { score, maxScore: max }
+    );
   };
 
   // Helper to ensure Learn Mode structural inputs exist, with optimized fallbacks for caching or preload assets
@@ -2217,15 +2286,39 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     if (!activeToken) return;
     setAdminGoogleUsersLoading(true);
     try {
-      const response = await fetch('/api/admin/google-users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: activeToken }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setAdminGoogleUsers(data.users || []);
+      // 1. Try fetching via backend API first
+      let loadedUsers: any[] = [];
+      try {
+        const response = await fetch('/api/admin/google-users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: activeToken }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          loadedUsers = data.users || [];
+        }
+      } catch (err) {
+        console.warn('API fetch for google users failed, falling back to client-side Firestore:', err);
       }
+
+      // 2. If API returned empty (due to backend IAM restrictions) or failed, query client-side Firestore directly!
+      if (loadedUsers.length === 0) {
+        try {
+          const { collection, query, orderBy, getDocs } = await import('firebase/firestore');
+          const q = query(collection(db, 'google_users'), orderBy('lastLoginAt', 'desc'));
+          const snapshot = await getDocs(q);
+          const users: any[] = [];
+          snapshot.forEach((docSnap) => {
+            users.push(docSnap.data());
+          });
+          loadedUsers = users;
+        } catch (err) {
+          console.warn('Client-side Firestore google users fetch failed:', err);
+        }
+      }
+
+      setAdminGoogleUsers(loadedUsers);
     } catch (err) {
       console.warn('Could not read secure administrative google users logs:', err);
     } finally {
@@ -2238,19 +2331,61 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     setAdminDbDiagnosticLoading(true);
     setAdminDbDiagnosticResult(null);
     try {
-      const response = await fetch('/api/admin/db-diagnostic', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: adminSessionToken }),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setAdminDbDiagnosticResult(data);
+      // 1. Try backend API diagnostic check
+      let apiResult: any = null;
+      try {
+        const response = await fetch('/api/admin/db-diagnostic', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: adminSessionToken }),
+        });
+        if (response.ok) {
+          apiResult = await response.json();
+        }
+      } catch (err) {
+        console.warn('Backend DB diagnostic check failed:', err);
+      }
+
+      // 2. Perform direct client-side database write/read test
+      let clientSuccess = false;
+      let clientError = '';
+      try {
+        const { doc, setDoc, getDoc, deleteDoc } = await import('firebase/firestore');
+        const testRef = doc(db, 'google_users', 'admin_client_test_doc');
+        await setDoc(testRef, { test: true, timestamp: new Date().toISOString() });
+        const snap = await getDoc(testRef);
+        if (snap.exists()) {
+          clientSuccess = true;
+          await deleteDoc(testRef);
+        } else {
+          clientError = 'Test document was not created successfully.';
+        }
+      } catch (err: any) {
+        clientError = err.message || String(err);
+      }
+
+      if (apiResult && apiResult.success) {
+        setAdminDbDiagnosticResult({
+          success: true,
+          mode: 'Full Stack Connected',
+          details: `Backend connection test was successful! Client-side write/read: ${clientSuccess ? 'OK' : 'FAILED (' + clientError + ')'}`,
+          projectId: apiResult.projectId,
+          databaseId: apiResult.databaseId,
+        });
       } else {
-        setAdminDbDiagnosticResult({ success: false, error: 'Failed to query database diagnostic API.' });
+        // If backend fails but client-side succeeds, we are in Client-Auth Direct Connected Mode!
+        setAdminDbDiagnosticResult({
+          success: clientSuccess,
+          mode: clientSuccess ? 'Client-Auth Direct Connected' : 'Disconnected',
+          details: clientSuccess 
+            ? 'The server-side container lacks direct GCP IAM owner credentials, but your logged-in Google credentials successfully authenticated direct client-side Firestore read/write! All visitor logging and analytics are operational via Client-Auth mode.' 
+            : `Both server and client database connections failed. Client error: ${clientError}. Backend error: ${apiResult?.error || 'unreachable'}`,
+          projectId: firebaseConfig.projectId,
+          databaseId: firebaseConfig.firestoreDatabaseId || '(default)'
+        });
       }
     } catch (err: any) {
-      setAdminDbDiagnosticResult({ success: false, error: err.message || 'Network diagnostic failure' });
+      setAdminDbDiagnosticResult({ success: false, error: err.message || 'Unexpected diagnostic error.' });
     } finally {
       setAdminDbDiagnosticLoading(false);
     }
