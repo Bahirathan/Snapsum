@@ -48,7 +48,8 @@ import {
 } from 'lucide-react';
 import { PRELOADED_VIDEOS } from './preloadedData';
 import { YouTubeSummaryResponse, SavedSummary } from './types';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
+import firebaseConfig from '../firebase-applet-config.json';
 import { 
   onAuthStateChanged, 
   signInWithPopup, 
@@ -1562,42 +1563,42 @@ export default function App() {
   const ensureLearnModeStructures = (summary: YouTubeSummaryResponse | null): any => {
     if (!summary) return null;
     
-    // Customized fine-tuned content for preloaded lecture #1: Dustin Moskovitz
-    if (summary.metadata.videoId === 'CBYhVcOnK8Y') {
+    // Customized fine-tuned content for preloaded lecture #1: Steve Jobs
+    if (summary.metadata.videoId === 'UF8uR6Z6KLc') {
       const concepts = [
         {
-          concept: 'The Founder Illusions',
-          definition: 'The romanticized myths about startup life propagated by media, including absolute status, immense, effortlessly built wealth, and total leisure.',
-          simplifiedExplanation: 'Movies like "The Social Network" make building a startup look like a constant party. In reality, it involves constant high-tension hours, sleeping under desks, and extreme risk.'
+          concept: 'Connecting the Dots',
+          definition: 'Trusting that the diverse, seemingly random activities and challenges you pursue will eventually harmonize in your future.',
+          simplifiedExplanation: 'Dropping out of college allowed Steve Jobs to take calligraphy out of pure curiosity. 10 years later, that training formed the typography system of the Macintosh.'
         },
         {
-          concept: 'Compelling Motivation (The Obsession)',
-          definition: 'The deep, highly persistent intrinsic obsession that compels a founder to solve a problem because its existing pain simply cannot be tolerated.',
-          simplifiedExplanation: "Don't start a startup for fame or money. Real longevity comes when you are so obsessed with a user's problem that you physically can't rest until you build its absolute solution."
+          concept: 'Love and Loss',
+          definition: 'Understanding that severe setbacks, like getting fired or failing publicly, can strip away comfort and spark an incredibly creative rebirth.',
+          simplifiedExplanation: "Being fired from Apple at 30 was devastating, but it freed Jobs to enter his most creative period, founding NeXT and Pixar, which eventually led to his legendary return to Apple."
         },
         {
-          concept: 'Severe Stress Carrier',
-          definition: 'The psychological burden of carrying absolute responsibility for the livelihoods, salaries, health insurance, and focus of your employees.',
-          simplifiedExplanation: "As a boss, you don't just relax. When things go wrong, you are the final shield carrying the heavy burden of making payroll and preventing team burnout."
+          concept: 'Remembering Mortality',
+          definition: 'Using the remembrance of death to clear away all trivial expectations of pride, fear, and embarrassment, leaving only what is truly important.',
+          simplifiedExplanation: "Remembering that you will die is the single best way to avoid the trap of thinking you have something to lose. Your time is limited, so don’t live someone else's life."
         }
       ];
 
       const cards = [
         {
-          question: 'According to Dustin Moskovitz, who does a startup founder report to?',
-          answer: 'Everyone! The employees, customers, partners, and investors. You are the ultimate servant leader.'
+          question: 'According to Steve Jobs, why is it impossible to connect the dots looking forward?',
+          answer: 'Because you can only recognize the value and synergy of life events in hindsight. You must trust that they will connect in your future.'
         },
         {
-          question: 'What is the most sustainable reason to start a company?',
-          answer: 'An urgent, real obsession with solving an intolerable problem that the world needs.'
+          question: 'What was the major setback Steve Jobs experienced that ultimately catalyzed Pixar and NeXT?',
+          answer: 'He was fired from Apple at age 30, which freed him to enter his most creative period.'
         },
         {
-          question: 'Why is starting a startup to gain "status" or "wealth" a trap?',
-          answer: "Because the workload is so extreme and stressful that financial reward alone won't sustain you through hard times."
+          question: 'What is the single best tool Jobs recommends to stay focused on what truly matters?',
+          answer: 'Remembering that you are going to die, which clears away trivial external expectations.'
         }
       ];
 
-      const rem = `- **Rethink Boss Myths**: You are not your own master; you are a primary servant to your team.\n- **Intrinsic obsessions**: Chase a burning user agony, not a generic market trend.\n- **Prepare for the carrying burden**: Build high psychological resilience before diving in.`;
+      const rem = `- **Trust your intuition**: Follow your heart even when it leads you off the well-worn path.\n- **Embrace setbacks**: See public failures or career disruptions as potential canvases for creative rebirth.\n- **Focus on the essential**: Remember mortality to shed fear of failure and pursue what truly matters.`;
 
       return {
         ...summary,
@@ -1739,7 +1740,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     } catch (e) {
       console.warn('Failed parsing local storage histories', e);
     }
-    // Default to Dustin Moskovitz lecture for rich quick onboarding
+    // Default to Steve Jobs lecture for rich quick onboarding
     setActiveSummary(PRELOADED_VIDEOS[0]);
   }, []);
 
@@ -2759,13 +2760,13 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         {/* Mock Video Aspect Player */}
                         <div className="sm:col-span-5 bg-slate-900 rounded-2xl p-3 relative aspect-[16/10] sm:aspect-auto flex flex-col justify-between overflow-hidden shadow-sm group">
                           <img 
-                            src="https://img.youtube.com/vi/CBYhVcOnK8Y/maxresdefault.jpg" 
+                            src="https://img.youtube.com/vi/UF8uR6Z6KLc/maxresdefault.jpg" 
                             alt="Lecture Preview" 
                             className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-luminosity filter blur-xs"
                             referrerPolicy="no-referrer"
                           />
                           <div className="bg-black/40 text-[8px] text-white px-1.5 py-0.5 rounded-md font-mono self-start relative z-10">
-                            12:15 / 24:00
+                            09:12 / 15:00
                           </div>
                           <div className="absolute inset-0 flex items-center justify-center relative z-10">
                             <span className="w-10 h-10 bg-[#0071e3] text-white rounded-full flex items-center justify-center shadow-md animate-pulse">
@@ -2773,7 +2774,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             </span>
                           </div>
                           <div className="text-[9px] text-neutral-200 truncate font-sans font-medium relative z-10">
-                             Dustin Moskovitz • Startup school
+                             Steve Jobs • Stanford Address
                           </div>
                         </div>
 
@@ -2785,11 +2786,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           </div>
                           
                           <h4 className="text-sm font-bold font-display text-neutral-900 leading-tight">
-                            Evaluating Founder Motivation
+                            Evaluating Intuition & Resilience
                           </h4>
                           
                           <p className="text-[11px] text-neutral-500 leading-normal line-clamp-3 font-light">
-                            Examines why status, quick wealth, and complete flexibility are usually illusions. Moskovitz insists true builders should only proceed if compelled by a problem's extreme urgency.
+                            Examines how unexpected experiences connect backward to shape your future, why public setbacks catalyze creative rebirths, and how mortality helps you focus on what truly matters.
                           </p>
 
                           <div className="space-y-1.5 pt-1">
@@ -4106,7 +4107,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <div className="bg-white/95 p-3.5 rounded-xl border border-rose-100/50 space-y-2">
                           <p className="text-xs font-semibold text-neutral-800">Available Quick Workarounds:</p>
                           <ul className="text-xs text-neutral-600 list-disc list-inside space-y-1 bg-neutral-50/50 p-2.5 rounded-lg border border-neutral-100">
-                            <li><strong className="text-neutral-900">Cached Templates:</strong> Select Dustin Moskovitz or Simon Sinek in the side rail for zero-cost, high-fidelity analyses.</li>
+                            <li><strong className="text-neutral-900">Cached Templates:</strong> Select Steve Jobs or Simon Sinek in the side rail for zero-cost, high-fidelity analyses.</li>
                             <li><strong className="text-neutral-900">Custom API Key:</strong> Provide your own Gemini API key inside the <strong className="text-indigo-600 font-medium">Admin tab</strong> above to bypass billing limits.</li>
                           </ul>
                         </div>

@@ -8,149 +8,143 @@ import { YouTubeSummaryResponse } from './types';
 export const PRELOADED_VIDEOS: YouTubeSummaryResponse[] = [
   {
     metadata: {
-      videoId: 'CBYhVcOnK8Y',
-      videoUrl: 'https://www.youtube.com/watch?v=CBYhVcOnK8Y',
-      title: 'How to Start a Startup - Dustin Moskovitz (YC Startup School)',
-      author: 'Y Combinator',
-      thumbnailUrl: 'https://img.youtube.com/vi/CBYhVcOnK8Y/maxresdefault.jpg',
-      duration: '24 mins',
+      videoId: 'UF8uR6Z6KLc',
+      videoUrl: 'https://www.youtube.com/watch?v=UF8uR6Z6KLc',
+      title: 'Steve Jobs: 2005 Stanford Commencement Address',
+      author: 'Stanford',
+      thumbnailUrl: 'https://img.youtube.com/vi/UF8uR6Z6KLc/maxresdefault.jpg',
+      duration: '15 mins',
     },
-    summary: 'In this classic Y Combinator lecture, Dustin Moskovitz (co-founder of Facebook and Asana) delivers a realistic talk on "Why to Start a Startup". Defying popular media glamorization, Dustin explores the true stresses, duties, and motivations of founders. He outlines that the most successful founders do not seek status, control, or wealth, but rather are compelled by a problem that they simply must solve because the world needs it.',
+    summary: 'In this legendary commencement address at Stanford University in 2005, Steve Jobs (co-founder of Apple) shares three personal stories about "connecting the dots," "love and loss," and "death." He urges graduates to follow their curiosity and intuition, trust that their experiences will somehow connect in the future, love their work, and live every day as if it were their last to focus on what truly matters.',
     takeaways: [
-      'The media glamorizes the "startup lifestyle"—real startup existence consists of constant high stress, massive risk, and relentless work.',
-      'True passion for an idea is the only sustainable driver. Starting a company just to make money or be your own boss is highly counter-productive.',
-      'As a founder, you are NOT your own boss; you report to everyone—team, customers, investors, and partners.',
-      'Successful startups require extreme focus on solving a core user problem rather than chasing flashy PR or hiring milestones.',
-      'Execution is everything. Ideas are valuable, but a masterfully executed average idea beats a mediocrely executed great idea every single time.',
+      'Connecting the dots: You cannot connect the dots looking forward; you can only connect them looking backward. You must trust that they will connect in your future.',
+      'Love and loss: Getting fired from Apple was the best thing that could have happened to Steve. It freed him to enter one of the most creative periods of his life.',
+      'Death as an agent: Remembering that you are going to die is the best way to avoid the trap of thinking you have something to lose. Your time is limited, so don’t waste it living someone else’s life.',
+      'Curiosity and Intuition: Follow your heart even when it leads you off the well-worn path, and that will make all the difference.',
+      'Stay Hungry, Stay Foolish: Embrace lifelong learning, remain ambitious, and never settle for mediocrity.',
     ],
     chapters: [
       {
         timestamp: '00:00',
         secondsCount: 0,
-        title: 'Introduction & Startup Myths',
-        takeaway: 'Dustin breaks down the romanticized startup narrative perpetuated by movies and social media.',
+        title: 'First Story: Connecting the Dots',
+        takeaway: 'Dropping out of Reed College allowed Steve to drop in on calligraphy classes, which directly inspired the rich typography of the Macintosh computer.',
       },
       {
-        timestamp: '04:15',
-        secondsCount: 255,
-        title: 'Evaluating Your True Motivation',
-        takeaway: 'Examines why status, wealth, and flexibility are usually illusions for early-stage founders.',
+        timestamp: '05:08',
+        secondsCount: 308,
+        title: 'Second Story: Love and Loss',
+        takeaway: 'Steve describes founding Apple, getting fired at age 30, and discovering the creative freedom that led to Next, Pixar, and returning to Apple.',
       },
       {
-        timestamp: '10:30',
-        secondsCount: 630,
-        title: 'The Burden of Extreme Responsibility',
-        takeaway: 'Highlights how founders carry the psychological stress of everyone on their team failing or succeeding.',
+        timestamp: '09:12',
+        secondsCount: 552,
+        title: 'Third Story: Death and Mortality',
+        takeaway: 'Confronting cancer taught Steve that remembering mortality is the ultimate tool for making major life decisions.',
       },
       {
-        timestamp: '16:45',
-        secondsCount: 1005,
-        title: 'The Compelling Reason to Build',
-        takeaway: 'You should only start a startup if you feel a problem is so urgent that you cannot live without creating its solution.',
-      },
-      {
-        timestamp: '22:00',
-        secondsCount: 1320,
-        title: 'Final Takeaway and Q&A',
-        takeaway: 'A realistic summary on measuring success through user value over capital raised.',
+        timestamp: '13:30',
+        secondsCount: 810,
+        title: 'Stay Hungry, Stay Foolish',
+        takeaway: 'Concludes with his famous charge to the graduating class to keep seeking and never settle.',
       },
     ],
-    blogPost: `# Demystifying the Startup Dream: Why Dustin Moskovitz Says You Probably Shouldn't Start a Startup
+    blogPost: `# Stay Hungry, Stay Foolish: Lessons from Steve Jobs’ Famous 2005 Stanford Address
 
-In the age of tech giants and overnight unicorns, the media has painted a highly seductive picture of the entrepreneur. We envision late-night brainstorms, massive funding announcements, instant fame, and the absolute freedom of "being your own boss."
-
-But in his famous lecture at Y Combinator's Startup School, **Dustin Moskovitz** (co-founder of Facebook and Asana) pulls back the curtain. His message is clear, grounded, and essential for any aspiring builder: **most of what you believe about starting a startup is a myth.**
+In June 2005, Apple co-founder Steve Jobs stood before the graduating class at Stanford University and delivered one of the most memorable speeches in modern history. He did not talk about corporate statistics, software features, or product strategies. Instead, he told three simple stories.
 
 ---
 
-## 1. The Glitz vs. The Reality
-Dustin points out that the cinematic depiction of startup life lacks the compounding stress and sleepless weeks that dominate a founder's schedule. While the film *The Social Network* showed high-stakes boardrooms and party-filled lifestyles, the day-to-day reality in Palo Alto was simple, repetitive desk labor.
+## 1. Connecting the Dots
+Jobs dropped out of Reed College after six months, but stayed as a drop-in for another 18 months. This allowed him to take a calligraphy course out of pure interest. 
 
-> **"It is incredibly hard work. You are on the hook, always."**
+Ten years later, when designing the first Macintosh computer, that calligraphy training became the foundation for the beautiful, proportional typography we take for granted on computers today.
 
-Startups require high emotional resilience. When things go wrong—and they always do—the weight of failure falls squarely on the founders' shoulders.
+> **"You can't connect the dots looking forward; you can only connect them looking backward."**
 
----
-
-## 2. The Illusion of Control
-One of the most persistent misconceptions is that starting a company grants you master-level control over your schedule. Dustin explains that as a founder, your level of responsibility balloons:
-
-*   **You report to your employees:** If they aren't equipped, you fail.
-*   **You report to your customers:** If they are unhappy, you have no product.
-*   **You report to your investors:** They expect astronomical compound growth.
-
-Instead of reporting to a single manager, you now report to the entire ecosystem of your business.
+You must trust that the dots will somehow connect in your future. This trust gives you the confidence to follow your heart.
 
 ---
 
-## 3. The Only Valid Reason to Start
-If not for wealth, status, or flexibility, why start? Dustin offers the only bulletproof motivation: **compulsion**.
+## 2. Love and Loss
+At age 30, Jobs was publicly fired from Apple, the very company he founded. It was devastating, but it proved to be a blessing in disguise. 
 
-You should start a startup if and only if you find a problem so deeply urgent, so completely ignored by the world, that you feel an absolute duty to fix it yourself. Passion sustains you when funding dries up or launch metrics fall flat. Use that pressure to determine whether you are ready to ship.
+It freed him to enter one of the most creative phases of his life, founding NeXT and Pixar (which created the world's first computer-animated feature film, *Toy Story*). Apple eventually bought NeXT, bringing Jobs back to revolutionize the company.
+
+> **"The only way to do great work is to love what you do. If you haven't found it yet, keep looking. Don't settle."**
+
+---
+
+## 3. Death is the Ultimate Life Agent
+Confronting his initial cancer diagnosis led Jobs to appreciate the power of mortality as a decision-making tool.
+
+> **"Remembering that you are going to die is the best way I know to avoid the trap of thinking you have something to lose. You are already naked. There is no reason not to follow your heart."**
+
+Your time is limited, so don't waste it living someone else's life. Be brave enough to follow your own path.
 `,
     twitterThread: [
-      '1/ Ready to start a startup? Dustin Moskovitz (co-founder of Facebook & Asana) begs you to think twice. True startup life is not what you see on social media. Crucial lessons: 👇',
-      '2/ The Glamor Myth: Movies show boardrooms, parties, and instant billionaire status. Real life is 14-hour days, tedious product testing, and psychological weight. True tech builders enjoy the process, not just the PR.',
-      '3/ "Being your own boss" is a myth. As a founder, you actually report to everyone. Your engineers need tools, your clients demand support, and your investors expect 10x returns. You are at the bottom of the pyramid, serving others.',
-      '4/ Motivation Check: If you are building solely for status, control, or cash, you will burn out within 12 months. The only real anchor is absolute obsession with the user problem.',
-      '5/ Conclusion: Only launch when the problem is so urgent that its solution becomes a necessity. Fixate on value, scale steadily, and leave the glamour behind. 🎯',
+      '1/ In 2005, Steve Jobs delivered one of the most iconic commencement addresses in history. His three simple stories contain timeless wisdom for anyone building a career or a business. A breakdown of his key lessons: 👇',
+      '2/ Lesson 1: Connecting the Dots. You cannot connect them looking forward; you can only connect them looking backward. Dropouts, calligraphy classes, and unexpected paths shaped the Macintosh. Trust your intuition.',
+      '3/ Lesson 2: Love & Loss. Being fired from Apple at 30 was devastating but ultimately liberating. It sparked the creation of Pixar and NeXT. Remember: "The only way to do great work is to love what you do. Don\'t settle."',
+      '4/ Lesson 3: Confronting Mortality. Death is life\'s change agent. Remembering your time is limited prevents you from living someone else\'s life or thinking you have something to lose. Follow your heart.',
+      '5/ Conclusion: "Stay Hungry, Stay Foolish." Never lose your curiosity, beginner\'s mind, or drive to push boundaries. Keep seeking. 🎯',
     ],
-    socialSnippet: '🚀 "Startups aren\'t about being your own boss—they are about serving everyone else." Dustin Moskovitz (Facebook, Asana) delivered this masterclass at Y Combinator on why most founders fail. Read our full timeline and AI summary of Startup Myths below! #Startups #YCombinator #Productivity #Monetize',
+    socialSnippet: '🎓 "Stay Hungry, Stay Foolish." Steve Jobs’ legendary 2005 Stanford Commencement Address is a powerful reminder to trust our intuition, love our work, and embrace mortality to focus on what truly matters. Read the full timeline and chapters below! #SteveJobs #Inspiration #Productivity #CareerGrowth',
     quiz: [
       {
-        question: 'Which company did Dustin Moskovitz co-found alongside Facebook?',
-        options: ['Asana', 'Slack', 'Trello', 'Notion'],
+        question: 'What class did Steve Jobs "drop in" on at Reed College that later inspired Mac typography?',
+        options: ['Calligraphy', 'Computer Science', 'Art History', 'Physics'],
         answerIndex: 0,
-        explanation: 'Dustin Moskovitz co-founded Asana in 2008 to solve co-worker coordination and task tracking issues.',
+        explanation: 'Jobs dropped in on calligraphy classes after dropping out of Reed College, which later inspired the Macintosh\'s beautiful typography.',
       },
       {
-        question: 'Why does Dustin argue founders actually have less flexibility than regular employees?',
+        question: 'Which company did Steve Jobs co-found/lead after being fired from Apple that Apple eventually acquired?',
+        options: ['Pixar', 'NeXT', 'Asana', 'Intel'],
+        answerIndex: 1,
+        explanation: 'Steve Jobs founded NeXT (and bought Pixar). Apple acquired NeXT in 1996 to bring Jobs back.',
+      },
+      {
+        question: 'According to Steve Jobs, what is the single best tool to avoid the trap of thinking you have something to lose?',
         options: [
-          'Because they are bound by strict government mandates.',
-          'They report to their entire ecosystem: employees, clients, investors, and partners.',
-          'Investors specify their exact office check-in times.',
-          'They are legally not permitted to take holidays.',
+          'Securing venture capital',
+          'Remembering that you are going to die',
+          'Earning a Stanford degree',
+          'Expanding your personal network',
         ],
         answerIndex: 1,
-        explanation: "As a founder, you have ultimate accountability. You must resolve problems for every stakeholder, erasing the myth of total 'freedom'.",
-      },
-      {
-        question: 'What is the only valid motivation Dustin suggests for launching a startup?',
-        options: [
-          'Chasing quick status and public PR clout.',
-          'Acquiring capital to invest in speculative markets.',
-          'Compelling passion to solve an urgent user problem.',
-          'To work fewer hours than a 9-to-5 job.',
-        ],
-        answerIndex: 2,
-        explanation: "Only deep obsession with a problem provides the long-term stamina required to survive a startup's severe lows.",
+        explanation: 'Jobs asserts that remembering your own mortality is the ultimate way to stay focused on what truly matters.',
       },
     ],
     mindmap: [
       {
-        concept: 'Startup Myths',
+        concept: 'Steve Jobs Stanford Address',
         category: 'Core Thesis',
-        description: 'Analyzing why the glamorized view of entrepreneurship mismatches reality.',
+        description: 'Three personal stories highlighting connecting dots, love/loss, and mortality.',
       },
       {
-        concept: 'Illusion of Freedom',
-        category: 'Startup Myths',
-        description: 'Founders do not have more free time; they are bound to everyone else.',
+        concept: 'Connecting the Dots',
+        category: 'Steve Jobs Stanford Address',
+        description: 'Trusting that diverse, seemingly unrelated interests will align in the future.',
       },
       {
-        concept: 'The True Bosses',
-        category: 'Illusion of Freedom',
-        description: 'Employees, customers, and venture investors hold ultimate leverage.',
+        concept: 'Calligraphy Inspiration',
+        category: 'Connecting the Dots',
+        description: 'How a creative interest directly resulted in the Mac\'s proportional typography.',
       },
       {
-        concept: 'Valid Motivation',
+        concept: 'Love and Loss',
         category: 'Core Thesis',
-        description: 'Determining the source of long-term grit.',
+        description: 'How setbacks and failures can open creative opportunities.',
       },
       {
-        concept: 'Core Compulsion',
-        category: 'Valid Motivation',
-        description: 'Solving a problem because its existence feels intolerable to you.',
+        concept: 'Getting Fired',
+        category: 'Love and Loss',
+        description: 'Being ousted from Apple was a creative rebirth that birthed NeXT and Pixar.',
+      },
+      {
+        concept: 'Mortality as a Tool',
+        category: 'Core Thesis',
+        description: 'Using death to clear away external expectations and focus on what truly matters.',
       },
     ],
   },
@@ -204,40 +198,40 @@ You should start a startup if and only if you find a problem so deeply urgent, s
       },
     ],
     blogPost: `# The Inside-Out Leadership Guide: Simon Sinek’s Golden Circle Explained
-
-Why are some companies more innovative, influential, and profitable than others? Why do they command such staggering loyalty from customers and employees alike?
-
-In one of the most popular TED Talks of all time, **Simon Sinek** unpacks the secret. It is not about larger budgets, better technology, or superior talent. It is about a simple, geometric formula he calls **The Golden Circle**.
-
----
-
-## 1. What is The Golden Circle?
-Sinek notes that every single organization on Earth operates with three nested questions:
-1.  **What:** Every company knows *what* products or services they sell.
-2.  **How:** Some companies know *how* they do it—their secret processes or unique selling propositions (USPs).
-3.  **Why:** Very few companies can articulate *why* they do what they do. Note: "Why" is not about profit (that is a result). "Why" is your purpose, your cause, or your belief.
-
-Most businesses communicate from the **outside in** (What ➔ How ➔ Why). But inspiring organizations—such as Apple, Patagonia, or the Wright Brothers—communicate from the **inside out** (Why ➔ How ➔ What).
-
----
-
-## 2. The Golden Circle is Rooted in Biology
-This isn't just a marketing theory; it corresponds precisely to how the human brain processes information:
-
-*   **The Neocortex (Outer level):** Corresponds to the *What*. It is responsible for analytical, rational thought and language.
-*   **The Limbic Brain (Inner levels):** Corresponds to the *How* and *Why*. This controls all human emotions, trust, behavioral decision-making, and has **no capacity for language**.
-
-When you describe features (What), you appeal to language centers. But when you address purpose (Why), you talk directly to the emotional part of the brain that triggers gut decisions.
-
----
-
-## 3. People Buy "Why," Not "What"
-Sinek’s core thesis is simple: **People don’t buy what you do; they buy why you do it.**
-
-If you speak about what you believe, you will attract those who believe the same. This shared belief is what creates sustainable consumer trust and employee inspiration. Focus your brand's messaging loop here to cross the market chasm successfully.
-`,
+ 
+ Why are some companies more innovative, influential, and profitable than others? Why do they command such staggering loyalty from customers and employees alike?
+ 
+ In one of the most popular TED Talks of all time, **Simon Sinek** unpacks the secret. It is not about larger budgets, better technology, or superior talent. It is about a simple, geometric formula he calls **The Golden Circle**.
+ 
+ ---
+ 
+ ## 1. What is The Golden Circle?
+ Sinek notes that every single organization on Earth operates with three nested questions:
+ 1.  **What:** Every company knows *what* products or services they sell.
+ 2.  **How:** Some companies know *how* they do it—their secret processes or unique selling propositions (USPs).
+ 3.  **Why:** Very few companies can articulate *why* they do what they do. Note: "Why" is not about profit (that is a result). "Why" is your purpose, your cause, or your belief.
+ 
+ Most businesses communicate from the **outside in** (What ➔ How ➔ Why). But inspiring organizations—such as Apple, Patagonia, or the Wright Brothers—communicate from the **inside out** (Why ➔ How ➔ What).
+ 
+ ---
+ 
+ ## 2. The Golden Circle is Rooted in Biology
+ This isn't just a marketing theory; it corresponds precisely to how the human brain processes information:
+ 
+ *   **The Neocortex (Outer level):** Corresponds to the *What*. It is responsible for analytical, rational thought and language.
+ *   **The Limbic Brain (Inner levels):** Corresponds to the *How* and *Why*. This controls all human emotions, trust, behavioral decision-making, and has **no capacity for language**.
+ 
+ When you describe features (What), you appeal to language centers. But when you address purpose (Why), you talk directly to the emotional part of the brain that triggers gut decisions.
+ 
+ ---
+ 
+ ## 3. People Buy "Why," Not "What"
+ Sinek’s core thesis is simple: **People don’t buy what you do; they buy why you do it.**
+ 
+ If you speak about what you believe, you will attract those who believe the same. This shared belief is what creates sustainable consumer trust and employee inspiration. Focus your brand's messaging loop here to cross the market chasm successfully.
+ `,
     twitterThread: [
-      '1/ Why do some brands command fierce loyalty while others compete on price? Simon Sinek’s legendary Golden Circle explanation is a masterclass in influence. A breakdown: 👇',
+      '1/ Why do some brands command fierce loyalty while others compete on price? Simon Sinek’s legendary Golden Circle explanation is a masterclass in influence. A breakdown of his key lessons: 👇',
       '2/ The Golden Circle has 3 layers:\n• WHAT: The products/services you sell\n• HOW: Your unique process or USP\n• WHY: Your core purpose or belief.\n\nMost brands talk from What to Why. Inspiring brands do the reverse.',
       '3/ "People don\'t buy what you do; they buy why you do it." \n\nWhen communications start with the WHY, they target the limbic brain—the section that controls feelings, trust, and visceral decisions. Neocortex handles logic only.',
       '4/ Compare Apple vs. Dell:\n\nDell: "We make nice computers. They have high RAM. Want to buy?" (What ➔ How)\n\nApple: "We challenge the status quo inside design. We do this with elegant UX. Oh, and we make nice computers." (Why ➔ How ➔ What)',

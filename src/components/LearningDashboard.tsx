@@ -44,12 +44,12 @@ import {
 // =========================================================================
 
 const RECTIFY_SAMPLE_SESSIONS: Record<string, VideoLearningSession> = {
-  'CBYhVcOnK8Y': {
-    videoId: 'CBYhVcOnK8Y',
-    title: 'How to Start a Startup - Dustin Moskovitz (YC Startup School)',
-    thumbnailUrl: 'https://img.youtube.com/vi/CBYhVcOnK8Y/maxresdefault.jpg',
+  'UF8uR6Z6KLc': {
+    videoId: 'UF8uR6Z6KLc',
+    title: 'Steve Jobs: 2005 Stanford Commencement Address',
+    thumbnailUrl: 'https://img.youtube.com/vi/UF8uR6Z6KLc/maxresdefault.jpg',
     processedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleDateString(),
-    duration: '24 mins',
+    duration: '15 mins',
     progressPercent: 65,
     completed: false
   },
@@ -67,13 +67,13 @@ const RECTIFY_SAMPLE_SESSIONS: Record<string, VideoLearningSession> = {
 };
 
 const RECTIFY_SAMPLE_CONCEPTS: Record<string, MemoryConcept> = {
-  'Startup-Myths': {
-    id: 'Startup-Myths',
-    concept: 'Startup Lifestyle Glorification',
-    sourceVideoId: 'CBYhVcOnK8Y',
-    sourceTitle: 'How to Start a Startup',
-    definition: 'The popular media romanticization of entrepreneurship, blinding early founders to systemic stress and risks.',
-    analogy: 'Like watching a formula racing highlights reel without realizing the drivers spend thousands of hours doing rigorous physical training and mechanical testing.',
+  'Connecting-Dots': {
+    id: 'Connecting-Dots',
+    concept: 'Connecting the Dots',
+    sourceVideoId: 'UF8uR6Z6KLc',
+    sourceTitle: 'Steve Jobs: Stanford Address',
+    definition: 'Trusting that the diverse, seemingly random activities and challenges you pursue will eventually harmonize in your future.',
+    analogy: 'Like taking a calligraphy class that seemed completely useless at college, but ten years later provided the exact typography blueprint for the Macintosh.',
     masteryLevel: 45,
     status: 'Weak'
   },
@@ -97,13 +97,13 @@ const RECTIFY_SAMPLE_CONCEPTS: Record<string, MemoryConcept> = {
     masteryLevel: 40,
     status: 'Weak'
   },
-  'Core-Motivation': {
-    id: 'Core-Motivation',
-    concept: 'Founder Obsession Anchoring',
-    sourceVideoId: 'CBYhVcOnK8Y',
-    sourceTitle: 'How to Start a Startup',
-    definition: 'The conviction alignment asserting founders must only build when compelled by an urgent user problem, rather than status.',
-    analogy: 'Like running a grueling marathon. If you are doing it for a shiny plastic medal at the end, you quit at mile 18. If you run to raise funds for your family, you finish.',
+  'Creative-Rebirth': {
+    id: 'Creative-Rebirth',
+    concept: 'Creative Resilience (Love & Loss)',
+    sourceVideoId: 'UF8uR6Z6KLc',
+    sourceTitle: 'Steve Jobs: Stanford Address',
+    definition: 'Understanding that severe setbacks, like being fired or failing publicly, can strip away comfort and spark an incredibly creative rebirth.',
+    analogy: 'Like a pruning shears cutting a branch back. It looks like destruction, but the next season brings twice as many blossoms and fruit.',
     masteryLevel: 90,
     status: 'Strong'
   }
@@ -111,16 +111,16 @@ const RECTIFY_SAMPLE_CONCEPTS: Record<string, MemoryConcept> = {
 
 const DEFAULT_DAILY_CHALLENGES: DailyChallengeQuestion[] = [
   {
-    question: "If Dustin Moskovitz asserts that founders actually 'report to everyone,' what core startup glamorization myth is he debunking?",
+    question: "According to Steve Jobs' Stanford address, why is it impossible to connect the dots of your life looking forward?",
     options: [
-      "The illusion of absolute calendar freedom and being your own boss.",
-      "The belief that startups require huge initial capital investments.",
-      "The idea that marketing is more valuable than robust engineers.",
-      "The misconception that co-founders must be friends."
+      "Because human intuition is naturally flawed and unpredictable.",
+      "Because you can only recognize the value and synergy of life events in hindsight.",
+      "Because modern technology moves too quickly to make accurate plans.",
+      "Because career advice from academic institutions is usually outdated."
     ],
-    answerIndex: 0,
-    explanation: "Dustin emphasizes that founders carry heavy systemic accountability to investors, staff, and clients, which erases any assumption of total 'independence.'",
-    conceptName: "Founder Accountabilities"
+    answerIndex: 1,
+    explanation: "Steve Jobs states that you cannot connect the dots looking forward; you can only connect them looking backward. You have to trust that the dots will somehow connect in your future.",
+    conceptName: "Trust and Intuition"
   },
   {
     question: "Which layer of Simon Sinek's Golden Circle corresponds directly to the human neocortex?",
@@ -158,11 +158,11 @@ export function loadMemoryGraph(): LearningMemoryGraph {
     concepts: RECTIFY_SAMPLE_CONCEPTS,
     sessions: RECTIFY_SAMPLE_SESSIONS,
     quizHistory: [
-      { videoId: 'qp0HIF3SfI4', title: 'Startups & Core Dedication', score: 3, total: 3, date: '21 Jun', difficulty: 'Medium' },
-      { videoId: 'CBYhVcOnK8Y', title: 'Sinek: Leverage the Limbic System', score: 2, total: 3, date: '22 Jun', difficulty: 'Medium' }
+      { videoId: 'qp0HIF3SfI4', title: 'Simon Sinek: Golden Circles', score: 3, total: 3, date: '21 Jun', difficulty: 'Medium' },
+      { videoId: 'UF8uR6Z6KLc', title: 'Steve Jobs: Connecting Dots', score: 2, total: 3, date: '22 Jun', difficulty: 'Medium' }
     ],
-    weakTopics: ['Biology of Decision Making', 'Startup Lifestyle Glorification'],
-    strongTopics: ['Founder Obsession Anchoring', 'The Inside-Out Golden Circle'],
+    weakTopics: ['Biology of Decision Making', 'Connecting the Dots'],
+    strongTopics: ['The Inside-Out Golden Circle', 'Creative Resilience (Love & Loss)'],
     xp: 540,
     level: 2,
     streak: 6,
@@ -661,11 +661,11 @@ export function LearningProgressDashboard({ onLoadVideo, onActivateDemo }: Learn
                   pill: 'Direct Neuroscience correlation'
                 },
                 {
-                  videoId: 'CBYhVcOnK8Y',
-                  title: 'Dustin Moskovitz: YC School',
-                  author: 'Y Combinator',
-                  thumbnailUrl: 'https://img.youtube.com/vi/CBYhVcOnK8Y/maxresdefault.jpg',
-                  pill: 'Stress Resilience training'
+                  videoId: 'UF8uR6Z6KLc',
+                  title: 'Steve Jobs: Stanford Address',
+                  author: 'Stanford',
+                  thumbnailUrl: 'https://img.youtube.com/vi/UF8uR6Z6KLc/maxresdefault.jpg',
+                  pill: 'Intuition & Resilience keynotes'
                 }
               ].map((recommend, index) => (
                 <button
