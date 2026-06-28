@@ -2381,6 +2381,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           details: clientSuccess 
             ? 'The server-side container lacks direct GCP IAM owner credentials, but your logged-in Google credentials successfully authenticated direct client-side Firestore read/write! All visitor logging and analytics are operational via Client-Auth mode.' 
             : `Both server and client database connections failed. Client error: ${clientError}. Backend error: ${apiResult?.error || 'unreachable'}`,
+          error: clientSuccess
+            ? null
+            : `Client error: ${clientError || 'none'}. Backend error: ${apiResult?.error || 'unreachable'}.`,
           projectId: firebaseConfig.projectId,
           databaseId: firebaseConfig.firestoreDatabaseId || '(default)'
         });
@@ -8395,7 +8398,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           <p className="text-[11px] leading-relaxed opacity-90">
                             {adminDbDiagnosticResult.success 
                               ? `Successfully performed automated read/write tests on project: "${adminDbDiagnosticResult.projectId}". Write payload verified: ${JSON.stringify(adminDbDiagnosticResult.data)}.`
-                              : `Failed connection: ${adminDbDiagnosticResult.error}. Please ensure your Firebase credentials and Cloud Firestore collection security settings match.`
+                              : `Failed connection: ${adminDbDiagnosticResult.error || adminDbDiagnosticResult.details || 'Unknown connection error'}. Please ensure your Firebase credentials and Cloud Firestore collection security settings match.`
                             }
                           </p>
                         </div>
