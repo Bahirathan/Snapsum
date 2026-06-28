@@ -123,9 +123,11 @@ class DocumentSnapshotAdapter {
 }
 
 let cachedDb: any = null;
+let initError: any = null;
 
 function getDbInstance() {
   if (cachedDb) return cachedDb;
+  if (initError) throw initError;
 
   try {
     const possiblePaths = [
@@ -153,9 +155,10 @@ function getDbInstance() {
     cachedDb = new ClientFirestoreAdapter(clientDb, config.projectId);
     console.log(`Firebase Client SDK initialized on backend with project: ${config.projectId}`);
     return cachedDb;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to initialize client-side Firestore on backend:', error);
-    return null;
+    initError = error;
+    throw error;
   }
 }
 
@@ -164,10 +167,7 @@ function getDbInstance() {
 const db = new Proxy({} as any, {
   get(target, prop, receiver) {
     const instance = getDbInstance();
-    if (!instance) {
-      return null;
-    }
-    const value = Reflect.get(instance, prop, receiver);
+    const value = (instance as any)[prop];
     if (typeof value === 'function') {
       return value.bind(instance);
     }
