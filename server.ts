@@ -927,7 +927,57 @@ app.post('/api/tts', async (req, res) => {
 
     return res.json({ audioBase64: base64Audio });
   } catch (err: any) {
-    console.error('TTS execution failed:', err);
+    console.error('TTS execution failed, falling back to Google Translate TTS:', err);
+    
+    try {
+      // Split text into chunks of at most 180 characters to satisfy Google Translate API limits
+      const chunks: string[] = [];
+      const words = text.split(/\s+/);
+      let currentChunk = '';
+      
+      for (const word of words) {
+        if ((currentChunk + ' ' + word).length > 180) {
+          if (currentChunk) chunks.push(currentChunk.trim());
+          currentChunk = word;
+        } else {
+          currentChunk = currentChunk ? currentChunk + ' ' + word : word;
+        }
+      }
+      if (currentChunk) {
+        chunks.push(currentChunk.trim());
+      }
+
+      // Limit to max 6 chunks to keep request fast and stay within reasonable audio duration
+      const selectedChunks = chunks.slice(0, 6);
+      const buffers: Buffer[] = [];
+      
+      for (const chunk of selectedChunks) {
+        if (!chunk) continue;
+        const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodeURIComponent(chunk)}`;
+        const resTts = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          }
+        });
+        
+        if (resTts.ok) {
+          const arrayBuf = await resTts.arrayBuffer();
+          buffers.push(Buffer.from(arrayBuf));
+        } else {
+          console.warn(`Translate TTS chunk fetch failed: ${resTts.statusText}`);
+        }
+      }
+
+      if (buffers.length > 0) {
+        const mergedBuffer = Buffer.concat(buffers);
+        const base64Audio = mergedBuffer.toString('base64');
+        console.log('Successfully generated speech using Translate TTS fallback.');
+        return res.json({ audioBase64: base64Audio });
+      }
+    } catch (fallbackErr) {
+      console.error('Translate TTS fallback failed:', fallbackErr);
+    }
+
     return res.status(500).json({ error: 'High-quality TTS synthesis failed. Fallback to browser speecher.' });
   }
 });
