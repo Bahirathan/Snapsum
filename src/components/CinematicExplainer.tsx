@@ -108,8 +108,130 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
   const [currentTime, setCurrentTime] = useState<number>(0); 
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [playSpeed, setPlaySpeed] = useState<number>(1);
-  const [activeTab, setActiveTab] = useState<'simulation' | 'script' | 'structure'>('simulation');
+  const [activeTab, setActiveTab] = useState<'simulation' | 'script' | 'structure' | 'voiceover'>('simulation');
   const [audioSupported, setAudioSupported] = useState<boolean>(true);
+  
+  // Audio voiceover state and references
+  const [customAudioUrl, setCustomAudioUrl] = useState<string | null>(null);
+  const [customAudioName, setCustomAudioName] = useState<string | null>(null);
+  const [isUsingCustomAudio, setIsUsingCustomAudio] = useState<boolean>(false);
+  const [dragActive, setDragActive] = useState<boolean>(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const handleAudioLoad = (url: string, fileName: string) => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    
+    const audio = new Audio(url);
+    audio.muted = isMuted;
+    audio.playbackRate = playSpeed;
+    audio.loop = false;
+    
+    audio.addEventListener('ended', () => {
+      setIsPlaying(false);
+      setCurrentTime(95);
+    });
+    
+    audioRef.current = audio;
+    setCustomAudioUrl(url);
+    setCustomAudioName(fileName);
+    setIsUsingCustomAudio(true);
+    setCurrentTime(0);
+    setIsPlaying(false);
+  };
+
+  // Auto-detect public/voiceover.mp3 or voiceover.wav
+  useEffect(() => {
+    const checkDefaultVoiceovers = async () => {
+      try {
+        const mp3Res = await fetch('/voiceover.mp3', { method: 'HEAD' });
+        if (mp3Res.ok) {
+          handleAudioLoad('/voiceover.mp3', 'voiceover.mp3');
+          return;
+        }
+        const wavRes = await fetch('/voiceover.wav', { method: 'HEAD' });
+        if (wavRes.ok) {
+          handleAudioLoad('/voiceover.wav', 'voiceover.wav');
+          return;
+        }
+      } catch (e) {
+        // Safe fail
+      }
+    };
+    checkDefaultVoiceovers();
+  }, []);
+
+  // Sync audio controls
+  useEffect(() => {
+    if (!audioRef.current) return;
+    
+    audioRef.current.muted = isMuted;
+    audioRef.current.playbackRate = playSpeed;
+    
+    if (isPlaying && isUsingCustomAudio) {
+      audioRef.current.play().catch(() => {
+        // user gesture requirement fallback
+      });
+    } else {
+      audioRef.current.pause();
+    }
+  }, [isPlaying, isMuted, playSpeed, isUsingCustomAudio]);
+
+  // Sync audio position on manual jumps (clicks on chapters/scrubs/rewind)
+  useEffect(() => {
+    if (!audioRef.current || !isUsingCustomAudio) return;
+    
+    const diff = Math.abs(audioRef.current.currentTime - currentTime);
+    if (diff > 0.5) {
+      audioRef.current.currentTime = currentTime;
+    }
+  }, [currentTime, isUsingCustomAudio]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      if (customAudioUrl && customAudioUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(customAudioUrl);
+      }
+    };
+  }, [customAudioUrl]);
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('audio/')) {
+        const url = URL.createObjectURL(file);
+        handleAudioLoad(url, file.name);
+      }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const url = URL.createObjectURL(file);
+      handleAudioLoad(url, file.name);
+    }
+  };
   
   // High fidelity Interactive Tour State inside Scene 4 & 5
   const [activeFeatureTab, setActiveFeatureTab] = useState<'chapters' | 'concepts' | 'quizzes' | 'dashboard'>('concepts');
@@ -221,7 +343,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
     }
 
     // TTS Voiceover Sync with window.speechSynthesis
-    if (typeof window !== 'undefined' && window.speechSynthesis && !isMuted) {
+    if (typeof window !== 'undefined' && window.speechSynthesis && !isMuted && !isUsingCustomAudio) {
       const sentence = currentScene.voiceover;
       if (currentSentenceRef.current !== sentence) {
         window.speechSynthesis.cancel();
@@ -246,7 +368,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
       }
       currentSentenceRef.current = "";
     }
-  }, [currentScene, isMuted, isPlaying]);
+  }, [currentScene, isMuted, isPlaying, isUsingCustomAudio]);
 
   // Audio browser permission checks
   useEffect(() => {
@@ -262,13 +384,24 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
       const tick = 1000 / (fps * playSpeed);
       
       intervalRef.current = setInterval(() => {
-        setCurrentTime(prev => {
-          if (prev >= 95) {
+        if (isUsingCustomAudio && audioRef.current) {
+          const audioTime = audioRef.current.currentTime;
+          if (audioTime >= 95) {
             setIsPlaying(false);
-            return 95;
+            audioRef.current.pause();
+            setCurrentTime(95);
+          } else {
+            setCurrentTime(Math.round(audioTime * 10) / 10);
           }
-          return Math.round((prev + 0.1) * 10) / 10;
-        });
+        } else {
+          setCurrentTime(prev => {
+            if (prev >= 95) {
+              setIsPlaying(false);
+              return 95;
+            }
+            return Math.round((prev + 0.1) * 10) / 10;
+          });
+        }
       }, tick);
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -277,7 +410,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isPlaying, playSpeed]);
+  }, [isPlaying, playSpeed, isUsingCustomAudio]);
 
   // Cleanup synthesis on components teardown
   useEffect(() => {
@@ -1136,21 +1269,21 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
           </span>
 
           {/* Quick tab controls */}
-          <div className="flex bg-black/[0.04] p-0.5 rounded-lg border border-black/[0.02]">
-            {(['simulation', 'script', 'structure'] as const).map((tab) => (
+          <div className="flex bg-black/[0.04] p-0.5 rounded-lg border border-black/[0.02] flex-wrap gap-y-0.5">
+            {(['simulation', 'script', 'structure', 'voiceover'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
                   setActiveTab(tab);
                   playSynthBeep(260 + (tab === 'script' ? 10 : 20), 'sine', 0.1);
                 }}
-                className={`flex-1 py-1 text-[10px] font-medium rounded-md capitalize transition duration-150 ${
+                className={`flex-1 py-1 text-[10px] font-medium rounded-md capitalize transition duration-150 min-w-[65px] ${
                   activeTab === tab
                     ? 'bg-white text-neutral-900 shadow-xs'
                     : 'text-neutral-500 hover:text-neutral-800'
                 }`}
               >
-                {tab}
+                {tab === 'voiceover' ? '🎙️ Voiceover' : tab}
               </button>
             ))}
           </div>
@@ -1274,6 +1407,99 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                     <span className="text-[9px]">Outro summary, flow-state indicators, and conversion launch button to workspace.</span>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'voiceover' && (
+            <div className="space-y-4 animate-fadeIn">
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-medium text-neutral-800">🎙️ Premium Voiceover Integration</p>
+                <p className="text-[10px] text-neutral-500 leading-relaxed font-light">
+                  Enhance your demo with studio-grade ElevenLabs human-quality narration instead of the browser's robotic TTS voice!
+                </p>
+              </div>
+
+              {/* Upload Drop Zone / Audio Card */}
+              <div
+                onDragEnter={handleDrag}
+                onDragOver={handleDrag}
+                onDragLeave={handleDrag}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-2xl p-4 text-center transition duration-250 flex flex-col items-center justify-center relative ${
+                  dragActive 
+                    ? 'border-indigo-500 bg-indigo-50/50' 
+                    : isUsingCustomAudio 
+                      ? 'border-emerald-500/40 bg-emerald-50/20' 
+                      : 'border-black/10 hover:border-black/20 bg-white'
+                }`}
+              >
+                <input
+                  type="file"
+                  id="voiceover-file-input"
+                  accept="audio/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+
+                {isUsingCustomAudio ? (
+                  <div className="space-y-3 w-full">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="h-6 w-6 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-600 font-bold text-xs">✓</div>
+                      <span className="text-[10px] font-mono text-emerald-700 font-bold uppercase tracking-wider">Audio Voiceover Active</span>
+                    </div>
+
+                    <div className="p-2 bg-neutral-50 border border-black/5 rounded-xl text-left space-y-1">
+                      <span className="text-[8px] font-mono text-neutral-400 block uppercase font-bold">Loaded File</span>
+                      <p className="text-[10px] text-neutral-800 truncate font-mono font-medium">{customAudioName || 'voiceover.mp3'}</p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          playSynthBeep(330, 'sine', 0.1);
+                          setIsUsingCustomAudio(!isUsingCustomAudio);
+                        }}
+                        className={`flex-1 py-1.5 px-3 rounded-lg text-[9px] font-semibold border transition ${
+                          isUsingCustomAudio
+                            ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                            : 'bg-indigo-600 text-white border-transparent hover:bg-indigo-700'
+                        }`}
+                      >
+                        {isUsingCustomAudio ? '⏸ Disable' : '▶ Enable'}
+                      </button>
+                      
+                      <label
+                        htmlFor="voiceover-file-input"
+                        className="py-1.5 px-3 rounded-lg text-[9px] font-semibold border border-black/15 bg-white text-neutral-700 hover:bg-neutral-50 transition cursor-pointer select-none"
+                      >
+                        Replace
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3 py-1">
+                    <div className="text-2xl">🎙️</div>
+                    <div>
+                      <p className="text-[10.5px] font-medium text-neutral-800">Drag & drop ElevenLabs audio</p>
+                      <p className="text-[9px] text-neutral-400 mt-0.5">or click to browse local files</p>
+                    </div>
+                    <label
+                      htmlFor="voiceover-file-input"
+                      className="inline-block py-1.5 px-4 rounded-xl text-[9.5px] font-bold bg-neutral-950 text-white hover:bg-neutral-900 transition cursor-pointer shadow-sm select-none"
+                    >
+                      Browse Files
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Developer / Deployment Auto-load Tip */}
+              <div className="p-3 bg-indigo-50/50 border border-indigo-100/60 rounded-xl text-left space-y-1">
+                <span className="text-[8px] font-mono font-bold text-indigo-700 uppercase block">💡 PRO TIP FOR PERSISTENCE</span>
+                <p className="text-[9.5px] text-neutral-600 leading-relaxed font-sans">
+                  To save and load your audio automatically for everyone: name your ElevenLabs download file <code className="bg-black/5 px-1 py-0.5 rounded text-[8.5px] font-mono">voiceover.mp3</code> or <code className="bg-black/5 px-1 py-0.5 rounded text-[8.5px] font-mono">voiceover.wav</code> and save it in the project's <code className="bg-black/5 px-1 py-0.5 rounded text-[8.5px] font-mono">public/</code> directory.
+                </p>
               </div>
             </div>
           )}

@@ -62,6 +62,37 @@ import { LearningProgressDashboard, ActiveLearningDashboard } from './components
 import { CinematicExplainer } from './components/CinematicExplainer';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
 
+const getEmbedUrl = (url: string) => {
+  if (!url) return null;
+  const cleaned = url.trim();
+  
+  // YouTube matches
+  let ytMatch = cleaned.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i);
+  if (ytMatch && ytMatch[1]) {
+    return { type: 'youtube', embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}?rel=0` };
+  }
+  
+  // Loom matches
+  let loomMatch = cleaned.match(/loom\.com\/(?:share|embed)\/([a-f0-9]+)/i);
+  if (loomMatch && loomMatch[1]) {
+    return { type: 'loom', embedUrl: `https://www.loom.com/embed/${loomMatch[1]}` };
+  }
+  
+  // Vimeo matches
+  let vimeoMatch = cleaned.match(/vimeo\.com\/(?:video\/)?([0-9]+)/i);
+  if (vimeoMatch && vimeoMatch[1]) {
+    return { type: 'vimeo', embedUrl: `https://player.vimeo.com/video/${vimeoMatch[1]}` };
+  }
+  
+  // Check if direct video file
+  if (cleaned.match(/\.(mp4|webm|ogg|mov)(?:\?|$)/i)) {
+    return { type: 'direct', embedUrl: cleaned };
+  }
+  
+  // Default fallback if already an embed URL or other
+  return { type: 'other', embedUrl: cleaned };
+};
+
 const getOrGenerateReelScript = (summary: YouTubeSummaryResponse | null): any => {
   if (!summary) return null;
   if (summary.reelScript) return summary.reelScript;
@@ -958,6 +989,22 @@ export default function App() {
       return localStorage.getItem('custom_vip_code') || '';
     } catch {
       return '';
+    }
+  });
+
+  const [customDemoVideoUrl, setCustomDemoVideoUrl] = useState(() => {
+    try {
+      return localStorage.getItem('custom_demo_video_url') || '';
+    } catch {
+      return '';
+    }
+  });
+
+  const [demoDisplayMode, setDemoDisplayMode] = useState(() => {
+    try {
+      return localStorage.getItem('demo_display_mode') || 'tour';
+    } catch {
+      return 'tour';
     }
   });
 
@@ -2282,6 +2329,57 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     }
   };
 
+  const renderDemoVideoPlayer = () => {
+    if (!customDemoVideoUrl) {
+      return (
+        <div className="p-12 text-center bg-white rounded-3xl border border-black/[0.04] shadow-sm space-y-4">
+          <Video className="w-12 h-12 text-neutral-300 mx-auto animate-bounce" />
+          <p className="text-sm text-neutral-500 max-w-md mx-auto leading-relaxed font-sans">
+            No custom video URL has been configured yet. Log into the <strong>Admin Control Panel</strong> (on the upper right under credentials) to configure your YouTube, Loom, Vimeo, or MP4 link!
+          </p>
+        </div>
+      );
+    }
+
+    const parsed = getEmbedUrl(customDemoVideoUrl);
+    if (!parsed || !parsed.embedUrl) {
+      return (
+        <div className="p-12 text-center bg-white rounded-3xl border border-black/[0.04] shadow-sm space-y-4">
+          <Video className="w-12 h-12 text-neutral-300 mx-auto" />
+          <p className="text-sm text-neutral-500 max-w-md mx-auto leading-relaxed font-sans">
+            Invalid video URL formatting. Please check your video URL or ID inside the Admin Panel.
+          </p>
+        </div>
+      );
+    }
+
+    if (parsed.type === 'direct') {
+      return (
+        <div className="aspect-video w-full bg-black rounded-3xl overflow-hidden border border-black/10 shadow-lg relative max-w-4xl mx-auto">
+          <video
+            src={parsed.embedUrl}
+            controls
+            preload="metadata"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="aspect-video w-full bg-neutral-950 rounded-3xl overflow-hidden border border-black/10 shadow-lg relative max-w-4xl mx-auto">
+        <iframe
+          src={parsed.embedUrl}
+          title="SnapSum Product Demo"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="w-full h-full absolute inset-0"
+        />
+      </div>
+    );
+  };
+
   const fetchAdminGoogleUsers = async (currentToken?: string) => {
     const activeToken = currentToken || adminSessionToken;
     if (!activeToken) return;
@@ -2825,23 +2923,52 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             {/* 🎬 CINEMATIC THEATER SECTION */}
             <section id="cinematic-theater" className="w-full bg-[#f5f5f7] py-16 sm:py-20 border-b border-black/[0.03] scroll-mt-20 text-center relative overflow-hidden">
               <div className="absolute inset-0 bg-radial-gradient from-indigo-500/[0.02] via-transparent to-transparent pointer-events-none"></div>
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
                 
                 <div className="space-y-4 max-w-3xl mx-auto">
                   <div className="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-150 px-3.5 py-1 rounded-full text-xs font-mono font-bold text-indigo-700 uppercase shadow-xs">
                     <Sparkles className="w-3.5 h-3.5 text-indigo-600 fill-indigo-600/10" />
-                    <span>60-Second Apple-Style Cinematic Tour</span>
+                    <span>{demoDisplayMode === 'video' ? 'Product Video Overview' : '60-Second Apple-Style Cinematic Tour'}</span>
                   </div>
                   <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-neutral-900 leading-tight">
-                    Turn Any Video Into Structured Knowledge
+                    {demoDisplayMode === 'video' ? 'See SnapSum In Action' : 'Turn Any Video Into Structured Knowledge'}
                   </h2>
                   <p className="text-neutral-500 font-light text-base sm:text-lg max-w-2xl mx-auto">
-                    Experience how SnapSum compiles raw multimedia streams into interactive chapters, high-clarity conceptual notes, and retention test quizzes. Watch our live-rendered spec explainer block below.
+                    {demoDisplayMode === 'video' 
+                      ? 'Watch our high-fidelity human-guided demonstration of how SnapSum converts complex hours of multimedia lectures into crisp, categorized intelligence.'
+                      : 'Experience how SnapSum compiles raw multimedia streams into interactive chapters, high-clarity conceptual notes, and retention test quizzes. Watch our live-rendered spec explainer block below.'}
                   </p>
                 </div>
 
+                {customDemoVideoUrl && (
+                  <div className="flex justify-center items-center gap-1.5 p-1 bg-neutral-200/50 backdrop-blur border border-black/[0.03] rounded-full max-w-xs mx-auto mb-2 relative z-10">
+                    <button
+                      onClick={() => {
+                        setDemoDisplayMode('tour');
+                        localStorage.setItem('demo_display_mode', 'tour');
+                      }}
+                      className={`px-4 py-1.5 rounded-full text-xs font-semibold font-sans transition-all duration-200 cursor-pointer ${demoDisplayMode === 'tour' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}
+                    >
+                      Interactive Tour
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDemoDisplayMode('video');
+                        localStorage.setItem('demo_display_mode', 'video');
+                      }}
+                      className={`px-4 py-1.5 rounded-full text-xs font-semibold font-sans transition-all duration-200 cursor-pointer ${demoDisplayMode === 'video' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-800'}`}
+                    >
+                      Product Video
+                    </button>
+                  </div>
+                )}
+
                 <div className="transition duration-500 hover:shadow-xl rounded-3xl">
-                  <CinematicExplainer onStartLearning={() => setCurrentScreen('app')} />
+                  {demoDisplayMode === 'video' && customDemoVideoUrl ? (
+                    renderDemoVideoPlayer()
+                  ) : (
+                    <CinematicExplainer onStartLearning={() => setCurrentScreen('app')} />
+                  )}
                 </div>
               </div>
             </section>
@@ -7944,6 +8071,77 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           <option value="true">Force Search Grounding (Inject Google Search queries on all jobs)</option>
                           <option value="false">Disable Search Grounding (No external internet fetching)</option>
                         </select>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* CARD 3B: DEMO VIDEO & EXPLAINER CONFIGURATION */}
+                  <div className="bg-white p-6 rounded-3xl border border-black/[0.04] space-y-4 shadow-sm text-left font-sans">
+                    <div className="flex items-center gap-2 text-zinc-800">
+                      <Video className="w-5 h-5 text-zinc-700" />
+                      <h3 className="font-bold text-sm tracking-tight text-[#1d1d1f]">
+                        Custom Demo Video & Explainer Settings
+                      </h3>
+                    </div>
+                    <p className="text-xs text-[#515154] font-sans font-light leading-relaxed">
+                      The browser's built-in speech synthesis (Web Speech API) used in our Interactive Tour sounds highly mechanical on some devices. You can customize the tour voice, or completely replace the tour with a professional human-voice demo video (from YouTube, Vimeo, Loom, or a direct MP4 file).
+                    </p>
+
+                    <div className="space-y-4 pt-2 border-t border-neutral-100">
+                      
+                      {/* Video source toggle */}
+                      <div className="space-y-1.5 font-sans">
+                        <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block">
+                          Primary Demo Display Mode
+                        </label>
+                        <select
+                          value={demoDisplayMode}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setDemoDisplayMode(val);
+                            localStorage.setItem('demo_display_mode', val);
+                          }}
+                          className="w-full px-3 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl font-sans cursor-pointer"
+                        >
+                          <option value="tour">Simulated Apple-Style Cinematic Tour (Interactive HTML)</option>
+                          <option value="video">Embedded Demo Video Player (Highest Emotional Touch)</option>
+                        </select>
+                      </div>
+
+                      {/* Custom Video URL */}
+                      <div className="space-y-1 font-sans">
+                        <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block">
+                          Demo Video URL or YouTube/Vimeo ID
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. https://www.youtube.com/watch?v=dQw4w9WgXcQ or Loom share link"
+                          value={customDemoVideoUrl}
+                          onChange={(e) => {
+                            const val = e.target.value.trim();
+                            setCustomDemoVideoUrl(val);
+                            if (val) {
+                              localStorage.setItem('custom_demo_video_url', val);
+                            } else {
+                              localStorage.removeItem('custom_demo_video_url');
+                            }
+                          }}
+                          className="w-full px-4 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono"
+                        />
+                        <span className="block text-[9px] text-[#86868b] leading-tight mt-1">
+                          Supports standard links from YouTube, Loom, Vimeo, or direct MP4/WebM video files.
+                        </span>
+                      </div>
+
+                      {/* Tool recommendations for realistic voice */}
+                      <div className="p-3 bg-indigo-50/40 rounded-xl border border-indigo-150/20 space-y-2">
+                        <span className="text-[10px] font-bold text-indigo-950 block font-sans">💡 Recommendations to Add Real Emotional Touch:</span>
+                        <ul className="list-disc pl-3.5 text-[9px] text-indigo-900 leading-relaxed font-sans font-light space-y-1">
+                          <li><strong>Voiceover AI (ElevenLabs):</strong> Create or clone highly authentic, natural human voices with deep emotional range and pacing, then export to MP4.</li>
+                          <li><strong>Video Avatars (HeyGen / Synthesia):</strong> Generate high-fidelity realistic virtual avatars with custom scripts and highly natural speaking cadence.</li>
+                          <li><strong>Interactive Screencast (Loom / Vidyard):</strong> Record yourself introducing SnapSum's features with your genuine voice, then paste the Loom link above for the most sincere human connection!</li>
+                        </ul>
                       </div>
 
                     </div>
