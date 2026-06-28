@@ -1656,18 +1656,27 @@ app.post('/api/admin/ip-reset', (req, res) => {
 app.get('/api/stripe-status', async (req, res) => {
   // Support custom in-app client developer overrides in addition to server environment variables
   const secretKey = (req.headers['x-custom-stripe-secret-key'] as string) || process.env.STRIPE_SECRET_KEY;
-  if (!secretKey) {
+  if (!secretKey || !secretKey.trim()) {
     return res.json({
       stripeConfigured: false,
       publishableKey: '',
       accountInfo: null,
-      error: 'Stripe Secret Key is not configured in the server environment.'
+      error: ''
+    });
+  }
+
+  if (!secretKey.trim().startsWith('sk_')) {
+    return res.json({
+      stripeConfigured: false,
+      publishableKey: '',
+      accountInfo: null,
+      error: `Invalid STRIPE_SECRET_KEY format (value starts with "${secretKey.trim().substring(0, 10)}..."). A valid Stripe secret key must start with "sk_test_" or "sk_live_". Please configure a valid key or clear it to use Sandbox Mode.`
     });
   }
 
   try {
     const headers = {
-      'Authorization': `Bearer ${secretKey}`,
+      'Authorization': `Bearer ${secretKey.trim()}`,
       'Content-Type': 'application/x-www-form-urlencoded'
     };
     
@@ -1697,7 +1706,7 @@ app.get('/api/stripe-status', async (req, res) => {
   } catch (err: any) {
     console.error('Error fetching Stripe status:', err);
     return res.json({
-      stripeConfigured: true,
+      stripeConfigured: false,
       publishableKey: (req.headers['x-custom-stripe-publishable-key'] as string) || process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
       accountInfo: null,
       error: err.message || 'Failed to retrieve account details from Stripe.'
@@ -1728,8 +1737,12 @@ app.post('/api/create-checkout-session', async (req, res) => {
   // Fallback to client override header if the main server environment variable is not set
   const stripeSecretKey = (req.headers['x-custom-stripe-secret-key'] as string) || process.env.STRIPE_SECRET_KEY;
 
-  if (!stripeSecretKey) {
+  if (!stripeSecretKey || !stripeSecretKey.trim()) {
     return res.status(400).json({ error: 'Stripe Secret Key is missing. Connect your live Stripe key via AI Studio settings or direct in-app Developer override.' });
+  }
+
+  if (!stripeSecretKey.trim().startsWith('sk_')) {
+    return res.status(400).json({ error: `Invalid Stripe Secret Key format. A valid secret key must start with "sk_test_" or "sk_live_". Please verify your secrets configuration.` });
   }
 
   try {
