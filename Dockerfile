@@ -31,6 +31,7 @@ RUN npm install --omit=dev
 
 # Copy compiled application assets and server from the builder stage
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/firebase-applet-config.json* ./
 
 # Default runtime port (can be overridden by GCP runtime environment variable)
 EXPOSE 3000
