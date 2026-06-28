@@ -16,7 +16,7 @@ import { getOrCreateReferralCode, recordReferral, getReferralCount, isLockedUnlo
 import { saveSubscription, getSubscription } from './server/subscriptionStore';
 import { db } from './server/firestore';
 // @ts-ignore
-import { authenticator } from 'otplib';
+import { generateSecret, generateURI, verifySync } from 'otplib';
 
 dotenv.config();
 
@@ -1144,7 +1144,8 @@ app.post('/api/admin/auth', async (req, res) => {
   if (mfaSecret) {
     if (mfaCode) {
       const cleanMfaCode = mfaCode.trim().replace(/\s+/g, '');
-      const isValid = authenticator.verify({ token: cleanMfaCode, secret: mfaSecret });
+      const mfaResult = verifySync({ token: cleanMfaCode, secret: mfaSecret });
+      const isValid = mfaResult.valid;
       if (!isValid) {
         const attempts = lockout ? lockout.attempts + 1 : 1;
         const lockedUntil = attempts >= 5 ? now + 180000 : 0;
@@ -1239,8 +1240,8 @@ app.post('/api/admin/generate-2fa', (req, res) => {
   }
 
   try {
-    const secret = authenticator.generateSecret();
-    const otpauthUrl = authenticator.keyuri('admin', 'SnapSum', secret);
+    const secret = generateSecret();
+    const otpauthUrl = generateURI({ label: 'admin', issuer: 'SnapSum', secret });
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`;
 
     return res.json({ secret, qrCodeUrl });
@@ -1262,7 +1263,8 @@ app.post('/api/admin/verify-2fa-setup', (req, res) => {
 
   try {
     const cleanCode = mfaCode.trim().replace(/\s+/g, '');
-    const isValid = authenticator.verify({ token: cleanCode, secret: mfaSecret });
+    const verifyResult = verifySync({ token: cleanCode, secret: mfaSecret });
+    const isValid = verifyResult.valid;
     return res.json({ valid: isValid });
   } catch (err: any) {
     return res.status(500).json({ error: err.message || 'Verification failed.' });
@@ -1445,7 +1447,7 @@ app.post('/api/customer-support', async (req, res) => {
   const getRuleBasedResponse = (userQuery: string): string => {
     const q = userQuery.toLowerCase();
     
-    let answer = `👋 **Welcome to SnapSum Elite Support!**\n\n`;
+    let answer = `👋 **Hey there! Welcome to SnapSum Support!**\n\n`;
     
     // Check if the API key itself is missing to add a diagnostic tip
     const customKey = req.headers['x-custom-gemini-api-key'] as string;
@@ -1453,64 +1455,59 @@ app.post('/api/customer-support', async (req, res) => {
     const isApiKeyMissing = (!customKey || !customKey.trim()) && (!serverKey || !serverKey.trim() || serverKey === 'MY_GEMINI_API_KEY');
     
     if (isApiKeyMissing) {
-      answer += `⚠️ *Note: Your workspace GEMINI_API_KEY is currently unconfigured. I am running in Offline Smart Fallback Mode to help you right away! To get full conversational AI, please add your \`GEMINI_API_KEY\` in Settings > Secrets or enter a Custom Key Override in the Developer Settings panel below.*\n\n`;
+      answer += `😊 *Quick heads up: It looks like our main workspace Gemini API key isn't fully configured yet, so I'm running in offline help mode to guide you right away. If you'd like full conversational AI capabilities, feel free to enter your own personal Gemini API Key in the Developer Settings panel below, or configure it in Settings > Secrets! But don't worry, I can still answer all your questions about SnapSum here!.*\n\n`;
     }
 
     if (q.includes('price') || q.includes('pricing') || q.includes('plan') || q.includes('pro') || q.includes('cost') || q.includes('subscription') || q.includes('premium') || q.includes('billing') || q.includes('buy') || q.includes('upgrade') || q.includes('starter')) {
-      answer += `**SnapSum offers three flexible, high-value plans tailored for creators and learners:**\n\n` +
+      answer += `We've kept SnapSum pricing super simple and transparent! We have two core premium tiers and an enterprise option tailored to your learning pace:\n\n` +
                 `1. 🌟 **Basic Starter Plan ($9/month)**:\n` +
-                `   - Standard summaries for videos up to 30 minutes long.\n` +
-                `   - Access to standard Active Recall quizzing & study tools.\n` +
-                `   - Standard text-to-speech voiceovers.\n\n` +
+                `   - Perfect for general learners! It gives you standard summaries for videos up to 30 minutes long.\n` +
+                `   - Access to standard Active Recall quizzing & handy study tools.\n` +
+                `   - Clear, standard text-to-speech voiceovers to listen on the go.\n\n` +
                 `2. 🔥 **Pro Creator Pass ($29/month)**:\n` +
-                `   - **Unlimited video processing** (no daily quota limits).\n` +
-                `   - Premium, high-fidelity humanlike voiceovers (TTS).\n` +
-                `   - Fully interactive concept mindmaps and dynamic study flashcards.\n` +
-                `   - High-contrast vertical viral reels & script exports.\n` +
-                `   - Priority queueing (blazing-fast generation).\n\n` +
-                `3. 🏢 **Enterprise Tier (Custom pricing)**:\n` +
-                `   - Custom LLM fine-tuning, high-volume API access, custom integrations, and dedicated SLA support.\n\n` +
-                `*Tip: You can test the entire Pro checkout flow at zero cost in our Sandbox Environment!*`;
+                `   - This is our most popular plan! You get **completely unlimited video processing** (no daily quota limits).\n` +
+                `   - Premium, high-fidelity humanlike AI voiceovers for a beautiful listening experience.\n` +
+                `   - Access to fully interactive concept mindmaps and dynamic study flashcards.\n` +
+                `   - High-contrast vertical viral reels & script exports to repurpose content in seconds.\n` +
+                `   - Priority queueing (blazing-fast generation speeds).\n\n` +
+                `3. 🏢 **Enterprise Tier (Custom)**:\n` +
+                `   - Custom LLM fine-tuning, high-volume API access, custom integrations, and dedicated support for organizations.\n\n` +
+                `*Tip: Since we are running in a sandbox environment, you can actually test the entire Pro checkout flow and play with premium features completely for free without spending a single cent!*`;
     } else if (q.includes('sandbox') || q.includes('test') || q.includes('stripe') || q.includes('card') || q.includes('payment') || q.includes('checkout') || q.includes('simulate') || q.includes('charge')) {
-      answer += `**SnapSum's Interactive Sandbox Environment** allows you to safely test our premium checkout flow with zero real charges!\n\n` +
-                `- **How it works**: When you click "Upgrade to Pro" or navigate to the Pricing section, the app detects if you are in sandbox developer mode.\n` +
-                `- **Stripe Test Mode**: You can enter any custom Stripe test credentials (or use our pre-configured sandbox environment) to trigger a simulated Stripe checkout.\n` +
-                `- **Zero Cost**: No real credit card is ever charged, and you instantly unlock Pro premium capabilities for testing!`;
+      answer += `Our sandbox mode is actually one of the coolest parts of the platform! It lets you test out the entire Pro upgrade flow and play with premium features without spending a single penny.\n\n` +
+                `- **How it works**: When you click "Upgrade to Pro" or head over to the Pricing section, the app automatically detects if you're in the developer sandbox testing mode.\n` +
+                `- **Stripe Test Mode**: You can enter any custom Stripe test credentials (or use our pre-configured sandbox credentials in the checkout window) to trigger a simulated Stripe checkout.\n` +
+                `- **Zero Real Cost**: No real credit card is ever charged, and you instantly unlock all premium Pro capabilities to experiment freely. It's 100% safe!`;
     } else if (q.includes('key') || q.includes('api') || q.includes('gemini') || q.includes('override') || q.includes('quota') || q.includes('limit') || q.includes('setting')) {
-      answer += `**Custom Gemini API Key Override & Quotas:**\n\n` +
-                `- **What it is**: To avoid daily server quota limits and enjoy 100% free processing, you can supply your own Google Gemini API key.\n` +
-                `- **Where to enter it**: Go to the **Developer Settings** panel (or look for the "Sandbox Keys" drawer in the bottom corner of your screen).\n` +
-                `- **Security**: Your custom key is stored safely inside your local browser storage and sent directly to the Gemini API securely server-side. It is never shared or persisted elsewhere.`;
+      answer += `If you want to bypass all daily server quotas and enjoy unlimited free video processing, you can use your own Google Gemini API key!\n\n` +
+                `- **What it is**: By pasting your own key, summaries and text-to-speech are processed directly through Google's free tier, costing you absolutely nothing.\n` +
+                `- **Where to enter it**: Simply expand the **Developer Settings** panel (or look for the "Sandbox Keys" drawer in the bottom corner of your screen) and paste your key.\n` +
+                `- **Your Security**: We treat your privacy seriously. Your custom key is stored safely inside your local browser's private storage (localStorage) and sent directly to the Gemini API securely server-side. It is never shared or persisted on any third-party database.`;
     } else if (q.includes('referral') || q.includes('refer') || q.includes('invite') || q.includes('unlocked') || q.includes('code') || q.includes('friend')) {
-      answer += `👥 **SnapSum Referral Program:**\n\n` +
-                `- You can unlock premium Pro Creator Pass features completely for free by inviting friends!\n` +
-                `- **How**: Share your unique referral link (found on the main workspace dashboard).\n` +
-                `- **Goal**: When **2 visitors** click your link and sign in using Google SSO, your account is instantly upgraded to premium status!`;
+      answer += `👥 **Unlock Premium for Free with Referrals!**\n\n` +
+                `Yes, we have an awesome referral system! You can unlock the Pro Creator Pass features entirely for free just by sharing the love with your friends.\n\n` +
+                `- **How**: Share your unique referral link (you can find it right on your main workspace dashboard).\n` +
+                `- **The Goal**: When **2 visitors** click your link and sign in using Google SSO, your account is instantly upgraded to premium status! No credit card, no charge — just free Pro access!`;
     } else if (q.includes('feature') || q.includes('summar') || q.includes('tts') || q.includes('audio') || q.includes('chapter') || q.includes('mindmap') || q.includes('quiz') || q.includes('reel') || q.includes('video') || q.includes('transcript')) {
-      answer += `🚀 **SnapSum is packed with elite knowledge-engine features:**\n\n` +
-                `- **Universal Summaries**: Turns any YouTube video or long-form transcript into structured summaries, key takeaways, and visual timelines.\n` +
-                `- **Chapters**: Auto-segments long videos into concise chapters with clickable timestamps.\n` +
-                `- **Active Recall Quizzes**: Staggers dynamic multiple-choice quizzes to test your understanding.\n` +
-                `- **Interactive Mindmaps**: Renders dynamic, node-based responsive mindmaps for active visual learning.\n` +
-                `- **AI Audio Voiceovers (TTS)**: Listens to summaries in high-quality speech with real-time controls.\n` +
-                `- **Viral Video Repurposer**: Auto-generates vertical TikTok/Reels storyboards, captions, and compiles them directly into downloadable WebM short video clips!`;
+      answer += `🚀 **SnapSum is packed with powerful, user-friendly tools to help you learn and create. Here is a quick look at what we offer:**\n\n` +
+                `- **Universal Summaries**: Turns any YouTube video or long transcript into beautiful, structured takeaways.\n` +
+                `- **Auto Chapters**: Automatically chunks long videos into neat segments with clickable timestamps so you can jump right to what matters.\n` +
+                `- **Active Recall Quizzes**: Dynamic multiple-choice quizzes that check your understanding as you learn.\n` +
+                `- **Interactive Mindmaps**: Gorgeous, interactive visual mindmaps to help you see how concepts connect.\n` +
+                `- **AI Voiceovers (TTS)**: Lets you listen to your summaries on the go with full audio controls.\n` +
+                `- **Viral Video Repurposer**: Automatically generate vertical TikTok or Reels storyboards and script exports from your summarized videos.`;
     } else if (q.includes('hi') || q.includes('hello') || q.includes('hey') || q.includes('greetings') || q.includes('who are you') || q.includes('help')) {
-      answer += `I am **SnapSum's Elite AI Customer Support Agent**!\n\n` +
-                `I can help you understand our video summaries, subscription plans, Google API configurations, or sandbox mechanics. How can I assist you today? Feel free to ask me about:\n` +
-                `- **SnapSum Plans & Pricing** 💳\n` +
-                `- **Sandbox Mode & Checkout Simulation** 🧪\n` +
-                `- **How to bypass quotas with your own Gemini API Key** 🔑\n` +
-                `- **Unlocking Premium via Referrals** 👥\n` +
-                `- **Our core video repurposing & mindmapping features** 🎬`;
+      answer += `Hey there! It's so nice to meet you! I am your friendly support assistant here at SnapSum. 😊\n\n` +
+                `I am here to help you get the absolute most out of our platform! Whether you're curious about our pricing plans, want to try out our free payment sandbox, or want to know how to plug in your own Gemini API key for unlimited free processing, I've got you covered.\n\n` +
+                `What can I help you explore today? Feel free to ask me about any of these:\n` +
+                `- **Plans & Pricing** 💳 (We have great Starter and Pro options)\n` +
+                `- **Interactive Sandbox Mode** 🧪 (Test checkout flows at $0 cost!)\n` +
+                `- **Using Custom Gemini Keys** 🔑 (To bypass server quotas for free)\n` +
+                `- **Our Core Features** 🎬 (Summaries, quizzes, mindmaps, and voiceovers!)`;
     } else {
-      answer += `I am the **SnapSum Elite AI Support Assistant**.\n\n` +
-                `SnapSum is the ultimate universal video summarizer and knowledge engine. It transforms YouTube videos, lectures, and documents into elegant structured summaries, quizzes, audio, and visual mindmaps.\n\n` +
-                `I can assist you with:\n` +
-                `- **Plans & Pricing** ($9 Starter, $29 Pro)\n` +
-                `- **Sandbox mode** to simulate payments and test the app for free\n` +
-                `- **Custom Gemini Key overrides** in Developer Settings\n` +
-                `- **Unlocking premium** via our 2-friend referral program\n\n` +
-                `How can I help you today? Please feel free to ask a specific question!`;
+      answer += `I am always here to help you navigate anything you need! SnapSum is built to be the ultimate knowledge engine, converting long-form videos and lectures into beautifully organized summaries, interactive quizzes, visual mindmaps, and clean audio voiceovers.\n\n` +
+                `If you have any questions at all about our pricing plans, how sandbox simulation works, setting up your own free Gemini key, or unlocking premium through referrals, just let me know. 😊\n\n` +
+                `What's on your mind? Ask me anything and I'll do my best to help you out!`;
     }
     
     return answer;
@@ -1560,8 +1557,11 @@ app.post('/api/customer-support', async (req, res) => {
       model: 'gemini-3.5-flash',
       contents: alternatingContents,
       config: {
-        systemInstruction: `You are SnapSum's dedicated Elite AI Customer Support Agent. You represent SnapSum, the ultimate AI-powered Universal Video Summarizer and Knowledge Engine.
+        systemInstruction: `You are SnapSum's friendly, warm, and highly conversational AI Customer Support Assistant. You represent SnapSum, the ultimate AI-powered Universal Video Summarizer and Knowledge Engine.
 Your goal is to answer user questions about SnapSum's features, pricing, troubleshooting, and operations.
+
+CRITICAL TONE DIRECTIVE:
+Always write with a warm, conversational, welcoming, and highly human touch. Speak as if you are a real, friendly support specialist chatting with a user in real-time. Do NOT sound robotic, overly formal, stiff, or mechanical. Avoid heavy lists or structured tables unless the user explicitly asks for them. Use friendly emojis naturally and maintain a helpful, encouraging, and encouraging tone.
 
 Key facts about SnapSum to guide your replies:
 1. SnapSum transforms YouTube videos, lectures, and custom uploads into elegant structured summaries, key takeaways, quizzes, interactive mindmaps, and premium audio voiceovers (TTS).
@@ -1573,7 +1573,7 @@ Key facts about SnapSum to guide your replies:
 4. Custom Gemini API Key Override: Users can paste their own Google Gemini API key in the Developer Settings tab (in-app or in the Admin panel). This allows users to completely bypass server daily credit quotas and utilize their personal free-tier API quotas.
 5. Other Features: Referrals (refer 2 visitors to unlock premium features), 2FA Security in Admin, IP tracker rate limit controls, Cinematic explainers, Active Recall quizzing, and audio transcription.
 
-Always be warm, polite, highly professional, concise, and incredibly helpful. If a question is unrelated to SnapSum, answer it politely but always loop back or offer assistance regarding SnapSum's features.`,
+If a question is unrelated to SnapSum, answer it politely but always loop back or offer assistance regarding SnapSum's features in a natural, friendly manner.`,
         temperature: 0.7,
       }
     });

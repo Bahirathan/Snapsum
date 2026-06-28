@@ -934,7 +934,7 @@ export default function App() {
   const [supportMessages, setSupportMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string; timestamp: string }>>([
     {
       role: 'assistant',
-      text: "Hello! I am your SnapSum Elite AI Support Assistant. Ask me anything about our video summaries, subscription plans, Google API setups, and features!",
+      text: "Hey there! 😊 Welcome to SnapSum! I'm your friendly support companion. Feel free to ask me absolutely anything about our video summaries, pricing, free sandbox checkout, or features. How can I help you today?",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
