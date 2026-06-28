@@ -4,8 +4,22 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const getDirname = () => {
+  try {
+    if (typeof __dirname !== 'undefined' && __dirname) {
+      return __dirname;
+    }
+    const meta = typeof import.meta !== 'undefined' ? import.meta : null;
+    if (meta && meta.url) {
+      return path.dirname(fileURLToPath(meta.url));
+    }
+  } catch (e) {
+    // safe fallback
+  }
+  return process.cwd();
+};
+
+const __dirname = getDirname();
 
 class ClientFirestoreAdapter {
   public _projectId: string;
