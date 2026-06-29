@@ -141,17 +141,44 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
     setIsPlaying(true);
   };
 
-  // Auto-detect public/voiceover.mp3 or voiceover.wav
+  // Auto-detect public/voiceover.mp3 or voiceover.wav with robust HEAD/GET checks
   useEffect(() => {
     const checkDefaultVoiceovers = async () => {
       try {
-        const mp3Res = await fetch('/voiceover.mp3', { method: 'HEAD' });
-        if (mp3Res.ok) {
+        let mp3Exists = false;
+        try {
+          const mp3Res = await fetch('/voiceover.mp3', { method: 'HEAD' });
+          if (mp3Res.ok) mp3Exists = true;
+        } catch (e) {
+          // ignore HEAD fail
+        }
+        if (!mp3Exists) {
+          try {
+            const mp3Res = await fetch('/voiceover.mp3');
+            if (mp3Res.ok) mp3Exists = true;
+          } catch (e) {}
+        }
+
+        if (mp3Exists) {
           handleAudioLoad('/voiceover.mp3', 'voiceover.mp3');
           return;
         }
-        const wavRes = await fetch('/voiceover.wav', { method: 'HEAD' });
-        if (wavRes.ok) {
+
+        let wavExists = false;
+        try {
+          const wavRes = await fetch('/voiceover.wav', { method: 'HEAD' });
+          if (wavRes.ok) wavExists = true;
+        } catch (e) {
+          // ignore HEAD fail
+        }
+        if (!wavExists) {
+          try {
+            const wavRes = await fetch('/voiceover.wav');
+            if (wavRes.ok) wavExists = true;
+          } catch (e) {}
+        }
+
+        if (wavExists) {
           handleAudioLoad('/voiceover.wav', 'voiceover.wav');
           return;
         }
@@ -162,7 +189,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
     checkDefaultVoiceovers();
   }, []);
 
-  // Sync audio controls
+  // Sync audio controls and handle autoplay blocks gracefully
   useEffect(() => {
     if (!audioRef.current) return;
     
@@ -170,8 +197,9 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
     audioRef.current.playbackRate = playSpeed;
     
     if (isPlaying && isUsingCustomAudio) {
-      audioRef.current.play().catch(() => {
-        // user gesture requirement fallback
+      audioRef.current.play().catch((err) => {
+        console.warn("Autoplay blocked by browser policy. Pausing simulation to await user interaction.", err);
+        setIsPlaying(false);
       });
     } else {
       audioRef.current.pause();
@@ -494,6 +522,38 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
         {/* ACTIVE STAGE CANVAS CONTAINERS */}
         {/* ========================================================================= */}
         <div className="flex-1 flex flex-col items-center justify-center relative py-6 text-center select-none z-10">
+          
+          {/* Big Play Overlay for initial engagement and to satisfy autoplay policies */}
+          {!isPlaying && currentTime === 0 && (
+            <div 
+              onClick={() => {
+                setIsPlaying(true);
+                playSynthBeep(440, 'sine', 0.15);
+              }}
+              className="absolute inset-0 bg-neutral-950/90 backdrop-blur-md z-30 flex flex-col items-center justify-center cursor-pointer group transition-all duration-300 rounded-3xl"
+            >
+              <div className="relative">
+                {/* Outer pulsing ring */}
+                <div className="absolute inset-0 bg-emerald-500/25 rounded-full filter blur-xl animate-pulse group-hover:scale-125 transition duration-500"></div>
+                
+                {/* Big Play Button */}
+                <div className="relative h-20 w-20 rounded-full bg-emerald-500 text-neutral-950 flex items-center justify-center shadow-[0_0_50px_rgba(16,185,129,0.35)] group-hover:scale-110 transition duration-300">
+                  <Play className="w-8 h-8 fill-current ml-1" />
+                </div>
+              </div>
+              
+              <div className="mt-6 text-center space-y-2 max-w-sm px-6">
+                <h3 className="text-base font-bold tracking-tight text-white group-hover:text-emerald-400 transition font-sans">
+                  {isUsingCustomAudio ? '🎙️ Premium Voiceover Ready' : '🎬 Click to Start Presentation'}
+                </h3>
+                <p className="text-[11px] text-neutral-400 leading-relaxed font-light font-sans">
+                  {isUsingCustomAudio 
+                    ? 'A studio-grade ElevenLabs voiceover has been loaded and is ready to play. Tap to begin!' 
+                    : 'Tap to start the interactive cinematic tour of SnapSum.'}
+                </p>
+              </div>
+            </div>
+          )}
           
           {/* ===================== SCENE 1: THE OVERLOAD (0s - 12s) ===================== */}
           {currentTime >= 0 && currentTime < 12 && (
