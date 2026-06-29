@@ -1256,6 +1256,108 @@ export default function App() {
 
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
+  // Dynamic Pricing & Promotions State (Firestore Backed)
+  const [proMonthlyPrice, setProMonthlyPrice] = useState<number>(28);
+  const [proYearlyPrice, setProYearlyPrice] = useState<number>(19);
+  const [enterpriseMonthlyPrice, setEnterpriseMonthlyPrice] = useState<number>(68);
+  const [enterpriseYearlyPrice, setEnterpriseYearlyPrice] = useState<number>(48);
+  const [promotionsList, setPromotionsList] = useState<any[]>([]);
+
+  // Promo code states
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<any | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
+  // Admin New Promo States
+  const [adminNewPromoCode, setAdminNewPromoCode] = useState('');
+  const [adminNewPromoType, setAdminNewPromoType] = useState<'percentage' | 'fixed'>('percentage');
+  const [adminNewPromoValue, setAdminNewPromoValue] = useState<number>(0);
+  const [pricingSaveLoading, setPricingSaveLoading] = useState(false);
+  const [pricingSaveStatus, setPricingSaveStatus] = useState<{ type: 'idle' | 'success' | 'error', message: string }>({ type: 'idle', message: '' });
+
+  const getDiscountedPrice = (originalPrice: number) => {
+    if (!appliedPromo) return originalPrice;
+    if (appliedPromo.discountType === 'percentage') {
+      const discount = (originalPrice * Number(appliedPromo.discountValue)) / 100;
+      return Math.max(0, originalPrice - discount);
+    } else if (appliedPromo.discountType === 'fixed') {
+      return Math.max(0, originalPrice - Number(appliedPromo.discountValue));
+    }
+    return originalPrice;
+  };
+
+  const getPlanPrice = (planCode: 'pro' | 'enterprise' | 'test', cycle: 'monthly' | 'yearly') => {
+    if (planCode === 'test') return 1;
+    if (planCode === 'enterprise') {
+      return cycle === 'monthly' ? enterpriseMonthlyPrice : enterpriseYearlyPrice;
+    }
+    return cycle === 'monthly' ? proMonthlyPrice : proYearlyPrice;
+  };
+
+  const getPlanTotalPrice = (planCode: 'pro' | 'enterprise' | 'test', cycle: 'monthly' | 'yearly') => {
+    const basePrice = getPlanPrice(planCode, cycle);
+    if (planCode === 'test') return 1;
+    const finalPrice = getDiscountedPrice(basePrice);
+    return cycle === 'monthly' ? finalPrice : finalPrice * 12;
+  };
+
+  useEffect(() => {
+    const fetchPricing = async () => {
+      try {
+        const { doc, getDoc } = await import('firebase/firestore');
+        const docRef = doc(db, 'admin_settings', 'pricing');
+        const snap = await getDoc(docRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.proMonthlyPrice !== undefined) setProMonthlyPrice(Number(data.proMonthlyPrice));
+          if (data.proYearlyPrice !== undefined) setProYearlyPrice(Number(data.proYearlyPrice));
+          if (data.enterpriseMonthlyPrice !== undefined) setEnterpriseMonthlyPrice(Number(data.enterpriseMonthlyPrice));
+          if (data.enterpriseYearlyPrice !== undefined) setEnterpriseYearlyPrice(Number(data.enterpriseYearlyPrice));
+          if (Array.isArray(data.promotions)) setPromotionsList(data.promotions);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch pricing config from Firestore, using defaults:', err);
+      }
+    };
+    fetchPricing();
+  }, []);
+
+  const handleSavePricingAndPromotions = async (updatedPromos?: any[], updatedPrices?: { proM: number, proY: number, entM: number, entY: number }) => {
+    setPricingSaveLoading(true);
+    setPricingSaveStatus({ type: 'idle', message: '' });
+    try {
+      const { doc, setDoc } = await import('firebase/firestore');
+      const docRef = doc(db, 'admin_settings', 'pricing');
+      
+      const payload = {
+        proMonthlyPrice: updatedPrices ? updatedPrices.proM : proMonthlyPrice,
+        proYearlyPrice: updatedPrices ? updatedPrices.proY : proYearlyPrice,
+        enterpriseMonthlyPrice: updatedPrices ? updatedPrices.entM : enterpriseMonthlyPrice,
+        enterpriseYearlyPrice: updatedPrices ? updatedPrices.entY : enterpriseYearlyPrice,
+        promotions: updatedPromos !== undefined ? updatedPromos : promotionsList,
+        updatedAt: new Date().toISOString()
+      };
+
+      await setDoc(docRef, payload, { merge: true });
+
+      if (updatedPrices) {
+        setProMonthlyPrice(updatedPrices.proM);
+        setProYearlyPrice(updatedPrices.proY);
+        setEnterpriseMonthlyPrice(updatedPrices.entM);
+        setEnterpriseYearlyPrice(updatedPrices.entY);
+      }
+      if (updatedPromos !== undefined) {
+        setPromotionsList(updatedPromos);
+      }
+
+      setPricingSaveStatus({ type: 'success', message: 'Pricing structures and promotional parameters synchronized successfully!' });
+    } catch (err: any) {
+      setPricingSaveStatus({ type: 'error', message: err.message || 'Error saving parameters to Firestore.' });
+    } finally {
+      setPricingSaveLoading(false);
+    }
+  };
+
   // Stripe Checkout Simulator dialog
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [selectedPlanCode, setSelectedPlanCode] = useState<'pro' | 'enterprise' | 'test' | null>(null);
@@ -1286,6 +1388,7 @@ export default function App() {
           body: JSON.stringify({
             planCode: plan,
             billingCycle,
+            promoCode: appliedPromo?.code || null,
             returnUrl: window.location.href.split('?')[0] // Clean active page url
           })
         });
@@ -3770,7 +3873,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       </div>
 
                       <div className="flex items-baseline gap-1.5 py-2 border-y border-neutral-100">
-                        <span className="text-3.5xl sm:text-4xl font-semibold font-mono text-neutral-950">$28</span>
+                        <span className="text-3.5xl sm:text-4xl font-semibold font-mono text-neutral-950">${proMonthlyPrice}</span>
                         <span className="text-xs text-neutral-400 font-light lowercase">/ month</span>
                       </div>
 
@@ -7038,10 +7141,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     
                     <div className="py-2">
                       <span className="text-3xl font-bold text-[#1d1d1f]">
-                        {billingCycle === 'monthly' ? '$28' : '$19'}
+                        {billingCycle === 'monthly' ? `$${proMonthlyPrice}` : `$${proYearlyPrice}`}
                       </span>
                       <span className="text-[#86868b] text-xs font-medium">
-                        {billingCycle === 'monthly' ? ' / month' : ' / month ($228/yr)'}
+                        {billingCycle === 'monthly' ? ' / month' : ` / month ($${proYearlyPrice * 12}/yr)`}
                       </span>
                     </div>
 
@@ -7101,10 +7204,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     
                     <div className="py-2">
                       <span className="text-3xl font-bold text-[#1d1d1f]">
-                        {billingCycle === 'monthly' ? '$68' : '$48'}
+                        {billingCycle === 'monthly' ? `$${enterpriseMonthlyPrice}` : `$${enterpriseYearlyPrice}`}
                       </span>
                       <span className="text-[#86868b] text-xs font-medium">
-                        {billingCycle === 'monthly' ? ' / month' : ' / month ($576/yr)'}
+                        {billingCycle === 'monthly' ? ' / month' : ` / month ($${enterpriseYearlyPrice * 12}/yr)`}
                       </span>
                     </div>
 
@@ -7960,6 +8063,227 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           }}
                           className="h-4 w-4 accent-emerald-600 rounded cursor-pointer"
                         />
+                      </div>
+
+                      {/* Dynamic Pricing Engine Sub-section */}
+                      <div className="pt-4 border-t border-neutral-100 space-y-4">
+                        <div className="flex items-center gap-1.5">
+                          <DollarSign className="w-4 h-4 text-zinc-700" />
+                          <h4 className="font-bold text-xs tracking-tight text-[#1d1d1f]">
+                            Dynamic Pricing Configuration
+                          </h4>
+                        </div>
+                        <p className="text-[11px] text-[#86868b] leading-normal font-light">
+                          Manage user-facing tier prices in USD $. Unlocked changes are stored in real-time Firestore database and applied globally across checkout paths.
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          {/* Pro Plan Prices */}
+                          <div className="space-y-2 p-3 bg-[#f5f5f7]/50 rounded-2xl border border-black/[0.02]">
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0071e3] block">Pro Creator Pass</span>
+                            <div className="space-y-1.5">
+                              <div>
+                                <label className="text-[9px] font-medium text-neutral-500 block">Monthly Price ($)</label>
+                                <input
+                                  type="number"
+                                  value={proMonthlyPrice}
+                                  onChange={(e) => setProMonthlyPrice(Number(e.target.value))}
+                                  className="w-full px-3 py-1.5 text-xs bg-white border border-black/[0.08] rounded-lg outline-none focus:border-neutral-300 font-mono"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[9px] font-medium text-neutral-500 block">Yearly Price ($ / mo)</label>
+                                <input
+                                  type="number"
+                                  value={proYearlyPrice}
+                                  onChange={(e) => setProYearlyPrice(Number(e.target.value))}
+                                  className="w-full px-3 py-1.5 text-xs bg-white border border-black/[0.08] rounded-lg outline-none focus:border-neutral-300 font-mono"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Enterprise Plan Prices */}
+                          <div className="space-y-2 p-3 bg-[#f5f5f7]/50 rounded-2xl border border-black/[0.02]">
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-800 block">Enterprise Agency Hub</span>
+                            <div className="space-y-1.5">
+                              <div>
+                                <label className="text-[9px] font-medium text-neutral-500 block">Monthly Price ($)</label>
+                                <input
+                                  type="number"
+                                  value={enterpriseMonthlyPrice}
+                                  onChange={(e) => setEnterpriseMonthlyPrice(Number(e.target.value))}
+                                  className="w-full px-3 py-1.5 text-xs bg-white border border-black/[0.08] rounded-lg outline-none focus:border-neutral-300 font-mono"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[9px] font-medium text-neutral-500 block">Yearly Price ($ / mo)</label>
+                                <input
+                                  type="number"
+                                  value={enterpriseYearlyPrice}
+                                  onChange={(e) => setEnterpriseYearlyPrice(Number(e.target.value))}
+                                  className="w-full px-3 py-1.5 text-xs bg-white border border-black/[0.08] rounded-lg outline-none focus:border-neutral-300 font-mono"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => handleSavePricingAndPromotions()}
+                            disabled={pricingSaveLoading}
+                            className="px-3.5 py-1.5 bg-[#1d1d1f] hover:bg-black text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+                          >
+                            {pricingSaveLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                            Save Pricing Changes
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Active Promotions & Discounts Engine */}
+                      <div className="pt-4 border-t border-neutral-100 space-y-4">
+                        <div className="flex items-center gap-1.5">
+                          <Megaphone className="w-4 h-4 text-zinc-700" />
+                          <h4 className="font-bold text-xs tracking-tight text-[#1d1d1f]">
+                            Promotions & Referral Discount Engine
+                          </h4>
+                        </div>
+                        <p className="text-[11px] text-[#86868b] leading-normal font-light">
+                          Create and configure active discount codes for marketing campaigns.
+                        </p>
+
+                        {/* Existing promotions list table */}
+                        {promotionsList.length > 0 ? (
+                          <div className="border border-black/[0.04] rounded-xl overflow-hidden text-xs bg-white">
+                            <table className="w-full border-collapse">
+                              <thead>
+                                <tr className="bg-[#f5f5f7]/50 text-neutral-500 border-b border-black/[0.04] font-mono text-[9px] uppercase font-bold text-left">
+                                  <th className="px-3 py-2">Promo Code</th>
+                                  <th className="px-3 py-2">Discount</th>
+                                  <th className="px-3 py-2">Status</th>
+                                  <th className="px-3 py-2 text-right">Action</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-black/[0.04]">
+                                {promotionsList.map((promo, pIdx) => (
+                                  <tr key={pIdx} className="hover:bg-neutral-50/50">
+                                    <td className="px-3 py-2 font-mono font-bold text-[#1d1d1f]">{promo.code}</td>
+                                    <td className="px-3 py-2">
+                                      {promo.discountType === 'percentage' ? `${promo.discountValue}% Off` : `$${promo.discountValue} Off`}
+                                    </td>
+                                    <td className="px-3 py-2">
+                                      <span className={`inline-flex px-1.5 py-0.5 rounded-sm text-[9px] font-mono font-bold uppercase ${promo.active ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-neutral-100 text-neutral-500'}`}>
+                                        {promo.active ? 'Active' : 'Disabled'}
+                                      </span>
+                                    </td>
+                                    <td className="px-3 py-2 text-right space-x-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const copy = [...promotionsList];
+                                          copy[pIdx].active = !copy[pIdx].active;
+                                          handleSavePricingAndPromotions(copy);
+                                        }}
+                                        className="text-[10px] text-neutral-600 hover:text-neutral-900 underline cursor-pointer"
+                                      >
+                                        Toggle
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          const copy = promotionsList.filter((_, idx) => idx !== pIdx);
+                                          handleSavePricingAndPromotions(copy);
+                                        }}
+                                        className="text-[10px] text-rose-600 hover:text-rose-900 font-semibold cursor-pointer"
+                                      >
+                                        Delete
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        ) : (
+                          <div className="p-4 text-center border border-dashed border-neutral-200 rounded-xl text-[11px] text-neutral-500 bg-[#f5f5f7]/20">
+                            No promotional codes created yet. Build your first campaign below!
+                          </div>
+                        )}
+
+                        {/* Add new promo code form */}
+                        <div className="p-3 bg-[#f5f5f7]/50 rounded-2xl border border-black/[0.02] space-y-3">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-600 block">Create Promotional Code</span>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="text-[9px] text-neutral-500 block font-medium">Promo Code</label>
+                              <input
+                                type="text"
+                                placeholder="E.g. SAVE30"
+                                value={adminNewPromoCode}
+                                onChange={(e) => setAdminNewPromoCode(e.target.value.toUpperCase())}
+                                className="w-full px-2.5 py-1.5 text-xs bg-white border border-black/[0.08] rounded-lg outline-none uppercase font-mono"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[9px] text-neutral-500 block font-medium">Type</label>
+                              <select
+                                value={adminNewPromoType}
+                                onChange={(e) => setAdminNewPromoType(e.target.value as any)}
+                                className="w-full px-2.5 py-1.5 text-xs bg-white border border-black/[0.08] rounded-lg outline-none text-neutral-800"
+                              >
+                                <option value="percentage">Percentage (%)</option>
+                                <option value="fixed">Fixed Amount ($)</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-[9px] text-neutral-500 block font-medium">Discount Value</label>
+                              <input
+                                type="number"
+                                placeholder="E.g. 30"
+                                value={adminNewPromoValue || ''}
+                                onChange={(e) => setAdminNewPromoValue(Number(e.target.value))}
+                                className="w-full px-2.5 py-1.5 text-xs bg-white border border-black/[0.08] rounded-lg outline-none font-mono text-neutral-800"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const code = adminNewPromoCode.trim().toUpperCase();
+                                if (!code) return;
+                                if (promotionsList.some(p => p.code === code)) {
+                                  alert('A promo code with this exact name already exists.');
+                                  return;
+                                }
+                                const newPromo = {
+                                  code,
+                                  discountType: adminNewPromoType,
+                                  discountValue: adminNewPromoValue || 0,
+                                  active: true
+                                };
+                                const updated = [...promotionsList, newPromo];
+                                handleSavePricingAndPromotions(updated);
+                                setAdminNewPromoCode('');
+                                setAdminNewPromoValue(0);
+                              }}
+                              className="px-3 py-1.5 bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-semibold rounded-lg transition cursor-pointer"
+                            >
+                              Create Campaign Code
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Save feedback block */}
+                        {pricingSaveStatus.type !== 'idle' && (
+                          <div className={`p-3 rounded-xl text-xs flex items-start gap-2 ${pricingSaveStatus.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-100' : 'bg-rose-50 text-rose-800 border border-rose-100'}`}>
+                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                            <span>{pricingSaveStatus.message}</span>
+                          </div>
+                        )}
                       </div>
 
                     </div>
@@ -8904,20 +9228,81 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   
                   <div className="flex items-baseline gap-1 py-1">
                     <span className="text-3xl font-extrabold text-white font-display">
-                      {selectedPlanCode === 'enterprise' 
-                        ? (billingCycle === 'monthly' ? '$68' : '$48') 
-                        : (billingCycle === 'monthly' ? '$28' : '$19')
-                      }
+                      ${getDiscountedPrice(getPlanPrice(selectedPlanCode || 'pro', billingCycle))}
                     </span>
                     <span className="text-xs font-mono text-neutral-400 font-medium"> / month</span>
+                    {appliedPromo && (
+                      <span className="text-xs text-neutral-400 line-through font-mono ml-2">
+                        ${getPlanPrice(selectedPlanCode || 'pro', billingCycle)}
+                      </span>
+                    )}
                   </div>
 
                   {billingCycle === 'yearly' && (
                     <div className="bg-neutral-800 border border-neutral-700 px-3 py-2 rounded-xl text-xs text-neutral-200 font-medium flex items-center gap-1.5 leading-snug">
                       <Zap className="w-3.5 h-3.5 text-white fill-white" />
-                      <span>Yearly Savings Active: Save {selectedPlanCode === 'enterprise' ? '$240' : '$108'} / year</span>
+                      <span>
+                        Yearly Savings Active: Save ${
+                          selectedPlanCode === 'enterprise' 
+                            ? (enterpriseMonthlyPrice - enterpriseYearlyPrice) * 12 
+                            : (proMonthlyPrice - proYearlyPrice) * 12
+                        } / year
+                      </span>
                     </div>
                   )}
+
+                  {/* Promo Code Input */}
+                  <div className="pt-4 border-t border-neutral-800 space-y-2">
+                    <span className="text-[9px] uppercase font-bold tracking-widest text-neutral-400 font-mono block">Promo Code</span>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Enter promo code"
+                        value={promoCodeInput}
+                        onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                        className="bg-neutral-800 border border-neutral-700 text-white rounded-xl px-3 py-1.5 text-xs outline-none focus:border-neutral-500 w-full font-mono uppercase"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const code = promoCodeInput.trim();
+                          if (!code) return;
+                          const found = promotionsList.find(p => p.code.toUpperCase() === code.toUpperCase() && p.active);
+                          if (found) {
+                            setAppliedPromo(found);
+                            setPromoError(null);
+                          } else {
+                            setAppliedPromo(null);
+                            setPromoError('Invalid or expired promo code.');
+                          }
+                        }}
+                        className="bg-neutral-700 hover:bg-neutral-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer shrink-0 transition"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                    {appliedPromo && (
+                      <div className="text-emerald-400 text-[11px] font-medium flex items-center gap-1">
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        <span>Code <strong>{appliedPromo.code}</strong> applied ({appliedPromo.discountType === 'percentage' ? `${appliedPromo.discountValue}%` : `$${appliedPromo.discountValue}`} off!)</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAppliedPromo(null);
+                            setPromoCodeInput('');
+                          }}
+                          className="text-neutral-400 hover:text-white underline ml-auto text-[10px] cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                    {promoError && (
+                      <div className="text-rose-400 text-[11px] font-medium">
+                        ⚠️ {promoError}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -8925,12 +9310,23 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 <div className="flex justify-between text-xs font-medium text-neutral-400">
                   <span>Subtotal</span>
                   <span>
-                    {selectedPlanCode === 'enterprise' 
-                      ? (billingCycle === 'monthly' ? '$68.00' : '$576.00') 
-                      : (billingCycle === 'monthly' ? '$28.00' : '$228.00')
+                    {selectedPlanCode === 'test'
+                      ? '$1.00'
+                      : `$${getPlanPrice(selectedPlanCode || 'pro', billingCycle) * (billingCycle === 'monthly' ? 1 : 12)}.00`
                     }
                   </span>
                 </div>
+                {appliedPromo && (
+                  <div className="flex justify-between text-xs font-medium text-emerald-400">
+                    <span>Discount ({appliedPromo.code})</span>
+                    <span>
+                      -${
+                        getPlanPrice(selectedPlanCode || 'pro', billingCycle) * (billingCycle === 'monthly' ? 1 : 12) -
+                        getPlanTotalPrice(selectedPlanCode || 'pro', billingCycle)
+                      }.00
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-xs font-medium text-neutral-400">
                   <span>SSL & DNS Setup Fee</span>
                   <span className="text-white font-bold uppercase text-[9px] font-mono bg-neutral-800 px-2 py-0.5 rounded">Free</span>
@@ -8938,9 +9334,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 <div className="flex justify-between text-sm font-bold text-white pt-2.5 border-t border-neutral-800">
                   <span>Total Amount Due</span>
                   <span className="text-white font-display">
-                    {selectedPlanCode === 'enterprise' 
-                      ? (billingCycle === 'monthly' ? '$68.00' : '$576.00') 
-                      : (billingCycle === 'monthly' ? '$28.00' : '$228.00')
+                    {selectedPlanCode === 'test'
+                      ? '$1.00'
+                      : `$${getPlanTotalPrice(selectedPlanCode || 'pro', billingCycle)}.00`
                     }
                   </span>
                 </div>

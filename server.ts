@@ -1732,7 +1732,7 @@ app.get('/api/subscription-status', async (req, res) => {
 });
 
 app.post('/api/create-checkout-session', async (req, res) => {
-  const { planCode, billingCycle, returnUrl } = req.body;
+  const { planCode, billingCycle, promoCode, returnUrl } = req.body;
   // Fallback to client override header if the main server environment variable is not set
   const stripeSecretKey = (req.headers['x-custom-stripe-secret-key'] as string) || process.env.STRIPE_SECRET_KEY;
 
@@ -1745,9 +1745,31 @@ app.post('/api/create-checkout-session', async (req, res) => {
   }
 
   try {
+    let proMonthly = 28;
+    let proYearly = 19;
+    let enterpriseMonthly = 68;
+    let enterpriseYearly = 48;
+    let promotions: any[] = [];
+
+    if (db) {
+      try {
+        const pricingDoc = await db.collection('admin_settings').doc('pricing').get();
+        if (pricingDoc.exists) {
+          const pData = pricingDoc.data();
+          if (pData?.proMonthlyPrice !== undefined) proMonthly = Number(pData.proMonthlyPrice);
+          if (pData?.proYearlyPrice !== undefined) proYearly = Number(pData.proYearlyPrice);
+          if (pData?.enterpriseMonthlyPrice !== undefined) enterpriseMonthly = Number(pData.enterpriseMonthlyPrice);
+          if (pData?.enterpriseYearlyPrice !== undefined) enterpriseYearly = Number(pData.enterpriseYearlyPrice);
+          if (Array.isArray(pData?.promotions)) promotions = pData.promotions;
+        }
+      } catch (err) {
+        console.error('Failed to load dynamic pricing from Firestore:', err);
+      }
+    }
+
     const isYearly = billingCycle === 'yearly';
     let planName = 'Pro Creator Pass';
-    let unitAmount = isYearly ? 19 : 28; // $19.00/mo or $28.00/mo
+    let unitAmount = isYearly ? proYearly : proMonthly;
     let isSubscription = true;
 
     if (planCode === 'test' || planCode === 'test_1usd') {
@@ -1756,11 +1778,27 @@ app.post('/api/create-checkout-session', async (req, res) => {
       isSubscription = false;
     } else if (planCode === 'enterprise') {
       planName = 'Enterprise Agency Hub';
-      unitAmount = isYearly ? 48 : 68; // $48.00/mo or $68.00/mo
+      unitAmount = isYearly ? enterpriseYearly : enterpriseMonthly;
+    }
+
+    // Apply promotion code discount if active and applicable
+    if (promoCode && planCode !== 'test' && planCode !== 'test_1usd') {
+      const codeStr = String(promoCode).trim().toUpperCase();
+      const foundPromo = promotions.find(p => p.code?.toUpperCase() === codeStr && p.active);
+      if (foundPromo) {
+        if (foundPromo.discountType === 'percentage') {
+          const discount = (unitAmount * Number(foundPromo.discountValue)) / 100;
+          unitAmount = Math.max(0, unitAmount - discount);
+          planName += ` (${foundPromo.code} - ${foundPromo.discountValue}% Off)`;
+        } else if (foundPromo.discountType === 'fixed') {
+          unitAmount = Math.max(0, unitAmount - Number(foundPromo.discountValue));
+          planName += ` (${foundPromo.code} - $${foundPromo.discountValue} Off)`;
+        }
+      }
     }
 
     // Convert prices to cents for Stripe
-    unitAmount = unitAmount * 100;
+    unitAmount = Math.round(unitAmount * 100);
 
     const payload = new URLSearchParams();
     payload.append('payment_method_types[0]', 'card');
