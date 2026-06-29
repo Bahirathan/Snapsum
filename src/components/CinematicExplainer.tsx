@@ -118,7 +118,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
   const [dragActive, setDragActive] = useState<boolean>(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const handleAudioLoad = (url: string, fileName: string) => {
+  const handleAudioLoad = (url: string, fileName: string, autoPlay: boolean = true) => {
     if (audioRef.current) {
       audioRef.current.pause();
     }
@@ -138,7 +138,13 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
     setCustomAudioName(fileName);
     setIsUsingCustomAudio(true);
     setCurrentTime(0);
-    setIsPlaying(true);
+    setIsPlaying(autoPlay);
+
+    if (autoPlay) {
+      audio.play().catch((err) => {
+        console.warn("Direct play failed on load:", err);
+      });
+    }
   };
 
   // Auto-detect public/voiceover.mp3 or voiceover.wav with robust HEAD/GET checks
@@ -160,7 +166,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
         }
 
         if (mp3Exists) {
-          handleAudioLoad('/voiceover.mp3', 'voiceover.mp3');
+          handleAudioLoad('/voiceover.mp3', 'voiceover.mp3', false);
           return;
         }
 
@@ -179,7 +185,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
         }
 
         if (wavExists) {
-          handleAudioLoad('/voiceover.wav', 'voiceover.wav');
+          handleAudioLoad('/voiceover.wav', 'voiceover.wav', false);
           return;
         }
       } catch (e) {
@@ -189,7 +195,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
     checkDefaultVoiceovers();
   }, []);
 
-  // Sync audio controls and handle autoplay blocks gracefully
+  // Sync audio controls and handle autoplay blocks gracefully without rolling back state
   useEffect(() => {
     if (!audioRef.current) return;
     
@@ -198,8 +204,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
     
     if (isPlaying && isUsingCustomAudio) {
       audioRef.current.play().catch((err) => {
-        console.warn("Autoplay blocked by browser policy. Pausing simulation to await user interaction.", err);
-        setIsPlaying(false);
+        console.warn("Autoplay blocked by browser policy. Awaiting user interaction.", err);
       });
     } else {
       audioRef.current.pause();
@@ -451,7 +456,17 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
 
   // Handles control functions
   const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
+    const nextPlaying = !isPlaying;
+    setIsPlaying(nextPlaying);
+    if (audioRef.current && isUsingCustomAudio) {
+      if (nextPlaying) {
+        audioRef.current.play().catch((err) => {
+          console.warn("Direct play failed in handlePlayPause:", err);
+        });
+      } else {
+        audioRef.current.pause();
+      }
+    }
   };
 
   const handleRewind = () => {
@@ -461,6 +476,12 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
     currentSentenceRef.current = "";
     setCurrentTime(0);
     setIsPlaying(true);
+    if (audioRef.current && isUsingCustomAudio) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch((err) => {
+        console.warn("Direct play failed in handleRewind:", err);
+      });
+    }
     playSynthBeep(220, 'sine', 0.2);
   };
 
@@ -478,6 +499,12 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
     currentSentenceRef.current = "";
     setCurrentTime(startSec);
     setIsPlaying(true);
+    if (audioRef.current && isUsingCustomAudio) {
+      audioRef.current.currentTime = startSec;
+      audioRef.current.play().catch((err) => {
+        console.warn("Direct play failed in jumpToScene:", err);
+      });
+    }
     playSynthBeep(330, 'sine', 0.15);
   };
 
@@ -528,6 +555,11 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
             <div 
               onClick={() => {
                 setIsPlaying(true);
+                if (audioRef.current && isUsingCustomAudio) {
+                  audioRef.current.play().catch((err) => {
+                    console.warn("Direct play failed on Big Play Overlay click:", err);
+                  });
+                }
                 playSynthBeep(440, 'sine', 0.15);
               }}
               className="absolute inset-0 bg-neutral-950/90 backdrop-blur-md z-30 flex flex-col items-center justify-center cursor-pointer group transition-all duration-300 rounded-3xl"
