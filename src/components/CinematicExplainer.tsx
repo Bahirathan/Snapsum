@@ -138,7 +138,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
     setCustomAudioName(fileName);
     setIsUsingCustomAudio(true);
     setCurrentTime(0);
-    setIsPlaying(false);
+    setIsPlaying(true);
   };
 
   // Auto-detect public/voiceover.mp3 or voiceover.wav
