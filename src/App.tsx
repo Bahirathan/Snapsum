@@ -3725,7 +3725,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       </div>
 
                       <div className="flex items-baseline gap-1.5 py-2 border-y border-white/[0.05]">
-                        <span className="text-3xl sm:text-4xl font-semibold font-mono text-white">0 AED</span>
+                        <span className="text-3xl sm:text-4xl font-semibold font-mono text-white">$0</span>
                         <span className="text-xs text-slate-400 font-light lowercase">/ forever</span>
                       </div>
 
@@ -3770,7 +3770,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       </div>
 
                       <div className="flex items-baseline gap-1.5 py-2 border-y border-neutral-100">
-                        <span className="text-3.5xl sm:text-4xl font-semibold font-mono text-neutral-950">29 AED</span>
+                        <span className="text-3.5xl sm:text-4xl font-semibold font-mono text-neutral-950">$28</span>
                         <span className="text-xs text-neutral-400 font-light lowercase">/ month</span>
                       </div>
 
@@ -7038,10 +7038,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     
                     <div className="py-2">
                       <span className="text-3xl font-bold text-[#1d1d1f]">
-                        {billingCycle === 'monthly' ? '$19' : '$14'}
+                        {billingCycle === 'monthly' ? '$28' : '$19'}
                       </span>
                       <span className="text-[#86868b] text-xs font-medium">
-                        {billingCycle === 'monthly' ? ' / month' : ' / month ($168/yr)'}
+                        {billingCycle === 'monthly' ? ' / month' : ' / month ($228/yr)'}
                       </span>
                     </div>
 
@@ -7101,10 +7101,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     
                     <div className="py-2">
                       <span className="text-3xl font-bold text-[#1d1d1f]">
-                        {billingCycle === 'monthly' ? '$49' : '$39'}
+                        {billingCycle === 'monthly' ? '$68' : '$48'}
                       </span>
                       <span className="text-[#86868b] text-xs font-medium">
-                        {billingCycle === 'monthly' ? ' / month' : ' / month ($468/yr)'}
+                        {billingCycle === 'monthly' ? ' / month' : ' / month ($576/yr)'}
                       </span>
                     </div>
 
@@ -8905,8 +8905,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   <div className="flex items-baseline gap-1 py-1">
                     <span className="text-3xl font-extrabold text-white font-display">
                       {selectedPlanCode === 'enterprise' 
-                        ? (billingCycle === 'monthly' ? '$49' : '$39') 
-                        : (billingCycle === 'monthly' ? '$19' : '$14')
+                        ? (billingCycle === 'monthly' ? '$68' : '$48') 
+                        : (billingCycle === 'monthly' ? '$28' : '$19')
                       }
                     </span>
                     <span className="text-xs font-mono text-neutral-400 font-medium"> / month</span>
@@ -8915,7 +8915,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   {billingCycle === 'yearly' && (
                     <div className="bg-neutral-800 border border-neutral-700 px-3 py-2 rounded-xl text-xs text-neutral-200 font-medium flex items-center gap-1.5 leading-snug">
                       <Zap className="w-3.5 h-3.5 text-white fill-white" />
-                      <span>Yearly Savings Active: Save ${selectedPlanCode === 'enterprise' ? '120' : '60'} / year</span>
+                      <span>Yearly Savings Active: Save {selectedPlanCode === 'enterprise' ? '$240' : '$108'} / year</span>
                     </div>
                   )}
                 </div>
@@ -8926,8 +8926,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   <span>Subtotal</span>
                   <span>
                     {selectedPlanCode === 'enterprise' 
-                      ? (billingCycle === 'monthly' ? '$49.00' : '$468.00') 
-                      : (billingCycle === 'monthly' ? '$19.00' : '$168.00')
+                      ? (billingCycle === 'monthly' ? '$68.00' : '$576.00') 
+                      : (billingCycle === 'monthly' ? '$28.00' : '$228.00')
                     }
                   </span>
                 </div>
@@ -8939,8 +8939,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   <span>Total Amount Due</span>
                   <span className="text-white font-display">
                     {selectedPlanCode === 'enterprise' 
-                      ? (billingCycle === 'monthly' ? '$49.00' : '$468.00') 
-                      : (billingCycle === 'monthly' ? '$19.00' : '$168.00')
+                      ? (billingCycle === 'monthly' ? '$68.00' : '$576.00') 
+                      : (billingCycle === 'monthly' ? '$28.00' : '$228.00')
                     }
                   </span>
                 </div>

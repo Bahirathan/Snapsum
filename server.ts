@@ -1460,17 +1460,16 @@ app.post('/api/customer-support', async (req, res) => {
 
     if (q.includes('price') || q.includes('pricing') || q.includes('plan') || q.includes('pro') || q.includes('cost') || q.includes('subscription') || q.includes('premium') || q.includes('billing') || q.includes('buy') || q.includes('upgrade') || q.includes('starter')) {
       answer += `We've kept SnapSum pricing super simple and transparent! We have two core premium tiers and an enterprise option tailored to your learning pace:\n\n` +
-                `1. 🌟 **Basic Starter Plan ($9/month)**:\n` +
+                `1. 🌟 **Basic Starter Plan ($0/forever)**:\n` +
                 `   - Perfect for general learners! It gives you standard summaries for videos up to 30 minutes long.\n` +
-                `   - Access to standard Active Recall quizzing & handy study tools.\n` +
-                `   - Clear, standard text-to-speech voiceovers to listen on the go.\n\n` +
-                `2. 🔥 **Pro Creator Pass ($29/month)**:\n` +
+                `   - Access to standard Active Recall quizzing & handy study tools.\n\n` +
+                `2. 🔥 **Pro Creator Pass ($28/month or $19/month billed annually)**:\n` +
                 `   - This is our most popular plan! You get **completely unlimited video processing** (no daily quota limits).\n` +
                 `   - Premium, high-fidelity humanlike AI voiceovers for a beautiful listening experience.\n` +
                 `   - Access to fully interactive concept mindmaps and dynamic study flashcards.\n` +
                 `   - High-contrast vertical viral reels & script exports to repurpose content in seconds.\n` +
                 `   - Priority queueing (blazing-fast generation speeds).\n\n` +
-                `3. 🏢 **Enterprise Tier (Custom)**:\n` +
+                `3. 🏢 **Enterprise Tier ($68/month or $48/month billed annually)**:\n` +
                 `   - Custom LLM fine-tuning, high-volume API access, custom integrations, and dedicated support for organizations.\n\n` +
                 `*Tip: Since we are running in a sandbox environment, you can actually test the entire Pro checkout flow and play with premium features completely for free without spending a single cent!*`;
     } else if (q.includes('sandbox') || q.includes('test') || q.includes('stripe') || q.includes('card') || q.includes('payment') || q.includes('checkout') || q.includes('simulate') || q.includes('charge')) {
@@ -1566,9 +1565,9 @@ Always write with a warm, conversational, welcoming, and highly human touch. Spe
 Key facts about SnapSum to guide your replies:
 1. SnapSum transforms YouTube videos, lectures, and custom uploads into elegant structured summaries, key takeaways, quizzes, interactive mindmaps, and premium audio voiceovers (TTS).
 2. Pricing and Billing:
-   - Basic Starter Plan: $9/month, offering standard summaries (up to 30 mins videos), basic quizzes, and standard voiceovers.
-   - Pro Creator Pass: $29/month, offering unlimited processing, premium high-fidelity voiceovers, interactive mindmaps, dynamic flashcards, and priority queueing.
-   - Enterprise Tier: Custom pricing for teams requiring high volume API access, customized LLM fine-tuning, and dedicated SLA support.
+   - Basic Starter Plan: $0/forever, offering standard summaries (up to 30 mins videos) and basic quizzes.
+   - Pro Creator Pass: $28/month (or $19/month billed annually), offering unlimited processing, premium high-fidelity voiceovers, interactive mindmaps, dynamic flashcards, and priority queueing.
+   - Enterprise Tier: $68/month (or $48/month billed annually), offering simultaneous bulk processing, automated web scheduler, API webhooks, and priority queueing.
 3. Sandbox Environment: SnapSum features a secure simulated sandbox environment. Connecting a Stripe test key or simulating Pro checkout allows developers/users to test the entire premium subscription flow at zero cost. No actual credit card is charged.
 4. Custom Gemini API Key Override: Users can paste their own Google Gemini API key in the Developer Settings tab (in-app or in the Admin panel). This allows users to completely bypass server daily credit quotas and utilize their personal free-tier API quotas.
 5. Other Features: Referrals (refer 2 visitors to unlock premium features), 2FA Security in Admin, IP tracker rate limit controls, Cinematic explainers, Active Recall quizzing, and audio transcription.
@@ -1748,7 +1747,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
   try {
     const isYearly = billingCycle === 'yearly';
     let planName = 'Pro Creator Pass';
-    let unitAmount = isYearly ? 14 : 19; // $14.00/mo or $19.00/mo
+    let unitAmount = isYearly ? 19 : 28; // $19.00/mo or $28.00/mo
     let isSubscription = true;
 
     if (planCode === 'test' || planCode === 'test_1usd') {
@@ -1757,7 +1756,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
       isSubscription = false;
     } else if (planCode === 'enterprise') {
       planName = 'Enterprise Agency Hub';
-      unitAmount = isYearly ? 39 : 49; // $39.00/mo or $49.00/mo
+      unitAmount = isYearly ? 48 : 68; // $48.00/mo or $68.00/mo
     }
 
     // Convert prices to cents for Stripe
