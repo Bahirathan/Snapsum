@@ -1070,6 +1070,15 @@ export default function App() {
     if (adminSearchGrounding !== 'default') {
       headers['x-custom-search-grounding'] = adminSearchGrounding;
     }
+    if (isPremium) {
+      headers['x-is-premium'] = 'true';
+    }
+    const activePlan = localStorage.getItem('youtube_summarizer_plan') || (isPremium ? 'pro' : 'free');
+    headers['x-user-plan'] = activePlan;
+    const userEmail = visitorUser?.email || localStorage.getItem('youtube_summarizer_premium_email') || '';
+    if (userEmail) {
+      headers['x-user-email'] = userEmail;
+    }
     return headers;
   };
 
@@ -1110,7 +1119,7 @@ export default function App() {
     // Handle successful Stripe Checkout redirect session
     const params = new URLSearchParams(window.location.search);
     if (params.get('checkout_success') === 'true') {
-      savePremiumStatus(true);
+      savePremiumStatus(true, 'pro', 'R_Bahirathan@gmail.com');
       fetch('/api/save-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1257,11 +1266,25 @@ export default function App() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   // Dynamic Pricing & Promotions State (Firestore Backed)
-  const [proMonthlyPrice, setProMonthlyPrice] = useState<number>(28);
-  const [proYearlyPrice, setProYearlyPrice] = useState<number>(19);
-  const [enterpriseMonthlyPrice, setEnterpriseMonthlyPrice] = useState<number>(68);
-  const [enterpriseYearlyPrice, setEnterpriseYearlyPrice] = useState<number>(48);
-  const [promotionsList, setPromotionsList] = useState<any[]>([]);
+  const [proMonthlyPrice, setProMonthlyPrice] = useState<number>(8.99);
+  const [proYearlyPrice, setProYearlyPrice] = useState<number>(7.49);
+  const [enterpriseMonthlyPrice, setEnterpriseMonthlyPrice] = useState<number>(12.99);
+  const [enterpriseYearlyPrice, setEnterpriseYearlyPrice] = useState<number>(11.49);
+  const [promotionsList, setPromotionsList] = useState<any[]>(() => {
+    return [
+      {
+        code: 'LAUNCH07',
+        discountType: 'percentage',
+        discountValue: 80,
+        active: true,
+        discountDurationType: 'first_month_only',
+        redemptionCap: 200,
+        redemptionsCount: 42,
+        expiryDate: '2026-12-31',
+        plans: 'monthly_only'
+      }
+    ];
+  });
 
   // Promo code states
   const [promoCodeInput, setPromoCodeInput] = useState('');
@@ -1272,6 +1295,10 @@ export default function App() {
   const [adminNewPromoCode, setAdminNewPromoCode] = useState('');
   const [adminNewPromoType, setAdminNewPromoType] = useState<'percentage' | 'fixed'>('percentage');
   const [adminNewPromoValue, setAdminNewPromoValue] = useState<number>(0);
+  const [adminNewPromoDuration, setAdminNewPromoDuration] = useState<'first_month_only' | 'recurring'>('recurring');
+  const [adminNewPromoCap, setAdminNewPromoCap] = useState<number>(0);
+  const [adminNewPromoExpiry, setAdminNewPromoExpiry] = useState<string>('');
+  const [adminNewPromoPlans, setAdminNewPromoPlans] = useState<'monthly_only' | 'all'>('all');
   const [pricingSaveLoading, setPricingSaveLoading] = useState(false);
   const [pricingSaveStatus, setPricingSaveStatus] = useState<{ type: 'idle' | 'success' | 'error', message: string }>({ type: 'idle', message: '' });
 
@@ -1476,10 +1503,19 @@ export default function App() {
   };
 
   // Save changes wrapper
-  const savePremiumStatus = (status: boolean) => {
+  const savePremiumStatus = (status: boolean, plan: string = 'pro', email: string = '') => {
     setIsPremium(status);
     try {
       localStorage.setItem('youtube_summarizer_premium', String(status));
+      if (status) {
+        localStorage.setItem('youtube_summarizer_plan', plan);
+        if (email) {
+          localStorage.setItem('youtube_summarizer_premium_email', email);
+        }
+      } else {
+        localStorage.removeItem('youtube_summarizer_plan');
+        localStorage.removeItem('youtube_summarizer_premium_email');
+      }
     } catch (e) {
       console.warn(e);
     }
@@ -2901,18 +2937,18 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <span>SnapSum 2.0 AI Engine Active</span>
                     </div>
                            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold font-display leading-[1.08] tracking-tight text-[#1d1d1f]">
-                      Turn Any Video Into<br />
+                      One Video.<br />
                       <span className="bg-gradient-to-r from-[#0071e3] via-indigo-600 to-violet-600 bg-clip-text text-transparent">
-                        Instant Knowledge.
+                        Three Formats. One Voice.
                       </span>
                     </h1>
                     
                     <p className="text-gray-900 font-medium text-base sm:text-lg leading-relaxed max-w-xl">
-                      “Stop wasting hours watching videos just to find minutes of useful information.”
+                      “Stop settling for flat bullet points. Transform any screen recording, lecture, or lecture stream into structured knowledge instantly.”
                     </p>
 
                     <p className="text-gray-550 font-light text-sm sm:text-base leading-relaxed max-w-xl">
-                      SnapSum transforms YouTube videos, lectures, and meetings into structured insights, summaries, and actionable notes in seconds.
+                      SnapSum transforms any video (YouTube, Vimeo, local MP4, or web links) into structured study guides, engaging viral scripts, and professional studio-grade audio voiceovers simultaneously.
                     </p>
                     
                     <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
@@ -4100,7 +4136,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
                         }`}
                       >
-                        <span>Standard Thesis</span>
+                        <span>Short Script</span>
                         <span className={`text-[8px] font-mono leading-none font-bold px-1.5 py-0.5 rounded ${selectedTone === 'standard' ? 'bg-white/20 text-white' : 'bg-black/[0.04] text-[#86868b]'}`}>Free</span>
                       </button>
 
@@ -7081,12 +7117,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <div className="space-y-1">
                       <span className="text-[10px] font-mono font-bold uppercase text-[#86868b] tracking-widest block">Tier 01</span>
                       <h4 className="text-lg font-bold text-[#1d1d1f]">
-                        {isAdminAuthenticated ? "Free Explorer Sandbox" : "Basic Starter"}
+                        Starter
                       </h4>
                       <p className="text-[#86868b] text-xs font-light leading-relaxed">
-                        {isAdminAuthenticated 
-                          ? "Perfect to let prospective leads sample basic capabilities." 
-                          : "Explore standard summaries and get acquainted with our core engine."}
+                        Top-of-funnel acquisition; no credit card required to start.
                       </p>
                     </div>
                     
@@ -7100,14 +7134,15 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <ul className="space-y-2.5 text-xs text-[#86868b] leading-normal font-light">
                         <li className="flex items-start gap-2">
                           <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
-                          <span>3 Video summarize credits/mo</span>
+                          <span>5 Video summaries / month</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
-                          <span>Standard timeline chronology</span>
+                          <span>Text-only summary output</span>
                         </li>
-                        <li className="flex items-start gap-2 text-neutral-400 line-through">
-                          <span>High quality AI voice synthesis</span>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
+                          <span>1 Synthesis preset (Short Script only)</span>
                         </li>
                       </ul>
                     </div>
@@ -7118,7 +7153,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       disabled
                       className="w-full bg-[#f5f5f7] border border-black/[0.02] text-[#86868b] py-3 rounded-xl text-xs font-semibold block text-center"
                     >
-                      {!isPremium ? 'Your Current Active Tier' : 'Downgrade Gated'}
+                      {!isPremium ? 'Your Current Active Tier' : 'Starter Tier'}
                     </button>
                   </div>
                 </div>
@@ -7144,7 +7179,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         {billingCycle === 'monthly' ? `$${proMonthlyPrice}` : `$${proYearlyPrice}`}
                       </span>
                       <span className="text-[#86868b] text-xs font-medium">
-                        {billingCycle === 'monthly' ? ' / month' : ` / month ($${proYearlyPrice * 12}/yr)`}
+                        {billingCycle === 'monthly' ? ' / month' : ` / month ($${(proYearlyPrice * 12).toFixed(2)}/yr)`}
                       </span>
                     </div>
 
@@ -7153,26 +7188,26 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <ul className="space-y-2.5 text-xs text-[#515154] leading-normal font-light">
                         <li className="flex items-start gap-2 font-medium text-[#1d1d1f]">
                           <CheckCircle className="w-4 h-4 text-[#0071e3] shrink-0 mt-0.5" />
-                          <span>Unlimited video summarize processing</span>
+                          <span>Unlimited summaries (150/mo fair-use)</span>
                         </li>
                         <li className="flex items-start gap-2 font-medium text-[#1d1d1f]">
                           <CheckCircle className="w-4 h-4 text-[#0071e3] shrink-0 mt-0.5" />
-                          <span>High quality Voiceovers (Premium TTS)</span>
+                          <span>Studio voiceover synthesis (300 mins/mo)</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <CheckCircle className="w-4 h-4 text-[#0071e3] shrink-0 mt-0.5" />
-                          <span>Custom formatted Markdown summary downloads</span>
+                          <span>All presets (Academic, Viral, Short Script)</span>
                         </li>
-                        <li className="flex items-start gap-2 font-medium text-[#1d1d1f]">
+                        <li className="flex items-start gap-2">
                           <CheckCircle className="w-4 h-4 text-[#0071e3] shrink-0 mt-0.5" />
-                          <span>Academic and Viral synthesis presets</span>
+                          <span>Custom formatted Markdown downloads</span>
                         </li>
                       </ul>
                     </div>
                   </div>
 
                   <div className="pt-6">
-                    {isPremium ? (
+                    {isPremium && (localStorage.getItem('youtube_summarizer_plan') || 'pro') === 'pro' ? (
                       <div className="bg-[#f5f5f7] text-[#1d1d1f] border border-black/[0.04] py-3 rounded-xl text-xs font-mono font-bold text-center block select-none">
                         ✓ PRO SUBSCRIPTION ACTIVE
                       </div>
@@ -7207,7 +7242,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         {billingCycle === 'monthly' ? `$${enterpriseMonthlyPrice}` : `$${enterpriseYearlyPrice}`}
                       </span>
                       <span className="text-[#86868b] text-xs font-medium">
-                        {billingCycle === 'monthly' ? ' / month' : ` / month ($${enterpriseYearlyPrice * 12}/yr)`}
+                        {billingCycle === 'monthly' ? ' / month' : ` / month ($${(enterpriseYearlyPrice * 12).toFixed(2)}/yr)`}
                       </span>
                     </div>
 
@@ -7216,35 +7251,155 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <ul className="space-y-2.5 text-xs text-[#86868b] leading-normal font-light">
                         <li className="flex items-start gap-2">
                           <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
-                          <span>Simultaneous bulk summarizing</span>
+                          <span>Multi-seat access (3 seats included)</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
-                          <span>Automated Twitter & LinkedIn web scheduler</span>
+                          <span>Ceiling raised to 500 summaries/month</span>
                         </li>
                         <li className="flex items-start gap-2">
                           <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
-                          <span>Developer API endpoints & Webhooks</span>
+                          <span>Voiceover capped at 800 mins/month</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
+                          <span>White-label exports & full API access</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
+                          <span>Priority processing queue</span>
                         </li>
                       </ul>
                     </div>
                   </div>
 
                   <div className="pt-6">
-                    <button
-                      onClick={() => handleCheckoutClick('enterprise')}
-                      className="w-full bg-[#1d1d1f] hover:bg-black text-white py-3 rounded-xl text-xs font-semibold block text-center transition cursor-pointer"
-                    >
-                      <span>
-                        {isAdminAuthenticated 
-                          ? (stripeConfig.stripeConfigured ? 'Start Enterprise Pass (Stripe)' : 'Simulate checkout (Stripe)')
-                          : 'Upgrade to Enterprise'
-                        }
-                      </span>
-                    </button>
+                    {isPremium && (localStorage.getItem('youtube_summarizer_plan') === 'enterprise') ? (
+                      <div className="bg-[#f5f5f7] text-[#1d1d1f] border border-black/[0.04] py-3 rounded-xl text-xs font-mono font-bold text-center block select-none">
+                        ✓ ENTERPRISE ACTIVE
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleCheckoutClick('enterprise')}
+                        className="w-full bg-[#1d1d1f] hover:bg-black text-white py-3 rounded-xl text-xs font-semibold block text-center transition cursor-pointer"
+                      >
+                        <span>
+                          {isAdminAuthenticated 
+                            ? (stripeConfig.stripeConfigured ? 'Start Enterprise Pass (Stripe)' : 'Simulate checkout (Stripe)')
+                            : 'Upgrade to Enterprise'
+                          }
+                        </span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
+              </div>
+
+              {/* Testimonials section */}
+              <div className="mt-12 space-y-6">
+                <div className="text-center space-y-1">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#0071e3]">Loved by thousands</span>
+                  <h3 className="text-xl font-bold text-[#1d1d1f]">What our early creators are saying</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+                  <div className="bg-white p-5 rounded-2xl border border-black/[0.03] space-y-3 shadow-sm hover:shadow transition duration-200">
+                    <div className="flex gap-1 text-amber-400">
+                      <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                    </div>
+                    <p className="text-xs text-[#515154] leading-relaxed italic font-light">
+                      "SnapSum completely changed how I consume long lecture materials. From one video, I get my structured notes and high-quality voice briefs immediately."
+                    </p>
+                    <div className="flex items-center gap-2 pt-1.5 border-t border-black/[0.02]">
+                      <div className="w-6 h-6 rounded-full bg-[#f5f5f7] flex items-center justify-center font-mono font-bold text-[10px] text-neutral-700">R</div>
+                      <div>
+                        <h5 className="text-[11px] font-bold text-[#1d1d1f]">R. Bahirathan</h5>
+                        <span className="text-[9px] text-[#86868b] block">Independent Educator</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-white p-5 rounded-2xl border border-black/[0.03] space-y-3 shadow-sm hover:shadow transition duration-200">
+                    <div className="flex gap-1 text-amber-400">
+                      <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                    </div>
+                    <p className="text-xs text-[#515154] leading-relaxed italic font-light">
+                      "The Viral Bulletin preset saved me hours of manual script writing. I just paste my YouTube link and instantly have scripts ready for TikTok and Reels!"
+                    </p>
+                    <div className="flex items-center gap-2 pt-1.5 border-t border-black/[0.02]">
+                      <div className="w-6 h-6 rounded-full bg-[#f5f5f7] flex items-center justify-center font-mono font-bold text-[10px] text-neutral-700">S</div>
+                      <div>
+                        <h5 className="text-[11px] font-bold text-[#1d1d1f]">Sarah K.</h5>
+                        <span className="text-[9px] text-[#86868b] block">Content Creator (140k subs)</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-white p-5 rounded-2xl border border-black/[0.03] space-y-3 shadow-sm hover:shadow transition duration-200">
+                    <div className="flex gap-1 text-amber-400">
+                      <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                    </div>
+                    <p className="text-xs text-[#515154] leading-relaxed italic font-light">
+                      "Having a real voice briefing means I can catch up on conference proceedings during my commute. No competitor does voice export this well."
+                    </p>
+                    <div className="flex items-center gap-2 pt-1.5 border-t border-black/[0.02]">
+                      <div className="w-6 h-6 rounded-full bg-[#f5f5f7] flex items-center justify-center font-mono font-bold text-[10px] text-neutral-700">A</div>
+                      <div>
+                        <h5 className="text-[11px] font-bold text-[#1d1d1f]">Dr. Alex M.</h5>
+                        <span className="text-[9px] text-[#86868b] block">Clinical Researcher</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feature Comparison Table */}
+              <div className="mt-12 space-y-6">
+                <div className="text-center space-y-1">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#0071e3]">Detailed Feature Comparison</span>
+                  <h3 className="text-xl font-bold text-[#1d1d1f]">Why SnapSum stands out</h3>
+                </div>
+                <div className="border border-black/[0.04] rounded-3xl overflow-hidden bg-white shadow-sm text-left">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-[#f5f5f7]/50 text-[#1d1d1f] font-sans text-xs border-b border-black/[0.04]">
+                        <th className="px-5 py-3 font-semibold w-1/3">Core Capability</th>
+                        <th className="px-5 py-3 font-semibold bg-blue-50/30 text-[#0071e3] w-1/3 text-center">
+                          <span className="inline-flex items-center gap-1">✨ SnapSum</span>
+                        </th>
+                        <th className="px-5 py-3 font-semibold text-neutral-500 w-1/3 text-center">Generic Summarizers</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-black/[0.03] text-xs">
+                      <tr className="hover:bg-neutral-50/50">
+                        <td className="px-5 py-4 font-medium text-neutral-800">Voiceover & Audio Synthesis</td>
+                        <td className="px-5 py-4 text-center bg-blue-50/10 text-neutral-900 font-medium">
+                          ✓ Included (High-fidelity studio speech presets)
+                        </td>
+                        <td className="px-5 py-4 text-center text-neutral-400">❌ Text-only (No voice synthesis)</td>
+                      </tr>
+                      <tr className="hover:bg-neutral-50/50">
+                        <td className="px-5 py-4 font-medium text-neutral-800">Persona-Based Output Synthesis</td>
+                        <td className="px-5 py-4 text-center bg-blue-50/10 text-neutral-900 font-medium">
+                          ✓ 3 Advanced Presets (Academic Study, Viral Bulletin, Short Script)
+                        </td>
+                        <td className="px-5 py-4 text-center text-neutral-400">❌ Generic flat bullet points</td>
+                      </tr>
+                      <tr className="hover:bg-neutral-50/50">
+                        <td className="px-5 py-4 font-medium text-neutral-800">Universal Source Support</td>
+                        <td className="px-5 py-4 text-center bg-blue-50/10 text-neutral-900 font-medium">
+                          ✓ YouTube, Vimeo, Local MP4 files, & Web URLs
+                        </td>
+                        <td className="px-5 py-4 text-center text-neutral-400">⚠️ YouTube-only</td>
+                      </tr>
+                      <tr className="hover:bg-neutral-50/50">
+                        <td className="px-5 py-4 font-medium text-neutral-800">Interactive Concept Learning</td>
+                        <td className="px-5 py-4 text-center bg-blue-50/10 text-neutral-900 font-medium">
+                          ✓ AI-generated Quizzes, Flashcards & Concept Recall Maps
+                        </td>
+                        <td className="px-5 py-4 text-center text-neutral-400">❌ Read-only list output</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* Developer Sandbox downgrader button */}
@@ -8162,6 +8317,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                 <tr className="bg-[#f5f5f7]/50 text-neutral-500 border-b border-black/[0.04] font-mono text-[9px] uppercase font-bold text-left">
                                   <th className="px-3 py-2">Promo Code</th>
                                   <th className="px-3 py-2">Discount</th>
+                                  <th className="px-3 py-2">Rules & Duration</th>
                                   <th className="px-3 py-2">Status</th>
                                   <th className="px-3 py-2 text-right">Action</th>
                                 </tr>
@@ -8172,6 +8328,16 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                     <td className="px-3 py-2 font-mono font-bold text-[#1d1d1f]">{promo.code}</td>
                                     <td className="px-3 py-2">
                                       {promo.discountType === 'percentage' ? `${promo.discountValue}% Off` : `$${promo.discountValue} Off`}
+                                    </td>
+                                    <td className="px-3 py-2 space-y-0.5 text-[10px] text-neutral-600">
+                                      <div>Duration: <strong className="font-semibold">{promo.discountDurationType === 'first_month_only' ? 'First Month Only' : 'Recurring'}</strong></div>
+                                      {promo.plans === 'monthly_only' && <div className="text-indigo-600 font-medium">Plans: Monthly Only</div>}
+                                      {promo.redemptionCap > 0 && (
+                                        <div>Cap: <strong className="font-semibold">{promo.redemptionsCount || 0} / {promo.redemptionCap}</strong> uses</div>
+                                      )}
+                                      {promo.expiryDate && (
+                                        <div className="text-amber-600 font-medium">Expires: {promo.expiryDate}</div>
+                                      )}
                                     </td>
                                     <td className="px-3 py-2">
                                       <span className={`inline-flex px-1.5 py-0.5 rounded-sm text-[9px] font-mono font-bold uppercase ${promo.active ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-neutral-100 text-neutral-500'}`}>
@@ -8215,7 +8381,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         {/* Add new promo code form */}
                         <div className="p-3 bg-[#f5f5f7]/50 rounded-2xl border border-black/[0.02] space-y-3">
                           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-600 block">Create Promotional Code</span>
-                          <div className="grid grid-cols-3 gap-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
                               <label className="text-[9px] text-neutral-500 block font-medium">Promo Code</label>
                               <input
@@ -8249,6 +8415,51 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             </div>
                           </div>
 
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                            <div>
+                              <label className="text-[9px] text-neutral-500 block font-medium">Duration Type</label>
+                              <select
+                                value={adminNewPromoDuration}
+                                onChange={(e) => setAdminNewPromoDuration(e.target.value as any)}
+                                className="w-full px-2.5 py-1.5 text-xs bg-white border border-black/[0.08] rounded-lg outline-none text-neutral-800"
+                              >
+                                <option value="first_month_only">First Month Only</option>
+                                <option value="recurring">Recurring (Continuous)</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-[9px] text-neutral-500 block font-medium">Redemption Cap (0 = none)</label>
+                              <input
+                                type="number"
+                                placeholder="E.g. 50"
+                                value={adminNewPromoCap || ''}
+                                onChange={(e) => setAdminNewPromoCap(Number(e.target.value))}
+                                className="w-full px-2.5 py-1.5 text-xs bg-white border border-black/[0.08] rounded-lg outline-none font-mono text-neutral-800"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[9px] text-neutral-500 block font-medium">Expiry Date (YYYY-MM-DD)</label>
+                              <input
+                                type="text"
+                                placeholder="YYYY-MM-DD"
+                                value={adminNewPromoExpiry}
+                                onChange={(e) => setAdminNewPromoExpiry(e.target.value)}
+                                className="w-full px-2.5 py-1.5 text-xs bg-white border border-black/[0.08] rounded-lg outline-none font-mono text-neutral-800"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[9px] text-neutral-500 block font-medium">Allowed Plans</label>
+                              <select
+                                value={adminNewPromoPlans}
+                                onChange={(e) => setAdminNewPromoPlans(e.target.value as any)}
+                                className="w-full px-2.5 py-1.5 text-xs bg-white border border-black/[0.08] rounded-lg outline-none text-neutral-800"
+                              >
+                                <option value="all">All Plans</option>
+                                <option value="monthly_only">Monthly Only</option>
+                              </select>
+                            </div>
+                          </div>
+
                           <div className="flex justify-end">
                             <button
                               type="button"
@@ -8263,12 +8474,20 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                   code,
                                   discountType: adminNewPromoType,
                                   discountValue: adminNewPromoValue || 0,
+                                  discountDurationType: adminNewPromoDuration,
+                                  redemptionCap: adminNewPromoCap || 0,
+                                  redemptionsCount: 0,
+                                  expiryDate: adminNewPromoExpiry,
+                                  plans: adminNewPromoPlans,
                                   active: true
                                 };
                                 const updated = [...promotionsList, newPromo];
                                 handleSavePricingAndPromotions(updated);
                                 setAdminNewPromoCode('');
                                 setAdminNewPromoValue(0);
+                                setAdminNewPromoCap(0);
+                                setAdminNewPromoExpiry('');
+                                setAdminNewPromoPlans('all');
                               }}
                               className="px-3 py-1.5 bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-semibold rounded-lg transition cursor-pointer"
                             >
@@ -9269,8 +9488,19 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           if (!code) return;
                           const found = promotionsList.find(p => p.code.toUpperCase() === code.toUpperCase() && p.active);
                           if (found) {
-                            setAppliedPromo(found);
-                            setPromoError(null);
+                            if (found.plans === 'monthly_only' && billingCycle === 'yearly') {
+                              setAppliedPromo(null);
+                              setPromoError('This promo code is only valid for monthly billing plans.');
+                            } else if (found.expiryDate && new Date(found.expiryDate) < new Date()) {
+                              setAppliedPromo(null);
+                              setPromoError('This promo code has expired.');
+                            } else if (found.redemptionCap > 0 && (found.redemptionsCount || 0) >= found.redemptionCap) {
+                              setAppliedPromo(null);
+                              setPromoError('This promo code has reached its usage limit.');
+                            } else {
+                              setAppliedPromo(found);
+                              setPromoError(null);
+                            }
                           } else {
                             setAppliedPromo(null);
                             setPromoError('Invalid or expired promo code.');
@@ -9416,7 +9646,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       setTimeout(() => {
                         setStripePaymentLoading(false);
                         setStripePaymentSuccess(true);
-                        savePremiumStatus(true);
+                        savePremiumStatus(true, selectedPlanCode || 'pro', subscriptionEmail);
                       }, 2000);
                     }} className="space-y-4">
                     

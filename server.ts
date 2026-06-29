@@ -61,8 +61,15 @@ interface RateLimitUsage {
 }
 const ipUsageStorage = new Map<string, RateLimitUsage>();
 
+interface MonthlyUsage {
+  count: number;
+  voiceoverMinutes: number;
+  lastReset: number;
+}
+const monthlyUsageStorage = new Map<string, MonthlyUsage>();
+
 // Middleware/inline utility to check and increment daily IP request credits
-async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: boolean; count: number; limit: number; remaining: number }> {
+async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: boolean; count: number; limit: number; remaining: number; throttleMs?: number; message?: string }> {
   // If the user has supplied a valid custom Gemini key, they run on their own quota
   // so we bypass local server rate limits completely (zero server cost).
   const customGeminiKey = req.headers['x-custom-gemini-api-key'] as string;
@@ -88,38 +95,84 @@ async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: 
     return { allowed: true, count: 0, limit: 99999, remaining: 99999 };
   }
 
-  // SECURITY: removed the 'x-custom-free-reqs-limit' header override — a client could
-  // previously tell the server what its own rate limit should be (e.g. 99999).
-  const limitSetting = parseInt(process.env.FREE_REQS_LIMIT || '3', 10);
+  // Get active plan and user identifier (email or IP)
+  const isPremium = req.headers['x-is-premium'] === 'true';
+  const userPlan = (req.headers['x-user-plan'] as string) || (isPremium ? 'pro' : 'free');
+  const email = req.headers['x-user-email'] as string;
+  const trackingKey = (email && email.trim()) ? `email:${email.trim().toLowerCase()}` : `ip:${ip}`;
+
   const now = Date.now();
-
-  let usage = ipUsageStorage.get(ip);
-  if (!usage) {
-    usage = { count: 0, lastReset: now };
-  } else if (now - usage.lastReset > 24 * 60 * 60 * 1000) {
-    // Standard 24 hours rate limit cooling cycle
-    usage.count = 0;
-    usage.lastReset = now;
+  let mUsage = monthlyUsageStorage.get(trackingKey);
+  if (!mUsage) {
+    mUsage = { count: 0, voiceoverMinutes: 0, lastReset: now };
+  } else if (now - mUsage.lastReset > 30 * 24 * 60 * 60 * 1000) {
+    // 30 days cooling cycle
+    mUsage.count = 0;
+    mUsage.voiceoverMinutes = 0;
+    mUsage.lastReset = now;
   }
 
-  if (usage.count >= limitSetting) {
-    return { 
-      allowed: false, 
-      count: usage.count, 
-      limit: limitSetting, 
-      remaining: 0 
-    };
+  // Determine limits based on active plan
+  let limit = 5; // default Starter monthly limit
+  const isPro = userPlan === 'pro';
+  const isEnterprise = userPlan === 'enterprise';
+
+  if (isPro) {
+    limit = 150; // soft cap
+  } else if (isEnterprise) {
+    limit = 500; // hard cap
   }
 
-  // Track request
-  usage.count += 1;
-  ipUsageStorage.set(ip, usage);
+  // Handle Free / Starter tier limit
+  if (!isPro && !isEnterprise) {
+    if (mUsage.count >= limit) {
+      return {
+        allowed: false,
+        count: mUsage.count,
+        limit,
+        remaining: 0,
+        message: 'Your Starter plan is limited to 5 summaries per month. Please upgrade to Pro or Enterprise for unlimited processing!'
+      };
+    }
+  }
 
-  return { 
-    allowed: true, 
-    count: usage.count, 
-    limit: limitSetting, 
-    remaining: Math.max(0, limitSetting - usage.count) 
+  // Handle Enterprise tier limit
+  if (isEnterprise) {
+    if (mUsage.count >= limit) {
+      return {
+        allowed: false,
+        count: mUsage.count,
+        limit,
+        remaining: 0,
+        message: 'You have reached your Enterprise fair-use ceiling of 500 summaries per month.'
+      };
+    }
+  }
+
+  // Handle Pro tier (soft cap: throttle above 150 by returning throttleMs)
+  let throttleMs = 0;
+  if (isPro && mUsage.count >= limit) {
+    throttleMs = 5000; // Delay next request by 5 seconds (smooth throttling)
+  }
+
+  // Track and increment usage
+  mUsage.count += 1;
+  monthlyUsageStorage.set(trackingKey, mUsage);
+
+  // Still support the legacy ipUsageStorage for backward compatibility
+  let legacyUsage = ipUsageStorage.get(ip);
+  if (!legacyUsage) {
+    legacyUsage = { count: 0, lastReset: now };
+  }
+  legacyUsage.count += 1;
+  ipUsageStorage.set(ip, legacyUsage);
+
+  return {
+    allowed: true,
+    count: mUsage.count,
+    limit,
+    remaining: Math.max(0, limit - mUsage.count),
+    throttleMs
   };
 }
 
@@ -542,11 +595,16 @@ app.post('/api/summarize', async (req, res) => {
   const usageStatus = await checkAndIncrementUsage(req);
   if (!usageStatus.allowed) {
     return res.status(429).json({
-      error: `Daily credit limit reached (${usageStatus.limit}/${usageStatus.limit} free queries used). Please insert your custom Gemini API key or Upgrade to PRO to process unlimited video summaries instantly!`,
+      error: usageStatus.message || `Credit limit reached (${usageStatus.count}/${usageStatus.limit} free queries used). Please insert your custom Gemini API key or Upgrade to PRO to process unlimited video summaries instantly!`,
       rateLimited: true,
       limit: usageStatus.limit,
       count: usageStatus.count,
     });
+  }
+
+  // Handle throttling (soft cap overflow delay)
+  if (usageStatus.throttleMs && usageStatus.throttleMs > 0) {
+    await new Promise((resolve) => setTimeout(resolve, usageStatus.throttleMs));
   }
 
   const isYouTube = !!extractVideoId(videoUrl);
@@ -901,6 +959,47 @@ app.post('/api/tts', async (req, res) => {
   if (!text) {
     return res.status(400).json({ error: 'Text content is required for TTS synthesis.' });
   }
+
+  // Get active plan and user identifier (email or IP)
+  const isPremium = req.headers['x-is-premium'] === 'true';
+  const userPlan = (req.headers['x-user-plan'] as string) || (isPremium ? 'pro' : 'free');
+  const email = req.headers['x-user-email'] as string;
+  const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
+  const ip = rawIp.split(',')[0].trim();
+  const trackingKey = (email && email.trim()) ? `email:${email.trim().toLowerCase()}` : `ip:${ip}`;
+
+  const isPro = userPlan === 'pro';
+  const isEnterprise = userPlan === 'enterprise';
+
+  if (!isPro && !isEnterprise) {
+    return res.status(403).json({
+      error: 'Your current Starter plan does not include voiceover generation. Please upgrade to Pro or Enterprise to unlock studio voice synthesis!'
+    });
+  }
+
+  // Track and increment voiceover minutes
+  const now = Date.now();
+  let mUsage = monthlyUsageStorage.get(trackingKey);
+  if (!mUsage) {
+    mUsage = { count: 0, voiceoverMinutes: 0, lastReset: now };
+  } else if (now - mUsage.lastReset > 30 * 24 * 60 * 60 * 1000) {
+    mUsage.count = 0;
+    mUsage.voiceoverMinutes = 0;
+    mUsage.lastReset = now;
+  }
+
+  const wordCount = text.split(/\s+/).length;
+  const estimatedMinutes = Math.max(0.1, Number((wordCount / 150).toFixed(2)));
+
+  const maxMinutes = isEnterprise ? 800 : 300;
+  if (mUsage.voiceoverMinutes >= maxMinutes) {
+    return res.status(429).json({
+      error: `You have reached your monthly voiceover generation limit (${mUsage.voiceoverMinutes.toFixed(1)} / ${maxMinutes} minutes used). Please upgrade your plan to extend your limits.`
+    });
+  }
+
+  mUsage.voiceoverMinutes += estimatedMinutes;
+  monthlyUsageStorage.set(trackingKey, mUsage);
 
   try {
     // Generate text-to-speech base64 audio
