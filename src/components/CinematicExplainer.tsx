@@ -104,98 +104,42 @@ interface CinematicExplainerProps {
 }
 
 export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartLearning }) => {
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0); 
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [playSpeed, setPlaySpeed] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<'simulation' | 'script' | 'structure' | 'voiceover'>('simulation');
   const [audioSupported, setAudioSupported] = useState<boolean>(true);
   
-  // Audio voiceover state and references
-  const [customAudioUrl, setCustomAudioUrl] = useState<string | null>(null);
-  const [customAudioName, setCustomAudioName] = useState<string | null>(null);
-  const [isUsingCustomAudio, setIsUsingCustomAudio] = useState<boolean>(false);
+  // Audio voiceover state and references - Default to the pre-packaged voiceover.mp3
+  const [customAudioUrl, setCustomAudioUrl] = useState<string | null>('/voiceover.mp3');
+  const [customAudioName, setCustomAudioName] = useState<string | null>('voiceover.mp3');
+  const [isUsingCustomAudio, setIsUsingCustomAudio] = useState<boolean>(true);
   const [dragActive, setDragActive] = useState<boolean>(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const handleAudioLoad = (url: string, fileName: string, autoPlay: boolean = true) => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-    }
-    
-    const audio = new Audio(url);
-    audio.muted = isMuted;
-    audio.playbackRate = playSpeed;
-    audio.loop = false;
-    
-    audio.addEventListener('ended', () => {
-      setIsPlaying(false);
-      setCurrentTime(95);
-    });
-    
-    audioRef.current = audio;
     setCustomAudioUrl(url);
     setCustomAudioName(fileName);
     setIsUsingCustomAudio(true);
     setCurrentTime(0);
     setIsPlaying(autoPlay);
 
-    if (autoPlay) {
-      audio.play().catch((err) => {
-        console.warn("Direct play failed on load:", err);
-      });
-    }
+    // Let React render cycle bind the new src before attempting synchronous play if autoPlay is requested
+    setTimeout(() => {
+      if (audioRef.current) {
+        audioRef.current.muted = isMuted;
+        audioRef.current.playbackRate = playSpeed;
+        if (autoPlay) {
+          audioRef.current.play().catch((err) => {
+            console.warn("Direct play failed on voiceover load:", err);
+          });
+        }
+      }
+    }, 50);
   };
 
-  // Auto-detect public/voiceover.mp3 or voiceover.wav with robust HEAD/GET checks
-  useEffect(() => {
-    const checkDefaultVoiceovers = async () => {
-      try {
-        let mp3Exists = false;
-        try {
-          const mp3Res = await fetch('/voiceover.mp3', { method: 'HEAD' });
-          if (mp3Res.ok) mp3Exists = true;
-        } catch (e) {
-          // ignore HEAD fail
-        }
-        if (!mp3Exists) {
-          try {
-            const mp3Res = await fetch('/voiceover.mp3');
-            if (mp3Res.ok) mp3Exists = true;
-          } catch (e) {}
-        }
-
-        if (mp3Exists) {
-          handleAudioLoad('/voiceover.mp3', 'voiceover.mp3', false);
-          return;
-        }
-
-        let wavExists = false;
-        try {
-          const wavRes = await fetch('/voiceover.wav', { method: 'HEAD' });
-          if (wavRes.ok) wavExists = true;
-        } catch (e) {
-          // ignore HEAD fail
-        }
-        if (!wavExists) {
-          try {
-            const wavRes = await fetch('/voiceover.wav');
-            if (wavRes.ok) wavExists = true;
-          } catch (e) {}
-        }
-
-        if (wavExists) {
-          handleAudioLoad('/voiceover.wav', 'voiceover.wav', false);
-          return;
-        }
-      } catch (e) {
-        // Safe fail
-      }
-    };
-    checkDefaultVoiceovers();
-  }, []);
-
-  // Sync audio controls and handle autoplay blocks gracefully without rolling back state
+  // Sync audio controls and handle autoplay blocks gracefully
   useEffect(() => {
     if (!audioRef.current) return;
     
@@ -517,6 +461,22 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
 
   return (
     <div className="w-full bg-white border border-black/[0.05] shadow-[0_25px_60px_rgba(0,0,0,0.06)] rounded-3xl overflow-hidden font-sans text-neutral-900 flex flex-col lg:flex-row transition-all duration-300 max-w-7xl mx-auto scroll-mt-20 my-2" id="cinematic-explainer-panel">
+      {/* Declarative audio playback element */}
+      <audio
+        ref={audioRef}
+        src={customAudioUrl || undefined}
+        muted={isMuted}
+        preload="auto"
+        className="hidden"
+        onEnded={() => {
+          setIsPlaying(false);
+          setCurrentTime(95);
+        }}
+        onError={(e) => {
+          console.warn("Custom audio loading failed or was not found. Falling back to TTS speech synthesis:", e);
+          setIsUsingCustomAudio(false);
+        }}
+      />
       
       {/* ========================================================================= */}
       {/* LEFT COLUMN: THE PREMIUM CINEMATIC SIMULATION DISPLAY */}
