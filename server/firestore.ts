@@ -99,6 +99,14 @@ class QuerySnapshotAdapter {
     return this.snapshot.size;
   }
 
+  get empty() {
+    return this.snapshot.empty;
+  }
+
+  get docs() {
+    return (this.snapshot.docs || []).map((docSnap: any) => new DocumentSnapshotAdapter(docSnap));
+  }
+
   forEach(callback: (doc: DocumentSnapshotAdapter) => void) {
     this.snapshot.forEach((docSnap: any) => {
       callback(new DocumentSnapshotAdapter(docSnap));

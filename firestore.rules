@@ -20,5 +20,20 @@ service cloud.firestore {
     match /learn_analytics/{docId} {
       allow read, write: if true;
     }
+
+    // Referrals and invite system
+    match /referrals/{docId} {
+      allow read, write: if true;
+    }
+
+    // Shared summary clips and bookmarks
+    match /summaries/{docId} {
+      allow read, write: if true;
+    }
+
+    // VIP/premium user subscriptions
+    match /subscriptions/{docId} {
+      allow read, write: if true;
+    }
   }
 }
