@@ -144,3 +144,36 @@ export interface LearningMemoryGraph {
   lastActiveDate?: string;
 }
 
+export interface SynthesizedStackTheme {
+  title: string;
+  description: string;
+}
+
+export interface SynthesizedStackContradiction {
+  claimA: string;
+  claimB: string;
+  nuance: string;
+}
+
+export interface SynthesizedStack {
+  id: string;
+  name: string;
+  createdAt: string;
+  videoTitles: string[];
+  summary: string;
+  themes: SynthesizedStackTheme[];
+  contradictions: SynthesizedStackContradiction[];
+  keyConcepts: Array<{
+    concept: string;
+    definition: string;
+    simplifiedExplanation: string;
+  }>;
+  quiz: Array<{
+    question: string;
+    options: string[];
+    answerIndex: number;
+    explanation: string;
+  }>;
+}
+
+

@@ -1936,6 +1936,152 @@ app.post('/api/create-checkout-session', async (req, res) => {
   }
 });
 
+// REST API endpoint: Multi-Video Synthesis ("Knowledge Stacks")
+app.post('/api/synthesize', async (req, res) => {
+  const { stackName, videos } = req.body;
+  if (!stackName) {
+    return res.status(400).json({ error: 'Stack name is required.' });
+  }
+  if (!videos || !Array.isArray(videos) || videos.length < 2) {
+    return res.status(400).json({ error: 'At least 2 video summaries are required for synthesis.' });
+  }
+
+  try {
+    // Enforce MVP Rate Limits on server
+    const usageStatus = await checkAndIncrementUsage(req);
+    if (!usageStatus.allowed) {
+      return res.status(429).json({
+        error: usageStatus.message || 'Credit limit reached. Please insert your custom Gemini API key or Upgrade to PRO to process knowledge stacks instantly!',
+        rateLimited: true,
+      });
+    }
+
+    // Format individual video summaries for Gemini prompt
+    const videoContents = videos.map((vid: any, index: number) => {
+      const conceptsStr = vid.keyConcepts && Array.isArray(vid.keyConcepts)
+        ? vid.keyConcepts.map((c: any) => `- ${c.concept}: ${c.definition}`).join('\n')
+        : 'None';
+
+      const takeawaysStr = vid.takeaways && Array.isArray(vid.takeaways)
+        ? vid.takeaways.map((t: any) => `- ${t}`).join('\n')
+        : 'None';
+
+      return `---
+Video #${index + 1}: "${vid.metadata?.title || 'Untitled Video'}"
+Author/Channel: "${vid.metadata?.author || 'Unknown'}"
+URL: "${vid.metadata?.videoUrl || ''}"
+
+Summary Takeaways:
+${takeawaysStr}
+
+Key Concepts:
+${conceptsStr}
+---`;
+    }).join('\n\n');
+
+    const finalPrompt = `
+You are a world-class cognitive science educational analyst and meta-knowledge synthesizer.
+Your goal is to digest multiple video summaries and construct a beautiful, high-value, synthesized "Knowledge Stack" titled "${stackName}".
+
+Below are the titles, summaries, and key concepts of the individual videos:
+${videoContents}
+
+Please perform a comprehensive cross-video synthesis and output a detailed JSON structure matching this schema:
+1. summary: A beautifully written, high-fidelity synthesis of the stack (2-3 paragraphs). Connect the ideas, explain the overall meta-premise, and outline the cohesive value loop.
+2. themes: Overarching global themes that connect these videos together (3-5 themes). For each, provide a "title" and a "description" detailing how the videos contribute to or explore this theme.
+3. contradictions: Disagreements, conflicting perspectives, or critical differences in focus/methodology between the sources (1-3 items). If they do not explicitly contradict, describe the critical nuances or different philosophical emphases they take (e.g., Video A focuses on system design while Video B focuses on emotional execution). For each item, provide "claimA" (what video A emphasizes), "claimB" (what video B emphasizes), and "nuance" (the synthesizing resolution or critical distinction).
+4. keyConcepts: A list of 3-5 advanced, high-level combined concepts across the stack. For each, provide a "concept" label, a precise academic "definition", and a "simplifiedExplanation" (using simple everyday analogies/metaphors).
+5. quiz: A combined active-recall synthesis quiz (3-5 questions) testing comprehension across multiple videos (e.g., conceptual crossover questions, comparative questions). For each question, provide "question", "options" (4 options), "answerIndex" (0-based index of correct option), and a highly detailed "explanation" choice.
+`;
+
+    const config: any = {
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          summary: { type: Type.STRING },
+          themes: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+                description: { type: Type.STRING },
+              },
+              required: ['title', 'description'],
+            },
+          },
+          contradictions: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                claimA: { type: Type.STRING },
+                claimB: { type: Type.STRING },
+                nuance: { type: Type.STRING },
+              },
+              required: ['claimA', 'claimB', 'nuance'],
+            },
+          },
+          keyConcepts: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                concept: { type: Type.STRING },
+                definition: { type: Type.STRING },
+                simplifiedExplanation: { type: Type.STRING },
+              },
+              required: ['concept', 'definition', 'simplifiedExplanation'],
+            },
+          },
+          quiz: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                question: { type: Type.STRING },
+                options: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                },
+                answerIndex: { type: Type.INTEGER },
+                explanation: { type: Type.STRING },
+              },
+              required: ['question', 'options', 'answerIndex', 'explanation'],
+            },
+          },
+        },
+        required: ['summary', 'themes', 'contradictions', 'keyConcepts', 'quiz'],
+      },
+    };
+
+    const activeAi = getGeminiClient(req);
+    const response = await activeAi.models.generateContent({
+      model: 'gemini-3.5-flash',
+      contents: finalPrompt,
+      config,
+    });
+
+    const outputText = response.text;
+    if (!outputText) {
+      throw new Error('Gemini response returned empty content.');
+    }
+
+    const result = JSON.parse(outputText.trim());
+    return res.json({
+      id: 'stack_' + Date.now().toString(36),
+      name: stackName,
+      createdAt: new Date().toISOString(),
+      videoTitles: videos.map((v: any) => v.metadata?.title || 'Untitled Video'),
+      ...result,
+    });
+  } catch (err: any) {
+    console.error('Stack synthesis failed:', err);
+    return res.status(500).json({ error: err.message || 'Failed to synthesize Knowledge Stack.' });
+  }
+});
+
 // REST API endpoint: AI Marketing Outreach & Script Generator
 app.post('/api/marketing-generate', async (req, res) => {
   const { type, promptInput, details } = req.body;

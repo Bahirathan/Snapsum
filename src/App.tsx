@@ -48,7 +48,7 @@ import {
   BarChart
 } from 'lucide-react';
 import { PRELOADED_VIDEOS } from './preloadedData';
-import { YouTubeSummaryResponse, SavedSummary } from './types';
+import { YouTubeSummaryResponse, SavedSummary, SynthesizedStack } from './types';
 import { auth, db } from './firebase';
 import firebaseConfig from '../firebase-applet-config.json';
 import { 
@@ -325,6 +325,28 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [activeSummary, setActiveSummary] = useState<YouTubeSummaryResponse | null>(null);
   const [savedSummaries, setSavedSummaries] = useState<SavedSummary[]>([]);
+  
+  // Knowledge Stacks States
+  const [activeStack, setActiveStack] = useState<SynthesizedStack | null>(null);
+  const [savedStacks, setSavedStacks] = useState<SynthesizedStack[]>(() => {
+    try {
+      const stored = localStorage.getItem('snapsum_saved_stacks');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isSynthesizing, setIsSynthesizing] = useState<boolean>(false);
+  const [isSelectingForStack, setIsSelectingForStack] = useState<boolean>(false);
+  const [selectedStackVideoIds, setSelectedStackVideoIds] = useState<string[]>([]);
+  const [stackNameInput, setStackNameInput] = useState<string>('');
+  const [activeStackTab, setActiveStackTab] = useState<'overview' | 'themes' | 'contradictions' | 'concepts' | 'quiz'>('overview');
+  const [stackQuizAnswers, setStackQuizAnswers] = useState<Record<number, number>>({});
+  const [stackQuizSubmitted, setStackQuizSubmitted] = useState<boolean>(false);
+
+  useEffect(() => {
+    localStorage.setItem('snapsum_saved_stacks', JSON.stringify(savedStacks));
+  }, [savedStacks]);
   
   // Is active loaded summary in Arabic RTL language
   const isRtl = activeSummary && /[\u0600-\u06FF]/.test(activeSummary.summary || '');
@@ -2195,6 +2217,57 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       }
     } finally {
       setTtsLoading(false);
+    }
+  };
+
+  // Trigger cross-video cognitive synthesis ("Knowledge Stack")
+  const handleGenerateStack = async () => {
+    if (!stackNameInput.trim()) {
+      alert('Please enter a name for your Knowledge Stack.');
+      return;
+    }
+    if (selectedStackVideoIds.length < 2) {
+      alert('Please select at least 2 video summaries to synthesize.');
+      return;
+    }
+
+    setIsSynthesizing(true);
+    try {
+      const selectedVideos = savedSummaries
+        .filter((vid) => selectedStackVideoIds.includes(vid.id))
+        .map((vid) => vid.response);
+
+      const response = await fetch('/api/synthesize', {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          stackName: stackNameInput.trim(),
+          videos: selectedVideos,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed to generate stack.');
+      }
+
+      const newStack = await response.json();
+      setSavedStacks((prev) => [newStack, ...prev]);
+      setActiveStack(newStack);
+      setActiveStackTab('overview');
+      setStackQuizAnswers({});
+      setStackQuizSubmitted(false);
+      setActiveSummary(null); // Clear individual summary when stack is loaded
+      
+      // Reset selection creator
+      setIsSelectingForStack(false);
+      setSelectedStackVideoIds([]);
+      setStackNameInput('');
+    } catch (err: any) {
+      console.error(err);
+      alert('Failed to synthesize Knowledge Stack: ' + err.message);
+    } finally {
+      setIsSynthesizing(false);
     }
   };
 
@@ -4540,66 +4613,585 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
             {/* Shelf Persistence History Box */}
             <div id="sandbox-library" className="bg-white rounded-3xl p-6 border border-black/[0.04] shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-bold font-display text-[#1d1d1f] flex items-center gap-1.5">
-                    <History className="w-4 h-4 text-[#86868b]" />
-                    Summaries Library
-                  </h3>
-                  <p className="text-[#86868b] text-[11px] mt-0.5 font-light">
-                    Your persistent offline sandbox shelf.
-                  </p>
+              
+              {/* SECTION A: INDIVIDUAL SUMMARIES */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-base font-bold font-display text-[#1d1d1f] flex items-center gap-1.5">
+                      <History className="w-4 h-4 text-[#86868b]" />
+                      Summaries Library
+                    </h3>
+                    <p className="text-[#86868b] text-[11px] mt-0.5 font-light">
+                      {isSelectingForStack ? 'Select 2+ summaries for Stack' : 'Your persistent offline sandbox shelf.'}
+                    </p>
+                  </div>
+                  
+                  {savedSummaries.length > 0 && (
+                    <div className="flex gap-2">
+                      {!isSelectingForStack ? (
+                        <button
+                          onClick={() => {
+                            setIsSelectingForStack(true);
+                            setSelectedStackVideoIds([]);
+                            setStackNameInput('');
+                          }}
+                          className="text-[10px] bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-bold px-2 py-1 rounded-lg cursor-pointer transition flex items-center gap-1"
+                        >
+                          <Sparkles className="w-3 h-3 text-indigo-600" />
+                          <span>Create Stack</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setIsSelectingForStack(false);
+                            setSelectedStackVideoIds([]);
+                            setStackNameInput('');
+                          }}
+                          className="text-[10px] text-neutral-500 hover:text-neutral-700 font-semibold cursor-pointer transition"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-                {savedSummaries.length > 0 && (
-                  <button
-                    onClick={handleClearAllHistory}
-                    className="text-[11px] text-red-500 hover:text-red-700 font-semibold cursor-pointer transition duration-200"
-                  >
-                    Clear All
-                  </button>
+
+                {isSelectingForStack && (
+                  <div className="bg-indigo-50/50 border border-indigo-100 p-3 rounded-2xl space-y-3 animate-slideDown">
+                    <div className="space-y-1">
+                      <label className="block text-[9px] font-mono font-bold text-indigo-700 uppercase">
+                        Knowledge Stack Name:
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Machine Learning Mastery"
+                        value={stackNameInput}
+                        onChange={(e) => setStackNameInput(e.target.value)}
+                        className="w-full text-xs p-2.5 rounded-xl border border-indigo-200 bg-white text-neutral-900 outline-none focus:border-indigo-500 transition"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs font-semibold">
+                      <span className="text-neutral-600 font-medium">Selected: {selectedStackVideoIds.length} videos</span>
+                      <button
+                        type="button"
+                        disabled={selectedStackVideoIds.length < 2 || isSynthesizing || !stackNameInput.trim()}
+                        onClick={handleGenerateStack}
+                        className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-neutral-300 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-xl cursor-pointer transition flex items-center gap-1"
+                      >
+                        {isSynthesizing ? (
+                          <>
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                            <span>Synthesizing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3 h-3" />
+                            <span>Generate Stack</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {savedSummaries.length === 0 ? (
+                  <div className="text-center py-6 px-4 border border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+                    <Bookmark className="w-6 h-6 text-neutral-300 mx-auto" />
+                    <p className="text-[#86868b] text-xs mt-2 font-light">No custom-summarized videos in history yet.</p>
+                    <p className="text-[#86868b]/70 text-[10px] mt-1 font-light">Paste a video URL above to build your catalog.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1 font-sans text-left">
+                    {savedSummaries.map((stored) => {
+                      const isSelected = selectedStackVideoIds.includes(stored.id);
+                      return (
+                        <div
+                          key={stored.id}
+                          onClick={() => {
+                            if (isSelectingForStack) {
+                              if (isSelected) {
+                                setSelectedStackVideoIds((prev) => prev.filter((id) => id !== stored.id));
+                              } else {
+                                setSelectedStackVideoIds((prev) => [...prev, stored.id]);
+                              }
+                            } else {
+                              handleLoadStoredItem(stored.response);
+                              setActiveStack(null); // Clear stack view when individual is loaded
+                            }
+                          }}
+                          className={`group p-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between gap-3 ${
+                            isSelectingForStack
+                              ? isSelected
+                                ? 'bg-indigo-50 border-indigo-200 shadow-sm'
+                                : 'border-neutral-100 hover:bg-neutral-50'
+                              : activeSummary?.metadata.videoId === stored.id 
+                                ? 'bg-neutral-100/80 border-transparent shadow-inner' 
+                                : 'border-transparent bg-neutral-50 hover:bg-neutral-100/50 hover:shadow-sm'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden min-w-0 flex-1">
+                            {isSelectingForStack && (
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                readOnly
+                                className="w-3.5 h-3.5 accent-indigo-600 shrink-0 cursor-pointer"
+                              />
+                            )}
+                            <div className="overflow-hidden min-w-0 flex-1">
+                              <p className="text-xs font-semibold text-[#1d1d1f] truncate leading-tight group-hover:text-black transition text-left">
+                                {stored.response.metadata.title}
+                              </p>
+                              <span className="text-[9px] font-mono text-[#86868b] mt-0.5 block text-left">
+                                Processed: {stored.savedAt}
+                              </span>
+                            </div>
+                          </div>
+                          {!isSelectingForStack && (
+                            <button
+                              onClick={(e) => handleDeleteShelfItem(stored.id, e)}
+                              className="p-1.5 text-neutral-300 hover:text-red-500 rounded-lg hover:bg-red-50 transition shrink-0"
+                              title="Delete from Shelf"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
 
-              {savedSummaries.length === 0 ? (
-                <div className="text-center py-6 px-4 border border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
-                  <Bookmark className="w-6 h-6 text-neutral-300 mx-auto" />
-                  <p className="text-[#86868b] text-xs mt-2 font-light">No custom-summarized videos in history yet.</p>
-                  <p className="text-[#86868b]/70 text-[10px] mt-1 font-light">Paste a video URL above to build your catalog.</p>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1 font-sans">
-                  {savedSummaries.map((stored) => (
-                    <div
-                      key={stored.id}
-                      onClick={() => handleLoadStoredItem(stored.response)}
-                      className={`group p-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between gap-3 ${
-                        activeSummary?.metadata.videoId === stored.id 
-                          ? 'bg-neutral-100/80 border-transparent shadow-inner' 
-                          : 'border-transparent bg-neutral-50 hover:bg-neutral-100/50 hover:shadow-sm'
-                      }`}
-                    >
-                      <div className="overflow-hidden min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-[#1d1d1f] truncate leading-tight group-hover:text-black transition">
-                          {stored.response.metadata.title}
-                        </p>
-                        <span className="text-[9px] font-mono text-[#86868b] mt-0.5 block">
-                          Processed: {stored.savedAt}
-                        </span>
-                      </div>
-                      <button
-                        onClick={(e) => handleDeleteShelfItem(stored.id, e)}
-                        className="p-1.5 text-neutral-300 hover:text-red-500 rounded-lg hover:bg-red-50 transition shrink-0"
-                        title="Delete from Shelf"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+              {/* SECTION B: KNOWLEDGE STACKS */}
+              {savedStacks.length > 0 && (
+                <div className="space-y-3 border-t border-slate-100 pt-4 text-left">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xs font-bold font-display text-[#1d1d1f] uppercase tracking-wider flex items-center gap-1">
+                        <span>📚 Synthesized Stacks</span>
+                        <span className="bg-indigo-100 text-indigo-700 text-[9px] font-mono px-1.5 py-0.2 rounded-full font-bold">{savedStacks.length}</span>
+                      </h3>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1 font-sans">
+                    {savedStacks.map((stack) => (
+                      <div
+                        key={stack.id}
+                        onClick={() => {
+                          setActiveStack(stack);
+                          setActiveStackTab('overview');
+                          setStackQuizAnswers({});
+                          setStackQuizSubmitted(false);
+                          setActiveSummary(null); // Clear individual video view
+                        }}
+                        className={`group p-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between gap-3 ${
+                          activeStack?.id === stack.id
+                            ? 'bg-indigo-50/80 border-indigo-200/50 shadow-inner'
+                            : 'border-transparent bg-neutral-50 hover:bg-neutral-100/50'
+                        }`}
+                      >
+                        <div className="overflow-hidden min-w-0 flex-1">
+                          <p className="text-xs font-bold text-neutral-850 truncate group-hover:text-black transition text-left">
+                            {stack.name}
+                          </p>
+                          <span className="text-[9px] font-mono text-neutral-400 mt-0.5 block text-left">
+                            {stack.videoTitles.length} videos • {new Date(stack.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (activeStack?.id === stack.id) setActiveStack(null);
+                            setSavedStacks((prev) => prev.filter((s) => s.id !== stack.id));
+                          }}
+                          className="p-1.5 text-neutral-300 hover:text-red-500 rounded-lg hover:bg-red-50 transition shrink-0"
+                          title="Delete Stack"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
+
             </div>
           </div>
         </div>
+
+        {/* Knowledge Stack Comparative Dashboard */}
+        {activeStack && (
+          <div id="stack-dashboard" className="bg-white rounded-3xl border border-neutral-200/80 shadow-sm overflow-hidden animate-fadeIn text-left">
+            
+            {/* Header Content Info Banner */}
+            <div className="bg-[#1d1d1f] p-6 md:p-8 text-white border-b border-black/[0.04] flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+              <div className="space-y-2 max-w-3xl">
+                <div className="inline-flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full text-[10px] font-mono tracking-wider text-indigo-300 font-bold uppercase">
+                  <Sparkles className="w-3 h-3 text-indigo-300" />
+                  <span>Cognitive Synthesis Stack</span>
+                </div>
+                <h2 className="text-xl md:text-2xl font-bold font-display tracking-tight leading-tight text-white">
+                  {activeStack.name}
+                </h2>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-neutral-350 text-xs">
+                  <span className="font-semibold text-neutral-300">Synthesized Sources ({activeStack.videoTitles.length}):</span>
+                  <div className="flex flex-wrap gap-1">
+                    {activeStack.videoTitles.map((title, idx) => (
+                      <span key={idx} className="bg-white/5 border border-white/10 text-neutral-300 px-2 py-0.5 rounded text-[10px] truncate max-w-44" title={title}>
+                        {title}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Close / Unload Stack Action */}
+              <button
+                type="button"
+                onClick={() => setActiveStack(null)}
+                className="bg-white/10 hover:bg-white/25 text-white px-5 py-2.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm active:scale-95"
+              >
+                <span>Back to Library</span>
+                <ArrowRight className="w-3.5 h-3.5 rotate-180" />
+              </button>
+            </div>
+
+            {/* Sliding Segment Workspace Selector Tabs */}
+            <div className="bg-neutral-50 border-b border-neutral-100 p-4">
+              <div className="flex flex-wrap bg-[#f2f2f7] p-1.5 items-center rounded-2xl gap-1 max-w-4xl mx-auto">
+                {[
+                  { id: 'overview', label: '1. Comparative Overview', icon: BookOpen },
+                  { id: 'themes', label: '2. Global Themes', icon: Sparkles },
+                  { id: 'contradictions', label: '3. Discrepancies & Nuance', icon: Award },
+                  { id: 'concepts', label: '4. Combined Concepts', icon: Network },
+                  { id: 'quiz', label: '5. Synthesis Quiz', icon: Trophy }
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const active = activeStackTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveStackTab(tab.id as any);
+                        trackGAEvent?.('stack_tab_clicked', { tab: tab.id });
+                      }}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold rounded-xl transition duration-200 cursor-pointer ${
+                        active
+                          ? 'bg-white text-indigo-700 shadow-sm font-bold border border-black/[0.02]'
+                          : 'text-neutral-500 hover:text-neutral-800'
+                      }`}
+                    >
+                      <Icon className={`w-3.5 h-3.5 ${active ? 'text-indigo-600' : 'text-neutral-450'}`} />
+                      <span className="text-xs whitespace-nowrap">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Active Stack Content Panel */}
+            <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-8 font-sans">
+              
+              {/* Tab 1: Comparative Overview */}
+              {activeStackTab === 'overview' && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="border-b border-slate-100 pb-3">
+                    <h3 className="text-lg font-bold text-neutral-900 font-display flex items-center gap-1.5">
+                      <BookOpen className="w-5 h-5 text-indigo-600" />
+                      Cross-Video Knowledge Synthesis
+                    </h3>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      A cohesive, unified perspective generated by analyzing similarities, context, and structural alignments.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4 bg-indigo-50/20 border border-indigo-100/50 p-6 rounded-3xl">
+                    {activeStack.summary.split('\n\n').map((para, i) => (
+                      <p key={i} className="text-sm text-neutral-700 leading-relaxed font-normal">
+                        {para}
+                      </p>
+                    ))}
+                  </div>
+
+                  {/* Sources info card */}
+                  <div className="bg-neutral-50 rounded-2xl p-4 border border-neutral-100">
+                    <h4 className="text-xs font-bold text-neutral-500 uppercase tracking-wide mb-2">Synthesized Resources</h4>
+                    <ul className="space-y-1.5">
+                      {activeStack.videoTitles.map((t, i) => (
+                        <li key={i} className="text-xs text-neutral-600 flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 shrink-0"></span>
+                          <span className="font-medium truncate">{t}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 2: Global Themes */}
+              {activeStackTab === 'themes' && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="border-b border-slate-100 pb-3">
+                    <h3 className="text-lg font-bold text-neutral-900 font-display flex items-center gap-1.5">
+                      <Sparkles className="w-5 h-5 text-indigo-600" />
+                      Overarching Global Themes
+                    </h3>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Key recurring themes and thematic crossovers that span across these different videos.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    {activeStack.themes.map((theme, i) => (
+                      <div key={i} className="bg-white rounded-2xl p-5 border border-neutral-150 shadow-sm space-y-2 hover:border-indigo-300 transition-all">
+                        <div className="flex items-center gap-2">
+                          <span className="bg-indigo-50 text-indigo-700 font-mono text-[11px] font-bold w-6 h-6 rounded-full flex items-center justify-center">
+                            {i + 1}
+                          </span>
+                          <h4 className="text-sm font-bold text-neutral-900 font-display">
+                            {theme.title}
+                          </h4>
+                        </div>
+                        <p className="text-xs text-neutral-600 leading-relaxed pl-8">
+                          {theme.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 3: Discrepancies & Nuance */}
+              {activeStackTab === 'contradictions' && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="border-b border-slate-100 pb-3">
+                    <h3 className="text-lg font-bold text-neutral-900 font-display flex items-center gap-1.5">
+                      <Award className="w-5 h-5 text-indigo-600" />
+                      Critical Nuances & Varied Emphases
+                    </h3>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Highlighting differences in focus, terminology, methodology, or contradictions between these resources.
+                    </p>
+                  </div>
+
+                  {activeStack.contradictions.length === 0 ? (
+                    <div className="text-center py-12 border border-dashed border-neutral-200 rounded-3xl bg-neutral-50/50">
+                      <p className="text-neutral-500 text-sm">No explicit conflicts or differences found between these sources.</p>
+                      <p className="text-neutral-400 text-xs mt-1">They are fully aligned and complementary!</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {activeStack.contradictions.map((item, i) => (
+                        <div key={i} className="bg-white border border-neutral-200 rounded-3xl overflow-hidden shadow-sm">
+                          <div className="bg-neutral-50 px-5 py-3 border-b border-neutral-100 flex items-center justify-between">
+                            <span className="text-xs font-bold text-neutral-500 uppercase tracking-wide">Comparison Perspective #{i + 1}</span>
+                          </div>
+                          <div className="p-5 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="bg-rose-50/40 border border-rose-100 p-4 rounded-2xl space-y-1">
+                                <h5 className="text-xs font-bold text-rose-800 uppercase tracking-wider">Perspective / Claim A</h5>
+                                <p className="text-xs text-rose-950 leading-relaxed font-normal">{item.claimA}</p>
+                              </div>
+                              <div className="bg-amber-50/40 border border-amber-100 p-4 rounded-2xl space-y-1">
+                                <h5 className="text-xs font-bold text-amber-800 uppercase tracking-wider">Perspective / Claim B</h5>
+                                <p className="text-xs text-amber-950 leading-relaxed font-normal">{item.claimB}</p>
+                              </div>
+                            </div>
+                            
+                            {/* Synthesis Bridge Card */}
+                            <div className="bg-indigo-50/50 border border-indigo-100 p-4 rounded-2xl space-y-1.5">
+                              <h5 className="text-xs font-bold text-indigo-800 uppercase tracking-wider flex items-center gap-1.5">
+                                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                                Synthesized Resolution & Nuance
+                              </h5>
+                              <p className="text-xs text-indigo-950 leading-relaxed font-normal">{item.nuance}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tab 4: Combined Key Concepts */}
+              {activeStackTab === 'concepts' && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="border-b border-slate-100 pb-3">
+                    <h3 className="text-lg font-bold text-neutral-900 font-display flex items-center gap-1.5">
+                      <Network className="w-5 h-5 text-indigo-600" />
+                      Combined Key Concepts
+                    </h3>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Advanced, compound concepts synthesized from the videos, mapped to everyday analogies.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                    {activeStack.keyConcepts.map((item, i) => (
+                      <div key={i} className="bg-white border border-neutral-150 rounded-2xl p-5 hover:shadow-md transition">
+                        <h4 className="text-base font-bold text-neutral-900 font-display">{item.concept}</h4>
+                        
+                        <div className="mt-3 space-y-3">
+                          <div className="pl-3 border-l-2 border-indigo-500">
+                            <span className="block text-[10px] font-mono font-bold text-neutral-400 uppercase tracking-wide">Academic Definition</span>
+                            <p className="text-xs text-neutral-700 leading-relaxed mt-0.5">{item.definition}</p>
+                          </div>
+
+                          <div className="pl-3 border-l-2 border-emerald-500 bg-emerald-50/20 p-2 rounded-r-lg">
+                            <span className="block text-[10px] font-mono font-bold text-emerald-700 uppercase tracking-wide">Simplified Analogy</span>
+                            <p className="text-xs text-emerald-900 leading-relaxed mt-0.5 font-normal italic">
+                              "{item.simplifiedExplanation}"
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 5: Synthesis Quiz */}
+              {activeStackTab === 'quiz' && (
+                <div className="space-y-6 animate-fadeIn">
+                  <div className="border-b border-slate-100 pb-3">
+                    <h3 className="text-lg font-bold text-neutral-900 font-display flex items-center gap-1.5">
+                      <Trophy className="w-5 h-5 text-indigo-600" />
+                      Active-Recall Synthesis Quiz
+                    </h3>
+                    <p className="text-xs text-neutral-500 mt-1">
+                      Test your compound, cross-video comprehension with this comparative challenge.
+                    </p>
+                  </div>
+
+                  <div className="space-y-6">
+                    {activeStack.quiz.map((q, qIdx) => {
+                      const selectedAns = stackQuizAnswers[qIdx];
+                      const isCorrect = selectedAns === q.answerIndex;
+                      
+                      return (
+                        <div key={qIdx} className="bg-white border border-neutral-200 rounded-3xl p-6 shadow-sm space-y-4">
+                          <div className="flex items-start gap-3">
+                            <span className="bg-indigo-50 text-indigo-700 font-mono text-xs font-bold px-2 py-1 rounded">
+                              Q{qIdx + 1}
+                            </span>
+                            <h4 className="text-sm font-bold text-neutral-900 leading-snug text-left">
+                              {q.question}
+                            </h4>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-2 text-left">
+                            {q.options.map((opt, optIdx) => {
+                              const isSelected = selectedAns === optIdx;
+                              const showSuccess = stackQuizSubmitted && optIdx === q.answerIndex;
+                              const showFailure = stackQuizSubmitted && isSelected && !isCorrect;
+
+                              return (
+                                <button
+                                  key={optIdx}
+                                  type="button"
+                                  disabled={stackQuizSubmitted}
+                                  onClick={() => setStackQuizAnswers((prev) => ({ ...prev, [qIdx]: optIdx }))}
+                                  className={`p-3 rounded-xl border text-left text-xs font-medium transition cursor-pointer flex items-center gap-2 ${
+                                    showSuccess
+                                      ? 'bg-emerald-50 border-emerald-300 text-emerald-900 shadow-sm'
+                                      : showFailure
+                                        ? 'bg-red-50 border-red-300 text-red-900'
+                                        : isSelected
+                                          ? 'bg-indigo-50/80 border-indigo-400 text-indigo-900 font-bold'
+                                          : 'bg-neutral-50 hover:bg-neutral-100/50 border-neutral-150'
+                                  }`}
+                                >
+                                  <span className="font-mono text-[10px] bg-white border border-neutral-200 text-neutral-500 w-5 h-5 rounded-full flex items-center justify-center shrink-0">
+                                    {String.fromCharCode(65 + optIdx)}
+                                  </span>
+                                  <span className="flex-1 leading-normal">{opt}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {stackQuizSubmitted && (
+                            <div className={`p-4 rounded-2xl border text-xs leading-relaxed text-left ${
+                              isCorrect 
+                                ? 'bg-emerald-50/30 border-emerald-100 text-emerald-900' 
+                                : 'bg-red-50/20 border-red-100 text-red-950'
+                            }`}>
+                              <p className="font-bold flex items-center gap-1 mb-1.5">
+                                {isCorrect ? (
+                                  <span className="text-emerald-700">✓ Correct</span>
+                                ) : (
+                                  <span className="text-red-700">✗ Incorrect (Correct Answer: {String.fromCharCode(65 + q.answerIndex)})</span>
+                                )}
+                              </p>
+                              <p className="font-light text-neutral-650">{q.explanation}</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {/* Quiz Submission Action Section */}
+                    {!stackQuizSubmitted ? (
+                      <div className="bg-neutral-50 p-5 rounded-3xl border border-neutral-150 flex items-center justify-between gap-4 text-left">
+                        <div>
+                          <p className="text-xs font-bold text-neutral-800">Ready to grade your quiz?</p>
+                          <p className="text-[11px] text-neutral-500 mt-0.5">Make sure you have selected answers for all questions.</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Check if at least one option selected
+                            if (Object.keys(stackQuizAnswers).length < activeStack.quiz.length) {
+                              alert(`Please answer all ${activeStack.quiz.length} questions before submitting!`);
+                              return;
+                            }
+                            setStackQuizSubmitted(true);
+                          }}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-sm active:scale-95 transition cursor-pointer"
+                        >
+                          Submit Synthesis Quiz
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-3xl space-y-4 text-center">
+                        <div className="inline-flex bg-indigo-100 text-indigo-700 w-12 h-12 rounded-full items-center justify-center font-bold font-mono text-lg shadow-sm">
+                          {activeStack.quiz.filter((q, idx) => stackQuizAnswers[idx] === q.answerIndex).length} / {activeStack.quiz.length}
+                        </div>
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-bold text-neutral-900 font-display">Comparative Comprehension Complete!</h4>
+                          <p className="text-xs text-neutral-600 max-w-md mx-auto leading-relaxed">
+                            {(() => {
+                              const score = activeStack.quiz.filter((q, idx) => stackQuizAnswers[idx] === q.answerIndex).length;
+                              if (score === activeStack.quiz.length) return 'Magnificent! You have mastered the conceptual bridges across this entire knowledge stack.';
+                              if (score >= activeStack.quiz.length / 2) return 'Great effort! Re-read the discrepancy bridge nuance and concepts to solidify your learning.';
+                              return 'Keep learning! Space out your sessions and review the comparative definitions.';
+                            })()}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStackQuizAnswers({});
+                            setStackQuizSubmitted(false);
+                          }}
+                          className="bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold text-xs px-4 py-2 rounded-xl transition shadow-sm cursor-pointer"
+                        >
+                          Retry Quiz
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        )}
 
         {/* Dynamic Display Board - Generated Output Dashboard */}
         {activeSummary && (
