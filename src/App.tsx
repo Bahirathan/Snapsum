@@ -38,6 +38,7 @@ import {
   Lock,
   Server,
   AlertCircle,
+  Info,
   ExternalLink,
   DollarSign,
   Megaphone,
@@ -1389,7 +1390,7 @@ export default function App() {
   const [showStripeModal, setShowStripeModal] = useState(false);
   const [selectedPlanCode, setSelectedPlanCode] = useState<'pro' | 'enterprise' | 'test' | null>(null);
   const [subscriptionEmail, setSubscriptionEmail] = useState('R_Bahirathan@gmail.com');
-  const [cardName, setCardName] = useState('');
+  const [cardName, setCardName] = useState('R. Bahirathan');
   const [cardNumber, setCardNumber] = useState('4242 4242 4242 4242');
   const [cardExpiry, setCardExpiry] = useState('12/28');
   const [cardCvc, setCardCvc] = useState('123');
@@ -9597,34 +9598,47 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 {!stripePaymentSuccess ? (
                   <div className="pt-4 space-y-4">
                     {/* Real Stripe Launch Error / Simulator Warning Banner */}
-                    <div className="bg-amber-50 border border-amber-200/60 rounded-2xl p-4 text-xs text-amber-900 space-y-2">
-                      <div className="flex items-start gap-2.5">
-                        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                        <div className="space-y-1">
-                          <span className="font-bold text-amber-800 block uppercase font-mono tracking-wider text-[10px]">⚠️ SANDBOX SIMULATION MODE ACTIVE</span>
-                          <p className="leading-relaxed text-amber-700">
-                            Real credit card transactions cannot be finalized because your connected Stripe account mode is either unconfigured or restricted. Any payment authorized here is a <strong>simulated sandbox test</strong> to unlock your client's workspace and will not produce a charge on your card.
-                          </p>
-                          {stripeLaunchError && (
-                            <div className="mt-2 bg-amber-100/60 p-3 rounded-xl border border-amber-200/50 font-mono text-[10px] text-amber-950 break-words leading-relaxed select-all">
-                              <span className="font-bold text-amber-900 block mb-1">Initialization Error Recalled:</span>
-                              {stripeLaunchError}
-                            </div>
-                          )}
-                          {stripeConfig.accountInfo && !stripeConfig.accountInfo.chargesEnabled && (
-                            <div className="mt-2 bg-rose-50 p-3 rounded-xl border border-rose-100/50 text-[10px] text-rose-950 font-mono leading-relaxed space-y-1">
-                              <span className="font-bold text-rose-900 block uppercase tracking-wider text-[9px] mb-1">🔴 Connected Stripe Account Restricted (Live mode blocked)</span>
-                              <div><strong>Account ID:</strong> {stripeConfig.accountInfo.id}</div>
-                              <div><strong>Charges Enabled:</strong> {String(stripeConfig.accountInfo.chargesEnabled)}</div>
-                              <div><strong>Capabilities card_payments:</strong> {stripeConfig.accountInfo.capabilities?.card_payments || 'unknown'}</div>
-                              <p className="text-[10px] text-rose-800 font-sans mt-1">
-                                Stripe has returned a <strong>"testmode_charges_only"</strong> constraint. Your connected account has not completed onboarding/identity verification. Visit <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener noreferrer" className="underline font-bold text-rose-900 hover:text-black">Stripe Dashboard Payments page</a> to resolve this.
-                              </p>
-                            </div>
-                          )}
+                    {!stripeConfig.stripeConfigured ? (
+                      <div className="bg-blue-50/85 border border-blue-100 rounded-2xl p-4 text-xs text-blue-900 space-y-1.5">
+                        <div className="flex items-start gap-2.5">
+                          <Info className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
+                          <div className="space-y-1">
+                            <span className="font-bold text-blue-800 block uppercase font-mono tracking-wider text-[10px]">💡 SnapSum Checkout Sandbox Active</span>
+                            <p className="leading-relaxed text-blue-700 font-light">
+                              SnapSum is currently running in a simulated developer sandbox environment. To allow you to fully test the upgrade flows and experience the premium Pro/Enterprise features, our built-in checkout simulator is active. No real credit card charges will occur.
+                            </p>
+                            {stripeLaunchError && !stripeLaunchError.includes('Stripe live secret keys are not configured') && (
+                              <div className="mt-2 bg-blue-100/60 p-2 rounded-xl font-mono text-[10px] text-blue-950 break-words leading-relaxed select-all">
+                                <span className="font-bold text-blue-900 block mb-0.5">Details:</span>
+                                {stripeLaunchError}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      stripeConfig.accountInfo && !stripeConfig.accountInfo.chargesEnabled && (
+                        <div className="bg-rose-50 border border-rose-200/60 rounded-2xl p-4 text-xs text-rose-900 space-y-2">
+                          <div className="flex items-start gap-2.5">
+                            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                            <div className="space-y-1">
+                              <span className="font-bold text-rose-800 block uppercase font-mono tracking-wider text-[10px]">🔴 Connected Stripe Account Restricted (Live mode blocked)</span>
+                              <p className="leading-relaxed text-rose-700">
+                                Your connected Stripe account has charges disabled. Stripe requires onboarding verification before accepting live card payments. Currently running in simulator fallback mode.
+                              </p>
+                              <div className="mt-2 bg-rose-100/50 p-3 rounded-xl border border-rose-200/50 font-mono text-[10px] text-rose-950 leading-relaxed space-y-1">
+                                <div><strong>Account ID:</strong> {stripeConfig.accountInfo.id}</div>
+                                <div><strong>Charges Enabled:</strong> {String(stripeConfig.accountInfo.chargesEnabled)}</div>
+                                <div><strong>Capabilities card_payments:</strong> {stripeConfig.accountInfo.capabilities?.card_payments || 'unknown'}</div>
+                                <p className="text-[10px] text-rose-800 font-sans mt-1">
+                                  Visit the <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener noreferrer" className="underline font-bold text-rose-900 hover:text-black">Stripe Dashboard Payments page</a> to complete your identity verification.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    )}
 
                     <form onSubmit={async (e) => {
                       e.preventDefault();
