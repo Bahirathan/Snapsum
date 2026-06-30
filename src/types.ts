@@ -99,6 +99,10 @@ export interface MemoryConcept {
   masteryLevel: number; // 0 to 100%
   status: 'Weak' | 'Strong' | 'New';
   lastTestedAt?: string;
+  interval?: number; // Days until next review
+  easeFactor?: number; // SM-2 ease factor
+  repetitions?: number; // Number of consecutive successful reviews
+  dueDate?: string; // ISO date string of next review
 }
 
 export interface VideoLearningSession {

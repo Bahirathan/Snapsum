@@ -75,7 +75,11 @@ const RECTIFY_SAMPLE_CONCEPTS: Record<string, MemoryConcept> = {
     definition: 'Trusting that the diverse, seemingly random activities and challenges you pursue will eventually harmonize in your future.',
     analogy: 'Like taking a calligraphy class that seemed completely useless at college, but ten years later provided the exact typography blueprint for the Macintosh.',
     masteryLevel: 45,
-    status: 'Weak'
+    status: 'Weak',
+    interval: 1,
+    easeFactor: 2.5,
+    repetitions: 0,
+    dueDate: new Date().toISOString() // Due today for testing!
   },
   'Golden-Circle': {
     id: 'Golden-Circle',
@@ -85,7 +89,11 @@ const RECTIFY_SAMPLE_CONCEPTS: Record<string, MemoryConcept> = {
     definition: 'A three-layer behavioral communication matrix asserting that inspirational messaging must begin with Why (Purpose), and proceed outward.',
     analogy: 'Rather than selling someone a car based on horsepower specs (What), selling them on the promise of unbound individual freedom and speed (Why).',
     masteryLevel: 85,
-    status: 'Strong'
+    status: 'Strong',
+    interval: 6,
+    easeFactor: 2.6,
+    repetitions: 2,
+    dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString() // Due in 5 days
   },
   'Limbic-Lattice': {
     id: 'Limbic-Lattice',
@@ -95,7 +103,11 @@ const RECTIFY_SAMPLE_CONCEPTS: Record<string, MemoryConcept> = {
     definition: 'Neurobiological overlap explaining how Why and How appeal directly to the emotional and behavioral centers of the human brain (limbic core).',
     analogy: 'Like buying a specific brand of jacket because of how it makes you feel when wearing it, then looking up logic specs to justify your purchase.',
     masteryLevel: 40,
-    status: 'Weak'
+    status: 'Weak',
+    interval: 1,
+    easeFactor: 2.5,
+    repetitions: 0,
+    dueDate: new Date().toISOString() // Due today for testing!
   },
   'Creative-Rebirth': {
     id: 'Creative-Rebirth',
@@ -105,7 +117,11 @@ const RECTIFY_SAMPLE_CONCEPTS: Record<string, MemoryConcept> = {
     definition: 'Understanding that severe setbacks, like being fired or failing publicly, can strip away comfort and spark an incredibly creative rebirth.',
     analogy: 'Like a pruning shears cutting a branch back. It looks like destruction, but the next season brings twice as many blossoms and fruit.',
     masteryLevel: 90,
-    status: 'Strong'
+    status: 'Strong',
+    interval: 10,
+    easeFactor: 2.7,
+    repetitions: 3,
+    dueDate: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000).toISOString() // Due in 9 days
   }
 };
 
@@ -146,6 +162,14 @@ export function loadMemoryGraph(): LearningMemoryGraph {
     if (raw) {
       const graph = JSON.parse(raw);
       if (graph && graph.concepts && Object.keys(graph.concepts).length > 0) {
+        // Ensure all concepts have spaced repetition properties
+        Object.keys(graph.concepts).forEach(key => {
+          const c = graph.concepts[key];
+          if (c.interval === undefined) c.interval = 1;
+          if (c.easeFactor === undefined) c.easeFactor = 2.5;
+          if (c.repetitions === undefined) c.repetitions = 0;
+          if (c.dueDate === undefined) c.dueDate = new Date().toISOString();
+        });
         return graph;
       }
     }
@@ -205,6 +229,9 @@ export function LearningProgressDashboard({ onLoadVideo, onActivateDemo }: Learn
   const [activeRevisionConcept, setActiveRevisionConcept] = useState<MemoryConcept | null>(null);
   const [revisionTypedAnswer, setRevisionTypedAnswer] = useState<string>('');
   const [revisionFeedback, setRevisionFeedback] = useState<string | null>(null);
+  const [revisionStage, setRevisionStage] = useState<'type' | 'assess' | 'done'>('type');
+  const [showAllConcepts, setShowAllConcepts] = useState<boolean>(false);
+  const [showHint, setShowHint] = useState<boolean>(false);
 
   // Sync graph state
   useEffect(() => {
@@ -284,29 +311,104 @@ export function LearningProgressDashboard({ onLoadVideo, onActivateDemo }: Learn
     ? unfinishedSessions[0] 
     : sessionsArray[0]; // fallback to first session
 
-  // Revision check submit handler
-  const handleRevisionTestSubmit = () => {
+  // Proceed to self-assessment stage
+  const handleProceedToAssess = () => {
     if (!activeRevisionConcept) return;
     if (revisionTypedAnswer.trim().length < 5) {
-      setRevisionFeedback("Please expand your answer slightly (minimum 5 characters) to demonstrate retention focus!");
+      setRevisionFeedback("Please expand your answer slightly (minimum 5 characters) to demonstrate active recall focus!");
       return;
     }
-    
+    setRevisionFeedback(null);
+    setRevisionStage('assess');
+  };
+
+  // SM-2 Spaced Repetition calculation and rating logger
+  const handleRecordRecallQuality = (quality: number) => {
+    if (!activeRevisionConcept || !graph) return;
+
     const g = { ...graph };
     const updatedConcept = { ...activeRevisionConcept };
+
+    // Initial SM-2 properties defaults
+    let interval = updatedConcept.interval ?? 1;
+    let easeFactor = updatedConcept.easeFactor ?? 2.5;
+    let repetitions = updatedConcept.repetitions ?? 0;
+
+    // SM-2 Lite repetition updates
+    if (quality >= 3) {
+      if (repetitions === 0) {
+        interval = 1;
+      } else if (repetitions === 1) {
+        interval = 4;
+      } else {
+        interval = Math.round(interval * easeFactor);
+      }
+      repetitions += 1;
+    } else {
+      repetitions = 0;
+      interval = 1;
+    }
+
+    // Ease factor update
+    easeFactor = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+    if (easeFactor < 1.3) easeFactor = 1.3;
+
+    // Cap interval
+    if (interval > 365) interval = 365;
+
+    // Save calculation back
+    updatedConcept.interval = interval;
+    updatedConcept.easeFactor = parseFloat(easeFactor.toFixed(2));
+    updatedConcept.repetitions = repetitions;
+    updatedConcept.lastTestedAt = new Date().toISOString();
+    
+    // Set next due date
+    updatedConcept.dueDate = new Date(Date.now() + interval * 24 * 60 * 60 * 1000).toISOString();
+
+    // Mastery level mapping based on recall quality
     const prevMastery = updatedConcept.masteryLevel;
-    updatedConcept.masteryLevel = Math.min(updatedConcept.masteryLevel + 25, 100);
-    updatedConcept.status = updatedConcept.masteryLevel >= 70 ? 'Strong' : 'Weak';
-    
+    let masteryUpdate = prevMastery;
+    let xpAwarded = 0;
+    let ratingLabel = "";
+
+    if (quality === 1) {
+      masteryUpdate = Math.max(prevMastery - 25, 20);
+      xpAwarded = 15; // Resilience bonus
+      ratingLabel = "Forgot 🔴";
+    } else if (quality === 3) {
+      masteryUpdate = Math.max(prevMastery - 10, 50);
+      xpAwarded = 40;
+      ratingLabel = "Struggled 🟡";
+    } else if (quality === 4) {
+      masteryUpdate = Math.min(prevMastery + 15, 85);
+      xpAwarded = 80;
+      ratingLabel = "Good 🔵";
+    } else if (quality === 5) {
+      masteryUpdate = Math.min(prevMastery + 35, 100);
+      xpAwarded = 120;
+      ratingLabel = "Easy 🟢";
+    }
+
+    updatedConcept.masteryLevel = masteryUpdate;
+    updatedConcept.status = masteryUpdate >= 70 ? 'Strong' : 'Weak';
+
     g.concepts[updatedConcept.id] = updatedConcept;
-    
+
     const revisedConceptsArray = Object.values(g.concepts) as MemoryConcept[];
-    // Recalculate weak & strong list
+    // Recalculate weak & strong lists
     g.weakTopics = revisedConceptsArray.filter(c => c.masteryLevel < 70).map(c => c.concept);
     g.strongTopics = revisedConceptsArray.filter(c => c.masteryLevel >= 70).map(c => c.concept);
 
-    setRevisionFeedback(`✨ Correct Synthesis! Topic knowledge restored: ${prevMastery}% ➔ ${updatedConcept.masteryLevel}% Mastery. Awarded +80 XP points.`);
-    awardXpPoints(80, g);
+    setRevisionStage('done');
+    
+    const formattedDate = new Date(updatedConcept.dueDate).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric'
+    });
+    
+    setRevisionFeedback(`🧠 **Memory Scheduled (${ratingLabel})!**\n\nYour recall was comparison-checked against the core mental model. Based on your rating, the next review has been calculated for **${interval} day${interval > 1 ? 's' : ''}** from now (**${formattedDate}**).\n\n**Mastery updated**: ${prevMastery}% ➔ ${masteryUpdate}%.\nAwarded **+${xpAwarded} XP**.`);
+    
+    awardXpPoints(xpAwarded, g);
   };
 
   return (
@@ -538,104 +640,368 @@ export function LearningProgressDashboard({ onLoadVideo, onActivateDemo }: Learn
             )}
           </div>
 
-          {/* RETENTION TASK B: WEAK TOPICS REVIEW BOARD */}
-          {conceptsArray.some((c: any) => c.masteryLevel < 70) && (
-            <div className="bg-white border border-black/[0.04] p-6 rounded-3xl shadow-sm text-left space-y-4">
-              <span className="text-[10px] font-mono font-bold text-[#e03e2d] uppercase tracking-wider block">
-                ⚠ Strategic Deliberate Practice (Active Repair Center)
-              </span>
+          {/* RETENTION TASK B: COGNITIVE RETENTION & SPACED REPETITION ENGINE (SM-2 LITE) */}
+          <div className="bg-white border border-black/[0.04] p-6 rounded-3xl shadow-sm text-left space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h3 className="text-base font-bold font-display text-neutral-900 leading-tight">
-                  Weak Concepts Revision Suggested
+                <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md uppercase tracking-wider inline-block">
+                  🧠 Cognitive Retention Engine (SM-2 Lite)
+                </span>
+                <h3 className="text-base font-bold font-display text-neutral-900 leading-tight mt-1">
+                  Spaced Repetition Review Queue
                 </h3>
-                <p className="text-xs text-neutral-500 mt-1 font-light leading-relaxed">
-                  These topics have falling mastery rates. Review their micro-analogies to restore memory strength!
+                <p className="text-xs text-neutral-500 mt-0.5 font-light leading-relaxed">
+                  Consolidate learning over time. Concepts scheduled dynamically based on recall performance.
                 </p>
               </div>
 
-              {!activeRevisionConcept ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                  {conceptsArray.filter((c: any) => c.masteryLevel < 70).map((concept: any) => (
-                    <button
-                      key={concept.id}
-                      type="button"
-                      onClick={() => {
-                        setActiveRevisionConcept(concept);
-                        setRevisionFeedback(null);
-                        setRevisionTypedAnswer('');
-                      }}
-                      className="text-left p-4 rounded-2xl border border-red-100 bg-red-50/10 hover:bg-red-50/20 transition cursor-pointer flex flex-col justify-between"
-                    >
-                      <div className="space-y-1">
-                        <span className="text-[#86868b] text-[9px] font-mono font-bold tracking-wider block uppercase">{concept.sourceTitle}</span>
-                        <h4 className="text-xs font-bold text-neutral-850 leading-tight">{concept.concept}</h4>
-                      </div>
-                      <div className="flex items-center justify-between mt-3">
-                        <span className="text-[9px] font-bold font-mono text-red-600 bg-red-100/50 border border-red-200/50 px-2 py-0.5 rounded-full">{concept.masteryLevel}% Mastery</span>
-                        <span className="text-[10px] text-neutral-600 font-bold hover:underline flex items-center gap-0.5">Quick Drill <ChevronRight className="w-3 h-3" /></span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-4.5 bg-neutral-50 border border-slate-200 rounded-2xl space-y-4 animate-slideUp">
-                  <div className="flex items-center justify-between border-b pb-2">
-                    <div>
-                      <span className="text-[9px] font-mono font-bold text-neutral-400 uppercase block">Concept Drill</span>
-                      <h4 className="text-sm font-bold text-indigo-700">{activeRevisionConcept.concept}</h4>
-                    </div>
-                    <button 
-                      type="button" 
-                      onClick={() => setActiveRevisionConcept(null)}
-                      className="text-xs font-bold text-neutral-400 hover:text-neutral-700 cursor-pointer"
-                    >
-                      Cancel review
-                    </button>
-                  </div>
-
-                  <div className="space-y-3.5 text-xs text-neutral-700 text-left">
-                    <p className="leading-relaxed">
-                      <strong className="font-semibold text-neutral-900 block mb-0.5">Abstract Definition:</strong>
-                      {activeRevisionConcept.definition}
-                    </p>
-
-                    <div className="bg-amber-50 rounded-xl p-3.5 border border-amber-200/80 leading-relaxed text-amber-950 font-sans">
-                      <strong className="text-amber-950 font-bold block mb-1">💡 Metaphorical Analogy:</strong>
-                      {activeRevisionConcept.analogy}
-                    </div>
-
-                    <div className="space-y-2 pt-1 border-t">
-                      <label className="block font-bold text-neutral-850 text-xs">
-                        ✍️ Retain Active Practice: Explain in your own words how you relate to this idea:
-                      </label>
-                      <textarea
-                        disabled={!!revisionFeedback}
-                        placeholder="Type a fast sentence linking this metaphor back to your work or life..."
-                        rows={2}
-                        value={revisionTypedAnswer}
-                        onChange={(e) => setRevisionTypedAnswer(e.target.value)}
-                        className="w-full text-xs p-3.5 rounded-xl border border-neutral-300 focus:bg-white focus:border-indigo-500 outline-none transition inline-block bg-white text-neutral-950"
-                      />
-                    </div>
-                  </div>
-
-                  {revisionFeedback ? (
-                    <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs rounded-xl font-sans animate-fadeIn">
-                      {revisionFeedback}
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleRevisionTestSubmit}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-5 py-2.5 rounded-xl cursor-pointer transition shadow-xs"
-                    >
-                      Submit Review & update mastery (+80 XP)
-                    </button>
-                  )}
+              {/* Toggle filters */}
+              {!activeRevisionConcept && (
+                <div className="flex bg-neutral-100 p-1 rounded-xl border self-start">
+                  <button
+                    type="button"
+                    onClick={() => setShowAllConcepts(false)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      !showAllConcepts
+                        ? 'bg-white text-neutral-900 shadow-xs'
+                        : 'text-neutral-500 hover:text-neutral-800'
+                    }`}
+                  >
+                    📝 Due Today ({conceptsArray.filter(c => !c.dueDate || new Date(c.dueDate) <= new Date()).length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAllConcepts(true)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      showAllConcepts
+                        ? 'bg-white text-neutral-900 shadow-xs'
+                        : 'text-neutral-500 hover:text-neutral-800'
+                    }`}
+                  >
+                    📚 All Concepts ({conceptsArray.length})
+                  </button>
                 </div>
               )}
             </div>
-          )}
+
+            {!activeRevisionConcept ? (
+              <div>
+                {/* Concept Grid List */}
+                {(() => {
+                  const filtered = showAllConcepts
+                    ? conceptsArray
+                    : conceptsArray.filter(c => !c.dueDate || new Date(c.dueDate) <= new Date());
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="p-8 text-center bg-emerald-50/40 border border-emerald-100 rounded-3xl space-y-3">
+                        <div className="mx-auto w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center">
+                          <CheckCircle className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-emerald-950">Retention Equilibrium Reached!</h4>
+                          <p className="text-xs text-emerald-800/80 mt-1 max-w-md mx-auto">
+                            All your key concepts are fully consolidated in your neural pathways for today. 
+                            Create another video summary or toggle to "All Concepts" to cram!
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowAllConcepts(true)}
+                          className="text-xs font-bold text-emerald-700 bg-emerald-100/50 hover:bg-emerald-100 border border-emerald-200/50 px-4 py-2 rounded-xl transition cursor-pointer"
+                        >
+                          Explore All Saved Concepts
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                      {filtered.map((concept: any) => {
+                        const isDue = !concept.dueDate || new Date(concept.dueDate) <= new Date();
+                        return (
+                          <button
+                            key={concept.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveRevisionConcept(concept);
+                              setRevisionFeedback(null);
+                              setRevisionTypedAnswer('');
+                              setRevisionStage('type');
+                              setShowHint(false);
+                            }}
+                            className={`text-left p-4 rounded-2xl border transition cursor-pointer flex flex-col justify-between ${
+                              isDue
+                                ? 'border-red-100 bg-red-50/10 hover:bg-red-50/20'
+                                : 'border-neutral-200 bg-neutral-50/50 hover:bg-neutral-50'
+                            }`}
+                          >
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[#86868b] text-[9px] font-mono font-bold tracking-wider block uppercase truncate max-w-[70%]">
+                                  {concept.sourceTitle}
+                                </span>
+                                {isDue ? (
+                                  <span className="text-[8px] px-1.5 py-0.5 bg-red-100 text-red-700 rounded-md font-bold font-mono uppercase">
+                                    Due Now
+                                  </span>
+                                ) : (
+                                  <span className="text-[8px] px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded-md font-bold font-mono uppercase">
+                                    Interval: {concept.interval || 1}d
+                                  </span>
+                                )}
+                              </div>
+                              <h4 className="text-xs font-bold text-neutral-850 leading-tight pt-1">{concept.concept}</h4>
+                            </div>
+                            <div className="flex items-center justify-between mt-4 border-t border-dashed pt-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`text-[9px] font-bold font-mono px-2 py-0.5 rounded-full border ${
+                                  concept.masteryLevel >= 70
+                                    ? 'text-emerald-700 bg-emerald-50 border-emerald-100'
+                                    : 'text-amber-700 bg-amber-50 border-amber-100'
+                                }`}>
+                                  {concept.masteryLevel}% Mastery
+                                </span>
+                                {concept.repetitions > 0 && (
+                                  <span className="text-[9px] text-neutral-400 font-mono">
+                                    Streak: {concept.repetitions}🔥
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-indigo-600 font-bold hover:underline flex items-center gap-0.5">
+                                Active Recall <ChevronRight className="w-3 h-3" />
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : (
+              <div className="p-4.5 bg-neutral-50 border border-slate-200 rounded-2xl space-y-4 animate-slideUp">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <div>
+                    <span className="text-[9px] font-mono font-bold text-neutral-400 uppercase block">
+                      Spaced Repetition Drill (Stage {revisionStage === 'type' ? '1: Active Recall' : revisionStage === 'assess' ? '2: Self Assessment' : '3: Scheduled'})
+                    </span>
+                    <h4 className="text-sm font-bold text-indigo-700">{activeRevisionConcept.concept}</h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveRevisionConcept(null)}
+                    className="text-xs font-bold text-neutral-400 hover:text-neutral-700 cursor-pointer"
+                  >
+                    Cancel Drill
+                  </button>
+                </div>
+
+                {/* STAGE 1: ACTIVE RECALL (TYPING ANSWER) */}
+                {revisionStage === 'type' && (
+                  <div className="space-y-4 text-xs text-neutral-700 text-left">
+                    <p className="leading-relaxed text-neutral-600">
+                      Write a brief synthesis explaining this concept, its core premise, or how it operates. 
+                      Try to explain it to a 10-year-old using your own words.
+                    </p>
+
+                    {/* Meta hint toggle */}
+                    <div className="border border-amber-100 rounded-xl bg-amber-50/40 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setShowHint(!showHint)}
+                        className="w-full flex items-center justify-between p-3.5 text-left text-xs text-amber-900 font-bold hover:bg-amber-100/50 cursor-pointer transition"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Lightbulb className="w-4 h-4 text-amber-500 shrink-0" />
+                          <span>💡 Need a Metaphorical Hint?</span>
+                        </span>
+                        <span className="text-[10px] text-amber-700">{showHint ? 'Hide hint' : 'Show hint'}</span>
+                      </button>
+                      {showHint && (
+                        <div className="px-4 pb-3.5 text-amber-950/85 text-xs font-sans leading-relaxed animate-fadeIn border-t border-amber-100/60 pt-2.5">
+                          {activeRevisionConcept.analogy}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2 pt-1">
+                      <label className="block font-bold text-neutral-800 text-xs">
+                        ✍️ Your Recall Attempt:
+                      </label>
+                      <textarea
+                        disabled={!!revisionFeedback}
+                        placeholder="Type what you recall about this concept to lock in memory pathways..."
+                        rows={3}
+                        value={revisionTypedAnswer}
+                        onChange={(e) => {
+                          setRevisionTypedAnswer(e.target.value);
+                          setRevisionFeedback(null);
+                        }}
+                        className="w-full text-xs p-3.5 rounded-xl border border-neutral-300 focus:bg-white focus:border-indigo-500 outline-none transition inline-block bg-white text-neutral-950 placeholder-neutral-400 font-sans"
+                      />
+                    </div>
+
+                    {revisionFeedback && (
+                      <div className="p-3 bg-red-50 border border-red-200 text-red-900 text-xs rounded-xl font-sans animate-fadeIn">
+                        {revisionFeedback}
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleProceedToAssess}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-5 py-2.5 rounded-xl cursor-pointer transition shadow-xs flex items-center gap-1.5"
+                    >
+                      <span>Reveal & Rate Recall Strength</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* STAGE 2: SELF ASSESSMENT (COMPARE WITH TRUTH) */}
+                {revisionStage === 'assess' && (
+                  <div className="space-y-4 text-xs text-neutral-750 text-left">
+                    <p className="leading-relaxed text-neutral-600">
+                      Compare your explanation below with the canonical source definition and micro-analogy. 
+                      Be honest in evaluating how accurately your mind captured the concept's core thesis.
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {/* Left: Canonical Source */}
+                      <div className="bg-neutral-100 border border-neutral-200 p-4 rounded-xl space-y-2.5">
+                        <span className="text-[8px] bg-indigo-100 border border-indigo-200 text-indigo-700 font-bold uppercase tracking-wider px-1.5 py-0.5 rounded font-mono">
+                          Source Blueprint
+                        </span>
+                        <div className="space-y-2 leading-relaxed">
+                          <p>
+                            <strong className="text-neutral-900 font-bold block">Abstract Definition:</strong>
+                            {activeRevisionConcept.definition}
+                          </p>
+                          <p className="bg-amber-100/50 p-2.5 rounded-lg border border-amber-100 text-amber-950 font-sans">
+                            <strong className="text-amber-950 font-bold block mb-0.5">Metaphor:</strong>
+                            {activeRevisionConcept.analogy}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Right: User's recall */}
+                      <div className="bg-white border border-neutral-200 p-4 rounded-xl space-y-2.5 flex flex-col justify-between">
+                        <div className="space-y-1.5">
+                          <span className="text-[8px] bg-slate-100 border border-slate-200 text-slate-700 font-bold uppercase tracking-wider px-1.5 py-0.5 rounded font-mono">
+                            Your Recall Attempt
+                          </span>
+                          <p className="italic text-neutral-800 font-sans leading-relaxed whitespace-pre-line pt-1">
+                            "{revisionTypedAnswer}"
+                          </p>
+                        </div>
+                        <div className="text-[10px] text-neutral-400 bg-neutral-50 px-2 py-1.5 rounded-lg border border-dashed font-mono mt-3">
+                          Characters typed: {revisionTypedAnswer.length}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-4 space-y-3">
+                      <h4 className="font-bold text-neutral-850 text-xs flex items-center gap-1">
+                        <Zap className="w-4 h-4 text-amber-500" />
+                        <span>Self-Assess Your Recall Strength:</span>
+                      </h4>
+
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleRecordRecallQuality(1)}
+                          className="bg-white hover:bg-red-50 text-red-900 border border-red-200/80 p-3.5 rounded-xl cursor-pointer transition flex flex-col items-center justify-center text-center gap-1 shadow-xs group"
+                        >
+                          <span className="text-lg">🔴</span>
+                          <strong className="text-xs font-bold font-display">Forgot</strong>
+                          <span className="text-[9px] text-neutral-500 block leading-tight">No idea / complete blank</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRecordRecallQuality(3)}
+                          className="bg-white hover:bg-amber-50 text-amber-900 border border-amber-200/80 p-3.5 rounded-xl cursor-pointer transition flex flex-col items-center justify-center text-center gap-1 shadow-xs group"
+                        >
+                          <span className="text-lg">🟡</span>
+                          <strong className="text-xs font-bold font-display">Struggled</strong>
+                          <span className="text-[9px] text-neutral-500 block leading-tight">Vague / high effort needed</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRecordRecallQuality(4)}
+                          className="bg-white hover:bg-blue-50 text-blue-900 border border-blue-200/80 p-3.5 rounded-xl cursor-pointer transition flex flex-col items-center justify-center text-center gap-1 shadow-xs group"
+                        >
+                          <span className="text-lg">🔵</span>
+                          <strong className="text-xs font-bold font-display">Good</strong>
+                          <span className="text-[9px] text-neutral-500 block leading-tight">Correct with slight thinking</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRecordRecallQuality(5)}
+                          className="bg-white hover:bg-emerald-50 text-emerald-950 border border-emerald-200/80 p-3.5 rounded-xl cursor-pointer transition flex flex-col items-center justify-center text-center gap-1 shadow-xs group"
+                        >
+                          <span className="text-lg">🟢</span>
+                          <strong className="text-xs font-bold font-display">Easy</strong>
+                          <span className="text-[9px] text-neutral-500 block leading-tight">Flawless, instant recall</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* STAGE 3: DONE (CONFIRMATION AND SCHEDULE OUTPUT) */}
+                {revisionStage === 'done' && (
+                  <div className="space-y-4 text-xs text-neutral-700 text-left">
+                    <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs rounded-2xl font-sans animate-fadeIn leading-relaxed space-y-1">
+                      <div className="flex items-center gap-1.5 font-bold text-emerald-900 mb-2">
+                        <CheckCircle className="w-5 h-5 text-emerald-600" />
+                        <span className="text-sm">Active recall drill logged!</span>
+                      </div>
+                      <p className="whitespace-pre-line leading-relaxed">{revisionFeedback}</p>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      {(() => {
+                        const due = conceptsArray.filter(c => !c.dueDate || new Date(c.dueDate) <= new Date());
+                        if (due.length > 0) {
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveRevisionConcept(due[0]);
+                                setRevisionTypedAnswer('');
+                                setRevisionFeedback(null);
+                                setRevisionStage('type');
+                                setShowHint(false);
+                              }}
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-5 py-2.5 rounded-xl cursor-pointer transition shadow-xs flex items-center gap-1"
+                            >
+                              <span>Consolidate Next Concept ({due.length} due)</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          );
+                        }
+                        return null;
+                      })()}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveRevisionConcept(null);
+                        }}
+                        className="bg-neutral-200 hover:bg-neutral-300 text-neutral-800 font-bold text-xs px-5 py-2.5 rounded-xl cursor-pointer transition"
+                      >
+                        Finish Study Session
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* RETENTION TASK D: RECOMMENDED NEXT LESSONS */}
           <div className="bg-gradient-to-br from-indigo-50/50 to-purple-50/30 border border-indigo-100 p-6 rounded-3xl shadow-sm text-left space-y-4">
@@ -899,7 +1265,11 @@ export function ActiveLearningDashboard({
             definition: kc.definition,
             analogy: kc.simplifiedExplanation,
             masteryLevel: 30, // Starts as New/Unlearned
-            status: 'Weak'
+            status: 'Weak',
+            interval: 1,
+            easeFactor: 2.5,
+            repetitions: 0,
+            dueDate: new Date().toISOString() // Due today
           };
         }
       });
