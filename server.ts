@@ -13,7 +13,7 @@ import fs from 'fs';
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { saveSummary, getSummary, listSummaries } from './server/summaryStore';
-import { getOrCreateReferralCode, recordReferral, getReferralCount, isLockedUnlocked } from './server/referralStore';
+import { getOrCreateReferralCode, recordReferral, getReferralCount, isLockedUnlocked, linkUserToReferral, getReferralLeaderboard } from './server/referralStore';
 import { saveSubscription, getSubscription } from './server/subscriptionStore';
 import { db } from './server/firestore';
 // @ts-ignore
@@ -558,13 +558,17 @@ app.get('/api/shared-summary/:id', async (req, res) => {
 
 // Referral API
 app.post('/api/referral/register', async (req, res) => {
-  const { referralCode } = req.body;
+  const { referralCode, uid, displayName, photoURL, email } = req.body;
   const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
   const ip = rawIp.split(',')[0].trim();
 
   let registered = false;
   if (referralCode) {
     registered = await recordReferral(ip, referralCode);
+  }
+
+  if (uid) {
+    await linkUserToReferral(ip, uid, displayName || '', photoURL || '', email || '');
   }
 
   const code = await getOrCreateReferralCode(ip);
@@ -579,6 +583,19 @@ app.post('/api/referral/register', async (req, res) => {
     unlocked,
     registered,
   });
+});
+
+app.get('/api/referral/leaderboard', async (req, res) => {
+  try {
+    const leaderboard = await getReferralLeaderboard();
+    return res.json({
+      success: true,
+      leaderboard
+    });
+  } catch (err: any) {
+    console.error('Error fetching referral leaderboard:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // Server-rendered summary routes

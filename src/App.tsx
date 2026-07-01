@@ -45,7 +45,8 @@ import {
   TrendingUp,
   Rocket,
   Activity,
-  BarChart
+  BarChart,
+  X
 } from 'lucide-react';
 import { PRELOADED_VIDEOS } from './preloadedData';
 import { toPng } from 'html-to-image';
@@ -923,10 +924,18 @@ export default function App() {
         const queryParams = new URLSearchParams(window.location.search);
         const refCode = queryParams.get('ref');
 
+        const payload: any = { referralCode: refCode };
+        if (visitorUser) {
+          payload.uid = visitorUser.uid;
+          payload.displayName = visitorUser.displayName || '';
+          payload.photoURL = visitorUser.photoURL || '';
+          payload.email = visitorUser.email || '';
+        }
+
         const response = await fetch('/api/referral/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ referralCode: refCode }),
+          body: JSON.stringify(payload),
         });
         const data = await response.json();
         if (data.success) {
@@ -940,7 +949,7 @@ export default function App() {
     };
 
     handleInitialBoot();
-  }, []);
+  }, [visitorUser]);
 
   // Shared summary & score-bearing quiz path hydrating router
   useEffect(() => {
@@ -1526,6 +1535,26 @@ export default function App() {
       setPricingSaveStatus({ type: 'error', message: err.message || 'Error saving parameters to Firestore.' });
     } finally {
       setPricingSaveLoading(false);
+    }
+  };
+
+  // Referral Leaderboard & Profile Modal States
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [referralLeaderboard, setReferralLeaderboard] = useState<any[]>([]);
+  const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
+
+  const fetchReferralLeaderboard = async () => {
+    try {
+      setIsLoadingLeaderboard(true);
+      const response = await fetch('/api/referral/leaderboard');
+      const data = await response.json();
+      if (data.success) {
+        setReferralLeaderboard(data.leaderboard || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch referral leaderboard:', err);
+    } finally {
+      setIsLoadingLeaderboard(false);
     }
   };
 
@@ -3038,21 +3067,39 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               <div className="flex items-center gap-2">
                 {visitorUser ? (
                   <div className="flex items-center gap-2 bg-[#f5f5f7] border border-black/[0.04] p-1 pr-3 rounded-full">
-                    {visitorUser.photoURL ? (
-                      <img 
-                        src={visitorUser.photoURL} 
-                        alt={visitorUser.displayName || 'Visitor'} 
-                        referrerPolicy="no-referrer"
-                        className="w-7 h-7 rounded-full shadow-sm object-cover animate-fade-in"
-                      />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs font-sans">
-                        {visitorUser.displayName ? visitorUser.displayName.charAt(0).toUpperCase() : 'V'}
+                    <button
+                      onClick={() => {
+                        fetchReferralLeaderboard();
+                        setShowProfileModal(true);
+                      }}
+                      title="View Profile & Referral Leaderboard"
+                      className="flex items-center gap-2 hover:opacity-85 transition cursor-pointer text-left"
+                    >
+                      {visitorUser.photoURL ? (
+                        <img 
+                          src={visitorUser.photoURL} 
+                          alt={visitorUser.displayName || 'Visitor'} 
+                          referrerPolicy="no-referrer"
+                          className="w-7 h-7 rounded-full shadow-sm object-cover animate-fade-in"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs font-sans">
+                          {visitorUser.displayName ? visitorUser.displayName.charAt(0).toUpperCase() : 'V'}
+                        </div>
+                      )}
+                      <div className="text-[10px] text-zinc-800 font-semibold hidden sm:flex flex-col justify-center leading-tight">
+                        <div className="max-w-[100px] truncate">{visitorUser.displayName || 'Visitor'}</div>
+                        <span className={`inline-block text-[8px] font-bold font-mono tracking-wider uppercase shrink-0 mt-0.5 ${
+                          referralCount >= 10 
+                            ? 'text-emerald-600' 
+                            : referralCount >= 3 
+                              ? 'text-indigo-600' 
+                              : 'text-amber-600'
+                        }`}>
+                          {referralCount >= 10 ? '🌟 Ambassador' : referralCount >= 3 ? '🚀 Rising Star' : '🌱 Advocate'}
+                        </span>
                       </div>
-                    )}
-                    <div className="text-[10px] text-zinc-800 font-medium hidden sm:block">
-                      {visitorUser.displayName || 'Visitor'}
-                    </div>
+                    </button>
                     <button
                       onClick={async () => {
                         try {
@@ -3061,7 +3108,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           console.error('Failed to sign out visitor user:', err);
                         }
                       }}
-                      className="text-[9px] font-bold text-rose-600 hover:text-rose-805 transition uppercase font-mono pl-1.5 border-l border-zinc-200 cursor-pointer"
+                      className="text-[9px] font-bold text-rose-600 hover:text-rose-805 transition uppercase font-mono pl-1.5 border-l border-zinc-200 cursor-pointer ml-1"
                     >
                       Sign Out
                     </button>
@@ -4701,17 +4748,28 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
             {/* Viral Referral Program Card Widget */}
             <div className="bg-gradient-to-br from-indigo-50/60 to-purple-50/40 rounded-3xl p-6 border border-indigo-100/50 shadow-sm space-y-4">
-              <div>
-                <span className="inline-flex items-center gap-1 bg-indigo-100/80 px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold text-indigo-700 uppercase">
-                  ⚡ viral referral invite
-                </span>
-                <h3 className="text-base font-bold font-display text-neutral-900 mt-2">
-                  Unlock Free Premium Access
-                </h3>
-                <p className="text-[#86868b] text-[11px] mt-0.5 font-light leading-relaxed font-sans">
-                  Refer just <strong className="font-semibold text-neutral-800">2 friends</strong> to bypass all guest limitations and unlock daily unlimited processing!
-                </p>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <span className="inline-flex items-center gap-1 bg-indigo-100/80 px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold text-indigo-700 uppercase">
+                    ⚡ viral referral invite
+                  </span>
+                  <h3 className="text-base font-bold font-display text-neutral-900 mt-1.5">
+                    Unlock Free Premium Access
+                  </h3>
+                </div>
+                <button
+                  onClick={() => {
+                    fetchReferralLeaderboard();
+                    setShowProfileModal(true);
+                  }}
+                  className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer bg-white border border-indigo-150 shadow-sm px-2.5 py-1.5 rounded-xl transition shrink-0 active:scale-95"
+                >
+                  🏆 Leaderboard
+                </button>
               </div>
+              <p className="text-[#86868b] text-[11px] mt-0.5 font-light leading-relaxed font-sans">
+                Refer just <strong className="font-semibold text-neutral-800">2 friends</strong> to bypass all guest limitations and unlock daily unlimited processing!
+              </p>
 
               {/* Progress Milestones */}
               <div className="bg-white/80 border border-indigo-100 p-3.5 rounded-2xl space-y-2 font-sans">
@@ -10745,6 +10803,253 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 ) : (
                   "🛡️ Protected by Stripe secure checkout. Standard SSL 256-bit encryption covers all data transmissions."
                 )}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Profile & Referral Leaderboard Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-4xl w-full overflow-hidden shadow-xl border border-neutral-200 grid grid-cols-1 md:grid-cols-12 max-h-[90vh] font-sans">
+            
+            {/* Left Side: User Referral Profile details */}
+            <div className="md:col-span-5 bg-neutral-900 p-6 md:p-8 text-white flex flex-col justify-between overflow-y-auto">
+              <div className="space-y-6 text-left">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+                      <Trophy className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-sm font-bold font-mono tracking-tight text-white select-none">
+                      Referral Profile
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => setShowProfileModal(false)}
+                    className="md:hidden text-neutral-400 hover:text-white transition text-xs font-semibold"
+                  >
+                    Close
+                  </button>
+                </div>
+
+                {/* Profile Display Card */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-4">
+                  <div className="flex items-center gap-3">
+                    {visitorUser?.photoURL ? (
+                      <img 
+                        src={visitorUser.photoURL} 
+                        alt="Profile Photo" 
+                        className="w-12 h-12 rounded-full border-2 border-white/20 object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-indigo-600/50 flex items-center justify-center text-white font-bold text-lg">
+                        {visitorUser?.displayName ? visitorUser.displayName.charAt(0).toUpperCase() : 'V'}
+                      </div>
+                    )}
+                    <div>
+                      <h4 className="font-bold text-sm text-white font-display">
+                        {visitorUser?.displayName || 'Guest Explorer'}
+                      </h4>
+                      <p className="text-[10px] text-neutral-400 font-mono">
+                        {visitorUser?.email || 'Sign in to sync stats across devices'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status Tier Badge */}
+                  <div className="pt-2 border-t border-white/5 space-y-1.5">
+                    <span className="text-[9px] uppercase tracking-wider text-neutral-400 font-mono font-bold block">Current Status Tier</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-1 rounded-xl text-xs font-bold font-mono tracking-wide uppercase border flex items-center gap-1.5 ${
+                        referralCount >= 10 
+                          ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/20' 
+                          : referralCount >= 3 
+                            ? 'bg-indigo-950/40 text-indigo-400 border-indigo-500/20' 
+                            : 'bg-amber-950/40 text-amber-400 border-amber-500/20'
+                      }`}>
+                        {referralCount >= 10 ? '🌟 SnapSum Ambassador' : referralCount >= 3 ? '🚀 Rising Star' : '🌱 Bronze Advocate'}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-neutral-400 leading-relaxed pt-1">
+                      {referralCount >= 10 
+                        ? 'Incredible! You have unlocked the highest referral rank and full premium feature access forever!'
+                        : referralCount >= 3
+                          ? `Awesome job! You are a Rising Star. Refer ${10 - referralCount} more friends to become a SnapSum Ambassador.`
+                          : `Refer just ${3 - referralCount} more friends to reach the "Rising Star" tier and get customized profile badges.`}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Viral Invite Share Tool */}
+                <div className="space-y-2.5">
+                  <span className="text-[9px] uppercase tracking-wider text-neutral-400 font-mono font-bold block">Your Referral Link</span>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={`${window.location.origin}?ref=${referralCode}`}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs outline-none font-mono text-white select-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const link = `${window.location.origin}?ref=${referralCode}`;
+                        navigator.clipboard.writeText(link);
+                        handleCopyText(link, 'referral_modal');
+                      }}
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 active:scale-95 cursor-pointer shrink-0"
+                    >
+                      {copiedStates['referral_modal'] ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-neutral-400">
+                    Sharing gets you unlimited premium access bypass and logs your rank in the global leaderboard.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-white/5 text-center text-[10px] text-neutral-500 font-mono">
+                {!visitorUser && (
+                  <p className="text-amber-400 font-sans font-medium mb-2">
+                    ⚠️ Log in with Google to secure your leaderboard rank!
+                  </p>
+                )}
+                SnapSum Referral Program • Additive Rewards
+              </div>
+            </div>
+
+            {/* Right Side: Simple Leaderboard View */}
+            <div className="md:col-span-7 p-6 md:p-8 flex flex-col justify-between max-h-[90vh] bg-neutral-50">
+              <div className="space-y-6 overflow-y-auto">
+                <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-amber-500 fill-amber-500/10" />
+                    <h3 className="text-lg font-bold font-display text-neutral-900">
+                      Top Referrers Leaderboard
+                    </h3>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={fetchReferralLeaderboard}
+                      disabled={isLoadingLeaderboard}
+                      className="text-[11px] font-bold text-neutral-600 hover:text-black hover:bg-neutral-200/60 px-2.5 py-1.5 rounded-lg border border-neutral-250 transition flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isLoadingLeaderboard ? 'animate-spin' : ''}`} />
+                      <span>Refresh</span>
+                    </button>
+                    <button
+                      onClick={() => setShowProfileModal(false)}
+                      className="hidden md:block text-neutral-400 hover:text-black transition"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {isLoadingLeaderboard ? (
+                  <div className="py-12 flex flex-col items-center justify-center space-y-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                    <p className="text-xs text-neutral-500 font-mono">Syncing global rankings from Firestore...</p>
+                  </div>
+                ) : referralLeaderboard.length === 0 ? (
+                  <div className="py-12 text-center space-y-2">
+                    <div className="text-3xl">🏆</div>
+                    <p className="text-xs text-neutral-500 font-semibold">The race has started!</p>
+                    <p className="text-[11px] text-neutral-450 max-w-xs mx-auto leading-relaxed">
+                      No successful referrals logged in the database yet. Refer a friend using your unique link above to take the #1 spot!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+                    {referralLeaderboard.map((item, idx) => {
+                      const isCurrentUser = item.referralCode === referralCode;
+                      const isTop3 = idx < 3;
+                      const medCol = isTop3 
+                        ? idx === 0 ? 'bg-amber-100 text-amber-800 border-amber-200'
+                          : idx === 1 ? 'bg-slate-100 text-slate-800 border-slate-200'
+                          : 'bg-orange-100 text-orange-800 border-orange-200'
+                        : 'bg-neutral-100 text-neutral-600 border-neutral-200';
+                      
+                      return (
+                        <div 
+                          key={idx}
+                          className={`flex items-center justify-between p-3 rounded-2xl border transition duration-200 ${
+                            isCurrentUser 
+                              ? 'bg-indigo-50/75 border-indigo-250 shadow-sm ring-1 ring-indigo-250/20' 
+                              : 'bg-white border-black/[0.04] hover:border-neutral-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {/* Rank medallion */}
+                            <span className={`h-6 w-6 rounded-lg font-mono font-bold text-xs flex items-center justify-center border ${medCol}`}>
+                              {idx + 1}
+                            </span>
+
+                            {/* Avatar or Initials */}
+                            {item.photoURL ? (
+                              <img 
+                                src={item.photoURL} 
+                                alt={item.displayName} 
+                                className="w-8 h-8 rounded-full border border-black/[0.04] object-cover"
+                                referrerPolicy="no-referrer"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-xs font-bold">
+                                {item.displayName ? item.displayName.charAt(0).toUpperCase() : 'E'}
+                              </div>
+                            )}
+
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs font-bold text-neutral-900 ${isCurrentUser ? 'text-indigo-900' : ''}`}>
+                                  {item.displayName}
+                                </span>
+                                {isCurrentUser && (
+                                  <span className="text-[8px] bg-indigo-600 text-white font-bold font-mono px-1.5 py-0.5 rounded-md uppercase">
+                                    You
+                                  </span>
+                                )}
+                              </div>
+                              <span className={`inline-block text-[8px] font-bold font-mono tracking-wider uppercase mt-0.5 ${
+                                item.referralCount >= 10 
+                                  ? 'text-emerald-600' 
+                                  : item.referralCount >= 3 
+                                    ? 'text-indigo-600' 
+                                    : 'text-amber-600'
+                              }`}>
+                                {item.referralCount >= 10 ? '🌟 Ambassador' : item.referralCount >= 3 ? '🚀 Rising Star' : '🌱 Advocate'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <span className="text-xs font-bold text-indigo-700 font-mono block">
+                              {item.referralCount} {item.referralCount === 1 ? 'referral' : 'referrals'}
+                            </span>
+                            <span className="text-[9px] text-neutral-450 font-mono">
+                              Code: {item.referralCode}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-6 border-t border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-neutral-500 font-sans">
+                <p>💡 Leaderboard is real-time and updates instantly on successful referral signups.</p>
+                <button
+                  onClick={() => setShowProfileModal(false)}
+                  className="sm:hidden w-full bg-neutral-900 hover:bg-neutral-850 text-white py-2.5 rounded-xl font-bold transition text-center"
+                >
+                  Close Modal
+                </button>
               </div>
             </div>
 
