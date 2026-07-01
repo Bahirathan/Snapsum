@@ -1,5 +1,5 @@
 import { db } from './firestore';
-import { YouTubeSummaryResponse } from '../src/types';
+import { YouTubeSummaryResponse, TakeawayItem } from '../src/types';
 
 // Stored Summary Interface
 export interface StoredSummary {
@@ -13,7 +13,7 @@ export interface StoredSummary {
     duration?: string;
   };
   summary: string;
-  takeaways: string[];
+  takeaways: (string | TakeawayItem)[];
   chapters: any[];
   blogPost: string;
   twitterThread: string[];

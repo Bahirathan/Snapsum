@@ -61,10 +61,15 @@ export interface ReelScript {
   callToAction: string;
 }
 
+export interface TakeawayItem {
+  text: string;
+  lowConfidence?: boolean; // true when the model flags the claim as potentially inaccurate
+}
+
 export interface YouTubeSummaryResponse {
   metadata: YouTubeVideoMetadata;
   summary: string;
-  takeaways: string[];
+  takeaways: (string | TakeawayItem)[];
   chapters: VideoChapter[];
   blogPost: string;
   twitterThread: string[];

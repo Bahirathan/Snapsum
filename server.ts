@@ -11,6 +11,7 @@ import { GoogleGenAI, Type, Modality } from '@google/genai';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import crypto from 'crypto';
+import rateLimit from 'express-rate-limit';
 import { saveSummary, getSummary, listSummaries } from './server/summaryStore';
 import { getOrCreateReferralCode, recordReferral, getReferralCount, isLockedUnlocked } from './server/referralStore';
 import { saveSubscription, getSubscription } from './server/subscriptionStore';
@@ -189,6 +190,23 @@ app.use(
 );
 
 app.use(express.json({ limit: '10mb' }));
+
+// Route-level rate limiters (configurable via env vars)
+const summarizeLimiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_SUMMARIZE_WINDOW_MS || '900000', 10), // 15 min default
+  max: parseInt(process.env.RATE_LIMIT_SUMMARIZE_MAX || '10', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many summarize requests from this IP. Please wait 15 minutes or add your own Gemini API key.', rateLimited: true },
+});
+
+const ttsLimiter = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_TTS_WINDOW_MS || '900000', 10), // 15 min default
+  max: parseInt(process.env.RATE_LIMIT_TTS_MAX || '20', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many TTS requests from this IP. Please wait 15 minutes or upgrade to PRO.', rateLimited: true },
+});
 
 // Helper to extract YouTube ID
 function extractVideoId(url: string): string | null {
@@ -416,14 +434,30 @@ async function fetchYouTubeOEmbed(videoId: string): Promise<{ title: string; aut
 }
 
 // OpenGraph Injector Helper
-function injectOGTags(html: string, summary: any, suffix: string = ''): string {
+function injectOGTags(html: string, summary: any, suffix: string = '', forkQuiz: boolean = false): string {
   const metadata = summary.metadata || {};
   const cleanTitle = (metadata.title || 'AI Video Summary').replace(/"/g, '&quot;');
   const title = (cleanTitle + suffix).replace(/"/g, '&quot;');
   const rawDesc = summary.summary || 'Click to view structured summaries, key insights, chapters, and interactive learning quizzes.';
   const description = rawDesc.replace(/"/g, '&quot;').slice(0, 150);
-  const imageUrl = metadata.thumbnailUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80';
+
+  // Dynamic OG image: pass thumbnail + top 3 takeaways to our /api/og-image endpoint
+  const thumbnailBase = metadata.thumbnailUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80';
+  const rawTakeaways: any[] = Array.isArray(summary.takeaways) ? summary.takeaways.slice(0, 3) : [];
+  const takeawayTexts = rawTakeaways.map((t: any) => (typeof t === 'string' ? t : (t?.text || ''))).filter(Boolean);
+  const ogParams = new URLSearchParams({
+    thumb: thumbnailBase,
+    title: metadata.title || 'SnapSum',
+    t1: takeawayTexts[0] || '',
+    t2: takeawayTexts[1] || '',
+    t3: takeawayTexts[2] || '',
+  });
+  const imageUrl = `/api/og-image?${ogParams.toString()}`;
   const url = `https://www.snapsum.app/s/${summary.shareId}`;
+
+  const forkMeta = forkQuiz
+    ? `\n    <meta name="snapsum:fork-quiz" content="true" />`
+    : '';
 
   const metaHtml = `
     <title>${title} - SnapSum</title>
@@ -438,13 +472,52 @@ function injectOGTags(html: string, summary: any, suffix: string = ''): string {
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${title} - SnapSum" />
     <meta name="twitter:description" content="${description}" />
-    <meta name="twitter:image" content="${imageUrl}" />
+    <meta name="twitter:image" content="${imageUrl}" />${forkMeta}
   `;
 
   let normalized = html.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
   normalized = normalized.replace('</head>', `${metaHtml}</head>`);
   return normalized;
 }
+
+// Dynamic OG image endpoint — returns an SVG social card with thumbnail + top 3 takeaways
+// Social crawlers (Slack, Twitter, LinkedIn) will render this as the link preview image
+app.get('/api/og-image', (req, res) => {
+  const { thumb = '', title = 'SnapSum', t1 = '', t2 = '', t3 = '' } = req.query as Record<string, string>;
+
+  const truncate = (s: string, max: number) => s.length > max ? s.slice(0, max - 1) + '…' : s;
+  const safeTitle = truncate(title, 60).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&/g, '&amp;');
+  const lines = [t1, t2, t3].filter(Boolean).map((t, i) => `<text x="640" y="${320 + i * 52}" font-family="Arial,sans-serif" font-size="22" fill="#e2e8f0" text-anchor="middle">${truncate(t.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&/g, '&amp;'), 80)}</text>`).join('\n');
+  const hasThumb = thumb && thumb.startsWith('http');
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <clipPath id="imgClip"><rect width="1200" height="630" rx="0"/></clipPath>
+  </defs>
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <!-- Thumbnail if available -->
+  ${hasThumb ? `<image href="${thumb}" x="0" y="0" width="1200" height="630" preserveAspectRatio="xMidYMid slice" clip-path="url(#imgClip)" opacity="0.25"/>` : ''}
+  <!-- Dark overlay -->
+  <rect width="1200" height="630" fill="url(#grad)"/>
+  <defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0f172a" stop-opacity="0.5"/><stop offset="100%" stop-color="#0f172a" stop-opacity="0.92"/></linearGradient></defs>
+  <!-- SnapSum badge -->
+  <rect x="48" y="48" width="140" height="36" rx="8" fill="#6366f1"/>
+  <text x="118" y="71" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="#fff" text-anchor="middle">SnapSum</text>
+  <!-- Title -->
+  <text x="600" y="230" font-family="Arial,sans-serif" font-size="38" font-weight="bold" fill="#ffffff" text-anchor="middle">${safeTitle}</text>
+  <!-- Divider -->
+  <rect x="480" y="268" width="240" height="3" rx="2" fill="#6366f1"/>
+  <!-- Takeaways -->
+  ${lines}
+  <!-- Footer -->
+  <text x="600" y="590" font-family="Arial,sans-serif" font-size="18" fill="#94a3b8" text-anchor="middle">snapsum.app — AI Video Summaries</text>
+</svg>`;
+
+  res.setHeader('Content-Type', 'image/svg+xml');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.send(svg);
+});
 
 // Robots & Sitemap
 app.get('/robots.txt', (req, res) => {
@@ -549,7 +622,7 @@ app.get('/s/:id/quiz', async (req, res) => {
     }
 
     let html = fs.readFileSync(htmlPath, 'utf-8');
-    html = injectOGTags(html, summary, ' - Interactive Quiz');
+    html = injectOGTags(html, summary, ' - Interactive Quiz', true);
     res.setHeader('Content-Type', 'text/html');
     return res.send(html);
   } catch (err) {
@@ -584,7 +657,7 @@ app.get('/s/:id/quiz/:score', async (req, res) => {
 });
 
 // REST API endpoint: Video summarizer (YouTube and generic videos/pages)
-app.post('/api/summarize', async (req, res) => {
+app.post('/api/summarize', summarizeLimiter, async (req, res) => {
   const { videoUrl, customTranscript, outputLanguage, learnMode } = req.body;
 
   if (!videoUrl) {
@@ -678,7 +751,7 @@ ${contentSource.slice(0, 50000)}
 
 Please analyze this transcript and fill out the detailed JSON structure:
 1. summary: A beautifully crafted, scannable, engaging summary of the video (2-3 structured paragraphs). Explain the problem, the core thesis, and the final solution.
-2. takeaways: A list of 5-7 actionable, eye-opening takeaways or direct value bombs.
+2. takeaways: A list of 5-7 actionable, eye-opening takeaways or direct value bombs. For each takeaway, provide a "text" field with the insight and a "lowConfidence" boolean field — set lowConfidence to true only if the claim comes from fast/unclear speech, is a technical/medical/niche claim that could not be fully verified from the transcript, or is ambiguous. Set it to false otherwise.
 3. chapters: A list of chronological video chapters summarizing sections. Group similar timestamps to form 4-8 logical chapters spread throughout the video. Allocate accurate "secondsCount" so the user can fast-forward to that exact second.
 4. blogPost: Write a comprehensive, premium-grade, SEO-friendly markdown blog post repurposing this video structure. Use headers (#, ##), bullets, bolding, and professional spacing.
 5. twitterThread: Create an engaging 4-6 tweet series dissecting the main value loop of the video. Write them as individual elements of an array.
@@ -719,7 +792,14 @@ Generate a complete, high-quality summary and promotional asset package matching
           summary: { type: Type.STRING },
           takeaways: {
             type: Type.ARRAY,
-            items: { type: Type.STRING },
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                text: { type: Type.STRING },
+                lowConfidence: { type: Type.BOOLEAN },
+              },
+              required: ['text', 'lowConfidence'],
+            },
           },
           chapters: {
             type: Type.ARRAY,
@@ -954,7 +1034,7 @@ app.get('/api/learn/analytics', async (req, res) => {
 });
 
 // REST API endpoint: Text-to-Speech service using gemini-3.1-flash-tts-preview
-app.post('/api/tts', async (req, res) => {
+app.post('/api/tts', ttsLimiter, async (req, res) => {
   const { text } = req.body;
   if (!text) {
     return res.status(400).json({ error: 'Text content is required for TTS synthesis.' });

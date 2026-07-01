@@ -1,44 +1,31 @@
-# Stage 1: Build stage
-FROM node:20-alpine AS builder
+# ---- Stage 1: Build ----
+FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# Copy package manifests
-COPY package*.json ./
+# Install dependencies
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
 
-# Install all dependencies (including devDependencies required for the build process)
-RUN npm install
-
-# Copy all application files
+# Copy source and build
 COPY . .
-
-# Set environment for production build
-ENV NODE_ENV=production
-
-# Compile React frontend and Express server
 RUN npm run build
 
-# Stage 2: Production execution stage
-FROM node:20-alpine AS runner
+# ---- Stage 2: Production runtime ----
+FROM node:20-slim AS runner
 
 WORKDIR /app
 
-# Copy package manifests for runtime
-COPY package*.json ./
-
-# Install only production-needed dependencies to reduce image size
-RUN npm install --omit=dev
-
-# Copy compiled application assets and server from the builder stage
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/firebase-applet-config.json* ./
-
-# Default runtime port (can be overridden by GCP runtime environment variable)
-EXPOSE 3000
-
-# Set Node environment variables
 ENV NODE_ENV=production
-ENV PORT=3000
 
-# Start the compiled self-contained server
+# Copy only what's needed to run
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+
+# Expose Cloud Run default port
+EXPOSE 8080
+
+ENV PORT=8080
+
 CMD ["node", "dist/server.cjs"]

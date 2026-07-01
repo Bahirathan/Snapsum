@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { jsPDF } from 'jspdf';
 import {
   Youtube,
   Sparkles,
@@ -101,7 +100,7 @@ const getOrGenerateReelScript = (summary: YouTubeSummaryResponse | null): any =>
   
   // Deterministic fallback script compiled gracefully from existing insights
   const title = `Viral Summary: ${summary.metadata.title.slice(0, 45)}...`;
-  const takeaways = summary.takeaways || [] as string[];
+  const takeaways = (summary.takeaways || []).map((t: any) => typeof t === 'string' ? t : (t?.text || ''));
   const baseTitle = summary.metadata.title;
   const author = summary.metadata.author;
 
@@ -1866,8 +1865,9 @@ export default function App() {
     }
 
     // Dynamic procedural backfills for user-generated summaries
-    const concepts = summary.keyConcepts || (summary.takeaways && summary.takeaways.length > 0 ? summary.takeaways.map((takeaway) => {
-      const split = takeaway.split('—');
+    const concepts = summary.keyConcepts || (summary.takeaways && summary.takeaways.length > 0 ? summary.takeaways.map((takeaway: any) => {
+      const raw = typeof takeaway === 'string' ? takeaway : (takeaway?.text || '');
+      const split = raw.split('—');
       const conceptName = split[0] ? split[0].trim() : 'Core Principle';
       const expl = split[1] ? split[1].trim() : takeaway;
       return {
@@ -1921,7 +1921,7 @@ ${activeSummary.summary}
 
 KEY TAKEAWAYS & DIRECT VALUE BOMBS:
 ===================================
-${activeSummary.takeaways.map((bomb, index) => `${index + 1}. ${bomb}`).join('\n')}
+${activeSummary.takeaways.map((bomb: any, index: number) => `${index + 1}. ${typeof bomb === 'string' ? bomb : bomb?.text || ''}`).join('\n')}
 
 TOPIC CATEGORIES & BRAIN MINDMAP:
 =================================
@@ -1937,213 +1937,6 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  const handleExportPDF = () => {
-    if (!activeSummary) return;
-
-    try {
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 20;
-      const contentWidth = pageWidth - (margin * 2);
-      let y = margin;
-
-      // Helper to add footer on pages
-      const addFooter = (pageNum: number) => {
-        doc.setFont('Helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        // Draw elegant thin divider line
-        doc.setDrawColor(230, 230, 230);
-        doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
-        
-        doc.text('Generated via SnapSum • www.snapsum.app', margin, pageHeight - 10);
-        doc.text(`Page ${pageNum}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
-      };
-
-      let pageNum = 1;
-      
-      // Header branding bar (dark modern theme)
-      doc.setFillColor(29, 29, 31); // SnapSum Dark slate #1d1d1f
-      doc.rect(0, 0, pageWidth, 35, 'F');
-
-      // Brand Logo / Title in Header
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(16);
-      doc.text('SnapSum', margin, 15);
-      
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.setTextColor(180, 180, 180);
-      doc.text('UNIVERSAL KNOWLEDGE ENGINE', margin, 20);
-
-      // Export Date in header (right aligned)
-      doc.setFontSize(8);
-      doc.text(`EXPORTED: ${new Date().toLocaleDateString()}`, pageWidth - margin, 15, { align: 'right' });
-      doc.text('PREMIUM WHITE-LABELED REPORT', pageWidth - margin, 20, { align: 'right' });
-
-      // Start below header bar
-      y = 45;
-
-      // Document Title (Video Title)
-      doc.setTextColor(29, 29, 31);
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(18);
-      
-      const titleLines = doc.splitTextToSize(activeSummary.metadata.title, contentWidth);
-      titleLines.forEach((line: string) => {
-        if (y > pageHeight - 25) {
-          addFooter(pageNum);
-          doc.addPage();
-          pageNum++;
-          y = margin;
-        }
-        doc.text(line, margin, y);
-        y += 8;
-      });
-
-      y += 2;
-
-      // Metadata Box (Author, length, video URL)
-      doc.setFillColor(248, 249, 250); // Light gray background #f8f9fa
-      doc.setDrawColor(230, 233, 236);
-      doc.rect(margin, y, contentWidth, 18, 'FD');
-
-      doc.setTextColor(100, 110, 120);
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.text(`Creator/Channel: ${activeSummary.metadata.author}`, margin + 5, y + 6);
-      doc.text(`Duration: ${activeSummary.metadata.duration || 'N/A'} mins`, margin + 5, y + 12);
-      
-      // Source Link text
-      doc.setTextColor(79, 70, 229); // Indigo #4f46e5
-      const urlText = `Video Link: ${activeSummary.metadata.videoUrl || 'https://youtube.com/watch?v=' + activeSummary.metadata.videoId}`;
-      const shortenedUrl = urlText.length > 60 ? urlText.substring(0, 60) + '...' : urlText;
-      doc.text(shortenedUrl, pageWidth - margin - 5, y + 9, { align: 'right' });
-
-      y += 28;
-
-      // Section: Core Thesis
-      doc.setTextColor(29, 29, 31);
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(13);
-      doc.text('1. The Core Thesis & Lesson', margin, y);
-      y += 6;
-
-      // Decorative separator line under section heading
-      doc.setDrawColor(79, 70, 229); // Indigo accent line
-      doc.setLineWidth(0.5);
-      doc.line(margin, y, margin + 25, y);
-      doc.setLineWidth(0.1); // Reset
-      y += 6;
-
-      // Body text of Summary
-      doc.setTextColor(50, 50, 50);
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(10);
-      
-      // Handle potential paragraphs split by newlines
-      const paragraphs = activeSummary.summary.split('\n');
-      paragraphs.forEach((pText) => {
-        const trimmed = pText.trim();
-        if (!trimmed) {
-          y += 4;
-          return;
-        }
-
-        const lines = doc.splitTextToSize(trimmed, contentWidth);
-        lines.forEach((line: string) => {
-          if (y > pageHeight - 25) {
-            addFooter(pageNum);
-            doc.addPage();
-            pageNum++;
-            y = margin;
-          }
-          doc.text(line, margin, y);
-          y += 5.5; // Line height spacing
-        });
-        y += 3; // Space between paragraphs
-      });
-
-      y += 6;
-
-      // Section: Key Takeaways
-      if (y > pageHeight - 40) {
-        addFooter(pageNum);
-        doc.addPage();
-        pageNum++;
-        y = margin;
-      }
-
-      doc.setTextColor(29, 29, 31);
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(13);
-      doc.text('2. Key Takeaways & Direct Lessons', margin, y);
-      y += 6;
-
-      // Decorative line
-      doc.setDrawColor(79, 70, 229);
-      doc.setLineWidth(0.5);
-      doc.line(margin, y, margin + 25, y);
-      doc.setLineWidth(0.1); // Reset
-      y += 8;
-
-      // Map takeaways
-      activeSummary.takeaways.forEach((takeaway, index) => {
-        if (y > pageHeight - 35) {
-          addFooter(pageNum);
-          doc.addPage();
-          pageNum++;
-          y = margin;
-        }
-
-        // Draw bullet text
-        doc.setTextColor(50, 50, 50);
-        doc.setFont('Helvetica', 'normal');
-        doc.setFontSize(9.5);
-
-        // Number prefix
-        const numberPrefix = `${index + 1}. `;
-        const prefixWidth = doc.getTextWidth(numberPrefix);
-        
-        doc.setFont('Helvetica', 'bold');
-        doc.text(numberPrefix, margin, y);
-        doc.setFont('Helvetica', 'normal');
-
-        const textLines = doc.splitTextToSize(takeaway, contentWidth - prefixWidth - 2);
-        textLines.forEach((line: string, lineIdx: number) => {
-          if (y > pageHeight - 25) {
-            addFooter(pageNum);
-            doc.addPage();
-            pageNum++;
-            y = margin;
-          }
-          doc.text(line, margin + prefixWidth + 2, y);
-          y += 5.5;
-        });
-
-        y += 4; // Spacing between takeaway blocks
-      });
-
-      // Add final page footer
-      addFooter(pageNum);
-
-      // Save document
-      const fileName = `${activeSummary.metadata.title.toLowerCase().replace(/[^a-z0-9]/g, '_')}_summary_report.pdf`;
-      doc.save(fileName);
-
-    } catch (error) {
-      console.error('Failed generating branded PDF report via jsPDF:', error);
-      alert('Failed to generate PDF export. Please try again.');
-    }
   };
 
   // Load saved summaries and default to the first preloaded summary
@@ -3761,12 +3554,12 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           <h4 className="text-xs font-bold font-mono text-indigo-600 uppercase tracking-wider">Primary Takeaways</h4>
                           
                           <div className="space-y-3">
-                            {demoActiveVideo.takeaways.map((takeaway, tIdx) => (
+                            {demoActiveVideo.takeaways.map((takeaway: any, tIdx: number) => (
                               <div key={tIdx} className="flex items-start gap-3 bg-neutral-50/50 p-3 rounded-2xl border border-neutral-100">
                                 <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
                                   {tIdx + 1}
                                 </div>
-                                <p className="text-xs text-neutral-700 leading-relaxed font-sans">{takeaway}</p>
+                                <p className="text-xs text-neutral-700 leading-relaxed font-sans">{typeof takeaway === 'string' ? takeaway : takeaway?.text || ''}</p>
                               </div>
                             ))}
                           </div>
@@ -5943,7 +5736,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         
                         {!audioUrl && (
                           <button
-                            onClick={() => handleGenerateTTS(activeSummary.summary + " key takeaways are: " + activeSummary.takeaways.join(". "))}
+                            onClick={() => handleGenerateTTS(activeSummary.summary + " key takeaways are: " + activeSummary.takeaways.map((t: any) => typeof t === 'string' ? t : t?.text || '').join(". "))}
                             disabled={ttsLoading}
                             className="bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-semibold px-4.5 py-2 rounded-full h-9 whitespace-nowrap transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm shadow-[#0071e3]/10"
                           >
@@ -6002,7 +5795,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </div>
 
                     {/* Premium PDF Export Support Gated Segment */}
-                    <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-4.5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="bg-neutral-50 border border-neutral-205 rounded-2xl p-4.5 flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div className="space-y-1 text-center sm:text-left">
                         <span className="text-[10px] font-mono font-bold text-neutral-400 block uppercase">Premium Publication Export</span>
                         <h4 className="text-xs font-bold text-neutral-800 flex items-center justify-center sm:justify-start gap-1">
@@ -6010,30 +5803,18 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           White-labeled Study Report (.MD / PDF Format)
                         </h4>
                         <p className="text-[11px] text-neutral-500 leading-normal max-w-sm">
-                          Assemble complete thesis structures, takeaways, and outlines into a raw styled Markdown document or highly polished, branded PDF files.
+                          Assemble complete thesis structures, chronology benchmarks, and mindmap catalogs into raw styled markdown documents ready for digital distribution.
                         </p>
                       </div>
 
                       {isPremium ? (
-                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto shrink-0">
-                          <button
-                            onClick={downloadSummaryAsPDF}
-                            className="bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs px-4 py-2.5 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
-                            title="Export plain markdown structured file"
-                          >
-                            <FileText className="w-3.5 h-3.5 text-neutral-650" />
-                            <span>Export Markdown</span>
-                          </button>
-                          
-                          <button
-                            onClick={handleExportPDF}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4.5 py-2.5 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shadow-sm shadow-indigo-600/10 hover:translate-y-[-1px] active:translate-y-[0px]"
-                            title="Generate publication-grade PDF file"
-                          >
-                            <Download className="w-3.5 h-3.5 text-white" />
-                            <span>Export Branded PDF</span>
-                          </button>
-                        </div>
+                        <button
+                          onClick={downloadSummaryAsPDF}
+                          className="bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs px-5 py-3 rounded-xl transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 self-center shadow-sm"
+                        >
+                          <Download className="w-4 h-4 text-white" />
+                          <span>Export Summary Report</span>
+                        </button>
                       ) : (
                         <button
                           onClick={() => {
@@ -6051,11 +5832,59 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
                     {/* Actionable Value Bombs list */}
                     <div className="space-y-4 pt-2">
-                      <h3 className="text-sm font-bold font-mono uppercase tracking-wider text-neutral-900 flex items-center gap-1">
-                        💡 Key Value Bombs & Direct Takeaways
-                      </h3>
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <h3 className="text-sm font-bold font-mono uppercase tracking-wider text-neutral-900 flex items-center gap-1">
+                          💡 Key Value Bombs & Direct Takeaways
+                        </h3>
+                        {/* Export buttons — Task 2 */}
+                        <div className="flex gap-2 flex-wrap">
+                          <button
+                            onClick={() => {
+                              const title = activeSummary.metadata?.title || 'Summary';
+                              const concepts = activeSummary.keyConcepts || [];
+                              const tks = activeSummary.takeaways.map((t: any, i: number) => `${i + 1}. ${typeof t === 'string' ? t : t.text}`).join('\n');
+                              const md = `# ${title}\n\n## Key Takeaways\n${tks}\n\n## Key Concepts\n${concepts.map((c: any) => `### ${c.concept}\n${c.definition}\n\n> ${c.simplifiedExplanation}`).join('\n\n')}\n\n---\n*Exported from [SnapSum](https://snapsum.app)*`;
+                              const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+                              const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${title.slice(0, 40)}.md`; a.click();
+                            }}
+                            className="text-[10px] font-mono px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 transition flex items-center gap-1"
+                            title="Export as Obsidian-compatible Markdown"
+                          >
+                            📝 Markdown
+                          </button>
+                          <button
+                            onClick={() => {
+                              const concepts = activeSummary.keyConcepts || [];
+                              const rows = concepts.map((c: any) => `${c.concept}\t${c.definition}. ${c.simplifiedExplanation}`).join('\n');
+                              const csv = `#separator:Tab\n#html:false\n#notetype:Basic\n#deck:SnapSum - ${activeSummary.metadata?.title?.slice(0, 40) || 'Summary'}\n#columns:Front\tBack\n${rows}`;
+                              const blob = new Blob([csv], { type: 'text/plain;charset=utf-8' });
+                              const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `snapsum_anki.txt`; a.click();
+                            }}
+                            className="text-[10px] font-mono px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 transition flex items-center gap-1"
+                            title="Export flashcards for Anki import (File > Import in Anki)"
+                          >
+                            🃏 Anki
+                          </button>
+                          <button
+                            onClick={() => {
+                              const title = activeSummary.metadata?.title || 'Summary';
+                              const concepts = activeSummary.keyConcepts || [];
+                              const tks = activeSummary.takeaways.map((t: any, i: number) => `${i + 1}. ${typeof t === 'string' ? t : t.text}`).join('\n');
+                              const notion = `# ${title}\n\n## 💡 Key Takeaways\n${tks}\n\n## 🧠 Key Concepts\n${concepts.map((c: any) => `**${c.concept}** — ${c.definition}\n> ${c.simplifiedExplanation}`).join('\n\n')}`;
+                              navigator.clipboard.writeText(notion).then(() => alert('✅ Copied! Paste directly into a Notion page.'));
+                            }}
+                            className="text-[10px] font-mono px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 transition flex items-center gap-1"
+                            title="Copy Notion-compatible markdown to clipboard"
+                          >
+                            📋 Notion
+                          </button>
+                        </div>
+                      </div>
                       <div className="grid grid-cols-1 gap-2.5">
-                        {activeSummary.takeaways.map((bomb, index) => (
+                        {activeSummary.takeaways.map((bomb: any, index: number) => {
+                          const text = typeof bomb === 'string' ? bomb : bomb?.text || '';
+                          const lowConf = typeof bomb === 'object' && bomb?.lowConfidence === true;
+                          return (
                           <div
                             key={index}
                             className="bg-white border border-neutral-200/80 p-4 rounded-xl flex gap-3 hover:translate-x-1 hover:border-neutral-300 transition duration-150 shadow-sm"
@@ -6063,11 +5892,20 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             <div className="h-6 w-6 rounded bg-neutral-150 flex items-center justify-center text-neutral-800 font-bold font-mono text-[11px] shrink-0">
                               {index + 1}
                             </div>
-                            <p className="text-neutral-750 text-xs font-medium leading-relaxed">
-                              {bomb}
+                            <p className="text-neutral-750 text-xs font-medium leading-relaxed flex-1">
+                              {text}
                             </p>
+                            {lowConf && (
+                              <div
+                                className="shrink-0 text-amber-500 cursor-help"
+                                title="This point may be less accurate — verify from the source (fast speech, technical or ambiguous claim detected)"
+                              >
+                                ⚠️
+                              </div>
+                            )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -6170,6 +6008,28 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 {/* 4. Interactive Knowledge Quiz */}
                 {activeTab === 'quiz' && (
                   <div className={`space-y-6 animate-fadeIn ${isRtl ? 'text-right' : 'text-left'}`}>
+                    {/* Fork Quiz CTA — shown when arriving via a shared /s/:id/quiz link */}
+                    {window.location.pathname.startsWith('/s/') && (
+                      <div className="bg-indigo-50 border border-indigo-200/80 p-4 rounded-2xl flex items-center justify-between gap-4 animate-slideDown shadow-sm">
+                        <div className="flex items-start gap-3">
+                          <span className="text-xl shrink-0">🧠</span>
+                          <div>
+                            <h4 className="text-sm font-bold text-indigo-900 font-display">
+                              Try this quiz yourself →
+                            </h4>
+                            <p className="text-xs text-indigo-700 mt-0.5">
+                              Save this quiz to your learning dashboard, track your mastery, and get spaced-repetition reminders.
+                            </p>
+                          </div>
+                        </div>
+                        <a
+                          href={`/?ref=shared_quiz&vid=${activeSummary?.metadata?.videoId || ''}`}
+                          className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-full transition whitespace-nowrap"
+                        >
+                          Sign up free
+                        </a>
+                      </div>
+                    )}
                     {quizChallenge && (
                       <div className="bg-amber-50 border border-amber-200/80 p-4 rounded-2xl flex items-center justify-between gap-4 animate-slideDown shadow-sm">
                         <div className="flex items-start gap-3">
@@ -8393,7 +8253,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           }
                           generateShortScript(
                             activeSummary.metadata.title, 
-                            activeSummary.takeaways.join('\n')
+                            activeSummary.takeaways.map((t: any) => typeof t === 'string' ? t : t?.text || '').join('\n')
                           );
                         }}
                         disabled={shortsScriptLoading || !activeSummary}
