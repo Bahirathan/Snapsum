@@ -48,6 +48,7 @@ import {
   BarChart
 } from 'lucide-react';
 import { PRELOADED_VIDEOS } from './preloadedData';
+import { toPng } from 'html-to-image';
 import { YouTubeSummaryResponse, SavedSummary, SynthesizedStack } from './types';
 import { auth, db } from './firebase';
 import firebaseConfig from '../firebase-applet-config.json';
@@ -365,6 +366,125 @@ export default function App() {
   const [simProgress, setSimProgress] = useState<number>(0);
   const [isRenderingVideo, setIsRenderingVideo] = useState<boolean>(false);
   const [renderingProgress, setRenderingProgress] = useState<number>(0);
+
+  const [isExportingMindmap, setIsExportingMindmap] = useState<boolean>(false);
+
+  const handleExportMindmap = async () => {
+    try {
+      setIsExportingMindmap(true);
+      const container = document.getElementById('mindmap-export-container');
+      if (!container) {
+        throw new Error('Mindmap container not found');
+      }
+
+      // Capture using html-to-image toPng
+      const dataUrl = await toPng(container, {
+        pixelRatio: 2.5, // ensures it's highly crisp and at least 1080px wide
+        backgroundColor: '#ffffff',
+        style: {
+          padding: '24px',
+          borderRadius: '16px',
+        }
+      });
+
+      // Bake logo and watermark using HTML5 Canvas
+      const img = new Image();
+      img.src = dataUrl;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        // Let's make sure the width is at least 1080px
+        const finalWidth = Math.max(1080, img.width);
+        const scaleFactor = finalWidth / img.width;
+        const finalHeight = img.height * scaleFactor;
+
+        canvas.width = finalWidth;
+        canvas.height = finalHeight + 80; // Add 80px for the branded footer banner
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Draw white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw captured mindmap
+        ctx.drawImage(img, 0, 0, finalWidth, finalHeight);
+
+        // Draw a clean divider/line for the branding area
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, finalHeight);
+        ctx.lineTo(finalWidth, finalHeight);
+        ctx.stroke();
+
+        // Draw logo image
+        const logo = new Image();
+        logo.src = '/src/assets/images/snapsum_logo_1782475562786.jpg';
+        logo.onload = () => {
+          // Rounded corners clip for logo inside canvas
+          const logoSize = 36;
+          const logoX = finalWidth - 280;
+          const logoY = finalHeight + 22;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+          ctx.restore();
+
+          // Write SnapSum text next to logo
+          ctx.fillStyle = '#0f172a';
+          ctx.font = 'bold 16px "Inter", sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText('SnapSum', logoX + logoSize + 12, logoY + 16);
+
+          // Write "snapsum.app" subtext
+          ctx.fillStyle = '#64748b';
+          ctx.font = '500 13px "JetBrains Mono", Courier, monospace';
+          ctx.fillText('snapsum.app', logoX + logoSize + 12, logoY + 32);
+
+          // Write watermark on the left side of footer
+          ctx.fillStyle = '#334155';
+          ctx.font = '600 14px "Inter", sans-serif';
+          ctx.fillText('💡 Summarized & Mapped with SnapSum AI', 40, finalHeight + 45);
+
+          // Convert to PNG and download
+          const exportUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.download = `snapsum-mindmap-${activeSummary?.metadata?.videoId || 'summary'}.png`;
+          link.href = exportUrl;
+          link.click();
+          setIsExportingMindmap(false);
+        };
+        logo.onerror = () => {
+          // If logo fails to load, fallback to text watermark
+          ctx.fillStyle = '#0f172a';
+          ctx.font = 'bold 16px "Inter", sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText('snapsum.app', finalWidth - 40, finalHeight + 45);
+
+          ctx.fillStyle = '#334155';
+          ctx.font = '600 14px "Inter", sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText('💡 Summarized & Mapped with SnapSum AI', 40, finalHeight + 45);
+
+          const exportUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.download = `snapsum-mindmap-${activeSummary?.metadata?.videoId || 'summary'}.png`;
+          link.href = exportUrl;
+          link.click();
+          setIsExportingMindmap(false);
+        };
+      };
+    } catch (error) {
+      console.error('Error exporting mindmap image:', error);
+      alert('Failed to export mindmap image. Please try again.');
+      setIsExportingMindmap(false);
+    }
+  };
 
   const downloadReelAsVideo = async (script: any) => {
     if (!script || !script.scenes) return;
@@ -6003,43 +6123,75 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 {activeTab === 'mindmap' && (
                   <div className={`space-y-6 animate-fadeIn ${isRtl ? 'text-right' : 'text-left'}`}>
                     
-                    <div>
-                      <h3 className="text-lg font-bold font-display text-neutral-900">
-                        Interactive Topic Mapping
-                      </h3>
-                      <p className="text-neutral-500 text-xs mt-1">
-                        See how main informational lessons branch across major structured directories.
-                      </p>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-150 pb-4">
+                      <div>
+                        <h3 className="text-lg font-bold font-display text-neutral-900">
+                          Interactive Topic Mapping
+                        </h3>
+                        <p className="text-neutral-500 text-xs mt-1">
+                          See how main informational lessons branch across major structured directories.
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleExportMindmap}
+                        disabled={isExportingMindmap}
+                        className="self-start sm:self-center bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-5 py-2.5 rounded-full transition duration-150 flex items-center gap-2 shadow-md shadow-indigo-600/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0 animate-fadeIn"
+                      >
+                        {isExportingMindmap ? (
+                          <>
+                            <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                            <span>Exporting High-Res...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>📸 Export as Image</span>
+                          </>
+                        )}
+                      </button>
                     </div>
 
-                    {/* Categorized Concept Grid Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Grouping items by category */}
-                      {Array.from(new Set(activeSummary.mindmap.map((item) => item.category))).map((category) => (
-                        <div key={category} className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-4.5 space-y-3 shadow-inner">
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-800 bg-neutral-200/80 px-2.5 py-1 rounded inline-block">
-                            📂 {category}
-                          </span>
-                          
-                          <div className="space-y-2.5">
-                            {activeSummary.mindmap
-                              .filter((item) => item.category === category)
-                              .map((node, index) => (
-                                <div
-                                  key={index}
-                                  className="bg-white border border-neutral-200/80 hover:border-neutral-400 p-3 rounded-xl transition shadow-sm space-y-1"
-                                >
-                                  <h4 className="text-xs font-bold text-neutral-800">
-                                    💡 {node.concept}
-                                  </h4>
-                                  <p className="text-[11px] text-neutral-500 leading-normal font-sans">
-                                    {node.description}
-                                  </p>
-                                </div>
-                              ))}
+                    <div id="mindmap-export-container" className="bg-white p-6 rounded-3xl border border-neutral-150 space-y-6">
+                      <div className="border-b border-neutral-100 pb-4">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded">
+                          🧠 SNAPSUM ACTIVE LEARNING MAP
+                        </span>
+                        <h3 className="text-base font-extrabold text-neutral-900 mt-2">
+                          {activeSummary?.metadata?.title || 'Concept Map'}
+                        </h3>
+                        <p className="text-neutral-500 text-xs mt-0.5">
+                          Extracted dynamically from raw video source
+                        </p>
+                      </div>
+
+                      {/* Categorized Concept Grid Cards */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Grouping items by category */}
+                        {Array.from(new Set(activeSummary.mindmap.map((item) => item.category))).map((category) => (
+                          <div key={category} className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-4.5 space-y-3 shadow-inner">
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-800 bg-neutral-200/80 px-2.5 py-1 rounded inline-block">
+                              📂 {category}
+                            </span>
+                            
+                            <div className="space-y-2.5">
+                              {activeSummary.mindmap
+                                .filter((item) => item.category === category)
+                                .map((node, index) => (
+                                  <div
+                                    key={index}
+                                    className="bg-white border border-neutral-200/80 hover:border-neutral-400 p-3 rounded-xl transition shadow-sm space-y-1"
+                                  >
+                                    <h4 className="text-xs font-bold text-neutral-800">
+                                      💡 {node.concept}
+                                    </h4>
+                                    <p className="text-[11px] text-neutral-500 leading-normal font-sans">
+                                      {node.description}
+                                    </p>
+                                  </div>
+                                ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
 
                     <div className="p-4 bg-neutral-900 text-white rounded-xl flex items-center gap-3">

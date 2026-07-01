@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { toPng } from 'html-to-image';
 import { 
   Play, 
   Pause, 
@@ -110,6 +111,10 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
   const [playSpeed, setPlaySpeed] = useState<number>(1);
   const [activeTab, setActiveTab] = useState<'simulation' | 'script' | 'structure' | 'voiceover'>('simulation');
   const [audioSupported, setAudioSupported] = useState<boolean>(true);
+  
+  const [isVerticalMode, setIsVerticalMode] = useState<boolean>(false);
+  const [isExportingVertical, setIsExportingVertical] = useState<boolean>(false);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
   
   // Audio voiceover state and references - Default to the pre-packaged voiceover.mp3
   const [customAudioUrl, setCustomAudioUrl] = useState<string | null>('/voiceover.mp3');
@@ -288,6 +293,53 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
   const currentScene = CINEMATIC_SCENES.find(
     s => currentTime >= s.start && currentTime < s.end
   ) || CINEMATIC_SCENES[CINEMATIC_SCENES.length - 1];
+
+  const handleExportVerticalVideo = async () => {
+    try {
+      setIsExportingVertical(true);
+      setExportMessage("Compiling high-definition 1080x1920 vertical frames...");
+      playSynthBeep(440, 'sine', 0.1);
+
+      // Force a small delay for state update to settle and render offscreen container
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      const element = document.getElementById("vertical-video-export-target");
+      if (!element) {
+        throw new Error("Export target element not found.");
+      }
+
+      setExportMessage("Baking audio track markers & watermark brand overlays...");
+      
+      const dataUrl = await toPng(element, {
+        width: 1080,
+        height: 1920,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+        },
+        cacheBust: true,
+      });
+
+      setExportMessage("Rendering final 1080x1920 PNG package...");
+      await new Promise((resolve) => setTimeout(resolve, 400));
+
+      const link = document.createElement('a');
+      link.download = `snapsum-explainer-916-scene${currentScene.id}.png`;
+      link.href = dataUrl;
+      link.click();
+
+      playPositiveChime();
+      setExportMessage("✓ Success! Vertical format exported successfully.");
+      setTimeout(() => setExportMessage(null), 3000);
+    } catch (err) {
+      console.error(err);
+      setExportMessage("❌ Export failed. Please try again.");
+      playNegativeChime();
+      setTimeout(() => setExportMessage(null), 3000);
+    } finally {
+      setIsExportingVertical(false);
+    }
+  };
 
   // React to time changes to trigger speech & chimes
   useEffect(() => {
@@ -488,7 +540,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
         <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-neutral-950 to-transparent pointer-events-none"></div>
         
         {/* Cinematic Header Overlay */}
-        <div className="relative z-10 flex items-center justify-between pb-4 border-b border-white/[0.05] shrink-0">
+        <div className="relative z-10 flex items-center justify-between pb-3 border-b border-white/[0.05] shrink-0">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#bf5af2] animate-ping"></span>
             <span className="text-[10px] font-bold font-mono tracking-widest text-[#bf5af2] uppercase">
@@ -505,10 +557,75 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
           </div>
         </div>
 
+        {/* Format Selectors and Social Video Exporters Bar */}
+        <div className="relative z-10 py-2.5 border-b border-white/[0.05] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shrink-0 animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono font-medium text-neutral-400">Aspect Ratio:</span>
+            <div className="bg-neutral-900 border border-white/5 rounded-xl p-1 flex gap-1">
+              <button
+                onClick={() => {
+                  setIsVerticalMode(false);
+                  playSynthBeep(350, 'sine', 0.08);
+                }}
+                className={`px-3 py-1.5 text-[9.5px] font-mono font-bold uppercase rounded-lg transition-all ${
+                  !isVerticalMode
+                    ? 'bg-[#bf5af2] text-white shadow shadow-[#bf5af2]/10'
+                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.03]'
+                } cursor-pointer`}
+              >
+                🖥️ 16:9 Landscape
+              </button>
+              <button
+                onClick={() => {
+                  setIsVerticalMode(true);
+                  playSynthBeep(420, 'sine', 0.08);
+                }}
+                className={`px-3 py-1.5 text-[9.5px] font-mono font-bold uppercase rounded-lg transition-all ${
+                  isVerticalMode
+                    ? 'bg-[#bf5af2] text-white shadow shadow-[#bf5af2]/10'
+                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.03]'
+                } cursor-pointer`}
+              >
+                📱 9:16 Vertical
+              </button>
+            </div>
+          </div>
+
+          <button
+            onClick={handleExportVerticalVideo}
+            disabled={isExportingVertical}
+            className="self-start sm:self-center px-4 py-2 bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-600 hover:to-indigo-700 disabled:opacity-50 text-white font-extrabold text-[10px] font-mono tracking-wider uppercase rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-lg shadow-indigo-600/25 shrink-0"
+          >
+            {isExportingVertical ? (
+              <>
+                <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                <span>Generating {exportMessage ? '...' : '9:16 Frame'}</span>
+              </>
+            ) : (
+              <>
+                <span>📥 Download for TikTok/Reels</span>
+              </>
+            )}
+          </button>
+        </div>
+
         {/* ========================================================================= */}
         {/* ACTIVE STAGE CANVAS CONTAINERS */}
         {/* ========================================================================= */}
-        <div className="flex-1 flex flex-col items-center justify-center relative py-6 text-center select-none z-10">
+        <div 
+          id="vertical-video-stage"
+          className={`relative text-center select-none z-10 transition-all duration-500 ${
+            isVerticalMode 
+              ? 'aspect-[9/16] w-full max-w-[350px] bg-neutral-950 rounded-[2.5rem] border-[8px] border-neutral-800 shadow-2xl py-12 px-4.5 my-4 mx-auto overflow-hidden flex flex-col items-center justify-center' 
+              : 'flex-1 py-6 w-full flex flex-col items-center justify-center'
+          }`}
+        >
+          {/* Persistent Watermark Overlay */}
+          <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-1.5 px-2.5 pointer-events-none shadow-sm animate-fadeIn">
+            <img src="/src/assets/images/snapsum_logo_1782475562786.jpg" className="w-3.5 h-3.5 rounded object-cover" referrerPolicy="no-referrer" alt="SnapSum Logo" />
+            <span className="text-[8.5px] font-mono font-bold text-white tracking-tight">snapsum.app</span>
+            <span className="text-[8.5px] font-mono font-light text-neutral-300 border-l border-white/20 pl-1.5">Summarized by SnapSum</span>
+          </div>
           
           {/* Big Play Overlay for initial engagement and to satisfy autoplay policies */}
           {!isPlaying && currentTime === 0 && (
@@ -567,9 +684,9 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                   <span className="text-[8px] font-mono font-bold text-red-500 animate-pulse uppercase">⚠ System Failure</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-5 pt-4">
+                <div className={`grid gap-5 pt-4 ${isVerticalMode ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12'}`}>
                   {/* Left Side: Distressed Learner UI Visual Representation */}
-                  <div className="col-span-1 md:col-span-5 flex flex-col items-center justify-center bg-red-950/10 border border-red-500/10 rounded-2xl p-4 text-center relative space-y-3">
+                  <div className={`flex flex-col items-center justify-center bg-red-950/10 border border-red-500/10 rounded-2xl p-4 text-center relative space-y-3 ${isVerticalMode ? 'w-full' : 'col-span-1 md:col-span-5'}`}>
                     
                     {/* Distressed Human Icon and Cognitive stress gauge */}
                     <div className="relative h-16 w-16 flex items-center justify-center bg-red-900/20 rounded-full border border-red-500/30">
@@ -590,7 +707,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                   </div>
 
                   {/* Right Side: Chaotic timelines & Scatter */}
-                  <div className="col-span-1 md:col-span-7 space-y-3">
+                  <div className={`space-y-3 ${isVerticalMode ? 'w-full' : 'col-span-1 md:col-span-7'}`}>
                     <div className="bg-neutral-900/85 rounded-xl h-24 overflow-hidden flex flex-col justify-between p-3 border border-white/5 relative">
                       <div className="flex justify-between items-center relative z-10">
                         <span className="text-[8px] font-mono bg-red-600 text-white font-bold rounded-md px-2 py-0.5 animate-pulse">LOST IN THE TIMELINE</span>
@@ -852,7 +969,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
+                      <div className={`grid gap-2.5 ${isVerticalMode ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'}`}>
                         {[
                           { min: 0, title: "0:00 Intro & Variables", active: timelineSecs < 100 },
                           { min: 100, title: "1:40 Advanced Closure Stack", active: timelineSecs >= 100 && timelineSecs < 220 },
@@ -892,9 +1009,9 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                     </div>
 
                     <div className="p-1 bg-[#f5f5f7] border border-black/[0.04] rounded-2xl">
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 p-2">
+                      <div className={`grid gap-3 p-2 ${isVerticalMode ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12'}`}>
                         {/* Selector items list */}
-                        <div className="md:col-span-4 space-y-1.5">
+                        <div className={`${isVerticalMode ? 'w-full' : 'md:col-span-4'} space-y-1.5`}>
                           {mockConcepts.map((item, index) => (
                             <button
                               key={index}
@@ -915,7 +1032,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                         </div>
 
                         {/* Interactive mental model graphic presentation */}
-                        <div className="md:col-span-8 bg-white border border-neutral-200/60 p-4 rounded-xl flex flex-col justify-between relative shadow-sm">
+                        <div className={`${isVerticalMode ? 'w-full' : 'md:col-span-8'} bg-white border border-neutral-200/60 p-4 rounded-xl flex flex-col justify-between relative shadow-sm`}>
                           <div className="flex items-center gap-1.5 text-xs text-indigo-600 font-bold">
                             <Lightbulb className="w-4 h-4 text-amber-500 fill-amber-500/10" />
                             <span>Metaphor Model</span>
@@ -1029,7 +1146,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className={`grid gap-3 ${isVerticalMode ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
                       {/* Left Block: Streak info & flame */}
                       <div className="bg-[#f5f5f7] border border-black/[0.04] p-4 rounded-2xl flex items-center gap-3">
                         <div className="relative h-12 w-12 flex items-center justify-center bg-amber-500/10 border border-amber-500/20 rounded-full">
@@ -1167,11 +1284,9 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
               <div className="bg-white/[0.02] border border-emerald-500/15 rounded-3xl p-6 text-left relative overflow-hidden backdrop-blur-md shadow-2xl">
                 
                 <div className="absolute inset-0 border-2 border-emerald-500/20 rounded-3xl animate-pulse pointer-events-none"></div>
-                <div className="absolute top-0 right-0 w-44 h-44 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+                           <div className={`grid gap-5 items-center ${isVerticalMode ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-12'}`}>
                   {/* Left: The Serene Empowered Human Graphic */}
-                  <div className="col-span-1 md:col-span-5 flex flex-col items-center justify-center text-center space-y-3 p-4 bg-emerald-950/10 border border-emerald-500/10 rounded-2xl relative">
+                  <div className={`flex flex-col items-center justify-center text-center space-y-3 p-4 bg-emerald-950/10 border border-emerald-500/10 rounded-2xl relative ${isVerticalMode ? 'w-full' : 'col-span-1 md:col-span-5'}`}>
                     
                     {/* Glowing Brain Aura */}
                     <div className="relative h-20 w-20 flex items-center justify-center bg-emerald-950 rounded-full border-2 border-emerald-400 shadow-lg shadow-emerald-500/20 animate-pulse">
@@ -1190,7 +1305,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                   </div>
 
                   {/* Right: Mastered Concepts check cards list */}
-                  <div className="col-span-1 md:col-span-7 space-y-2">
+                  <div className={`space-y-2 ${isVerticalMode ? 'w-full' : 'col-span-1 md:col-span-7'}`}>
                     <span className="text-[9px] font-mono font-bold text-emerald-400 tracking-wider uppercase block">✓ Active Cognitive Milestones</span>
                     
                     {[
@@ -1573,6 +1688,148 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
         </div>
 
       </div>
+
+      {/* OFF-SCREEN 1080x1920 EXPORTER CONTAINER */}
+      <div 
+        id="vertical-video-export-target" 
+        className="absolute bg-neutral-950 flex flex-col justify-between py-16 px-12 text-center"
+        style={{
+          left: '-9999px',
+          top: '-9999px',
+          width: '1080px',
+          height: '1920px',
+          fontFamily: 'Inter, sans-serif',
+          zIndex: -100
+        }}
+      >
+        {/* Grid background for modern styling */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none"></div>
+        <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-neutral-950 to-transparent pointer-events-none"></div>
+
+        {/* Header section in vertical export */}
+        <div className="relative z-10 flex items-center justify-between border-b border-white/[0.08] pb-6">
+          <div className="flex items-center gap-4">
+            <img src="/src/assets/images/snapsum_logo_1782475562786.jpg" className="w-14 h-14 rounded-2xl object-cover" referrerPolicy="no-referrer" alt="SnapSum Logo" />
+            <div className="text-left">
+              <span className="text-[20px] font-black tracking-widest text-[#bf5af2] uppercase block">SNAPSUM EXPLORER</span>
+              <span className="text-[14px] text-neutral-400 font-mono">Dynamic Multi-Modal Courseware</span>
+            </div>
+          </div>
+          <div className="bg-teal-500/15 border border-teal-500/20 rounded-xl px-4 py-1.5 text-right">
+            <span className="text-[14px] font-mono font-bold text-teal-400 uppercase tracking-widest block">ACTIVE PREVIEW</span>
+            <span className="text-[12px] font-mono text-neutral-400">Scene {currentScene.id} / 6</span>
+          </div>
+        </div>
+
+        {/* Center Active Scene content section */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center py-12 px-6">
+          <div className="w-full scale-[1.6] transform origin-center text-center">
+            {currentTime >= 0 && currentTime < 12 && (
+              <div className="space-y-6 text-white text-center">
+                <div className="mx-auto h-24 w-24 bg-red-900/20 rounded-full border-2 border-red-500 flex items-center justify-center text-5xl">🤯</div>
+                <div className="space-y-2">
+                  <span className="text-red-400 text-xs font-mono uppercase tracking-widest">Cognitive Overload</span>
+                  <h3 className="text-2xl font-black font-display text-white">Traditional video players drown you in noise</h3>
+                  <p className="text-neutral-400 text-xs leading-relaxed max-w-sm mx-auto mt-2">80% of knowledge is lost within 24 hours of passive watching.</p>
+                </div>
+              </div>
+            )}
+            {currentTime >= 12 && currentTime < 25 && (
+              <div className="space-y-6 text-white text-center">
+                <div className="mx-auto h-24 w-24 bg-indigo-900/20 rounded-full border-2 border-indigo-500 flex items-center justify-center text-5xl">⚡</div>
+                <div className="space-y-2">
+                  <span className="text-indigo-400 text-xs font-mono uppercase tracking-widest">Active Ingestion</span>
+                  <h3 className="text-2xl font-black font-display text-white">SnapSum transforms raw video to courseware</h3>
+                  <p className="text-neutral-400 text-xs leading-relaxed max-w-sm mx-auto mt-2">Paste any URL to construct custom mental retrieval maps.</p>
+                </div>
+              </div>
+            )}
+            {currentTime >= 25 && currentTime < 40 && (
+              <div className="space-y-6 text-white text-center">
+                <div className="mx-auto h-24 w-24 bg-yellow-500/10 rounded-full border-2 border-yellow-400 flex items-center justify-center text-5xl">🤖</div>
+                <div className="space-y-2">
+                  <span className="text-yellow-400 text-xs font-mono uppercase tracking-widest">Compile Engine</span>
+                  <h3 className="text-2xl font-black font-display text-white">Multimodal Semantic Scanning</h3>
+                  <p className="text-neutral-400 text-xs leading-relaxed max-w-sm mx-auto mt-2">Chronological chapters, metaphor nodes, and diagnostic quizzes.</p>
+                </div>
+              </div>
+            )}
+            {currentTime >= 40 && currentTime < 65 && (
+              <div className="space-y-6 text-white text-center">
+                <div className="mx-auto h-24 w-24 bg-teal-500/10 rounded-full border-2 border-teal-400 flex items-center justify-center text-5xl">🎮</div>
+                <div className="space-y-2">
+                  <span className="text-teal-400 text-xs font-mono uppercase tracking-widest">Active Metaphor Node</span>
+                  <h3 className="text-2xl font-black font-display text-white">{mockConcepts[conceptMetaphorIndex]?.title || "Mental Model Mapping"}</h3>
+                  <p className="text-neutral-400 text-xs leading-relaxed max-w-sm mx-auto mt-2">
+                    "{mockConcepts[conceptMetaphorIndex]?.metaphor || "Abstract concepts translated into concrete organic analogies."}"
+                  </p>
+                </div>
+              </div>
+            )}
+            {currentTime >= 65 && currentTime < 80 && (
+              <div className="space-y-6 text-white text-center">
+                <div className="mx-auto h-24 w-24 bg-purple-500/10 rounded-full border-2 border-purple-400 flex items-center justify-center text-5xl">⚖️</div>
+                <div className="space-y-2">
+                  <span className="text-purple-400 text-xs font-mono uppercase tracking-widest">Active Workspace Features</span>
+                  <h3 className="text-2xl font-black font-display text-white">
+                    {activeFeatureTab === 'chapters' && "Interactive Chronological Chapters"}
+                    {activeFeatureTab === 'concepts' && "Semantic Metaphor Association"}
+                    {activeFeatureTab === 'quizzes' && "Spaced-Repetition Interactive Quizzes"}
+                    {activeFeatureTab === 'dashboard' && "Atomic Study Streak & Knowledge Tracker"}
+                  </h3>
+                  <p className="text-neutral-400 text-xs leading-relaxed max-w-sm mx-auto mt-2">
+                    {activeFeatureTab === 'chapters' && "Scrape and anchor timestamps instantly to let you navigate high-density courses dynamically."}
+                    {activeFeatureTab === 'concepts' && "Translate mathematical abstractions and code paradigms into memorable physical analogies."}
+                    {activeFeatureTab === 'quizzes' && "Validate retention ratios automatically through tailored diagnostics generated by Gemini."}
+                    {activeFeatureTab === 'dashboard' && "Maintain compound learning rates and watch your retention stability metrics improve daily."}
+                  </p>
+                </div>
+              </div>
+            )}
+            {currentTime >= 80 && currentTime <= 95 && (
+              <div className="space-y-6 text-white text-center">
+                <div className="mx-auto h-24 w-24 bg-emerald-500/10 rounded-full border-2 border-emerald-400 flex items-center justify-center text-5xl">🏆</div>
+                <div className="space-y-2">
+                  <span className="text-emerald-400 text-xs font-mono uppercase tracking-widest">Intellectual Mastery</span>
+                  <h3 className="text-2xl font-black font-display text-white">Learn everything. Retain forever.</h3>
+                  <p className="text-neutral-400 text-xs leading-relaxed max-w-sm mx-auto mt-2">Turn raw media feeds into your private interactive tutor.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Large Professional Watermark branding in exported image */}
+        <div className="relative z-10 flex items-center justify-between bg-white/[0.03] border border-white/[0.08] rounded-3xl p-8 py-6">
+          <div className="flex items-center gap-4">
+            <img src="/src/assets/images/snapsum_logo_1782475562786.jpg" className="w-16 h-16 rounded-2xl object-cover" referrerPolicy="no-referrer" alt="SnapSum Logo" />
+            <div className="text-left">
+              <span className="text-[22px] font-black text-white font-sans tracking-wide">Summarized by SnapSum</span>
+              <span className="text-[16px] font-mono text-neutral-400 block">snapsum.app</span>
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="text-[14px] font-mono text-[#bf5af2] font-semibold tracking-wider uppercase block">🚀 Viral-Growth Spec</span>
+            <span className="text-[12px] font-mono text-neutral-400">@SnapSumApp</span>
+          </div>
+        </div>
+      </div>
+
+      {/* EXPORT PROGRESS STATE MODAL */}
+      {exportMessage && (
+        <div className="absolute inset-0 bg-black/85 backdrop-blur-md z-50 flex flex-col items-center justify-center text-center p-6 space-y-4 animate-fadeIn">
+          <div className="relative">
+            <div className="absolute inset-0 bg-indigo-500/20 rounded-full filter blur-xl animate-pulse"></div>
+            <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin flex items-center justify-center">
+              <Video className="w-6 h-6 text-indigo-400 animate-pulse" />
+            </div>
+          </div>
+          <div className="space-y-1 max-w-sm">
+            <span className="text-[10px] font-mono font-bold uppercase text-indigo-400 tracking-widest block">SNAPSUM SOCIAL EXPORTER</span>
+            <p className="text-xs font-mono text-neutral-300">{exportMessage}</p>
+          </div>
+        </div>
+      )}
 
     </div>
   );
