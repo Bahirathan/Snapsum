@@ -4442,24 +4442,69 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <span>Server Request Interrupted</span>
                     </div>
                     {error.includes("RESOURCE_EXHAUSTED") || error.includes("prepayment credits") || error.includes("429") ? (
+                      customApiKey ? (
+                        <div className="space-y-2.5">
+                          <p className="text-sm font-semibold text-rose-950">
+                            Custom Gemini API Key - Rate Limit or Quota Exhausted
+                          </p>
+                          <p className="text-xs text-neutral-600 leading-relaxed font-sans">
+                            A 429 / RESOURCE_EXHAUSTED response was returned by Gemini using your <strong>custom API key</strong>. This typically means your personal API key has hit the Google AI Studio free tier limits (such as Requests Per Minute) or doesn't have an active billing profile linked in Google Cloud.
+                          </p>
+                          <div className="bg-white/95 p-3.5 rounded-xl border border-rose-100/50 space-y-2">
+                            <p className="text-xs font-semibold text-neutral-800">Troubleshooting Steps:</p>
+                            <ul className="text-xs text-neutral-600 list-disc list-inside space-y-1 bg-neutral-50/50 p-2.5 rounded-lg border border-neutral-100">
+                              <li>Verify your key status on <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline font-medium">Google AI Studio</a>.</li>
+                              <li>Check if your Google AI Studio project has hit its rate limits (e.g., Requests Per Minute limit).</li>
+                              <li>Wait a few minutes and try again.</li>
+                              <li>You can clear your custom key from the Admin tab to revert to SnapSum host defaults.</li>
+                            </ul>
+                          </div>
+                          <p className="text-[10px] text-rose-800/80 font-mono">Original Error: {error}</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2.5">
+                          <p className="text-sm font-semibold text-rose-950">
+                            Your regional Google AI Studio Prepayment Credits are depleted.
+                          </p>
+                          <p className="text-xs text-neutral-600 leading-relaxed font-sans">
+                            A 429 Exhausted status indicates your Gemini endpoint has run out of tokens. However, don't worry! You can easily continue evaluating and demonstrating SnapSum using any of these options:
+                          </p>
+                          <div className="bg-white/95 p-3.5 rounded-xl border border-rose-100/50 space-y-2">
+                            <p className="text-xs font-semibold text-neutral-800">Available Quick Workarounds:</p>
+                            <ul className="text-xs text-neutral-600 list-disc list-inside space-y-1 bg-neutral-50/50 p-2.5 rounded-lg border border-neutral-100">
+                              <li><strong className="text-neutral-900">Cached Templates:</strong> Select Steve Jobs or Simon Sinek in the side rail for zero-cost, high-fidelity analyses.</li>
+                              <li><strong className="text-neutral-900">Custom API Key:</strong> Provide your own Gemini API key inside the <strong className="text-indigo-600 font-medium">Admin tab</strong> above to bypass billing limits.</li>
+                            </ul>
+                          </div>
+                        </div>
+                      )
+                    ) : error.toLowerCase().includes("api_key_invalid") || error.toLowerCase().includes("api key not valid") || error.toLowerCase().includes("invalid api key") || error.toLowerCase().includes("key is invalid") ? (
                       <div className="space-y-2.5">
                         <p className="text-sm font-semibold text-rose-950">
-                          Your regional Google AI Studio Prepayment Credits are depleted.
+                          Invalid Custom Gemini API Key Detected
                         </p>
                         <p className="text-xs text-neutral-600 leading-relaxed font-sans">
-                          A 429 Exhausted status indicates your Gemini endpoint has run out of tokens. However, don't worry! You can easily continue evaluating and demonstrating SnapSum using any of these options:
+                          Gemini rejected the request because the custom API key provided in your Admin settings is invalid or has expired.
                         </p>
                         <div className="bg-white/95 p-3.5 rounded-xl border border-rose-100/50 space-y-2">
-                          <p className="text-xs font-semibold text-neutral-800">Available Quick Workarounds:</p>
+                          <p className="text-xs font-semibold text-neutral-800">How to resolve this:</p>
                           <ul className="text-xs text-neutral-600 list-disc list-inside space-y-1 bg-neutral-50/50 p-2.5 rounded-lg border border-neutral-100">
-                            <li><strong className="text-neutral-900">Cached Templates:</strong> Select Steve Jobs or Simon Sinek in the side rail for zero-cost, high-fidelity analyses.</li>
-                            <li><strong className="text-neutral-900">Custom API Key:</strong> Provide your own Gemini API key inside the <strong className="text-indigo-600 font-medium">Admin tab</strong> above to bypass billing limits.</li>
+                            <li>Make sure you copied your entire key correctly from <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline font-medium">Google AI Studio Console</a> (typically starts with <code>AIzaSy</code>).</li>
+                            <li>Go to the <strong>Admin tab</strong> at the top, paste the key again, and click <strong>Save API Settings</strong>.</li>
+                            <li>Make sure you did not paste an OpenAI key (which starts with <code>sk-</code>) or another service provider's key.</li>
+                            <li>You can also clear the custom API key to use SnapSum's default host limits.</li>
                           </ul>
                         </div>
+                        <p className="text-[10px] text-rose-800/80 font-mono">Original Error: {error}</p>
                       </div>
                     ) : (
                       <>
                         <p className="text-xs font-mono leading-relaxed text-rose-800/90">{error}</p>
+                        {customApiKey && (
+                          <p className="text-xs text-amber-850 bg-amber-50 p-3 rounded-xl border border-amber-100/50">
+                            ⚠️ Note: You are currently running SnapSum using a <strong>custom Gemini API Key</strong>. Please verify that this key has adequate permissions and billing configuration.
+                          </p>
+                        )}
                         <p className="text-[11px] text-[#515154] bg-white/60 p-3 rounded-xl leading-relaxed border border-rose-100/30 font-light">
                           💡 Tip: Some videos do not contain public english subtitles. You can simply enable the <strong className="text-[#1d1d1f] font-medium">"Custom Transcript override"</strong> box below, paste any video dialogue paragraph, and Gemini will render the summary of that text!
                         </p>
@@ -7448,9 +7493,16 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         value={customApiKey}
                         onChange={(e) => {
                           const val = e.target.value;
-                          setCustomApiKey(val);
-                          if (val.trim()) {
-                            localStorage.setItem('custom_gemini_api_key', val.trim());
+                          let cleanVal = val.trim();
+                          if (cleanVal.includes('GEMINI_API_KEY=')) {
+                            cleanVal = cleanVal.split('GEMINI_API_KEY=')[1].trim();
+                          }
+                          if ((cleanVal.startsWith('"') && cleanVal.endsWith('"')) || (cleanVal.startsWith("'") && cleanVal.endsWith("'"))) {
+                            cleanVal = cleanVal.slice(1, -1).trim();
+                          }
+                          setCustomApiKey(cleanVal);
+                          if (cleanVal) {
+                            localStorage.setItem('custom_gemini_api_key', cleanVal);
                           } else {
                             localStorage.removeItem('custom_gemini_api_key');
                           }
@@ -7469,6 +7521,21 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         </button>
                       )}
                     </div>
+                    {customApiKey && customApiKey.startsWith('sk-') && (
+                      <span className="block text-[10px] text-amber-600 font-semibold mt-1 bg-amber-50 p-2 rounded-lg border border-amber-200/50 animate-fadeIn">
+                        ⚠️ Warning: This key looks like an OpenAI API key (starts with 'sk-'). Gemini requires a Google AI Studio API key (starts with 'AIzaSy').
+                      </span>
+                    )}
+                    {customApiKey && !customApiKey.startsWith('AIzaSy') && !customApiKey.startsWith('sk-') && (
+                      <span className="block text-[10px] text-indigo-600 font-medium mt-1 animate-fadeIn">
+                        ℹ️ Note: Standard Gemini API keys usually start with 'AIzaSy'. Please make sure this is your correct key from Google AI Studio.
+                      </span>
+                    )}
+                    {customApiKey && customApiKey.startsWith('AIzaSy') && (
+                      <span className="block text-[10px] text-emerald-600 font-semibold mt-1 bg-emerald-50/50 p-2 rounded-lg border border-emerald-100 animate-fadeIn">
+                        ✅ Valid Key Format: Your Gemini API Key starts with 'AIzaSy' and is configured successfully.
+                      </span>
+                    )}
                     <span className="block text-[10px] text-slate-500 font-light">
                       🔑 Security: Your API key is cached locally inside your browser's private state, keeping it completely immune to leaking over open servers.
                     </span>
@@ -9206,16 +9273,38 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           placeholder="AIzaSy..."
                           value={customApiKey}
                           onChange={(e) => {
-                            const val = e.target.value.trim();
-                            setCustomApiKey(val);
-                            if (val) {
-                              localStorage.setItem('custom_gemini_api_key', val);
+                            const val = e.target.value;
+                            let cleanVal = val.trim();
+                            if (cleanVal.includes('GEMINI_API_KEY=')) {
+                              cleanVal = cleanVal.split('GEMINI_API_KEY=')[1].trim();
+                            }
+                            if ((cleanVal.startsWith('"') && cleanVal.endsWith('"')) || (cleanVal.startsWith("'") && cleanVal.endsWith("'"))) {
+                              cleanVal = cleanVal.slice(1, -1).trim();
+                            }
+                            setCustomApiKey(cleanVal);
+                            if (cleanVal) {
+                              localStorage.setItem('custom_gemini_api_key', cleanVal);
                             } else {
                               localStorage.removeItem('custom_gemini_api_key');
                             }
                           }}
                           className="w-full px-4 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono"
                         />
+                        {customApiKey && customApiKey.startsWith('sk-') && (
+                          <span className="block text-[10px] text-amber-600 font-semibold mt-1 bg-amber-50 p-2 rounded-lg border border-amber-200/50 animate-fadeIn">
+                            ⚠️ Warning: This key looks like an OpenAI API key (starts with 'sk-'). Gemini requires a Google AI Studio API key (starts with 'AIzaSy').
+                          </span>
+                        )}
+                        {customApiKey && !customApiKey.startsWith('AIzaSy') && !customApiKey.startsWith('sk-') && (
+                          <span className="block text-[10px] text-indigo-600 font-medium mt-1 animate-fadeIn">
+                            ℹ️ Note: Standard Gemini API keys usually start with 'AIzaSy'. Please make sure this is your correct key from Google AI Studio.
+                          </span>
+                        )}
+                        {customApiKey && customApiKey.startsWith('AIzaSy') && (
+                          <span className="block text-[10px] text-emerald-600 font-semibold mt-1 bg-emerald-50/50 p-2 rounded-lg border border-emerald-100 animate-fadeIn">
+                            ✅ Valid Key Format: Your Gemini API Key starts with 'AIzaSy' and is configured successfully.
+                          </span>
+                        )}
                         <span className="block text-[9px] text-[#86868b] leading-tight">
                           Empty default utilizes host defaults (No direct developer prompt fees).
                         </span>
