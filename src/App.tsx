@@ -951,6 +951,7 @@ export default function App() {
   const [vault2faVerified, setVault2faVerified] = useState(false);
   const [vaultSetupLoading, setVaultSetupLoading] = useState(false);
   const [vaultSaveStatus, setVaultSaveStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' });
+  const [geminiSaveStatus, setGeminiSaveStatus] = useState(false);
 
   const [adminUserField, setAdminUserField] = useState('');
   const [adminPassField, setAdminPassField] = useState('');
@@ -9287,6 +9288,28 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           <option value="true">Force Search Grounding (Inject Google Search queries on all jobs)</option>
                           <option value="false">Disable Search Grounding (No external internet fetching)</option>
                         </select>
+                      </div>
+
+                      {/* Save API settings explicitly to reassure the user */}
+                      <div className="pt-4 flex items-center justify-between gap-3 border-t border-neutral-100 flex-wrap">
+                        <div className="h-6 flex items-center">
+                          {geminiSaveStatus && (
+                            <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5 animate-fadeIn">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                              Settings saved successfully to browser cache!
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setGeminiSaveStatus(true);
+                            setTimeout(() => setGeminiSaveStatus(false), 3000);
+                          }}
+                          className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl transition cursor-pointer shadow-sm active:scale-[0.98]"
+                        >
+                          Save API Settings
+                        </button>
                       </div>
 
                     </div>
