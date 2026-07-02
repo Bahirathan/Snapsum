@@ -90,3 +90,95 @@
   animation: scrubPath 4s cubic-bezier(0.445, 0.05, 0.55, 0.95) infinite;
 }
 
+/* ==========================================================================
+   GLOBAL RTL DIRECTION STYLING OVERRIDES (Arabic & Right-to-Left Support)
+   ========================================================================== */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Force text alignments */
+[dir="rtl"] .text-left {
+  text-align: right !important;
+}
+[dir="rtl"] .text-right {
+  text-align: left !important;
+}
+
+/* Margin-left/right auto alignment flip */
+[dir="rtl"] .ml-auto {
+  margin-right: auto !important;
+  margin-left: 0 !important;
+}
+[dir="rtl"] .mr-auto {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
+
+/* Dynamic margin flips for buttons and labels */
+[dir="rtl"] .mr-1 { margin-left: 0.25rem !important; margin-right: 0 !important; }
+[dir="rtl"] .mr-1\.5 { margin-left: 0.375rem !important; margin-right: 0 !important; }
+[dir="rtl"] .mr-2 { margin-left: 0.5rem !important; margin-right: 0 !important; }
+[dir="rtl"] .mr-2\.5 { margin-left: 0.625rem !important; margin-right: 0 !important; }
+[dir="rtl"] .mr-3 { margin-left: 0.75rem !important; margin-right: 0 !important; }
+[dir="rtl"] .mr-4 { margin-left: 1rem !important; margin-right: 0 !important; }
+
+[dir="rtl"] .ml-1 { margin-right: 0.25rem !important; margin-left: 0 !important; }
+[dir="rtl"] .ml-1\.5 { margin-right: 0.375rem !important; margin-left: 0 !important; }
+[dir="rtl"] .ml-2 { margin-right: 0.5rem !important; margin-left: 0 !important; }
+[dir="rtl"] .ml-2\.5 { margin-right: 0.625rem !important; margin-left: 0 !important; }
+[dir="rtl"] .ml-3 { margin-right: 0.75rem !important; margin-left: 0 !important; }
+[dir="rtl"] .ml-4 { margin-right: 1rem !important; margin-left: 0 !important; }
+
+/* Dynamic padding flips */
+[dir="rtl"] .pr-1 { padding-left: 0.25rem !important; padding-right: 0 !important; }
+[dir="rtl"] .pr-2 { padding-left: 0.5rem !important; padding-right: 0 !important; }
+[dir="rtl"] .pr-3 { padding-left: 0.75rem !important; padding-right: 0 !important; }
+[dir="rtl"] .pr-4 { padding-left: 1rem !important; padding-right: 0 !important; }
+[dir="rtl"] .pr-5 { padding-left: 1.25rem !important; padding-right: 0 !important; }
+[dir="rtl"] .pr-6 { padding-left: 1.5rem !important; padding-right: 0 !important; }
+
+[dir="rtl"] .pl-1 { padding-right: 0.25rem !important; padding-left: 0 !important; }
+[dir="rtl"] .pl-2 { padding-right: 0.5rem !important; padding-left: 0 !important; }
+[dir="rtl"] .pl-3 { padding-right: 0.75rem !important; padding-left: 0 !important; }
+[dir="rtl"] .pl-4 { padding-right: 1rem !important; padding-left: 0 !important; }
+[dir="rtl"] .pl-5 { padding-right: 1.25rem !important; padding-left: 0 !important; }
+[dir="rtl"] .pl-6 { padding-right: 1.5rem !important; padding-left: 0 !important; }
+
+/* Border flips */
+[dir="rtl"] .border-r {
+  border-left-width: 1px !important;
+  border-right-width: 0 !important;
+}
+[dir="rtl"] .border-l {
+  border-right-width: 1px !important;
+  border-left-width: 0 !important;
+}
+
+/* Absolute positioning placements */
+[dir="rtl"] .right-2 { left: 0.5rem !important; right: auto !important; }
+[dir="rtl"] .right-3 { left: 0.75rem !important; right: auto !important; }
+[dir="rtl"] .right-4 { left: 1rem !important; right: auto !important; }
+[dir="rtl"] .right-5 { left: 1.25rem !important; right: auto !important; }
+[dir="rtl"] .right-6 { left: 1.5rem !important; right: auto !important; }
+
+[dir="rtl"] .left-2 { right: 0.5rem !important; left: auto !important; }
+[dir="rtl"] .left-3 { right: 0.75rem !important; left: auto !important; }
+[dir="rtl"] .left-4 { right: 1rem !important; left: auto !important; }
+[dir="rtl"] .left-5 { right: 1.25rem !important; left: auto !important; }
+[dir="rtl"] .left-6 { right: 1.5rem !important; left: auto !important; }
+
+/* Flip directional icons dynamically so arrows/chevrons match writing flow */
+[dir="rtl"] .lucide-arrow-right,
+[dir="rtl"] .lucide-chevron-right,
+[dir="rtl"] .lucide-arrow-left,
+[dir="rtl"] .lucide-chevron-left {
+  transform: scaleX(-1) !important;
+}
+
+/* RTL Form / Input adjustments */
+[dir="rtl"] input, [dir="rtl"] select, [dir="rtl"] textarea {
+  text-align: right !important;
+}
+

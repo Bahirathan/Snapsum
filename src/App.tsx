@@ -350,11 +350,12 @@ export default function App() {
     localStorage.setItem('snapsum_saved_stacks', JSON.stringify(savedStacks));
   }, [savedStacks]);
   
-  // Is active loaded summary in Arabic RTL language
-  const isRtl = activeSummary && /[\u0600-\u06FF]/.test(activeSummary.summary || '');
-  
   // Referral, Challenge, and Language States
   const [outputLanguage, setOutputLanguage] = useState<'en' | 'ar'>('en');
+  
+  // Is active loaded summary in Arabic RTL language or selected output language is Arabic
+  const isRtl = outputLanguage === 'ar' || !!(activeSummary && /[\u0600-\u06FF]/.test(activeSummary.summary || ''));
+  
   const [referralCode, setReferralCode] = useState<string>('');
   const [referralCount, setReferralCount] = useState<number>(0);
   const [referralUnlocked, setReferralUnlocked] = useState<boolean>(false);
@@ -2965,7 +2966,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] font-sans antialiased selection:bg-[#0071e3]/10 selection:text-[#0071e3]">
+    <div 
+      className={`min-h-screen bg-[#f5f5f7] text-[#1d1d1f] font-sans antialiased selection:bg-[#0071e3]/10 selection:text-[#0071e3] ${isRtl ? 'rtl' : ''}`}
+      dir={isRtl ? 'rtl' : 'ltr'}
+    >
       
       {/* Sleek Apple-Inspired Navigation Header */}
       <header className="sticky top-0 z-35 bg-white/85 backdrop-blur-xl border-b border-black/[0.04] transition-all duration-300">
