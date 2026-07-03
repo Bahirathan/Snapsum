@@ -66,6 +66,7 @@ interface MonthlyUsage {
   count: number;
   voiceoverMinutes: number;
   lastReset: number;
+  isFirstCycle?: boolean;
 }
 const monthlyUsageStorage = new Map<string, MonthlyUsage>();
 
@@ -105,12 +106,13 @@ async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: 
   const now = Date.now();
   let mUsage = monthlyUsageStorage.get(trackingKey);
   if (!mUsage) {
-    mUsage = { count: 0, voiceoverMinutes: 0, lastReset: now };
+    mUsage = { count: 0, voiceoverMinutes: 0, lastReset: now, isFirstCycle: true };
   } else if (now - mUsage.lastReset > 30 * 24 * 60 * 60 * 1000) {
     // 30 days cooling cycle
     mUsage.count = 0;
     mUsage.voiceoverMinutes = 0;
     mUsage.lastReset = now;
+    mUsage.isFirstCycle = false;
   }
 
   // Determine limits based on active plan
@@ -122,6 +124,8 @@ async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: 
     limit = 150; // soft cap
   } else if (isEnterprise) {
     limit = 500; // hard cap
+  } else if (mUsage.isFirstCycle) {
+    limit = 8; // one-time first-session bonus
   }
 
   // Handle Free / Starter tier limit
@@ -132,7 +136,9 @@ async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: 
         count: mUsage.count,
         limit,
         remaining: 0,
-        message: 'Your Starter plan is limited to 5 summaries per month. Please upgrade to Pro or Enterprise for unlimited processing!'
+        message: mUsage.isFirstCycle
+          ? 'Your one-time first-session bonus limit of 8 summaries has been reached. Please upgrade to Pro or Enterprise for unlimited processing!'
+          : 'Your Starter plan is limited to 5 summaries per month. Please upgrade to Pro or Enterprise for unlimited processing!'
       };
     }
   }

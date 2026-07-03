@@ -422,7 +422,7 @@ export default function App() {
 
         // Draw logo image
         const logo = new Image();
-        logo.src = '/src/assets/images/snapsum_logo_1782475562786.jpg';
+        logo.src = '/logo.svg';
         logo.onload = () => {
           // Rounded corners clip for logo inside canvas
           const logoSize = 36;

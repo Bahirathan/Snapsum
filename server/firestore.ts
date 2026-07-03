@@ -154,14 +154,15 @@ function getDbInstance() {
 
     // Try initializing via Firebase Admin SDK (bypasses security rules server-side)
     try {
-      if (admin.apps.length === 0) {
-        admin.initializeApp({
+      const adminAny = admin as any;
+      if (adminAny.apps.length === 0) {
+        adminAny.initializeApp({
           projectId: config.projectId,
         });
       }
       const adminDb = config.firestoreDatabaseId && config.firestoreDatabaseId !== '(default)'
-        ? admin.firestore(config.firestoreDatabaseId)
-        : admin.firestore();
+        ? adminAny.firestore(config.firestoreDatabaseId)
+        : adminAny.firestore();
       
       cachedDb = adminDb;
       console.log(`Firebase Admin SDK initialized successfully on backend with project: ${config.projectId}, database: ${config.firestoreDatabaseId || '(default)'}`);
