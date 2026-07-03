@@ -622,7 +622,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
         >
           {/* Persistent Watermark Overlay */}
           <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-1.5 px-2.5 pointer-events-none shadow-sm animate-fadeIn">
-            <img src="/src/assets/images/snapsum_logo_1782475562786.jpg" className="w-3.5 h-3.5 rounded object-cover" referrerPolicy="no-referrer" alt="SnapSum Logo" />
+            <img src="/logo.svg" className="w-3.5 h-3.5 rounded object-cover" referrerPolicy="no-referrer" alt="SnapSum Logo" />
             <span className="text-[8.5px] font-mono font-bold text-white tracking-tight">snapsum.app</span>
             <span className="text-[8.5px] font-mono font-light text-neutral-300 border-l border-white/20 pl-1.5">Summarized by SnapSum</span>
           </div>
@@ -1709,7 +1709,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
         {/* Header section in vertical export */}
         <div className="relative z-10 flex items-center justify-between border-b border-white/[0.08] pb-6">
           <div className="flex items-center gap-4">
-            <img src="/src/assets/images/snapsum_logo_1782475562786.jpg" className="w-14 h-14 rounded-2xl object-cover" referrerPolicy="no-referrer" alt="SnapSum Logo" />
+            <img src="/logo.svg" className="w-14 h-14 rounded-2xl object-cover" referrerPolicy="no-referrer" alt="SnapSum Logo" />
             <div className="text-left">
               <span className="text-[20px] font-black tracking-widest text-[#bf5af2] uppercase block">SNAPSUM EXPLORER</span>
               <span className="text-[14px] text-neutral-400 font-mono">Dynamic Multi-Modal Courseware</span>
@@ -1802,7 +1802,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
         {/* Large Professional Watermark branding in exported image */}
         <div className="relative z-10 flex items-center justify-between bg-white/[0.03] border border-white/[0.08] rounded-3xl p-8 py-6">
           <div className="flex items-center gap-4">
-            <img src="/src/assets/images/snapsum_logo_1782475562786.jpg" className="w-16 h-16 rounded-2xl object-cover" referrerPolicy="no-referrer" alt="SnapSum Logo" />
+            <img src="/logo.svg" className="w-16 h-16 rounded-2xl object-cover" referrerPolicy="no-referrer" alt="SnapSum Logo" />
             <div className="text-left">
               <span className="text-[22px] font-black text-white font-sans tracking-wide">Summarized by SnapSum</span>
               <span className="text-[16px] font-mono text-neutral-400 block">snapsum.app</span>
