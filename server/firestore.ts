@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, orderBy, getDocs, updateDoc } from 'firebase/firestore';
+import admin from 'firebase-admin';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -150,6 +151,25 @@ function getDbInstance() {
     }
 
     const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+
+    // Try initializing via Firebase Admin SDK (bypasses security rules server-side)
+    try {
+      if (admin.apps.length === 0) {
+        admin.initializeApp({
+          projectId: config.projectId,
+        });
+      }
+      const adminDb = config.firestoreDatabaseId && config.firestoreDatabaseId !== '(default)'
+        ? admin.firestore(config.firestoreDatabaseId)
+        : admin.firestore();
+      
+      cachedDb = adminDb;
+      console.log(`Firebase Admin SDK initialized successfully on backend with project: ${config.projectId}, database: ${config.firestoreDatabaseId || '(default)'}`);
+      return cachedDb;
+    } catch (adminErr) {
+      console.warn('Firebase Admin SDK initialization failed, falling back to Client SDK:', adminErr);
+    }
+
     const app = initializeApp({
       apiKey: config.apiKey,
       authDomain: config.authDomain,
@@ -164,7 +184,7 @@ function getDbInstance() {
     console.log(`Firebase Client SDK initialized on backend with project: ${config.projectId}`);
     return cachedDb;
   } catch (error: any) {
-    console.error('Failed to initialize client-side Firestore on backend:', error);
+    console.error('Failed to initialize Firestore on backend:', error);
     initError = error;
     throw error;
   }

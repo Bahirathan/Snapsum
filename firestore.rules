@@ -23,7 +23,8 @@ service cloud.firestore {
 
     // Referrals and invite system
     match /referrals/{docId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if false;
     }
 
     // Shared summary clips and bookmarks
