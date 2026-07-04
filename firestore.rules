@@ -13,7 +13,7 @@ service cloud.firestore {
 
     // Administrative configuration and settings
     match /admin_settings/{docId} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
 
     // Learn analytics & events tracking
@@ -34,7 +34,7 @@ service cloud.firestore {
 
     // VIP/premium user subscriptions
     match /subscriptions/{docId} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

@@ -1215,12 +1215,6 @@ export default function App() {
     if (customVipCode && customVipCode.trim()) {
       headers['x-vip-bypass-code'] = customVipCode.trim();
     }
-    if (customStripeSecret && customStripeSecret.trim()) {
-      headers['x-custom-stripe-secret-key'] = customStripeSecret.trim();
-    }
-    if (customStripePublishable && customStripePublishable.trim()) {
-      headers['x-custom-stripe-publishable-key'] = customStripePublishable.trim();
-    }
 
     // Admin Dashboard parameter injectors:
     if (adminFreeReqsLimit) {
@@ -1284,16 +1278,39 @@ export default function App() {
     // Handle successful Stripe Checkout redirect session
     const params = new URLSearchParams(window.location.search);
     if (params.get('checkout_success') === 'true') {
-      savePremiumStatus(true, 'pro', 'R_Bahirathan@gmail.com');
-      fetch('/api/save-subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: 'R_Bahirathan@gmail.com',
-          plan: 'pro',
-          status: 'active'
-        })
-      }).catch(e => console.warn(e));
+      let email = 'R_Bahirathan@gmail.com';
+      try {
+        email = localStorage.getItem('pending_checkout_email') || 'R_Bahirathan@gmail.com';
+      } catch (e) {
+        console.warn(e);
+      }
+      setVerifyingPayment(true);
+      setVerifyingPaymentEmail(email);
+
+      let attempts = 0;
+      const maxAttempts = 20; // up to 40 seconds
+      const intervalId = setInterval(async () => {
+        attempts++;
+        try {
+          const res = await fetch(`/api/subscription-status?email=${encodeURIComponent(email)}`);
+          const data = await res.json();
+          if (data?.subscription?.status === 'active') {
+            savePremiumStatus(true, data.subscription.plan || 'pro', email);
+            setVerifyingPayment(false);
+            clearInterval(intervalId);
+            console.log('Stripe payment verified successfully via webhook and database status check.');
+          }
+        } catch (err) {
+          console.warn('Subscription status check failed:', err);
+        }
+
+        if (attempts >= maxAttempts) {
+          clearInterval(intervalId);
+          setVerifyingPayment(false);
+          console.warn('Stripe checkout verification timed out.');
+        }
+      }, 2000);
+
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, document.title, cleanUrl);
     }
@@ -1411,6 +1428,9 @@ export default function App() {
       return false;
     }
   });
+
+  const [verifyingPayment, setVerifyingPayment] = useState<boolean>(false);
+  const [verifyingPaymentEmail, setVerifyingPaymentEmail] = useState<string>('');
 
   // Custom Domain Configuration state
   const [customDomain, setCustomDomain] = useState<string>(() => {
@@ -1596,6 +1616,12 @@ export default function App() {
     if (stripeConfig.stripeConfigured) {
       setStripePaymentLoading(true);
       try {
+        const userEmail = visitorUser?.email || localStorage.getItem('youtube_summarizer_premium_email') || subscriptionEmail || 'R_Bahirathan@gmail.com';
+        try {
+          localStorage.setItem('pending_checkout_email', userEmail);
+        } catch (e) {
+          console.warn(e);
+        }
         const response = await fetch('/api/create-checkout-session', {
           method: 'POST',
           headers: getHeaders(),
@@ -1603,7 +1629,8 @@ export default function App() {
             planCode: plan,
             billingCycle,
             promoCode: appliedPromo?.code || null,
-            returnUrl: window.location.href.split('?')[0] // Clean active page url
+            returnUrl: window.location.href.split('?')[0], // Clean active page url
+            email: userEmail
           })
         });
         const data = await response.json();
@@ -11579,6 +11606,26 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </div>
         )}
       </div>
+
+      {verifyingPayment && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 max-w-md w-full mx-4 p-8 text-center flex flex-col items-center">
+            <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-6 animate-pulse">
+              <svg className="w-8 h-8 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Verifying Your Payment</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              We are finalizing your upgrade with Stripe. Please keep this tab open...
+            </p>
+            <div className="text-xs text-gray-400 font-mono select-all">
+              Checking status for: {verifyingPaymentEmail}
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

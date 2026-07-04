@@ -18,6 +18,7 @@ import { saveSubscription, getSubscription } from './server/subscriptionStore';
 import { db } from './server/firestore';
 // @ts-ignore
 import { generateSecret, generateURI, verifySync } from 'otplib';
+import Stripe from 'stripe';
 
 dotenv.config();
 
@@ -317,7 +318,12 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ 
+  limit: '10mb',
+  verify: (req: any, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 // Route-level rate limiters (configurable via env vars)
 const summarizeLimiter = rateLimit({
@@ -1977,8 +1983,7 @@ app.post('/api/admin/ip-reset', (req, res) => {
 });
 
 app.get('/api/stripe-status', async (req, res) => {
-  // Support custom in-app client developer overrides in addition to server environment variables
-  const secretKey = (req.headers['x-custom-stripe-secret-key'] as string) || process.env.STRIPE_SECRET_KEY;
+  const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey || !secretKey.trim()) {
     return res.json({
       stripeConfigured: false,
@@ -1993,7 +1998,7 @@ app.get('/api/stripe-status', async (req, res) => {
       stripeConfigured: false,
       publishableKey: '',
       accountInfo: null,
-      error: `Invalid STRIPE_SECRET_KEY format (value starts with "${secretKey.trim().substring(0, 10)}..."). A valid Stripe secret key must start with "sk_test_" or "sk_live_". Please configure a valid key or clear it to use Sandbox Mode.`
+      error: 'Invalid STRIPE_SECRET_KEY format.'
     });
   }
 
@@ -2012,7 +2017,7 @@ app.get('/api/stripe-status', async (req, res) => {
     const acc = await accRes.json();
     return res.json({
       stripeConfigured: true,
-      publishableKey: (req.headers['x-custom-stripe-publishable-key'] as string) || process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
       accountInfo: {
         id: acc.id,
         chargesEnabled: acc.charges_enabled,
@@ -2030,20 +2035,11 @@ app.get('/api/stripe-status', async (req, res) => {
     console.error('Error fetching Stripe status:', err);
     return res.json({
       stripeConfigured: false,
-      publishableKey: (req.headers['x-custom-stripe-publishable-key'] as string) || process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || process.env.VITE_STRIPE_PUBLISHABLE_KEY || '',
       accountInfo: null,
       error: err.message || 'Failed to retrieve account details from Stripe.'
     });
   }
-});
-
-app.post('/api/save-subscription', async (req, res) => {
-  const { email, plan, status } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'Email is required' });
-  }
-  const success = await saveSubscription(email, plan || 'pro', status || 'active');
-  return res.json({ success });
 });
 
 app.get('/api/subscription-status', async (req, res) => {
@@ -2055,17 +2051,66 @@ app.get('/api/subscription-status', async (req, res) => {
   return res.json({ subscription });
 });
 
+app.post('/api/stripe-webhook', async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!sig) {
+    console.error('Stripe webhook error: Missing stripe-signature header');
+    return res.status(400).send('Webhook Error: Missing stripe-signature header');
+  }
+
+  if (!webhookSecret) {
+    console.error('Stripe webhook error: STRIPE_WEBHOOK_SECRET is not configured on the server');
+    return res.status(500).send('Webhook Error: STRIPE_WEBHOOK_SECRET is not configured');
+  }
+
+  let event: any;
+
+  try {
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeSecretKey) {
+      throw new Error('STRIPE_SECRET_KEY is not configured');
+    }
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: '2025-01-27.acacia' as any,
+    });
+    
+    const rawBody = (req as any).rawBody || JSON.stringify(req.body);
+    event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
+  } catch (err: any) {
+    console.error(`Webhook signature verification failed: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const email = session.metadata?.email || session.customer_details?.email;
+    const plan = session.metadata?.planCode || 'pro';
+    
+    if (email) {
+      console.log(`Stripe Webhook checkout.session.completed: email=${email}, plan=${plan}`);
+      await saveSubscription(email, plan, 'active');
+    } else {
+      console.error('Stripe Webhook: checkout.session.completed event is missing user email in metadata or customer_details', session);
+    }
+  }
+
+  return res.json({ received: true });
+});
+
 app.post('/api/create-checkout-session', async (req, res) => {
-  const { planCode, billingCycle, promoCode, returnUrl } = req.body;
-  // Fallback to client override header if the main server environment variable is not set
-  const stripeSecretKey = (req.headers['x-custom-stripe-secret-key'] as string) || process.env.STRIPE_SECRET_KEY;
+  const { planCode, billingCycle, promoCode, returnUrl, email } = req.body;
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
   if (!stripeSecretKey || !stripeSecretKey.trim()) {
-    return res.status(400).json({ error: 'Stripe Secret Key is missing. Connect your live Stripe key via AI Studio settings or direct in-app Developer override.' });
+    console.error('STRIPE_SECRET_KEY is missing from environment');
+    return res.status(500).json({ error: 'Stripe configuration is missing on server side.' });
   }
 
   if (!stripeSecretKey.trim().startsWith('sk_')) {
-    return res.status(400).json({ error: `Invalid Stripe Secret Key format. A valid secret key must start with "sk_test_" or "sk_live_". Please verify your secrets configuration.` });
+    console.error('STRIPE_SECRET_KEY on server does not start with sk_');
+    return res.status(500).json({ error: 'Stripe configuration is invalid on server side.' });
   }
 
   try {
@@ -2138,6 +2183,13 @@ app.post('/api/create-checkout-session', async (req, res) => {
     payload.append('line_items[0][quantity]', '1');
     payload.append('success_url', `${returnUrl || 'http://localhost:3000'}?checkout_success=true&session_id={CHECKOUT_SESSION_ID}`);
     payload.append('cancel_url', `${returnUrl || 'http://localhost:3000'}?checkout_cancel=true`);
+
+    if (planCode) {
+      payload.append('metadata[planCode]', String(planCode));
+    }
+    if (email) {
+      payload.append('metadata[email]', String(email));
+    }
 
     const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
