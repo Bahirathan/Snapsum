@@ -34,6 +34,128 @@ const ai = new GoogleGenAI({
   },
 });
 
+// Extremely robust JSON cleaning, extraction, and repair engine to prevent parsing crashes
+function looseJsonRepair(jsonStr: string): string {
+  let s = jsonStr.trim();
+  
+  // Balance brackets/braces and quotes
+  let inString = false;
+  let escape = false;
+  const stack: string[] = [];
+  let cleanStr = "";
+  
+  for (let i = 0; i < s.length; i++) {
+    const char = s[i];
+    
+    if (escape) {
+      cleanStr += char;
+      escape = false;
+      continue;
+    }
+    
+    if (char === '\\') {
+      cleanStr += char;
+      escape = true;
+      continue;
+    }
+    
+    if (char === '"') {
+      inString = !inString;
+      cleanStr += char;
+      continue;
+    }
+    
+    if (inString) {
+      cleanStr += char;
+      continue;
+    }
+    
+    if (char === '{' || char === '[') {
+      stack.push(char === '{' ? '}' : ']');
+      cleanStr += char;
+    } else if (char === '}' || char === ']') {
+      if (stack.length > 0 && stack[stack.length - 1] === char) {
+        stack.pop();
+      }
+      cleanStr += char;
+    } else {
+      cleanStr += char;
+    }
+  }
+  
+  // If we ended up inside a string, close the string
+  if (inString) {
+    cleanStr += '"';
+  }
+  
+  let repaired = cleanStr.trim();
+  
+  // Clean up trailing invalid elements (commas, unclosed object properties, etc) before balancing braces
+  while (repaired.endsWith(',')) {
+    repaired = repaired.slice(0, -1).trim();
+  }
+  
+  // Clean up dangling keys, trailing colon, dangling comma at the end
+  repaired = repaired.replace(/,\s*"[^"]*"\s*:\s*[^,]*$/, '');
+  repaired = repaired.replace(/,\s*"[^"]*"\s*$/, '');
+  repaired = repaired.replace(/,\s*$/, '');
+  
+  // Pop everything remaining in the stack to close open structures
+  while (stack.length > 0) {
+    const closing = stack.pop();
+    repaired = repaired.trim();
+    if (repaired.endsWith(',')) {
+      repaired = repaired.slice(0, -1).trim();
+    }
+    repaired += closing;
+  }
+  
+  return repaired;
+}
+
+function cleanAndParseJson(text: string): any {
+  let cleaned = text.trim();
+
+  // 1. If wrapped in markdown code blocks, extract
+  const match = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (match && match[1]) {
+    cleaned = match[1].trim();
+  }
+
+  // 2. Extract the actual JSON portion if there is surrounding conversational text
+  const firstBrace = cleaned.indexOf('{');
+  const firstBracket = cleaned.indexOf('[');
+  
+  let startIdx = -1;
+  let endIdx = -1;
+  
+  if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+    startIdx = firstBrace;
+    endIdx = cleaned.lastIndexOf('}');
+  } else if (firstBracket !== -1) {
+    startIdx = firstBracket;
+    endIdx = cleaned.lastIndexOf(']');
+  }
+
+  if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+    cleaned = cleaned.slice(startIdx, endIdx + 1);
+  }
+
+  // 3. Try to parse
+  try {
+    return JSON.parse(cleaned);
+  } catch (err: any) {
+    console.warn("Standard JSON.parse failed, attempting loose repair. Error:", err.message);
+    try {
+      const repaired = looseJsonRepair(cleaned);
+      return JSON.parse(repaired);
+    } catch (repairErr: any) {
+      console.error("JSON repair failed:", repairErr.message);
+      throw new Error(`Failed to parse AI output as JSON: ${err.message}. Raw output sample: ${text.slice(0, 150)}...`);
+    }
+  }
+}
+
 // Helper to get active Gemini client.
 // SECURITY: Support client-supplied 'x-custom-gemini-api-key' securely so that users
 // can pay for their own API usage. If and only if a valid custom key is specified, we
@@ -967,7 +1089,7 @@ Generate a complete, high-quality summary and promotional asset package matching
       throw new Error('Gemini response returned empty content.');
     }
 
-    const result = JSON.parse(outputText.trim());
+    const result = cleanAndParseJson(outputText);
 
     // Build saved summary package
     const richSummary = {
@@ -2171,7 +2293,7 @@ Please perform a comprehensive cross-video synthesis and output a detailed JSON 
       throw new Error('Gemini response returned empty content.');
     }
 
-    const result = JSON.parse(outputText.trim());
+    const result = cleanAndParseJson(outputText);
     return res.json({
       id: 'stack_' + Date.now().toString(36),
       name: stackName,

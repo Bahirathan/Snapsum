@@ -1,6 +1,8 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, orderBy, getDocs, updateDoc } from 'firebase/firestore';
 import admin from 'firebase-admin';
+import { getApps, initializeApp as initAdminApp, getApp } from 'firebase-admin/app';
+import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -154,15 +156,14 @@ function getDbInstance() {
 
     // Try initializing via Firebase Admin SDK (bypasses security rules server-side)
     try {
-      const adminAny = admin as any;
-      if (adminAny.apps.length === 0) {
-        adminAny.initializeApp({
+      if (getApps().length === 0) {
+        initAdminApp({
           projectId: config.projectId,
         });
       }
       const adminDb = config.firestoreDatabaseId && config.firestoreDatabaseId !== '(default)'
-        ? adminAny.firestore(config.firestoreDatabaseId)
-        : adminAny.firestore();
+        ? getAdminFirestore(getApp(), config.firestoreDatabaseId)
+        : getAdminFirestore();
       
       cachedDb = adminDb;
       console.log(`Firebase Admin SDK initialized successfully on backend with project: ${config.projectId}, database: ${config.firestoreDatabaseId || '(default)'}`);
