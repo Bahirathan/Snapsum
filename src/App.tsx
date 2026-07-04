@@ -437,26 +437,26 @@ export default function App() {
           ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
           ctx.restore();
 
-          // Write SnapSum text next to logo
+          // Write Zipytiny text next to logo
           ctx.fillStyle = '#0f172a';
           ctx.font = 'bold 16px "Inter", sans-serif';
           ctx.textAlign = 'left';
-          ctx.fillText('SnapSum', logoX + logoSize + 12, logoY + 16);
+          ctx.fillText('Zipytiny', logoX + logoSize + 12, logoY + 16);
 
-          // Write "snapsum.app" subtext
+          // Write "zipytiny.app" subtext
           ctx.fillStyle = '#64748b';
           ctx.font = '500 13px "JetBrains Mono", Courier, monospace';
-          ctx.fillText('snapsum.app', logoX + logoSize + 12, logoY + 32);
+          ctx.fillText('zipytiny.app', logoX + logoSize + 12, logoY + 32);
 
           // Write watermark on the left side of footer
           ctx.fillStyle = '#334155';
           ctx.font = '600 14px "Inter", sans-serif';
-          ctx.fillText('💡 Summarized & Mapped with SnapSum AI', 40, finalHeight + 45);
+          ctx.fillText('💡 Summarized & Mapped with Zipytiny AI', 40, finalHeight + 45);
 
           // Convert to PNG and download
           const exportUrl = canvas.toDataURL('image/png');
           const link = document.createElement('a');
-          link.download = `snapsum-mindmap-${activeSummary?.metadata?.videoId || 'summary'}.png`;
+          link.download = `zipytiny-mindmap-${activeSummary?.metadata?.videoId || 'summary'}.png`;
           link.href = exportUrl;
           link.click();
           setIsExportingMindmap(false);
@@ -466,16 +466,16 @@ export default function App() {
           ctx.fillStyle = '#0f172a';
           ctx.font = 'bold 16px "Inter", sans-serif';
           ctx.textAlign = 'right';
-          ctx.fillText('snapsum.app', finalWidth - 40, finalHeight + 45);
+          ctx.fillText('zipytiny.app', finalWidth - 40, finalHeight + 45);
 
           ctx.fillStyle = '#334155';
           ctx.font = '600 14px "Inter", sans-serif';
           ctx.textAlign = 'left';
-          ctx.fillText('💡 Summarized & Mapped with SnapSum AI', 40, finalHeight + 45);
+          ctx.fillText('💡 Summarized & Mapped with Zipytiny AI', 40, finalHeight + 45);
 
           const exportUrl = canvas.toDataURL('image/png');
           const link = document.createElement('a');
-          link.download = `snapsum-mindmap-${activeSummary?.metadata?.videoId || 'summary'}.png`;
+          link.download = `zipytiny-mindmap-${activeSummary?.metadata?.videoId || 'summary'}.png`;
           link.href = exportUrl;
           link.click();
           setIsExportingMindmap(false);
@@ -648,7 +648,7 @@ export default function App() {
       ctx.fillStyle = '#ff7b00'; // high intensity orange
       ctx.font = '900 11px "Inter", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('• SNAPSUM AI REPURPOSER •', width / 2, 95);
+      ctx.fillText('• ZIPYTINY AI REPURPOSER •', width / 2, 95);
 
       // 5. Draw Central Captions with high contrast card backing
       ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
@@ -1004,14 +1004,14 @@ export default function App() {
   useEffect(() => {
     try {
       const titles: Record<string, string> = {
-        landing: 'SnapSum - Instant AI Video Knowledge Engine',
-        app: 'AI Video Knowledge Engine Workspace | SnapSum',
-        domain: 'Domain Configuration | SnapSum',
-        billing: 'Premium Plans & Upgrades | SnapSum',
-        marketing: 'AI Viral Creator Hub | SnapSum',
-        admin: 'Administrative Console | SnapSum'
+        landing: 'Zipytiny - Instant AI Video Knowledge Engine',
+        app: 'AI Video Knowledge Engine Workspace | Zipytiny',
+        domain: 'Domain Configuration | Zipytiny',
+        billing: 'Premium Plans & Upgrades | Zipytiny',
+        marketing: 'AI Viral Creator Hub | Zipytiny',
+        admin: 'Administrative Console | Zipytiny'
       };
-      document.title = titles[currentScreen] || 'SnapSum - Instant AI Video Knowledge Engine';
+      document.title = titles[currentScreen] || 'Zipytiny - Instant AI Video Knowledge Engine';
     } catch (err) {
       console.warn('Failed to set tab title:', err);
     }
@@ -1119,7 +1119,7 @@ export default function App() {
   const [supportMessages, setSupportMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string; timestamp: string }>>([
     {
       role: 'assistant',
-      text: "Hey there! 😊 Welcome to SnapSum! I'm your friendly support companion. Feel free to ask me absolutely anything about our video summaries, pricing, free sandbox checkout, or features. How can I help you today?",
+      text: "Hey there! 😊 Welcome to Zipytiny! I'm your friendly support companion. Feel free to ask me absolutely anything about our video summaries, pricing, free sandbox checkout, or features. How can I help you today?",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -2058,7 +2058,7 @@ export default function App() {
   const downloadSummaryAsPDF = () => {
     if (!activeSummary) return;
     const contents = `---
-SNAPSUM PROFESSIONAL SUMMARY REPORT
+ZIPYTINY PROFESSIONAL SUMMARY REPORT
 TITLE: ${activeSummary.metadata.title}
 AUTHOR: ${activeSummary.metadata.author}
 DURATION: ${activeSummary.metadata.duration}
@@ -2175,7 +2175,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
   const handleCopyText = (text: string, elementId: string) => {
     let textToCopy = text;
     if (['blog', 'thread', 'snippet', 'overview', 'summary'].includes(elementId)) {
-      textToCopy = `${text}\n\n---\n⚡ Summarized by SnapSum - AI Video Knowledge Engine (https://www.snapsum.app)`;
+      textToCopy = `${text}\n\n---\n⚡ Summarized by Zipytiny - AI Video Knowledge Engine (https://www.zipytiny.app)`;
     }
     navigator.clipboard.writeText(textToCopy);
     setCopiedStates((prev) => ({ ...prev, [elementId]: true }));
@@ -2735,7 +2735,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       <div className="aspect-video w-full bg-neutral-950 rounded-3xl overflow-hidden border border-black/10 shadow-lg relative max-w-4xl mx-auto">
         <iframe
           src={parsed.embedUrl}
-          title="SnapSum Product Demo"
+          title="Zipytiny Product Demo"
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen
@@ -2976,11 +2976,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => setCurrentScreen('landing')}>
             <div className="h-8.5 w-8.5 bg-[#1d1d1f] flex items-center justify-center rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition duration-300">
-              <img src="/logo.svg" alt="SnapSum Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="/logo.svg" alt="Zipytiny Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </div>
             <div className="hidden sm:block">
               <span className="text-base font-bold font-display tracking-tight text-[#1d1d1f] group-hover:text-neutral-800 transition">
-                SnapSum
+                Zipytiny
               </span>
               <p className="text-[8px] uppercase tracking-widest text-[#86868b] font-semibold font-mono leading-none mt-0.5">
                 Universal Content Processor
@@ -3181,7 +3181,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   <div className="lg:col-span-6 space-y-6 text-left">
                     <div className="inline-flex items-center gap-2 bg-[#0071e3]/5 border border-[#0071e3]/10 px-4 py-1.5 rounded-full text-xs font-semibold text-[#0071e3] shadow-sm animate-pulse">
                       <Sparkles className="w-4 h-4 fill-[#0071e3]/10" />
-                      <span>SnapSum 2.0 AI Engine Active</span>
+                      <span>Zipytiny 2.0 AI Engine Active</span>
                     </div>
                            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold font-display leading-[1.08] tracking-tight text-[#1d1d1f]">
                       One Video.<br />
@@ -3195,7 +3195,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </p>
 
                     <p className="text-gray-550 font-light text-sm sm:text-base leading-relaxed max-w-xl">
-                      SnapSum transforms any video (YouTube, Vimeo, local MP4, or web links) into structured study guides, engaging viral scripts, and professional studio-grade audio voiceovers simultaneously.
+                      Zipytiny transforms any video (YouTube, Vimeo, local MP4, or web links) into structured study guides, engaging viral scripts, and professional studio-grade audio voiceovers simultaneously.
                     </p>
                     
                     <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
@@ -3237,7 +3237,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         </div>
                         <div className="bg-neutral-100/60 px-4 py-1.5 rounded-lg text-[10px] text-[#86868b] font-mono flex items-center gap-1.5 w-60 sm:w-80">
                           <Lock className="w-3 h-3 text-neutral-400 shrink-0" />
-                          <span className="truncate">https://snapsum.app/dashboard</span>
+                          <span className="truncate">https://zipytiny.app/dashboard</span>
                         </div>
                         <span className="w-3 h-3 rounded-full bg-slate-200"></span>
                       </div>
@@ -3317,12 +3317,12 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <span>{demoDisplayMode === 'video' ? 'Product Video Overview' : '60-Second Apple-Style Cinematic Tour'}</span>
                   </div>
                   <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-neutral-900 leading-tight">
-                    {demoDisplayMode === 'video' ? 'See SnapSum In Action' : 'Turn Any Video Into Structured Knowledge'}
+                    {demoDisplayMode === 'video' ? 'See Zipytiny In Action' : 'Turn Any Video Into Structured Knowledge'}
                   </h2>
                   <p className="text-neutral-500 font-light text-base sm:text-lg max-w-2xl mx-auto">
                     {demoDisplayMode === 'video' 
-                      ? 'Watch our high-fidelity human-guided demonstration of how SnapSum converts complex hours of multimedia lectures into crisp, categorized intelligence.'
-                      : 'Experience how SnapSum compiles raw multimedia streams into interactive chapters, high-clarity conceptual notes, and retention test quizzes. Watch our live-rendered spec explainer block below.'}
+                      ? 'Watch our high-fidelity human-guided demonstration of how Zipytiny converts complex hours of multimedia lectures into crisp, categorized intelligence.'
+                      : 'Experience how Zipytiny compiles raw multimedia streams into interactive chapters, high-clarity conceptual notes, and retention test quizzes. Watch our live-rendered spec explainer block below.'}
                   </p>
                 </div>
 
@@ -3394,7 +3394,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     The Fast Path to Complete Retention
                   </h2>
                   <p className="text-gray-500 font-light text-base sm:text-lg leading-relaxed">
-                    Traditional video research requires tedious clicking, skipping, and note-taking. SnapSum synthesizes perfect conceptual summaries in three simple steps.
+                    Traditional video research requires tedious clicking, skipping, and note-taking. Zipytiny synthesizes perfect conceptual summaries in three simple steps.
                   </p>
                 </div>
 
@@ -3460,7 +3460,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     Built for Intense Knowledge Extraction
                   </h2>
                   <p className="text-gray-500 font-light text-base sm:text-lg">
-                    SnapSum combines multiple layers of semantic context processing to deliver pristine educational assets.
+                    Zipytiny combines multiple layers of semantic context processing to deliver pristine educational assets.
                   </p>
                 </div>
 
@@ -3475,7 +3475,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       </div>
                       <h3 className="text-xl font-bold font-display text-neutral-900">Smart Structured Chronologies</h3>
                       <p className="text-xs text-slate-500 leading-relaxed max-w-xl font-light">
-                        Instead of massive blocks of prose, SnapSum organizes insights into structured chronologies. Select chapters to instantly seek to timestamp segments or read key takeaways of that specific timestamp. Perfect for reviewing core arguments.
+                        Instead of massive blocks of prose, Zipytiny organizes insights into structured chronologies. Select chapters to instantly seek to timestamp segments or read key takeaways of that specific timestamp. Perfect for reviewing core arguments.
                       </p>
                     </div>
                     
@@ -3541,7 +3541,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       </div>
                       <h3 className="text-xl font-bold font-display text-neutral-900">Multi-Language Synthesizer (Arabic Support)</h3>
                       <p className="text-xs text-slate-500 leading-relaxed max-w-xl font-light">
-                        Designed with high-fidelity GCC performance. SnapSum can translate long YouTube transcripts or web addresses immediately into detailed Arabic notes, making it highly effective for regional academic and enterprise study.
+                        Designed with high-fidelity GCC performance. Zipytiny can translate long YouTube transcripts or web addresses immediately into detailed Arabic notes, making it highly effective for regional academic and enterprise study.
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -3874,7 +3874,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     Who Uses the Knowledge Engine?
                   </h2>
                   <p className="text-gray-500 font-light text-base sm:text-lg">
-                    SnapSum eliminates tedious scrubbing across many industries and goals.
+                    Zipytiny eliminates tedious scrubbing across many industries and goals.
                   </p>
                 </div>
 
@@ -3964,7 +3964,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 <div className="text-center max-w-3xl mx-auto space-y-4">
                   <div className="inline-flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 px-3.5 py-1 rounded-full text-xs font-mono font-bold text-indigo-700 uppercase">
                     <Zap className="w-3.5 h-3.5" />
-                    <span>The SnapSum Advantage</span>
+                    <span>The Zipytiny Advantage</span>
                   </div>
                   <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-neutral-900 animate-fadeIn">
                     Why Not Just Prompt with ChatGPT?
@@ -3985,7 +3985,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           <tr className="border-b border-slate-200/80">
                             <th className="py-4.5 px-4 text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">CAPABILITY / WORKFLOW</th>
                             <th className="py-4.5 px-4 text-xs font-mono font-bold text-indigo-600 bg-indigo-50/50 rounded-t-2xl uppercase tracking-widest text-center w-60">
-                              SNAPSUM ENGINE
+                              ZIPYTINY ENGINE
                             </th>
                             <th className="py-4.5 px-4 text-xs font-mono font-bold text-gray-400 uppercase tracking-widest text-center w-60">
                               CHATGPT & FREE CHATS
@@ -4065,7 +4065,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     {/* Bottom Micro Pitch box */}
                     <div className="bg-indigo-50/50 border border-indigo-100 p-4.5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono">
                       <span className="text-indigo-950 font-light text-center sm:text-left leading-relaxed">
-                        💡 <strong className="font-semibold text-indigo-900">Why prompt engineer for 15 minutes</strong> when SnapSum designs complete educational dashboards from any video in 15 seconds?
+                        💡 <strong className="font-semibold text-indigo-900">Why prompt engineer for 15 minutes</strong> when Zipytiny designs complete educational dashboards from any video in 15 seconds?
                       </span>
                       <button 
                         onClick={() => setCurrentScreen('app')}
@@ -4202,7 +4202,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   Ready to Turn Screen Time Into Actual Leverage?
                 </h2>
                 <p className="text-slate-400 font-light text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-                  Join hundreds of academic scholars, busy corporate executives, and fast content repurposers using SnapSum.
+                  Join hundreds of academic scholars, busy corporate executives, and fast content repurposers using Zipytiny.
                 </p>
                 <div className="pt-2">
                   <button
@@ -4627,7 +4627,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                               <li>Verify your key status on <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline font-medium">Google AI Studio</a>.</li>
                               <li>Check if your Google AI Studio project has hit its rate limits (e.g., Requests Per Minute limit).</li>
                               <li>Wait a few minutes and try again.</li>
-                              <li>You can clear your custom key from the Admin tab to revert to SnapSum host defaults.</li>
+                              <li>You can clear your custom key from the Admin tab to revert to Zipytiny host defaults.</li>
                             </ul>
                           </div>
                           <p className="text-[10px] text-rose-800/80 font-mono">Original Error: {error}</p>
@@ -4638,7 +4638,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             Your regional Google AI Studio Prepayment Credits are depleted.
                           </p>
                           <p className="text-xs text-neutral-600 leading-relaxed font-sans">
-                            A 429 Exhausted status indicates your Gemini endpoint has run out of tokens. However, don't worry! You can easily continue evaluating and demonstrating SnapSum using any of these options:
+                            A 429 Exhausted status indicates your Gemini endpoint has run out of tokens. However, don't worry! You can easily continue evaluating and demonstrating Zipytiny using any of these options:
                           </p>
                           <div className="bg-white/95 p-3.5 rounded-xl border border-rose-100/50 space-y-2">
                             <p className="text-xs font-semibold text-neutral-800">Available Quick Workarounds:</p>
@@ -4663,7 +4663,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             <li>Make sure you copied your entire key correctly from <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline font-medium">Google AI Studio Console</a> (typically starts with <code>AIzaSy</code>).</li>
                             <li>Go to the <strong>Admin tab</strong> at the top, paste the key again, and click <strong>Save API Settings</strong>.</li>
                             <li>Make sure you did not paste an OpenAI key (which starts with <code>sk-</code>) or another service provider's key.</li>
-                            <li>You can also clear the custom API key to use SnapSum's default host limits.</li>
+                            <li>You can also clear the custom API key to use Zipytiny's default host limits.</li>
                           </ul>
                         </div>
                         <p className="text-[10px] text-rose-800/80 font-mono">Original Error: {error}</p>
@@ -4673,7 +4673,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <p className="text-xs font-mono leading-relaxed text-rose-800/90">{error}</p>
                         {customApiKey && (
                           <p className="text-xs text-amber-850 bg-amber-50 p-3 rounded-xl border border-amber-100/50">
-                            ⚠️ Note: You are currently running SnapSum using a <strong>custom Gemini API Key</strong>. Please verify that this key has adequate permissions and billing configuration.
+                            ⚠️ Note: You are currently running Zipytiny using a <strong>custom Gemini API Key</strong>. Please verify that this key has adequate permissions and billing configuration.
                           </p>
                         )}
                         <p className="text-[11px] text-[#515154] bg-white/60 p-3 rounded-xl leading-relaxed border border-rose-100/30 font-light">
@@ -4818,11 +4818,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     type="button"
                     onClick={() => {
                       const link = `${window.location.origin}?ref=${referralCode}`;
-                      const text = `Take a look at SnapSum - Instant AI Video Knowledge Engine! It turns standard YouTube videos into structured guides, timelines, mindmaps, and interactive learning quizzes. Use my link to get unlimited credits: ${link}`;
+                      const text = `Take a look at Zipytiny - Instant AI Video Knowledge Engine! It turns standard YouTube videos into structured guides, timelines, mindmaps, and interactive learning quizzes. Use my link to get unlimited credits: ${link}`;
                       
                       if (navigator.share) {
                         navigator.share({
-                          title: 'SnapSum Video Knowledge Engine',
+                          title: 'Zipytiny Video Knowledge Engine',
                           text: text,
                           url: link
                         }).catch(() => {
@@ -6071,7 +6071,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                               const title = activeSummary.metadata?.title || 'Summary';
                               const concepts = activeSummary.keyConcepts || [];
                               const tks = activeSummary.takeaways.map((t: any, i: number) => `${i + 1}. ${typeof t === 'string' ? t : t.text}`).join('\n');
-                              const md = `# ${title}\n\n## Key Takeaways\n${tks}\n\n## Key Concepts\n${concepts.map((c: any) => `### ${c.concept}\n${c.definition}\n\n> ${c.simplifiedExplanation}`).join('\n\n')}\n\n---\n*Exported from [SnapSum](https://snapsum.app)*`;
+                              const md = `# ${title}\n\n## Key Takeaways\n${tks}\n\n## Key Concepts\n${concepts.map((c: any) => `### ${c.concept}\n${c.definition}\n\n> ${c.simplifiedExplanation}`).join('\n\n')}\n\n---\n*Exported from [Zipytiny](https://zipytiny.app)*`;
                               const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
                               const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${title.slice(0, 40)}.md`; a.click();
                             }}
@@ -6084,9 +6084,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             onClick={() => {
                               const concepts = activeSummary.keyConcepts || [];
                               const rows = concepts.map((c: any) => `${c.concept}\t${c.definition}. ${c.simplifiedExplanation}`).join('\n');
-                              const csv = `#separator:Tab\n#html:false\n#notetype:Basic\n#deck:SnapSum - ${activeSummary.metadata?.title?.slice(0, 40) || 'Summary'}\n#columns:Front\tBack\n${rows}`;
+                              const csv = `#separator:Tab\n#html:false\n#notetype:Basic\n#deck:Zipytiny - ${activeSummary.metadata?.title?.slice(0, 40) || 'Summary'}\n#columns:Front\tBack\n${rows}`;
                               const blob = new Blob([csv], { type: 'text/plain;charset=utf-8' });
-                              const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `snapsum_anki.txt`; a.click();
+                              const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `zipytiny_anki.txt`; a.click();
                             }}
                             className="text-[10px] font-mono px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-600 transition flex items-center gap-1"
                             title="Export flashcards for Anki import (File > Import in Anki)"
@@ -6215,7 +6215,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <div id="mindmap-export-container" className="bg-white p-6 rounded-3xl border border-neutral-150 space-y-6">
                       <div className="border-b border-neutral-100 pb-4">
                         <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded">
-                          🧠 SNAPSUM ACTIVE LEARNING MAP
+                          🧠 ZIPYTINY ACTIVE LEARNING MAP
                         </span>
                         <h3 className="text-base font-extrabold text-neutral-900 mt-2">
                           {activeSummary?.metadata?.title || 'Concept Map'}
@@ -6427,11 +6427,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                               const total = activeSummary?.quiz?.length || 5;
                               const shareId = activeSummary?.shareId || activeSummary?.metadata.videoId || 'vid';
                               const link = `${window.location.origin}/s/${shareId}/quiz/${score}`;
-                              const text = `I scored ${score}/${total} on this video's interactive learning quiz on SnapSum! 🎯 Can you beat my score? Take the challenge here:\n\n${link}`;
+                              const text = `I scored ${score}/${total} on this video's interactive learning quiz on Zipytiny! 🎯 Can you beat my score? Take the challenge here:\n\n${link}`;
                               
                               if (navigator.share) {
                                 navigator.share({
-                                  title: 'Beat my SnapSum Quiz Score!',
+                                  title: 'Beat my Zipytiny Quiz Score!',
                                   text: text,
                                   url: link
                                 }).catch(() => {
@@ -7350,7 +7350,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     Map Your MVP To a Custom Public Domain
                   </h2>
                   <p className="text-[#86868b] text-sm max-w-2xl leading-relaxed font-light">
-                    Configure white-labeled public accessibility for your SnapSum MVP application. Connect your own branding (e.g. <code className="bg-[#f5f5f7] px-1.5 py-0.5 rounded text-xs text-[#1d1d1f]">www.snapsum.app</code>) to route direct traffic.
+                    Configure white-labeled public accessibility for your Zipytiny MVP application. Connect your own branding (e.g. <code className="bg-[#f5f5f7] px-1.5 py-0.5 rounded text-xs text-[#1d1d1f]">www.zipytiny.app</code>) to route direct traffic.
                   </p>
                 </div>
                 
@@ -7387,7 +7387,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </div>
                     <input
                       type="text"
-                      placeholder="e.g. snapsum.app or app.mycreatorbrand.com"
+                      placeholder="e.g. zipytiny.app or app.mycreatorbrand.com"
                       value={customDomain}
                       onChange={(e) => setCustomDomain(e.target.value)}
                       disabled={dnsStatus === 'verifying'}
@@ -7696,7 +7696,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <h3 className="font-bold text-sm tracking-tight text-blue-950">Zero-Cost MVP Launchpad & Developer Sandbox</h3>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed max-w-4xl font-light">
-                    To get real market validation, run your SnapSum MVP at <strong>$0 hosting and API costs</strong>! By pasting your personal <strong>Google Gemini API Key</strong> below, it will be saved securely in your browser's private <code>localStorage</code>. All summaries and premium audio voiceovers will execute utilizing your personal free-tier sandbox. This completely bypasses server quota blocks and costs you absolutely nothing!
+                    To get real market validation, run your Zipytiny MVP at <strong>$0 hosting and API costs</strong>! By pasting your personal <strong>Google Gemini API Key</strong> below, it will be saved securely in your browser's private <code>localStorage</code>. All summaries and premium audio voiceovers will execute utilizing your personal free-tier sandbox. This completely bypasses server quota blocks and costs you absolutely nothing!
                   </p>
 
                   <div className="max-w-xl space-y-2">
@@ -8263,7 +8263,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
                     </div>
                     <p className="text-xs text-[#515154] leading-relaxed italic font-light">
-                      "SnapSum completely changed how I consume long lecture materials. From one video, I get my structured notes and high-quality voice briefs immediately."
+                      "Zipytiny completely changed how I consume long lecture materials. From one video, I get my structured notes and high-quality voice briefs immediately."
                     </p>
                     <div className="flex items-center gap-2 pt-1.5 border-t border-black/[0.02]">
                       <div className="w-6 h-6 rounded-full bg-[#f5f5f7] flex items-center justify-center font-mono font-bold text-[10px] text-neutral-700">R</div>
@@ -8310,7 +8310,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               <div className="mt-12 space-y-6">
                 <div className="text-center space-y-1">
                   <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#0071e3]">Detailed Feature Comparison</span>
-                  <h3 className="text-xl font-bold text-[#1d1d1f]">Why SnapSum stands out</h3>
+                  <h3 className="text-xl font-bold text-[#1d1d1f]">Why Zipytiny stands out</h3>
                 </div>
                 <div className="border border-black/[0.04] rounded-3xl overflow-hidden bg-white shadow-sm text-left">
                   <table className="w-full border-collapse">
@@ -8318,7 +8318,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <tr className="bg-[#f5f5f7]/50 text-[#1d1d1f] font-sans text-xs border-b border-black/[0.04]">
                         <th className="px-5 py-3 font-semibold w-1/3">Core Capability</th>
                         <th className="px-5 py-3 font-semibold bg-blue-50/30 text-[#0071e3] w-1/3 text-center">
-                          <span className="inline-flex items-center gap-1">✨ SnapSum</span>
+                          <span className="inline-flex items-center gap-1">✨ Zipytiny</span>
                         </th>
                         <th className="px-5 py-3 font-semibold text-neutral-500 w-1/3 text-center">Generic Summarizers</th>
                       </tr>
@@ -8410,7 +8410,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <span>MVP Digital Launch Accelerators</span>
                   </div>
                   <h2 className="text-2xl font-bold text-[#1d1d1f] tracking-tight">
-                    SnapSum Growth Hub & Outreach Engine
+                    Zipytiny Growth Hub & Outreach Engine
                   </h2>
                   <p className="text-[#86868b] text-sm max-w-2xl leading-relaxed font-light font-sans">
                     Zero budget? No problem. Use our specialized built-in growth engines powered by Gemini to extract prospects, script short-form videos from your shelf summary history, and acquire paying enterprise customers.
@@ -8582,7 +8582,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             <div className="bg-[#1d1d1f] rounded-3xl p-6 md:p-8 text-white space-y-6 text-left">
               <div className="space-y-1.5 font-sans">
                 <span className="text-[10px] font-mono font-bold text-[#86868b] tracking-wider uppercase">THE OFFICIAL LAUNCHBOOK</span>
-                <h3 className="text-lg font-semibold text-white font-sans">Three High-Converting Channels for SnapSum</h3>
+                <h3 className="text-lg font-semibold text-white font-sans">Three High-Converting Channels for Zipytiny</h3>
                 <p className="text-[#86868b] text-xs leading-relaxed max-w-xl font-sans font-light">Follow these three zero-budget traffic streams to scale your pre-configured custom hosting link to paying custom users.</p>
               </div>
 
@@ -8595,7 +8595,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     The Reddit Value Bomb
                   </h4>
                   <p className="text-[11px] text-neutral-400 leading-relaxed font-sans font-light">
-                    Search Reddit subs like <strong>r/learnprogramming</strong>, <strong>r/podcasts</strong>, or <strong>r/solopreneur</strong>. Do not pitch directly. Instead, find trending threads talking about massive YouTube tutorial series or long podcasts, summarize them with your app, and reply with the summary. Append a small footnote credit back to your SnapSum live custom domain!
+                    Search Reddit subs like <strong>r/learnprogramming</strong>, <strong>r/podcasts</strong>, or <strong>r/solopreneur</strong>. Do not pitch directly. Instead, find trending threads talking about massive YouTube tutorial series or long podcasts, summarize them with your app, and reply with the summary. Append a small footnote credit back to your Zipytiny live custom domain!
                   </p>
                 </div>
 
@@ -8816,7 +8816,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 {/* Dashboard Title Banner */}
                 <div className="bg-[#1d1d1f] rounded-3xl p-6 md:p-8 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1 text-left font-sans">
-                    <span className="text-[9px] font-mono uppercase text-[#86868b] tracking-wider font-bold">SnapSum Operations Suite</span>
+                    <span className="text-[9px] font-mono uppercase text-[#86868b] tracking-wider font-bold">Zipytiny Operations Suite</span>
                     <h2 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
                       <ShieldCheck className="w-5 h-5 text-emerald-400" />
                       Administrative Control Terminal
@@ -9682,7 +9682,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <ul className="list-disc pl-3.5 text-[9px] text-indigo-900 leading-relaxed font-sans font-light space-y-1">
                           <li><strong>Voiceover AI (ElevenLabs):</strong> Create or clone highly authentic, natural human voices with deep emotional range and pacing, then export to MP4.</li>
                           <li><strong>Video Avatars (HeyGen / Synthesia):</strong> Generate high-fidelity realistic virtual avatars with custom scripts and highly natural speaking cadence.</li>
-                          <li><strong>Interactive Screencast (Loom / Vidyard):</strong> Record yourself introducing SnapSum's features with your genuine voice, then paste the Loom link above for the most sincere human connection!</li>
+                          <li><strong>Interactive Screencast (Loom / Vidyard):</strong> Record yourself introducing Zipytiny's features with your genuine voice, then paste the Loom link above for the most sincere human connection!</li>
                         </ul>
                       </div>
 
@@ -10157,7 +10157,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   {currentScreen === 'terms' ? 'Terms & Conditions' : 'Privacy Policy'}
                 </h1>
                 <p className="text-xs text-neutral-500 leading-relaxed max-w-xl">
-                  Please read our dynamic legal policies governing your experience with <strong>snapsum.app</strong>. 
+                  Please read our dynamic legal policies governing your experience with <strong>zipytiny.app</strong>. 
                   These policies are designed to comply with GCC data frameworks (including Saudi Arabia PDPL, UAE Personal Data Protection Law) as well as global benchmarks like EU GDPR and CCPA.
                 </p>
                 <div className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider flex items-center gap-2 pt-2">
@@ -10249,7 +10249,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 {currentScreen === 'terms' ? (
                   <div className="space-y-8">
                     <p className="text-neutral-500 font-light italic leading-loose">
-                      Welcome to <strong>SnapSum</strong> (referred to as the "Service" or "Platform"). These Terms &amp; Conditions constitute a legally binding agreement made between you ("User" or "you") and SnapSum.app ("we," "us," or "our"), concerning your access to and use of our universal content processor web application.
+                      Welcome to <strong>Zipytiny</strong> (referred to as the "Service" or "Platform"). These Terms &amp; Conditions constitute a legally binding agreement made between you ("User" or "you") and Zipytiny.app ("we," "us," or "our"), concerning your access to and use of our universal content processor web application.
                     </p>
 
                     <section id="acceptance" className="scroll-mt-24 space-y-3">
@@ -10273,7 +10273,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <section id="user-accounts" className="scroll-mt-24 space-y-3">
                       <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">3. User Credentials &amp; API Storage</h2>
                       <p>
-                        To enable complete private client operations at zero platform hosting cost, SnapSum leverages local client browser structures (<code>localStorage</code>) to cache summaries and developer secrets.
+                        To enable complete private client operations at zero platform hosting cost, Zipytiny leverages local client browser structures (<code>localStorage</code>) to cache summaries and developer secrets.
                       </p>
                       <p>
                         You are solely responsible for securing your personal <strong>Google Gemini API Key</strong> and ensuring your private client browser cache is not cleared without prior export if you wish to prevent data loss. We are not liable for accidental data wipes arising from deleted browser logs.
@@ -10286,14 +10286,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         Our platform offers a mock premium upgrade model ("Pro Creator Pass") featuring a Stripe Sandbox Gateway simulator. 
                       </p>
                       <p>
-                        All payment workflows run completely locally in premium mock simulations. No actual financial storage, credit card clearance, or regional payment capture takes place on live database networks, resulting in zero real monetization liabilities under local trading laws. To hard-gate active privileges, we issue localized gating tokens (e.g. <code>SnapSumPro=True</code>) bound to local clients.
+                        All payment workflows run completely locally in premium mock simulations. No actual financial storage, credit card clearance, or regional payment capture takes place on live database networks, resulting in zero real monetization liabilities under local trading laws. To hard-gate active privileges, we issue localized gating tokens (e.g. <code>ZipytinyPro=True</code>) bound to local clients.
                       </p>
                     </section>
 
                     <section id="acceptable-use" className="scroll-mt-24 space-y-3">
                       <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">5. Acceptable Use Policy</h2>
                       <p>
-                        You warrant that your use of SnapSum does not violate any local Municipal laws or safety regulations. In particular:
+                        You warrant that your use of Zipytiny does not violate any local Municipal laws or safety regulations. In particular:
                       </p>
                       <ul className="list-disc pl-5 space-y-1.5 text-neutral-700">
                         <li>You shall not input transcripts, text files, or URLs hosting hate speech, violent extremism, adult material, or illegal, defamatory commentary.</li>
@@ -10308,7 +10308,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         Our service is provided on an "AS IS" and "AS AVAILABLE" basis. We make no guarantees that transcripts fetched will represent 100% video accuracy, nor do we assume responsibility for hallucinated AI summaries or erroneous test questions curated by LLM processors.
                       </p>
                       <p>
-                        Under no circumstances shall SnapSum, its contractors, or its parent operators be held liable for administrative downtime, missed content objectives, or technical developer API-quota blocks.
+                        Under no circumstances shall Zipytiny, its contractors, or its parent operators be held liable for administrative downtime, missed content objectives, or technical developer API-quota blocks.
                       </p>
                     </section>
 
@@ -10318,7 +10318,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         These Terms and Conditions are governed by standard international software covenants and local GCC commercial guidelines. 
                       </p>
                       <p>
-                        If you are accessing the service from the Gulf Cooperation Council (including the Kingdom of Saudi Arabia, United Arab Emirates, Qatar, Kuwait, Oman, and Bahrain), regional consumer arbitration rules and competent judicial courts of respective major hubs (e.g., Riyadh or Dubai) shall have exclusive jurisdiction over any domestic merchant disputes arising under SnapSum service availability.
+                        If you are accessing the service from the Gulf Cooperation Council (including the Kingdom of Saudi Arabia, United Arab Emirates, Qatar, Kuwait, Oman, and Bahrain), regional consumer arbitration rules and competent judicial courts of respective major hubs (e.g., Riyadh or Dubai) shall have exclusive jurisdiction over any domestic merchant disputes arising under Zipytiny service availability.
                       </p>
                     </section>
                   </div>
@@ -10375,7 +10375,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <section id="user-rights" className="scroll-mt-24 space-y-3">
                       <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">5. Your Legal Subject Rights (GDPR / GCC / CCPA)</h2>
                       <p>
-                        Irrespective of your regional geography, you enjoy robust legislative protection over your digital footprint. As a data subject of SnapSum, you have:
+                        Irrespective of your regional geography, you enjoy robust legislative protection over your digital footprint. As a data subject of Zipytiny, you have:
                       </p>
                       <ul className="list-disc pl-5 space-y-1.5 text-neutral-700">
                         <li><strong>Right to Destruction (Be Forgotten):</strong> You can wipe your active database state or clear local storage cache logs instantaneously via your setting toggles to delete all traces.</li>
@@ -10401,7 +10401,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         We reserve the right to revise this Privacy Policy periodically to align with updated regulatory decisions.
                       </p>
                       <p>
-                        For questions, full data disclosures, or regulatory compliance requests under Saudi PDPL, UAE decree laws, or general EU data panels, please reach out to our team at <strong>legal@snapsum.app</strong> or open an audit thread via our official domain channels at <strong>snapsum.app</strong>.
+                        For questions, full data disclosures, or regulatory compliance requests under Saudi PDPL, UAE decree laws, or general EU data panels, please reach out to our team at <strong>legal@zipytiny.app</strong> or open an audit thread via our official domain channels at <strong>zipytiny.app</strong>.
                       </p>
                     </section>
                   </div>
@@ -10429,7 +10429,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <Video className="w-4 h-4 text-neutral-900" />
                   </div>
                   <span className="text-sm font-bold font-mono tracking-tight text-white select-none">
-                    SnapSum Secure
+                    Zipytiny Secure
                   </span>
                 </div>
 
@@ -10601,9 +10601,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <div className="flex items-start gap-2.5">
                           <Info className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
                           <div className="space-y-1">
-                            <span className="font-bold text-blue-800 block uppercase font-mono tracking-wider text-[10px]">💡 SnapSum Checkout Sandbox Active</span>
+                            <span className="font-bold text-blue-800 block uppercase font-mono tracking-wider text-[10px]">💡 Zipytiny Checkout Sandbox Active</span>
                             <p className="leading-relaxed text-blue-700 font-light">
-                              SnapSum is currently running in a simulated developer sandbox environment. To allow you to fully test the upgrade flows and experience the premium Pro/Enterprise features, our built-in checkout simulator is active. No real credit card charges will occur.
+                              Zipytiny is currently running in a simulated developer sandbox environment. To allow you to fully test the upgrade flows and experience the premium Pro/Enterprise features, our built-in checkout simulator is active. No real credit card charges will occur.
                             </p>
                             {stripeLaunchError && !stripeLaunchError.includes('Stripe live secret keys are not configured') && (
                               <div className="mt-2 bg-blue-100/60 p-2 rounded-xl font-mono text-[10px] text-blue-950 break-words leading-relaxed select-all">
@@ -10782,7 +10782,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       </div>
                       <div className="pt-2 flex justify-between">
                         <span className="text-neutral-450">Gating Token:</span>
-                        <span className="text-neutral-800 font-bold select-all">SnapSumPro=True</span>
+                        <span className="text-neutral-800 font-bold select-all">ZipytinyPro=True</span>
                       </div>
                     </div>
 
@@ -10875,14 +10875,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             ? 'bg-indigo-950/40 text-indigo-400 border-indigo-500/20' 
                             : 'bg-amber-950/40 text-amber-400 border-amber-500/20'
                       }`}>
-                        {referralCount >= 10 ? '🌟 SnapSum Ambassador' : referralCount >= 3 ? '🚀 Rising Star' : '🌱 Bronze Advocate'}
+                        {referralCount >= 10 ? '🌟 Zipytiny Ambassador' : referralCount >= 3 ? '🚀 Rising Star' : '🌱 Bronze Advocate'}
                       </span>
                     </div>
                     <p className="text-[10px] text-neutral-400 leading-relaxed pt-1">
                       {referralCount >= 10 
                         ? 'Incredible! You have unlocked the highest referral rank and full premium feature access forever!'
                         : referralCount >= 3
-                          ? `Awesome job! You are a Rising Star. Refer ${10 - referralCount} more friends to become a SnapSum Ambassador.`
+                          ? `Awesome job! You are a Rising Star. Refer ${10 - referralCount} more friends to become a Zipytiny Ambassador.`
                           : `Refer just ${3 - referralCount} more friends to reach the "Rising Star" tier and get customized profile badges.`}
                     </p>
                   </div>
@@ -10922,7 +10922,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     ⚠️ Log in with Google to secure your leaderboard rank!
                   </p>
                 )}
-                SnapSum Referral Program • Additive Rewards
+                Zipytiny Referral Program • Additive Rewards
               </div>
             </div>
 
@@ -11066,11 +11066,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg overflow-hidden flex items-center justify-center bg-slate-900 border border-slate-800">
-              <img src="/logo.svg" alt="SnapSum Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="/logo.svg" alt="Zipytiny Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </div>
             <div>
               <span className="text-sm font-bold font-display tracking-tight text-white">
-                SnapSum
+                Zipytiny
               </span>
               <p className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold font-mono">
                 Speed learning & content repurposing
@@ -11098,7 +11098,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               Privacy Policy
             </button>
             <div className="text-slate-500 text-xs font-mono pt-2 sm:pt-0 border-t border-slate-800 sm:border-0">
-              &copy; {new Date().getFullYear()} SnapSum. GCC & International Compliant.
+              &copy; {new Date().getFullYear()} Zipytiny. GCC & International Compliant.
             </div>
           </div>
         </div>
@@ -11250,7 +11250,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         )}
       </div>
 
-      {/* 💬 SnapSum Elite AI Customer Support Hub */}
+      {/* 💬 Zipytiny Elite AI Customer Support Hub */}
       <div className="fixed bottom-6 right-6 z-50 font-sans text-left">
         {!isSupportOpen ? (
           <button
@@ -11259,7 +11259,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               trackGAEvent?.('support_chat_opened', { timestamp: new Date().toISOString() });
             }}
             className="bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full p-3.5 shadow-xl flex items-center gap-2 transition duration-200 cursor-pointer scale-100 hover:scale-105 shadow-blue-500/10 border border-blue-400/20"
-            title="SnapSum AI Customer Support"
+            title="Zipytiny AI Customer Support"
           >
             <MessageSquare className="w-5 h-5 text-white animate-bounce" />
             <span className="text-xs font-semibold pr-1.5">AI Customer Support</span>
@@ -11277,7 +11277,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 </div>
                 <div>
                   <h4 className="text-xs font-extrabold tracking-wider uppercase font-mono">
-                    SnapSum AI Support
+                    Zipytiny AI Support
                   </h4>
                   <span className="text-[10px] text-blue-100 block -mt-0.5">Elite Knowledge Agent</span>
                 </div>
@@ -11327,7 +11327,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {[
-                  "What is SnapSum?",
+                  "What is Zipytiny?",
                   "How does the Pro Pass work?",
                   "Is there a sandbox mode?",
                   "Can I use my own Gemini key?"

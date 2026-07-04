@@ -54,8 +54,8 @@ const CINEMATIC_SCENES: CinematicScene[] = [
     start: 12,
     end: 25,
     title: "The Ingestion: Seamless Digital Conversion",
-    onScreenText: "“What if videos became interactive courseware?”\n“SnapSum Dynamic Ingestion Pipeline”",
-    voiceover: "What if content adapted to your mind? You paste any URL inside SnapSum. Instantly, our multi-modal compiler indexes the sound, frames, and speech, preparing a custom active workspace designed entirely for your brain.",
+    onScreenText: "“What if videos became interactive courseware?”\n“Zipytiny Dynamic Ingestion Pipeline”",
+    voiceover: "What if content adapted to your mind? You paste any URL inside Zipytiny. Instantly, our multi-modal compiler indexes the sound, frames, and speech, preparing a custom active workspace designed entirely for your brain.",
     emotion: 'intrigued'
   },
   {
@@ -84,7 +84,7 @@ const CINEMATIC_SCENES: CinematicScene[] = [
     start: 65,
     end: 80,
     title: "The Split Contrast: Passive vs Active",
-    onScreenText: "“Passive Watching: 15% Retention”\n“Active SnapSumming: 94% Retention”",
+    onScreenText: "“Passive Watching: 15% Retention”\n“Active Zipytinying: 94% Retention”",
     voiceover: "Compare the difference. On the left: scrolling, confusion, and distraction. On the right: crisp mental structures, 94 percent active retention rates, and accelerated speed. You learn faster with less fatigue.",
     emotion: 'retained'
   },
@@ -95,7 +95,7 @@ const CINEMATIC_SCENES: CinematicScene[] = [
     end: 95,
     title: "The Outro: Elevate Your Growth",
     onScreenText: "“Learn everything. Retain forever.”\n“Paste your first link now.”",
-    voiceover: "Build your personal repository of intelligence. Study what you want, when you want, with complete retention. SnapSum will turn any multimedia channel into your private tutor. Paste a link to start.",
+    voiceover: "Build your personal repository of intelligence. Study what you want, when you want, with complete retention. Zipytiny will turn any multimedia channel into your private tutor. Paste a link to start.",
     emotion: 'mastered'
   }
 ];
@@ -324,7 +324,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
       await new Promise((resolve) => setTimeout(resolve, 400));
 
       const link = document.createElement('a');
-      link.download = `snapsum-explainer-916-scene${currentScene.id}.png`;
+      link.download = `zipytiny-explainer-916-scene${currentScene.id}.png`;
       link.href = dataUrl;
       link.click();
 
@@ -544,7 +544,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#bf5af2] animate-ping"></span>
             <span className="text-[10px] font-bold font-mono tracking-widest text-[#bf5af2] uppercase">
-              SnapSum Cinematic Cinema
+              Zipytiny Cinematic Cinema
             </span>
           </div>
           <div className="flex items-center gap-3">
@@ -622,9 +622,9 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
         >
           {/* Persistent Watermark Overlay */}
           <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md border border-white/10 rounded-lg p-1.5 px-2.5 pointer-events-none shadow-sm animate-fadeIn">
-            <img src="/logo.svg" className="w-3.5 h-3.5 rounded object-cover" referrerPolicy="no-referrer" alt="SnapSum Logo" />
-            <span className="text-[8.5px] font-mono font-bold text-white tracking-tight">snapsum.app</span>
-            <span className="text-[8.5px] font-mono font-light text-neutral-300 border-l border-white/20 pl-1.5">Summarized by SnapSum</span>
+            <img src="/logo.svg" className="w-3.5 h-3.5 rounded object-cover" referrerPolicy="no-referrer" alt="Zipytiny Logo" />
+            <span className="text-[8.5px] font-mono font-bold text-white tracking-tight">zipytiny.app</span>
+            <span className="text-[8.5px] font-mono font-light text-neutral-300 border-l border-white/20 pl-1.5">Summarized by Zipytiny</span>
           </div>
           
           {/* Big Play Overlay for initial engagement and to satisfy autoplay policies */}
@@ -658,7 +658,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                 <p className="text-[11px] text-neutral-400 leading-relaxed font-light font-sans">
                   {isUsingCustomAudio 
                     ? 'A studio-grade ElevenLabs voiceover has been loaded and is ready to play. Tap to begin!' 
-                    : 'Tap to start the interactive cinematic tour of SnapSum.'}
+                    : 'Tap to start the interactive cinematic tour of Zipytiny.'}
                 </p>
               </div>
             </div>
@@ -756,7 +756,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
             </div>
           )}
 
-          {/* ===================== SCENE 2: ENTER SNAPSUM AI (12s - 25s) ===================== */}
+          {/* ===================== SCENE 2: ENTER ZIPYTINY AI (12s - 25s) ===================== */}
           {currentTime >= 12 && currentTime < 25 && (
             <div className="w-full max-w-2xl space-y-6 animate-slideUp">
               
@@ -832,7 +832,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                   What if content automatically adapted to your mind?
                 </h3>
                 <p className="text-neutral-400 text-xs sm:text-sm font-light leading-relaxed">
-                  Stop simply witnessing hours of streaming noise. Meet SnapSum, the hyper-compiler that decomposes complex video timelines into bite-sized, interactive active retrieval structures.
+                  Stop simply witnessing hours of streaming noise. Meet Zipytiny, the hyper-compiler that decomposes complex video timelines into bite-sized, interactive active retrieval structures.
                 </p>
               </div>
 
@@ -901,7 +901,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                     <div className="w-3 h-3 rounded-full bg-rose-400"></div>
                     <div className="w-3 h-3 rounded-full bg-amber-400"></div>
                     <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
-                    <span className="text-xs font-mono font-bold text-neutral-700 ml-2">SnapSum Core Workspace</span>
+                    <span className="text-xs font-mono font-bold text-neutral-700 ml-2">Zipytiny Core Workspace</span>
                   </div>
                   
                   {/* Interactive selector inside tour */}
@@ -1221,11 +1221,11 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                     </div>
                   </div>
 
-                  {/* Right Side Panel: Active SnapSum Studio Workspace */}
+                  {/* Right Side Panel: Active Zipytiny Studio Workspace */}
                   <div className="absolute inset-y-0 right-0 bg-indigo-950/30 flex flex-col justify-between p-4 text-right items-end" style={{ width: `${100 - splitSliderPos}%` }}>
                     <div>
                       <span className="text-[9px] font-mono uppercase bg-indigo-600 text-white rounded px-1.5 py-0.5 font-bold tracking-wider">
-                        SnapSum Space
+                        Zipytiny Space
                       </span>
                       <h4 className="text-xs font-bold text-indigo-300 mt-2">Precision mastery</h4>
                     </div>
@@ -1352,7 +1352,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                     }}
                     className="w-full bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-600 hover:to-indigo-700 text-white font-bold text-xs py-3.5 px-6 rounded-full transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/25"
                   >
-                    <span>🚀 Launch SnapSum Active Workspace Now</span>
+                    <span>🚀 Launch Zipytiny Active Workspace Now</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
@@ -1682,7 +1682,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
             }}
             className="w-full bg-neutral-950 hover:bg-neutral-900 text-white font-bold text-xs py-3.5 px-4 rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer shadow-md shadow-black/10"
           >
-            <span>👉 Enter SnapSum Workspace</span>
+            <span>👉 Enter Zipytiny Workspace</span>
             <ChevronRight className="w-3.5 h-3.5 text-white" />
           </button>
         </div>
@@ -1709,9 +1709,9 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
         {/* Header section in vertical export */}
         <div className="relative z-10 flex items-center justify-between border-b border-white/[0.08] pb-6">
           <div className="flex items-center gap-4">
-            <img src="/logo.svg" className="w-14 h-14 rounded-2xl object-cover" referrerPolicy="no-referrer" alt="SnapSum Logo" />
+            <img src="/logo.svg" className="w-14 h-14 rounded-2xl object-cover" referrerPolicy="no-referrer" alt="Zipytiny Logo" />
             <div className="text-left">
-              <span className="text-[20px] font-black tracking-widest text-[#bf5af2] uppercase block">SNAPSUM EXPLORER</span>
+              <span className="text-[20px] font-black tracking-widest text-[#bf5af2] uppercase block">ZIPYTINY EXPLORER</span>
               <span className="text-[14px] text-neutral-400 font-mono">Dynamic Multi-Modal Courseware</span>
             </div>
           </div>
@@ -1739,7 +1739,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                 <div className="mx-auto h-24 w-24 bg-indigo-900/20 rounded-full border-2 border-indigo-500 flex items-center justify-center text-5xl">⚡</div>
                 <div className="space-y-2">
                   <span className="text-indigo-400 text-xs font-mono uppercase tracking-widest">Active Ingestion</span>
-                  <h3 className="text-2xl font-black font-display text-white">SnapSum transforms raw video to courseware</h3>
+                  <h3 className="text-2xl font-black font-display text-white">Zipytiny transforms raw video to courseware</h3>
                   <p className="text-neutral-400 text-xs leading-relaxed max-w-sm mx-auto mt-2">Paste any URL to construct custom mental retrieval maps.</p>
                 </div>
               </div>
@@ -1802,15 +1802,15 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
         {/* Large Professional Watermark branding in exported image */}
         <div className="relative z-10 flex items-center justify-between bg-white/[0.03] border border-white/[0.08] rounded-3xl p-8 py-6">
           <div className="flex items-center gap-4">
-            <img src="/logo.svg" className="w-16 h-16 rounded-2xl object-cover" referrerPolicy="no-referrer" alt="SnapSum Logo" />
+            <img src="/logo.svg" className="w-16 h-16 rounded-2xl object-cover" referrerPolicy="no-referrer" alt="Zipytiny Logo" />
             <div className="text-left">
-              <span className="text-[22px] font-black text-white font-sans tracking-wide">Summarized by SnapSum</span>
-              <span className="text-[16px] font-mono text-neutral-400 block">snapsum.app</span>
+              <span className="text-[22px] font-black text-white font-sans tracking-wide">Summarized by Zipytiny</span>
+              <span className="text-[16px] font-mono text-neutral-400 block">zipytiny.app</span>
             </div>
           </div>
           <div className="text-right">
             <span className="text-[14px] font-mono text-[#bf5af2] font-semibold tracking-wider uppercase block">🚀 Viral-Growth Spec</span>
-            <span className="text-[12px] font-mono text-neutral-400">@SnapSumApp</span>
+            <span className="text-[12px] font-mono text-neutral-400">@ZipytinyApp</span>
           </div>
         </div>
       </div>
@@ -1825,7 +1825,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
             </div>
           </div>
           <div className="space-y-1 max-w-sm">
-            <span className="text-[10px] font-mono font-bold uppercase text-indigo-400 tracking-widest block">SNAPSUM SOCIAL EXPORTER</span>
+            <span className="text-[10px] font-mono font-bold uppercase text-indigo-400 tracking-widest block">ZIPYTINY SOCIAL EXPORTER</span>
             <p className="text-xs font-mono text-neutral-300">{exportMessage}</p>
           </div>
         </div>

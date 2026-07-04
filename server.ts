@@ -185,7 +185,7 @@ async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: 
 
 
 // Proxy Firebase Auth helper requests directly to Firebase's official server domain.
-// This allows Google Auth popups to recognize and display 'www.snapsum.app' (or 'snapsum.app')
+// This allows Google Auth popups to recognize and display 'www.zipytiny.app' (or 'zipytiny.app')
 // under the custom brand domain rather than the default firebaseapp.com domain.
 app.use(
   '/__/auth',
@@ -453,30 +453,30 @@ function injectOGTags(html: string, summary: any, suffix: string = '', forkQuiz:
   const takeawayTexts = rawTakeaways.map((t: any) => (typeof t === 'string' ? t : (t?.text || ''))).filter(Boolean);
   const ogParams = new URLSearchParams({
     thumb: thumbnailBase,
-    title: metadata.title || 'SnapSum',
+    title: metadata.title || 'Zipytiny',
     t1: takeawayTexts[0] || '',
     t2: takeawayTexts[1] || '',
     t3: takeawayTexts[2] || '',
   });
   const imageUrl = `/api/og-image?${ogParams.toString()}`;
-  const url = `https://www.snapsum.app/s/${summary.shareId}`;
+  const url = `https://www.zipytiny.app/s/${summary.shareId}`;
 
   const forkMeta = forkQuiz
-    ? `\n    <meta name="snapsum:fork-quiz" content="true" />`
+    ? `\n    <meta name="zipytiny:fork-quiz" content="true" />`
     : '';
 
   const metaHtml = `
-    <title>${title} - SnapSum</title>
+    <title>${title} - Zipytiny</title>
     <meta name="description" content="${description}" />
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="${title} - SnapSum" />
+    <meta property="og:title" content="${title} - Zipytiny" />
     <meta property="og:description" content="${description}" />
     <meta property="og:image" content="${imageUrl}" />
     <meta property="og:url" content="${url}" />
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="${title} - SnapSum" />
+    <meta name="twitter:title" content="${title} - Zipytiny" />
     <meta name="twitter:description" content="${description}" />
     <meta name="twitter:image" content="${imageUrl}" />${forkMeta}
   `;
@@ -489,7 +489,7 @@ function injectOGTags(html: string, summary: any, suffix: string = '', forkQuiz:
 // Dynamic OG image endpoint — returns an SVG social card with thumbnail + top 3 takeaways
 // Social crawlers (Slack, Twitter, LinkedIn) will render this as the link preview image
 app.get('/api/og-image', (req, res) => {
-  const { thumb = '', title = 'SnapSum', t1 = '', t2 = '', t3 = '' } = req.query as Record<string, string>;
+  const { thumb = '', title = 'Zipytiny', t1 = '', t2 = '', t3 = '' } = req.query as Record<string, string>;
 
   const truncate = (s: string, max: number) => s.length > max ? s.slice(0, max - 1) + '…' : s;
   const safeTitle = truncate(title, 60).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&/g, '&amp;');
@@ -507,9 +507,9 @@ app.get('/api/og-image', (req, res) => {
   <!-- Dark overlay -->
   <rect width="1200" height="630" fill="url(#grad)"/>
   <defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0f172a" stop-opacity="0.5"/><stop offset="100%" stop-color="#0f172a" stop-opacity="0.92"/></linearGradient></defs>
-  <!-- SnapSum badge -->
+  <!-- Zipytiny badge -->
   <rect x="48" y="48" width="140" height="36" rx="8" fill="#6366f1"/>
-  <text x="118" y="71" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="#fff" text-anchor="middle">SnapSum</text>
+  <text x="118" y="71" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="#fff" text-anchor="middle">Zipytiny</text>
   <!-- Title -->
   <text x="600" y="230" font-family="Arial,sans-serif" font-size="38" font-weight="bold" fill="#ffffff" text-anchor="middle">${safeTitle}</text>
   <!-- Divider -->
@@ -517,7 +517,7 @@ app.get('/api/og-image', (req, res) => {
   <!-- Takeaways -->
   ${lines}
   <!-- Footer -->
-  <text x="600" y="590" font-family="Arial,sans-serif" font-size="18" fill="#94a3b8" text-anchor="middle">snapsum.app — AI Video Summaries</text>
+  <text x="600" y="590" font-family="Arial,sans-serif" font-size="18" fill="#94a3b8" text-anchor="middle">zipytiny.app — AI Video Summaries</text>
 </svg>`;
 
   res.setHeader('Content-Type', 'image/svg+xml');
@@ -528,14 +528,14 @@ app.get('/api/og-image', (req, res) => {
 // Robots & Sitemap
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
-  res.send('User-agent: *\nAllow: /\nSitemap: https://www.snapsum.app/sitemap.xml');
+  res.send('User-agent: *\nAllow: /\nSitemap: https://www.zipytiny.app/sitemap.xml');
 });
 
 app.get('/sitemap.xml', async (req, res) => {
   const summaries = await listSummaries();
   const urls = summaries.map(s => `
   <url>
-    <loc>https://www.snapsum.app/s/${s.shareId}</loc>
+    <loc>https://www.zipytiny.app/s/${s.shareId}</loc>
     <lastmod>${new Date(s.savedAt || Date.now()).toISOString().split('T')[0]}</lastmod>
     <changefreq>monthly</changefreq>
   </url>`).join('');
@@ -543,7 +543,7 @@ app.get('/sitemap.xml', async (req, res) => {
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://www.snapsum.app/</loc>
+    <loc>https://www.zipytiny.app/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>${urls}
@@ -1290,7 +1290,7 @@ app.post('/api/admin/auth', async (req, res) => {
 
   // Set default fallbacks
   let finalAdminUser = (process.env.ADMIN_USER_ID || 'admin').trim();
-  let finalAdminPass = (process.env.ADMIN_PASSWORD || 'SnapSumAdmin2026!').trim();
+  let finalAdminPass = (process.env.ADMIN_PASSWORD || 'ZipytinyAdmin2026!').trim();
   let mfaSecret = '';
 
   // Attempt to load settings from Firebase Database
@@ -1443,7 +1443,7 @@ app.post('/api/admin/generate-2fa', (req, res) => {
 
   try {
     const secret = generateSecret();
-    const otpauthUrl = generateURI({ label: 'admin', issuer: 'SnapSum', secret });
+    const otpauthUrl = generateURI({ label: 'admin', issuer: 'Zipytiny', secret });
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(otpauthUrl)}`;
 
     return res.json({ secret, qrCodeUrl });
@@ -1617,7 +1617,7 @@ app.post('/api/admin/db-diagnostic', async (req, res) => {
     await testDocRef.set({
       test: true,
       timestamp: new Date().toISOString(),
-      message: 'This is a secure connection test from SnapSum backend.'
+      message: 'This is a secure connection test from Zipytiny backend.'
     });
 
     // Try a test read
@@ -1649,7 +1649,7 @@ app.post('/api/customer-support', async (req, res) => {
   const getRuleBasedResponse = (userQuery: string): string => {
     const q = userQuery.toLowerCase();
     
-    let answer = `👋 **Hey there! Welcome to SnapSum Support!**\n\n`;
+    let answer = `👋 **Hey there! Welcome to Zipytiny Support!**\n\n`;
     
     // Check if the API key itself is missing to add a diagnostic tip
     const customKey = req.headers['x-custom-gemini-api-key'] as string;
@@ -1657,11 +1657,11 @@ app.post('/api/customer-support', async (req, res) => {
     const isApiKeyMissing = (!customKey || !customKey.trim()) && (!serverKey || !serverKey.trim() || serverKey === 'MY_GEMINI_API_KEY');
     
     if (isApiKeyMissing) {
-      answer += `😊 *Quick heads up: It looks like our main workspace Gemini API key isn't fully configured yet, so I'm running in offline help mode to guide you right away. If you'd like full conversational AI capabilities, feel free to enter your own personal Gemini API Key in the Developer Settings panel below, or configure it in Settings > Secrets! But don't worry, I can still answer all your questions about SnapSum here!.*\n\n`;
+      answer += `😊 *Quick heads up: It looks like our main workspace Gemini API key isn't fully configured yet, so I'm running in offline help mode to guide you right away. If you'd like full conversational AI capabilities, feel free to enter your own personal Gemini API Key in the Developer Settings panel below, or configure it in Settings > Secrets! But don't worry, I can still answer all your questions about Zipytiny here!.*\n\n`;
     }
 
     if (q.includes('price') || q.includes('pricing') || q.includes('plan') || q.includes('pro') || q.includes('cost') || q.includes('subscription') || q.includes('premium') || q.includes('billing') || q.includes('buy') || q.includes('upgrade') || q.includes('starter')) {
-      answer += `We've kept SnapSum pricing super simple and transparent! We have two core premium tiers and an enterprise option tailored to your learning pace:\n\n` +
+      answer += `We've kept Zipytiny pricing super simple and transparent! We have two core premium tiers and an enterprise option tailored to your learning pace:\n\n` +
                 `1. 🌟 **Basic Starter Plan ($0/forever)**:\n` +
                 `   - Perfect for general learners! It gives you standard summaries for videos up to 30 minutes long.\n` +
                 `   - Access to standard Active Recall quizzing & handy study tools.\n\n` +
@@ -1690,7 +1690,7 @@ app.post('/api/customer-support', async (req, res) => {
                 `- **How**: Share your unique referral link (you can find it right on your main workspace dashboard).\n` +
                 `- **The Goal**: When **2 visitors** click your link and sign in using Google SSO, your account is instantly upgraded to premium status! No credit card, no charge — just free Pro access!`;
     } else if (q.includes('feature') || q.includes('summar') || q.includes('tts') || q.includes('audio') || q.includes('chapter') || q.includes('mindmap') || q.includes('quiz') || q.includes('reel') || q.includes('video') || q.includes('transcript')) {
-      answer += `🚀 **SnapSum is packed with powerful, user-friendly tools to help you learn and create. Here is a quick look at what we offer:**\n\n` +
+      answer += `🚀 **Zipytiny is packed with powerful, user-friendly tools to help you learn and create. Here is a quick look at what we offer:**\n\n` +
                 `- **Universal Summaries**: Turns any YouTube video or long transcript into beautiful, structured takeaways.\n` +
                 `- **Auto Chapters**: Automatically chunks long videos into neat segments with clickable timestamps so you can jump right to what matters.\n` +
                 `- **Active Recall Quizzes**: Dynamic multiple-choice quizzes that check your understanding as you learn.\n` +
@@ -1698,7 +1698,7 @@ app.post('/api/customer-support', async (req, res) => {
                 `- **AI Voiceovers (TTS)**: Lets you listen to your summaries on the go with full audio controls.\n` +
                 `- **Viral Video Repurposer**: Automatically generate vertical TikTok or Reels storyboards and script exports from your summarized videos.`;
     } else if (q.includes('hi') || q.includes('hello') || q.includes('hey') || q.includes('greetings') || q.includes('who are you') || q.includes('help')) {
-      answer += `Hey there! It's so nice to meet you! I am your friendly support assistant here at SnapSum. 😊\n\n` +
+      answer += `Hey there! It's so nice to meet you! I am your friendly support assistant here at Zipytiny. 😊\n\n` +
                 `I am here to help you get the absolute most out of our platform! Whether you're curious about our pricing plans, want to try out our free payment sandbox, or want to know how to plug in your own Gemini API key for unlimited free processing, I've got you covered.\n\n` +
                 `What can I help you explore today? Feel free to ask me about any of these:\n` +
                 `- **Plans & Pricing** 💳 (We have great Starter and Pro options)\n` +
@@ -1706,7 +1706,7 @@ app.post('/api/customer-support', async (req, res) => {
                 `- **Using Custom Gemini Keys** 🔑 (To bypass server quotas for free)\n` +
                 `- **Our Core Features** 🎬 (Summaries, quizzes, mindmaps, and voiceovers!)`;
     } else {
-      answer += `I am always here to help you navigate anything you need! SnapSum is built to be the ultimate knowledge engine, converting long-form videos and lectures into beautifully organized summaries, interactive quizzes, visual mindmaps, and clean audio voiceovers.\n\n` +
+      answer += `I am always here to help you navigate anything you need! Zipytiny is built to be the ultimate knowledge engine, converting long-form videos and lectures into beautifully organized summaries, interactive quizzes, visual mindmaps, and clean audio voiceovers.\n\n` +
                 `If you have any questions at all about our pricing plans, how sandbox simulation works, setting up your own free Gemini key, or unlocking premium through referrals, just let me know. 😊\n\n` +
                 `What's on your mind? Ask me anything and I'll do my best to help you out!`;
     }
@@ -1758,23 +1758,23 @@ app.post('/api/customer-support', async (req, res) => {
       model: 'gemini-3.5-flash',
       contents: alternatingContents,
       config: {
-        systemInstruction: `You are SnapSum's friendly, warm, and highly conversational AI Customer Support Assistant. You represent SnapSum, the ultimate AI-powered Universal Video Summarizer and Knowledge Engine.
-Your goal is to answer user questions about SnapSum's features, pricing, troubleshooting, and operations.
+        systemInstruction: `You are Zipytiny's friendly, warm, and highly conversational AI Customer Support Assistant. You represent Zipytiny, the ultimate AI-powered Universal Video Summarizer and Knowledge Engine.
+Your goal is to answer user questions about Zipytiny's features, pricing, troubleshooting, and operations.
 
 CRITICAL TONE DIRECTIVE:
 Always write with a warm, conversational, welcoming, and highly human touch. Speak as if you are a real, friendly support specialist chatting with a user in real-time. Do NOT sound robotic, overly formal, stiff, or mechanical. Avoid heavy lists or structured tables unless the user explicitly asks for them. Use friendly emojis naturally and maintain a helpful, encouraging, and encouraging tone.
 
-Key facts about SnapSum to guide your replies:
-1. SnapSum transforms YouTube videos, lectures, and custom uploads into elegant structured summaries, key takeaways, quizzes, interactive mindmaps, and premium audio voiceovers (TTS).
+Key facts about Zipytiny to guide your replies:
+1. Zipytiny transforms YouTube videos, lectures, and custom uploads into elegant structured summaries, key takeaways, quizzes, interactive mindmaps, and premium audio voiceovers (TTS).
 2. Pricing and Billing:
    - Basic Starter Plan: $0/forever, offering standard summaries (up to 30 mins videos) and basic quizzes.
    - Pro Creator Pass: $28/month (or $19/month billed annually), offering unlimited processing, premium high-fidelity voiceovers, interactive mindmaps, dynamic flashcards, and priority queueing.
    - Enterprise Tier: $68/month (or $48/month billed annually), offering simultaneous bulk processing, automated web scheduler, API webhooks, and priority queueing.
-3. Sandbox Environment: SnapSum features a secure simulated sandbox environment. Connecting a Stripe test key or simulating Pro checkout allows developers/users to test the entire premium subscription flow at zero cost. No actual credit card is charged.
+3. Sandbox Environment: Zipytiny features a secure simulated sandbox environment. Connecting a Stripe test key or simulating Pro checkout allows developers/users to test the entire premium subscription flow at zero cost. No actual credit card is charged.
 4. Custom Gemini API Key Override: Users can paste their own Google Gemini API key in the Developer Settings tab (in-app or in the Admin panel). This allows users to completely bypass server daily credit quotas and utilize their personal free-tier API quotas.
 5. Other Features: Referrals (refer 2 visitors to unlock premium features), 2FA Security in Admin, IP tracker rate limit controls, Cinematic explainers, Active Recall quizzing, and audio transcription.
 
-If a question is unrelated to SnapSum, answer it politely but always loop back or offer assistance regarding SnapSum's features in a natural, friendly manner.`,
+If a question is unrelated to Zipytiny, answer it politely but always loop back or offer assistance regarding Zipytiny's features in a natural, friendly manner.`,
         temperature: 0.7,
       }
     });
@@ -1897,7 +1897,7 @@ app.get('/api/stripe-status', async (req, res) => {
         payoutsEnabled: acc.payouts_enabled,
         detailsSubmitted: acc.details_submitted,
         capabilities: acc.capabilities || {},
-        businessName: acc.settings?.dashboard?.display_name || acc.business_profile?.name || acc.nickname || 'SnapSum.com',
+        businessName: acc.settings?.dashboard?.display_name || acc.business_profile?.name || acc.nickname || 'Zipytiny.com',
         country: acc.country,
         requirements: acc.requirements || {},
         payouts_enabled: acc.payouts_enabled,
@@ -2196,7 +2196,7 @@ app.post('/api/marketing-generate', async (req, res) => {
     let finalPrompt = '';
     if (type === 'outreach') {
       finalPrompt = `You are a world-class digital marketing and cold sales outreach expert. 
-I am running a productivity SaaS called "SnapSum - Universal Video Summarizer", which summarizes any video (and audio uploads) into concise takeaways, interactive quizzes, study chapters, and audio-narrated podcasts.
+I am running a productivity SaaS called "Zipytiny - Universal Video Summarizer", which summarizes any video (and audio uploads) into concise takeaways, interactive quizzes, study chapters, and audio-narrated podcasts.
 
 Please write a highly persuasive, human-like, non-spammy cold email campaign and a 1-sentence social DM outreach script targeting potential users in this niche: "${promptInput}".
 Make the subject lines irresistible. Follow standard AIDA copy structures and focus on how saving 5 hours a week summarizing video training will skyrocket their productivity. Do not use generic AI buzzwords. Keep it concise.`;
@@ -2206,7 +2206,7 @@ I want you to write a high-impact, 45-second viral short-form script based on th
 The script must have:
 - A powerful viral hook in the first 3 seconds (addressing an exact pain point).
 - Three rapid benefit points.
-- A strong call-to-action to use "SnapSum" at their website custom domain.
+- A strong call-to-action to use "Zipytiny" at their website custom domain.
 
 Format the output clearly with [VISUAL] directions and spoken lines, keeping it high-paced, catchy, and trendy. Header/Subject of the video was: "${details || ''}".`;
     }

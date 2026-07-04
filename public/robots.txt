@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://snapsum.app/sitemap.xml
+Sitemap: https://zipytiny.app/sitemap.xml
