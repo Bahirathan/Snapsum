@@ -364,7 +364,9 @@ async function fetchGenericVideoMetadata(url: string): Promise<{ title: string; 
     if (parsedUrl.hostname.includes('vimeo.com')) {
       try {
         const vimeoOembed = `https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`;
-        const res = await fetch(vimeoOembed);
+        const res = await fetch(vimeoOembed, {
+          signal: AbortSignal.timeout(5000),
+        });
         if (res.ok) {
           const data = await res.json();
           return {
@@ -405,6 +407,7 @@ async function fetchGenericVideoMetadata(url: string): Promise<{ title: string; 
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept-Language': 'en-US,en;q=0.9',
       },
+      signal: AbortSignal.timeout(6000),
     });
 
     if (response.ok) {
@@ -465,6 +468,7 @@ async function fetchTranscript(videoId: string): Promise<string> {
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept-Language': 'en-US,en;q=0.9',
       },
+      signal: AbortSignal.timeout(7000),
     });
 
     if (!response.ok) {
@@ -514,7 +518,9 @@ async function fetchTranscript(videoId: string): Promise<string> {
     const trackUrl = track.baseUrl;
     if (!trackUrl) return '';
 
-    const xmlResponse = await fetch(trackUrl);
+    const xmlResponse = await fetch(trackUrl, {
+      signal: AbortSignal.timeout(5000),
+    });
     if (!xmlResponse.ok) return '';
     const xmlText = await xmlResponse.text();
 
@@ -548,7 +554,9 @@ async function fetchTranscript(videoId: string): Promise<string> {
 async function fetchYouTubeOEmbed(videoId: string): Promise<{ title: string; author: string; thumbnailUrl: string }> {
   try {
     const oembedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
-    const response = await fetch(oembedUrl);
+    const response = await fetch(oembedUrl, {
+      signal: AbortSignal.timeout(5000),
+    });
     if (response.ok) {
       const data = await response.json();
       return {
@@ -863,7 +871,12 @@ app.post('/api/summarize', summarizeLimiter, async (req, res) => {
     let transcript = customTranscript || '';
 
     if (!transcript && isYouTube) {
-      transcript = await fetchTranscript(videoId);
+      try {
+        transcript = await fetchTranscript(videoId);
+      } catch (transcriptErr: any) {
+        console.warn('Failed to retrieve YouTube transcript, falling back to knowledge synthesis:', transcriptErr.message || transcriptErr);
+        transcript = '';
+      }
     }
 
     // 3. Draft prompt for Gemini based on availability of transcript and output language selection
@@ -1287,7 +1300,8 @@ app.post('/api/tts', ttsLimiter, async (req, res) => {
         const resTts = await fetch(url, {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-          }
+          },
+          signal: AbortSignal.timeout(6000),
         });
         
         if (resTts.ok) {
