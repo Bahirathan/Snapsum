@@ -2262,12 +2262,45 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Server returned an error generating summary.');
+        let errorMsg = `Server returned status ${response.status}`;
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMsg = errorData.error || errorMsg;
+          } else {
+            const text = await response.text();
+            if (text.includes('<body>') || text.includes('<!DOCTYPE')) {
+              const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300);
+              errorMsg = `Server Error (${response.status}): ${cleanText}`;
+            } else {
+              errorMsg = text.slice(0, 300) || errorMsg;
+            }
+          }
+        } catch (e) {
+          errorMsg = `Server Error (${response.status}).`;
+        }
+        throw new Error(errorMsg);
       }
 
       setLoadingStep('Applying advanced reasoning structures with Gemini...');
-      const summaryData = (await response.json()) as YouTubeSummaryResponse;
+      let summaryData: YouTubeSummaryResponse;
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          summaryData = (await response.json()) as YouTubeSummaryResponse;
+        } else {
+          const text = await response.text();
+          if (text.includes('<body>') || text.includes('<!DOCTYPE')) {
+            const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300);
+            throw new Error(`Invalid JSON response (Status ${response.status}): ${cleanText}`);
+          } else {
+            throw new Error(`Invalid JSON response: ${text.slice(0, 300)}`);
+          }
+        }
+      } catch (err: any) {
+        throw new Error(err.message || 'Failed to parse server summary response.');
+      }
       const hydratedData = ensureLearnModeStructures(summaryData);
       
       setActiveSummary(hydratedData);
@@ -3016,26 +3049,24 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               </button>
             )}
 
-            {(isAdminAuthenticated || currentScreen === 'billing') && (
-              <button
-                onClick={() => setCurrentScreen('billing')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
-                  currentScreen === 'billing'
-                    ? 'bg-white text-[#1d1d1f] shadow-sm'
-                    : 'text-[#86868b] hover:text-[#1d1d1f]'
-                }`}
-              >
-                <CreditCard className="w-3.5 h-3.5" />
-                <span className="hidden xs:inline flex items-center gap-1">
-                  <span>Billing</span>
-                  {isPremium ? (
-                    <span className="bg-[#0071e3] text-white text-[8px] font-mono leading-none tracking-wider px-1 py-0.5 rounded-sm">PRO</span>
-                  ) : (
-                    <span className="bg-black/10 text-[#515154] text-[8px] font-mono leading-none tracking-wider px-1 py-0.5 rounded-sm">Basic</span>
-                  )}
-                </span>
-              </button>
-            )}
+            <button
+              onClick={() => setCurrentScreen('billing')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
+                currentScreen === 'billing'
+                  ? 'bg-white text-[#1d1d1f] shadow-sm'
+                  : 'text-[#86868b] hover:text-[#1d1d1f]'
+              }`}
+            >
+              <CreditCard className="w-3.5 h-3.5" />
+              <span className="hidden xs:inline flex items-center gap-1">
+                <span>Billing</span>
+                {isPremium ? (
+                  <span className="bg-[#0071e3] text-white text-[8px] font-mono leading-none tracking-wider px-1 py-0.5 rounded-sm">PRO</span>
+                ) : (
+                  <span className="bg-black/10 text-[#515154] text-[8px] font-mono leading-none tracking-wider px-1 py-0.5 rounded-sm">Basic</span>
+                )}
+              </span>
+            </button>
 
             {(isAdminAuthenticated || ['domain', 'marketing', 'admin'].includes(currentScreen)) && (
               <>
@@ -4612,7 +4643,42 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                       <span>Server Request Interrupted</span>
                     </div>
-                    {error.includes("RESOURCE_EXHAUSTED") || error.includes("prepayment credits") || error.includes("429") ? (
+                    {error.includes("dunning decision") || error.includes("Lightning dunning") || error.toLowerCase().includes("deny for project") ? (
+                      <div className="space-y-2.5">
+                        <p className="text-sm font-semibold text-rose-950 flex items-center gap-1.5">
+                          <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
+                          Google Cloud Billing Hold (Dunning Status Active)
+                        </p>
+                        <p className="text-xs text-neutral-600 leading-relaxed font-sans">
+                          Google Cloud has restricted API requests for your GCP project (<code>projects/39732050718</code>) because of a billing hold, unpaid charge, or temporary suspended state (called <strong>Dunning</strong>). Because you just added a new payment method, Google needs a brief moment to sync, and you may need to complete a few quick setup steps!
+                        </p>
+                        <div className="bg-white/95 p-4 rounded-xl border border-rose-100/50 space-y-2.5">
+                          <p className="text-xs font-semibold text-neutral-800">How to restore your API access immediately:</p>
+                          <ul className="text-xs text-neutral-600 list-disc list-inside space-y-2 bg-neutral-50/50 p-3 rounded-lg border border-neutral-100 leading-relaxed">
+                            <li>
+                              <strong className="text-neutral-900">Add Prepay Credits (Critical)</strong>: Google AI Studio operates on a <strong>Prepaid Billing Model</strong> for new developer accounts. Simply linking a new credit card is <strong>not enough</strong>! You must manually buy starting prepay credits. Go to your <a href="https://aistudio.google.com/app/billing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 font-semibold underline inline-flex items-center gap-0.5 hover:text-indigo-800">Google AI Studio Billing Console</a>, click <strong>Add Funds / Buy Credits</strong>, and load a positive balance (e.g., $10). Google will immediately lift the block once your balance is positive!
+                            </li>
+                            <li>
+                              <strong className="text-neutral-900">Check Project Association</strong>: Ensure your newly added billing account is actively linked to your Google Cloud Project <code>39732050718</code> in the <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 font-medium underline">GCP Billing Panel</a>.
+                            </li>
+                            <li>
+                              <strong className="text-neutral-900">Wait for Sync</strong>: Once you purchase prepay credits, Google Cloud usually takes 15-30 minutes to propagate the billing update across global GenAI servers.
+                            </li>
+                            <li>
+                              <strong className="text-neutral-950 bg-amber-50 px-1 py-0.5 rounded border border-amber-200">Instant Bypass</strong>: While waiting, you can paste your own personal developer Gemini API key inside our {" "}
+                              <button
+                                onClick={() => setCurrentScreen('billing')}
+                                className="text-indigo-600 font-bold hover:underline bg-transparent border-none p-0 inline cursor-pointer"
+                              >
+                                Billing (Sandbox)
+                              </button>{" "}
+                              tab above to test the app completely free with zero limits!
+                            </li>
+                          </ul>
+                        </div>
+                        <p className="text-[10px] text-rose-800/80 font-mono">Original Error Details: {error}</p>
+                      </div>
+                    ) : error.includes("RESOURCE_EXHAUSTED") || error.includes("prepayment credits") || error.includes("429") ? (
                       customApiKey ? (
                         <div className="space-y-2.5">
                           <p className="text-sm font-semibold text-rose-950">
@@ -4627,24 +4693,42 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                               <li>Verify your key status on <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline font-medium">Google AI Studio</a>.</li>
                               <li>Check if your Google AI Studio project has hit its rate limits (e.g., Requests Per Minute limit).</li>
                               <li>Wait a few minutes and try again.</li>
-                              <li>You can clear your custom key from the Admin tab to revert to Zipytiny host defaults.</li>
+                              <li>You can clear your custom key from the Billing tab to revert to Zipytiny host defaults.</li>
                             </ul>
                           </div>
                           <p className="text-[10px] text-rose-800/80 font-mono">Original Error: {error}</p>
                         </div>
                       ) : (
                         <div className="space-y-2.5">
-                          <p className="text-sm font-semibold text-rose-950">
-                            Your regional Google AI Studio Prepayment Credits are depleted.
+                          <p className="text-sm font-semibold text-rose-950 flex items-center gap-1.5">
+                            <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                            Google AI Studio Prepayment Credits Depleted
                           </p>
                           <p className="text-xs text-neutral-600 leading-relaxed font-sans">
-                            A 429 Exhausted status indicates your Gemini endpoint has run out of tokens. However, don't worry! You can easily continue evaluating and demonstrating Zipytiny using any of these options:
+                            A 429 Exhausted status indicates your Gemini endpoint has run out of tokens, or your Google AI Studio prepaid credit balance is currently $0.00. Because you just updated your card, let's complete the final step!
                           </p>
-                          <div className="bg-white/95 p-3.5 rounded-xl border border-rose-100/50 space-y-2">
-                            <p className="text-xs font-semibold text-neutral-800">Available Quick Workarounds:</p>
-                            <ul className="text-xs text-neutral-600 list-disc list-inside space-y-1 bg-neutral-50/50 p-2.5 rounded-lg border border-neutral-100">
-                              <li><strong className="text-neutral-900">Cached Templates:</strong> Select Steve Jobs or Simon Sinek in the side rail for zero-cost, high-fidelity analyses.</li>
-                              <li><strong className="text-neutral-900">Custom API Key:</strong> Provide your own Gemini API key inside the <strong className="text-indigo-600 font-medium">Admin tab</strong> above to bypass billing limits.</li>
+                          <div className="bg-white/95 p-4 rounded-xl border border-rose-100/50 space-y-2.5">
+                            <p className="text-xs font-semibold text-neutral-800">Required Steps for Paid Tier Gemini API:</p>
+                            <ul className="text-xs text-neutral-600 list-disc list-inside space-y-2 bg-neutral-50/50 p-3 rounded-lg border border-neutral-100 leading-relaxed">
+                              <li>
+                                <strong className="text-neutral-900">Purchase Prepaid Credits (Required)</strong>: Under Google AI Studio's paid plan, simply linking a credit card is <strong>not enough</strong> to start. You must go to <a href="https://aistudio.google.com/app/billing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 font-semibold underline hover:text-indigo-800">Google AI Studio Billing</a> and click <strong>Add Funds / Buy Credits</strong> to purchase prepay credits (minimum $10). Once your balance is positive, Google immediately activates paid requests.
+                              </li>
+                              <li>
+                                <strong className="text-neutral-900">Verify Project Linking</strong>: Ensure your billing account is actively linked to Google Cloud Project ID <code>39732050718</code> in the Google Cloud Billing console.
+                              </li>
+                              <li>
+                                <strong className="text-neutral-900">Instant Bypass</strong>: While your prepay balance is syncing, you can enter your private personal Gemini API key inside our {" "}
+                                <button
+                                  onClick={() => setCurrentScreen('billing')}
+                                  className="text-indigo-600 font-bold hover:underline bg-transparent border-none p-0 inline cursor-pointer"
+                                >
+                                  Billing (Sandbox) Tab
+                                </button>{" "}
+                                above to completely bypass server limits and summarize videos instantly for free!
+                              </li>
+                              <li>
+                                <strong className="text-neutral-900">Cached Templates</strong>: Select Steve Jobs or Simon Sinek in the side rail for zero-cost, high-fidelity analyses.
+                              </li>
                             </ul>
                           </div>
                         </div>
@@ -7689,88 +7773,86 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               )}
 
               {/* ZERO-COST MVP DEV SANDBOX: CUSTOM GEMINI API KEY */}
-              {isAdminAuthenticated && (
-                <div className="p-6 rounded-3xl border border-blue-100 bg-blue-50/20 text-left space-y-4 font-sans">
-                  <div className="flex items-center gap-2 text-blue-800">
-                    <Server className="w-5 h-5 text-blue-700" />
-                    <h3 className="font-bold text-sm tracking-tight text-blue-950">Zero-Cost MVP Launchpad & Developer Sandbox</h3>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed max-w-4xl font-light">
-                    To get real market validation, run your Zipytiny MVP at <strong>$0 hosting and API costs</strong>! By pasting your personal <strong>Google Gemini API Key</strong> below, it will be saved securely in your browser's private <code>localStorage</code>. All summaries and premium audio voiceovers will execute utilizing your personal free-tier sandbox. This completely bypasses server quota blocks and costs you absolutely nothing!
-                  </p>
-
-                  <div className="max-w-xl space-y-2">
-                    <div className="flex gap-2.5">
-                      <input
-                        type="password"
-                        placeholder="Paste your private personal Gemini API key here (AI_...) or leave blank to use the default"
-                        value={customApiKey}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          let cleanVal = val.trim();
-                          if (cleanVal.includes('GEMINI_API_KEY=')) {
-                            cleanVal = cleanVal.split('GEMINI_API_KEY=')[1].trim();
-                          }
-                          if ((cleanVal.startsWith('"') && cleanVal.endsWith('"')) || (cleanVal.startsWith("'") && cleanVal.endsWith("'"))) {
-                            cleanVal = cleanVal.slice(1, -1).trim();
-                          }
-                          setCustomApiKey(cleanVal);
-                          if (cleanVal) {
-                            localStorage.setItem('custom_gemini_api_key', cleanVal);
-                          } else {
-                            localStorage.removeItem('custom_gemini_api_key');
-                          }
-                        }}
-                        className="flex-1 px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-blue-500 font-mono shadow-sm"
-                      />
-                      {customApiKey && (
-                        <button
-                          onClick={() => {
-                            setCustomApiKey('');
-                            localStorage.removeItem('custom_gemini_api_key');
-                          }}
-                          className="px-3.5 py-2 text-xs hover:bg-neutral-100/60 text-neutral-600 rounded-xl border border-black/[0.08] transition whitespace-nowrap font-medium cursor-pointer"
-                        >
-                          Clear Key
-                        </button>
-                      )}
-                    </div>
-                    {customApiKey && customApiKey.startsWith('sk-') && (
-                      <span className="block text-[10px] text-amber-600 font-semibold mt-1 bg-amber-50 p-2 rounded-lg border border-amber-200/50 animate-fadeIn">
-                        ⚠️ Warning: This key looks like an OpenAI API key (starts with 'sk-'). Gemini requires a Google AI Studio API key (starts with 'AIzaSy').
-                      </span>
-                    )}
-                    {customApiKey && !customApiKey.startsWith('AIzaSy') && !customApiKey.startsWith('sk-') && (
-                      <span className="block text-[10px] text-indigo-600 font-medium mt-1 animate-fadeIn">
-                        ℹ️ Note: Standard Gemini API keys usually start with 'AIzaSy'. Please make sure this is your correct key from Google AI Studio.
-                      </span>
-                    )}
-                    {customApiKey && customApiKey.startsWith('AIzaSy') && (
-                      <span className="block text-[10px] text-emerald-600 font-semibold mt-1 bg-emerald-50/50 p-2 rounded-lg border border-emerald-100 animate-fadeIn">
-                        ✅ Valid Key Format: Your Gemini API Key starts with 'AIzaSy' and is configured successfully.
-                      </span>
-                    )}
-                    <span className="block text-[10px] text-slate-500 font-light">
-                      🔑 Security: Your API key is cached locally inside your browser's private state, keeping it completely immune to leaking over open servers.
-                    </span>
-                  </div>
-
-                  <div className="pt-3.5 border-t border-blue-100/50 space-y-2">
-                    <h4 className="text-xs font-bold text-blue-950 leading-none">🚀 How to host this full-stack MVP entirely for free:</h4>
-                    <ul className="text-[11px] text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed font-light">
-                      <li>
-                        <strong>Avoid Google Cloud Run for $0 Budgets</strong>: Cloud Run & GCP Artifact Registry require linking an active payment billing profile, which is why your GitHub Actions push errored with <code>BILLING_DISABLED</code>.
-                      </li>
-                      <li>
-                        <strong>Use Render.com or Koyeb instead</strong>: These platforms feature robust <strong>Free Tiers for Node.js</strong> servers which require no credit cards or billing setup to deploy! This Express + Vite project will compile and deploy on them out-of-the-box.
-                      </li>
-                      <li>
-                        <strong>Try Static Hosting like Vercel or Netlify</strong>: By relying on your custom Gemini API key above, you can export this React project as a purely static site and deploy it instantly for $0.
-                      </li>
-                    </ul>
-                  </div>
+              <div className="p-6 rounded-3xl border border-blue-100 bg-blue-50/20 text-left space-y-4 font-sans">
+                <div className="flex items-center gap-2 text-blue-800">
+                  <Server className="w-5 h-5 text-blue-700" />
+                  <h3 className="font-bold text-sm tracking-tight text-blue-950">Zero-Cost MVP Launchpad & Developer Sandbox</h3>
                 </div>
-              )}
+                <p className="text-xs text-slate-600 leading-relaxed max-w-4xl font-light">
+                  To get real market validation, run your Zipytiny MVP at <strong>$0 hosting and API costs</strong>! By pasting your personal <strong>Google Gemini API Key</strong> below, it will be saved securely in your browser's private <code>localStorage</code>. All summaries and premium audio voiceovers will execute utilizing your personal free-tier sandbox. This completely bypasses server quota blocks and costs you absolutely nothing!
+                </p>
+
+                <div className="max-w-xl space-y-2">
+                  <div className="flex gap-2.5">
+                    <input
+                      type="password"
+                      placeholder="Paste your private personal Gemini API key here (AI_...) or leave blank to use the default"
+                      value={customApiKey}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        let cleanVal = val.trim();
+                        if (cleanVal.includes('GEMINI_API_KEY=')) {
+                          cleanVal = cleanVal.split('GEMINI_API_KEY=')[1].trim();
+                        }
+                        if ((cleanVal.startsWith('"') && cleanVal.endsWith('"')) || (cleanVal.startsWith("'") && cleanVal.endsWith("'"))) {
+                          cleanVal = cleanVal.slice(1, -1).trim();
+                        }
+                        setCustomApiKey(cleanVal);
+                        if (cleanVal) {
+                          localStorage.setItem('custom_gemini_api_key', cleanVal);
+                        } else {
+                          localStorage.removeItem('custom_gemini_api_key');
+                        }
+                      }}
+                      className="flex-1 px-4 py-2 text-xs bg-white text-[#1d1d1f] border border-black/[0.08] rounded-xl outline-none focus:border-blue-500 font-mono shadow-sm"
+                    />
+                    {customApiKey && (
+                      <button
+                        onClick={() => {
+                          setCustomApiKey('');
+                          localStorage.removeItem('custom_gemini_api_key');
+                        }}
+                        className="px-3.5 py-2 text-xs hover:bg-neutral-100/60 text-neutral-600 rounded-xl border border-black/[0.08] transition whitespace-nowrap font-medium cursor-pointer"
+                      >
+                        Clear Key
+                      </button>
+                    )}
+                  </div>
+                  {customApiKey && customApiKey.startsWith('sk-') && (
+                    <span className="block text-[10px] text-amber-600 font-semibold mt-1 bg-amber-50 p-2 rounded-lg border border-amber-200/50 animate-fadeIn">
+                      ⚠️ Warning: This key looks like an OpenAI API key (starts with 'sk-'). Gemini requires a Google AI Studio API key (starts with 'AIzaSy').
+                    </span>
+                  )}
+                  {customApiKey && !customApiKey.startsWith('AIzaSy') && !customApiKey.startsWith('sk-') && (
+                    <span className="block text-[10px] text-indigo-600 font-medium mt-1 animate-fadeIn">
+                      ℹ️ Note: Standard Gemini API keys usually start with 'AIzaSy'. Please make sure this is your correct key from Google AI Studio.
+                    </span>
+                  )}
+                  {customApiKey && customApiKey.startsWith('AIzaSy') && (
+                    <span className="block text-[10px] text-emerald-600 font-semibold mt-1 bg-emerald-50/50 p-2 rounded-lg border border-emerald-100 animate-fadeIn">
+                      ✅ Valid Key Format: Your Gemini API Key starts with 'AIzaSy' and is configured successfully.
+                    </span>
+                  )}
+                  <span className="block text-[10px] text-slate-500 font-light">
+                    🔑 Security: Your API key is cached locally inside your browser's private state, keeping it completely immune to leaking over open servers.
+                  </span>
+                </div>
+
+                <div className="pt-3.5 border-t border-blue-100/50 space-y-2">
+                  <h4 className="text-xs font-bold text-blue-950 leading-none">🚀 How to host this full-stack MVP entirely for free:</h4>
+                  <ul className="text-[11px] text-slate-600 space-y-1.5 list-disc pl-4 leading-relaxed font-light">
+                    <li>
+                      <strong>Avoid Google Cloud Run for $0 Budgets</strong>: Cloud Run & GCP Artifact Registry require linking an active payment billing profile, which is why your GitHub Actions push errored with <code>BILLING_DISABLED</code>.
+                    </li>
+                    <li>
+                      <strong>Use Render.com or Koyeb instead</strong>: These platforms feature robust <strong>Free Tiers for Node.js</strong> servers which require no credit cards or billing setup to deploy! This Express + Vite project will compile and deploy on them out-of-the-box.
+                    </li>
+                    <li>
+                      <strong>Try Static Hosting like Vercel or Netlify</strong>: By relying on your custom Gemini API key above, you can export this React project as a purely static site and deploy it instantly for $0.
+                    </li>
+                  </ul>
+                </div>
+              </div>
 
               {/* Dynamic Rate Control Center & Stripe Integration Hub */}
               {isAdminAuthenticated && (
