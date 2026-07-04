@@ -10501,7 +10501,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       {/* Stripe Payment Simulator Gated Modal */}
       {showStripeModal && (
         <div className="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-4xl w-full overflow-hidden shadow-xl border border-neutral-200 grid grid-cols-1 md:grid-cols-12 max-h-[95vh] font-sans">
+          <div className="bg-white rounded-3xl max-w-4xl w-full shadow-xl border border-neutral-200 grid grid-cols-1 md:grid-cols-12 max-h-[90vh] md:max-h-[85vh] overflow-y-auto md:overflow-hidden font-sans">
             
             {/* Left Side: Order summary details */}
             <div className="md:col-span-5 bg-neutral-900 p-6 md:p-8 text-white flex flex-col justify-between">
@@ -10655,7 +10655,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             </div>
 
             {/* Right Side: Credit Card collection interface */}
-            <div className="md:col-span-7 p-6 md:p-8 bg-white flex flex-col justify-between overflow-y-auto max-h-[70vh] md:max-h-none text-left font-sans">
+            <div className="md:col-span-7 p-6 md:p-8 bg-white flex flex-col justify-between overflow-y-visible md:overflow-y-auto md:max-h-[85vh] text-left font-sans">
               <div>
                 <div className="flex items-center justify-between pb-4 border-b border-neutral-100">
                   <h3 className="text-base font-bold font-display text-neutral-900 flex items-center gap-1.5">
@@ -10679,16 +10679,16 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   <div className="pt-4 space-y-4">
                     {/* Real Stripe Launch Error / Simulator Warning Banner */}
                     {!stripeConfig.stripeConfigured ? (
-                      <div className="bg-blue-50/85 border border-blue-100 rounded-2xl p-4 text-xs text-blue-900 space-y-1.5">
-                        <div className="flex items-start gap-2.5">
-                          <Info className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
-                          <div className="space-y-1">
-                            <span className="font-bold text-blue-800 block uppercase font-mono tracking-wider text-[10px]">💡 Zipytiny Checkout Sandbox Active</span>
-                            <p className="leading-relaxed text-blue-700 font-light">
-                              Zipytiny is currently running in a simulated developer sandbox environment. To allow you to fully test the upgrade flows and experience the premium Pro/Enterprise features, our built-in checkout simulator is active. No real credit card charges will occur.
+                      <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-3 text-xs text-blue-950">
+                        <div className="flex items-start gap-2">
+                          <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                          <div className="space-y-0.5 text-left">
+                            <span className="font-bold text-blue-800 uppercase font-mono tracking-wider text-[9px] block">Zipytiny Sandbox Checkout Active</span>
+                            <p className="text-blue-900 font-sans leading-relaxed text-[11px] font-light">
+                              Zipytiny is running in simulated sandbox mode. Fill in any mock credentials below to complete checkout and unlock all Pro features completely free. No real charges will occur.
                             </p>
                             {stripeLaunchError && !stripeLaunchError.includes('Stripe live secret keys are not configured') && (
-                              <div className="mt-2 bg-blue-100/60 p-2 rounded-xl font-mono text-[10px] text-blue-950 break-words leading-relaxed select-all">
+                              <div className="mt-1.5 bg-blue-100/60 p-1.5 rounded-lg font-mono text-[9px] text-blue-950 break-words leading-relaxed select-all">
                                 <span className="font-bold text-blue-900 block mb-0.5">Details:</span>
                                 {stripeLaunchError}
                               </div>
