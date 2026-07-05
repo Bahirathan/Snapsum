@@ -9251,32 +9251,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   {/* High-end decorative visual protection line */}
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-neutral-900 via-neutral-600 to-neutral-900" />
 
-                  {/* Plans Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 text-left">
-
-                    {/* Tier 1: Free Tier */}
-                    <div className="border border-black/[0.06] dark:border-zinc-800 rounded-3xl p-6 bg-[#f5f5f7]/40 dark:bg-zinc-900/40 flex flex-col justify-between relative overflow-hidden text-left font-sans">
                       <div className="space-y-4">
-                        <div className="space-y-1">
-                          <span className="text-[10px] font-mono font-bold uppercase text-[#86868b] dark:text-zinc-500 tracking-widest block">Tier 01</span>
-                          <h4 className="text-lg font-bold text-[#1d1d1f] dark:text-zinc-100">Starter</h4>
-                          <p className="text-[#86868b] dark:text-zinc-400 text-xs font-light leading-relaxed">Try AI-powered summarization free — no credit card needed.</p>
-                        </div>
-
-                        <div className="py-2">
-                          <span className="text-3xl font-bold text-[#1d1d1f] dark:text-zinc-100">$0</span>
-                          <span className="text-[#86868b] dark:text-zinc-500 text-xs font-medium"> / forever</span>
-                        </div>
-
-                        <div className="border-t border-black/[0.04] dark:border-zinc-800 pt-4 space-y-3">
-                          <span className="text-[#1d1d1f] dark:text-zinc-300 text-[10px] font-mono font-bold block uppercase tracking-wider">What's included:</span>
-                          <ul className="space-y-2.5 text-xs text-[#86868b] dark:text-zinc-400 leading-normal font-light">
-                            {['5 AI summaries per month', 'Text summary + basic quiz', 'Markdown export', 'AI Chat (5 msg/day)'].map(f => (
-                              <li key={f} className="flex items-start gap-2">
-                                <CheckCircle className="w-4 h-4 text-neutral-400 dark:text-zinc-600 shrink-0 mt-0.5" />
-                                <span>{f}</span>
-                              </li>
-                            ))}
+                        <div className="inline-flex items-center gap-2 bg-[#f5f5f7] border border-black/[0.04] px-3 py-1 rounded-full text-[10px] font-mono font-bold text-neutral-700 uppercase tracking-widest">
                           <span className="h-1.5 w-1.5 bg-zinc-500 rounded-full animate-ping" />
                           STAGE 1: CREDENTIAL CHALLENGE
                         </div>
