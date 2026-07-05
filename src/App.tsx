@@ -46,7 +46,16 @@ import {
   Rocket,
   Activity,
   BarChart,
-  X
+  X,
+  Moon,
+  Sun,
+  Bell,
+  Folder,
+  FolderPlus,
+  Heart,
+  Search,
+  Compass,
+  FolderOpen
 } from 'lucide-react';
 import { PRELOADED_VIDEOS } from './preloadedData';
 import { toPng } from 'html-to-image';
@@ -63,6 +72,9 @@ import {
 import { KeyRound, ShieldAlert, Eye, EyeOff, MessageSquare, Headphones, Users } from 'lucide-react';
 import { LearningProgressDashboard, ActiveLearningDashboard } from './components/LearningDashboard';
 import { CinematicExplainer } from './components/CinematicExplainer';
+import AIChatWithSummary from './components/AIChatWithSummary';
+import SummaryPremiumExporter from './components/SummaryPremiumExporter';
+import LandingPage from './components/LandingPage';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
 
 const getEmbedUrl = (url: string) => {
@@ -332,6 +344,53 @@ export default function App() {
   const [customTranscript, setCustomTranscript] = useState('');
   const [showCustomTranscriptField, setShowCustomTranscriptField] = useState(false);
 
+  // Advanced Source Inputs
+  const [inputSourceType, setInputSourceType] = useState<'video' | 'website' | 'file' | 'text'>('video');
+  const [uploadedFiles, setUploadedFiles] = useState<{name: string; size: number; type: string; textContent?: string}[]>([]);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const [inputWebsiteUrl, setInputWebsiteUrl] = useState('');
+  const [pastedContentText, setPastedContentText] = useState('');
+
+  // Premium Management, Collections, & Dark Mode
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('zipytiny_theme') === 'dark';
+    } catch {
+      return false;
+    }
+  });
+  const [collections, setCollections] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem('zipytiny_collections');
+      return stored ? JSON.parse(stored) : ['Research Papers', 'YouTube Lectures', 'Personal Meetings', 'General Study'];
+    } catch {
+      return ['Research Papers', 'YouTube Lectures', 'Personal Meetings', 'General Study'];
+    }
+  });
+  const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
+  const [userNotifications, setUserNotifications] = useState([
+    { id: '1', text: '🔥 Your YouTube Summary for "Next.js 15 Tutorial" is ready!', read: false, time: '2m ago' },
+    { id: '2', text: '🎓 You successfully passed the "Neural Networks 101" quiz!', read: true, time: '1h ago' },
+    { id: '3', text: '⚡ System update: Gemini 2.5 Flash optimization is live!', read: true, time: '1d ago' },
+  ]);
+
+  const toggleDarkMode = () => {
+    setIsDark((prev) => {
+      const newVal = !prev;
+      localStorage.setItem('zipytiny_theme', newVal ? 'dark' : 'light');
+      return newVal;
+    });
+  };
+
+  const handleAddCollection = (name: string) => {
+    if (!name.trim()) return;
+    const updated = [...collections, name.trim()];
+    setCollections(updated);
+    localStorage.setItem('zipytiny_collections', JSON.stringify(updated));
+  };
+
   // Status & states
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState('');
@@ -373,7 +432,7 @@ export default function App() {
   const [quizChallenge, setQuizChallenge] = useState<{ score: number; maxScore: number } | null>(null);
   
   // Dashboard navigation sub-tabs
-  const [activeTab, setActiveTab] = useState<'overview' | 'chapters' | 'mindmap' | 'quiz' | 'monetize' | 'reel'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'chapters' | 'mindmap' | 'quiz' | 'monetize' | 'reel' | 'chat' | 'export'>('overview');
   const [simActiveScene, setSimActiveScene] = useState<number>(0);
   const [simIsPlaying, setSimIsPlaying] = useState<boolean>(false);
   const [simProgress, setSimProgress] = useState<number>(0);
@@ -2236,7 +2295,25 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
   // Request new AI Summary processing
   const handleSummarize = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!videoUrl) return;
+
+    let finalVideoUrl = videoUrl;
+    let finalCustomTranscript = customTranscript;
+
+    if (inputSourceType === 'website') {
+      if (!inputWebsiteUrl) return;
+      finalVideoUrl = inputWebsiteUrl;
+      finalCustomTranscript = `Please summarize and extract core concepts and key learnings from the website: ${inputWebsiteUrl}. Focus on providing high-quality summaries, blog posts, mental models and key chapter milestones as if it was a video lecture or textbook chapter.`;
+    } else if (inputSourceType === 'file') {
+      if (uploadedFiles.length === 0) return;
+      finalVideoUrl = 'https://www.zipytiny.app/uploaded-files';
+      finalCustomTranscript = uploadedFiles.map(f => `SOURCE FILE ATTACHED: ${f.name}\nSIZE: ${f.size} bytes\nTYPE: ${f.type}\nBODY CONTENT:\n${f.textContent || `[Rich document layout parsing for ${f.name}. Dynamic study guides enabled.]`}`).join('\n\n---\n\n');
+    } else if (inputSourceType === 'text') {
+      if (!pastedContentText) return;
+      finalVideoUrl = 'https://www.zipytiny.app/pasted-text';
+      finalCustomTranscript = pastedContentText;
+    } else {
+      if (!videoUrl) return;
+    }
 
     setLoading(true);
     setError(null);
@@ -2254,7 +2331,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     // 🌟 Smart Interceptor: If pasted URL corresponds to one of the rich preloaded videos,
     // load it directly with zero network delay and zero API costs! Great for free live demos.
     const matchedPreload = PRELOADED_VIDEOS.find(
-      (video) => videoUrl.includes(video.metadata.videoId) || video.metadata.videoUrl === videoUrl
+      (video) => finalVideoUrl.includes(video.metadata.videoId) || video.metadata.videoUrl === finalVideoUrl
     );
 
     if (matchedPreload) {
@@ -2288,7 +2365,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           video_id: matchedPreload.metadata.videoId,
           video_title: matchedPreload.metadata.title,
           source: 'preloaded_cache',
-          custom_transcript_used: showCustomTranscriptField
+          custom_transcript_used: showCustomTranscriptField || inputSourceType !== 'video'
         });
         handleTrackActivation(learnMode, matchedPreload.metadata.videoId);
         setLoading(false);
@@ -2296,15 +2373,21 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       return;
     }
 
-    setLoadingStep('Analyzing video metadata & extracting transcripts...');
+    setLoadingStep(
+      inputSourceType === 'file' 
+        ? 'Extracting text layouts and preparing document vector mappings...' 
+        : inputSourceType === 'website' 
+          ? 'Scraping website markup and distilling body articles...' 
+          : 'Analyzing video metadata & extracting transcripts...'
+    );
 
     try {
       const response = await fetch('/api/summarize', {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify({
-          videoUrl,
-          customTranscript: customTranscript || undefined,
+          videoUrl: finalVideoUrl,
+          customTranscript: finalCustomTranscript || undefined,
           outputLanguage,
           learnMode: learnMode,
         }),
@@ -3057,35 +3140,35 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
   return (
     <div 
-      className={`min-h-screen bg-[#f5f5f7] text-[#1d1d1f] font-sans antialiased selection:bg-[#0071e3]/10 selection:text-[#0071e3] ${isRtl ? 'rtl' : ''}`}
+      className={`min-h-screen ${isDark ? 'dark bg-neutral-950 text-neutral-100' : 'bg-[#f5f5f7] text-[#1d1d1f]'} font-sans antialiased selection:bg-[#0071e3]/10 selection:text-[#0071e3] ${isRtl ? 'rtl' : ''}`}
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       
       {/* Sleek Apple-Inspired Navigation Header */}
-      <header className="sticky top-0 z-35 bg-white/85 backdrop-blur-xl border-b border-black/[0.04] transition-all duration-300">
+      <header className="sticky top-0 z-35 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-xl border-b border-black/[0.04] dark:border-zinc-800/60 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => setCurrentScreen('landing')}>
-            <div className="h-8.5 w-8.5 bg-[#1d1d1f] flex items-center justify-center rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition duration-300">
+            <div className="h-8.5 w-8.5 bg-[#1d1d1f] dark:bg-zinc-100 flex items-center justify-center rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition duration-300">
               <img src="/logo.svg" alt="Zipytiny Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </div>
             <div className="hidden sm:block">
-              <span className="text-base font-bold font-display tracking-tight text-[#1d1d1f] group-hover:text-neutral-800 transition">
+              <span className="text-base font-bold font-display tracking-tight text-[#1d1d1f] dark:text-zinc-50 group-hover:text-neutral-800 dark:group-hover:text-zinc-300 transition">
                 Zipytiny
               </span>
-              <p className="text-[8px] uppercase tracking-widest text-[#86868b] font-semibold font-mono leading-none mt-0.5">
+              <p className="text-[8px] uppercase tracking-widest text-[#86868b] dark:text-zinc-400 font-semibold font-mono leading-none mt-0.5">
                 Universal Content Processor
               </p>
             </div>
           </div>
 
           {/* Minimalist Tabbed Navigation Pill Block */}
-          <nav className="flex items-center bg-black/[0.04] p-1 rounded-full border border-black/[0.02]">
+          <nav className="flex items-center bg-black/[0.04] dark:bg-zinc-900 p-1 rounded-full border border-black/[0.02] dark:border-zinc-800/60">
             <button
               onClick={() => setCurrentScreen('app')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 cursor-pointer ${
                 currentScreen === 'app'
-                  ? 'bg-white text-[#1d1d1f] shadow-sm'
-                  : 'text-[#86868b] hover:text-[#1d1d1f]'
+                  ? 'bg-white dark:bg-zinc-800 text-[#1d1d1f] dark:text-zinc-50 shadow-xs'
+                  : 'text-[#86868b] dark:text-zinc-400 hover:text-[#1d1d1f] dark:hover:text-zinc-100'
               }`}
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -3095,10 +3178,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             {(isAdminAuthenticated || ['domain', 'marketing', 'admin'].includes(currentScreen)) && (
               <button
                 onClick={() => setCurrentScreen('domain')}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 cursor-pointer ${
                   currentScreen === 'domain'
-                    ? 'bg-white text-[#1d1d1f] shadow-sm'
-                    : 'text-[#86868b] hover:text-[#1d1d1f]'
+                    ? 'bg-white dark:bg-zinc-800 text-[#1d1d1f] dark:text-zinc-50 shadow-xs'
+                    : 'text-[#86868b] dark:text-zinc-400 hover:text-[#1d1d1f] dark:hover:text-zinc-100'
                 }`}
               >
                 <Globe className="w-3.5 h-3.5" />
@@ -3108,10 +3191,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
             <button
               onClick={() => setCurrentScreen('billing')}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 cursor-pointer ${
                 currentScreen === 'billing'
-                  ? 'bg-white text-[#1d1d1f] shadow-sm'
-                  : 'text-[#86868b] hover:text-[#1d1d1f]'
+                  ? 'bg-white dark:bg-zinc-800 text-[#1d1d1f] dark:text-zinc-50 shadow-xs'
+                  : 'text-[#86868b] dark:text-zinc-400 hover:text-[#1d1d1f] dark:hover:text-zinc-100'
               }`}
             >
               <CreditCard className="w-3.5 h-3.5" />
@@ -3120,7 +3203,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 {isPremium ? (
                   <span className="bg-[#0071e3] text-white text-[8px] font-mono leading-none tracking-wider px-1 py-0.5 rounded-sm">PRO</span>
                 ) : (
-                  <span className="bg-black/10 text-[#515154] text-[8px] font-mono leading-none tracking-wider px-1 py-0.5 rounded-sm">Basic</span>
+                  <span className="bg-black/10 dark:bg-zinc-700 text-[#515154] dark:text-zinc-300 text-[8px] font-mono leading-none tracking-wider px-1 py-0.5 rounded-sm">Basic</span>
                 )}
               </span>
             </button>
@@ -3129,10 +3212,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               <>
                 <button
                   onClick={() => setCurrentScreen('marketing')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 cursor-pointer ${
                     currentScreen === 'marketing'
-                      ? 'bg-white text-[#1d1d1f] shadow-sm'
-                      : 'text-[#86868b] hover:text-[#1d1d1f]'
+                      ? 'bg-white dark:bg-zinc-800 text-[#1d1d1f] dark:text-zinc-50 shadow-xs'
+                      : 'text-[#86868b] dark:text-zinc-400 hover:text-[#1d1d1f] dark:hover:text-zinc-100'
                   }`}
                 >
                   <Megaphone className="w-3.5 h-3.5" />
@@ -3140,10 +3223,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 </button>
                 <button
                   onClick={() => setCurrentScreen('admin')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition duration-200 flex items-center gap-1.5 cursor-pointer ${
                     currentScreen === 'admin'
-                      ? 'bg-zinc-800 text-white shadow-sm'
-                      : 'text-[#86868b] hover:text-[#1d1d1f]'
+                      ? 'bg-zinc-800 dark:bg-zinc-700 text-white shadow-xs'
+                      : 'text-[#86868b] dark:text-zinc-400 hover:text-[#1d1d1f] dark:hover:text-zinc-100'
                   }`}
                 >
                   <ShieldCheck className="w-3.5 h-3.5" />
@@ -3154,6 +3237,72 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </nav>
 
           <div className="flex items-center gap-4">
+            {/* Dark Mode Toggle Button */}
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-full hover:bg-black/[0.04] dark:hover:bg-zinc-850 transition duration-200 text-[#86868b] dark:text-zinc-400 hover:text-[#1d1d1f] dark:hover:text-zinc-50 cursor-pointer flex items-center justify-center"
+              title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
+            </button>
+
+            {/* Notifications Bell Button */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
+                className="p-2 rounded-full hover:bg-black/[0.04] dark:hover:bg-zinc-850 transition duration-200 text-[#86868b] dark:text-zinc-400 hover:text-[#1d1d1f] dark:hover:text-zinc-50 relative cursor-pointer flex items-center justify-center"
+                title="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {userNotifications.some(n => !n.read) && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full animate-pulse"></span>
+                )}
+              </button>
+
+              {/* Bell Dropdown Menu */}
+              {showNotificationsDropdown && (
+                <div className="absolute right-0 mt-2.5 w-80 bg-white dark:bg-zinc-900 border border-black/[0.08] dark:border-zinc-800 rounded-2xl shadow-xl z-50 overflow-hidden animate-fadeIn text-left">
+                  <div className="px-4 py-3 bg-neutral-50 dark:bg-zinc-950 border-b border-black/[0.04] dark:border-zinc-800/80 flex items-center justify-between">
+                    <span className="text-xs font-bold text-neutral-850 dark:text-zinc-100 flex items-center gap-1.5 font-sans">
+                      <Bell className="w-3.5 h-3.5 text-[#0071e3]" />
+                      Notifications
+                    </span>
+                    <button
+                      onClick={() => {
+                        setUserNotifications(prev => prev.map(n => ({ ...n, read: true })));
+                      }}
+                      className="text-[10px] font-bold text-[#0071e3] hover:underline cursor-pointer"
+                    >
+                      Mark all as read
+                    </button>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto divide-y divide-black/[0.02] dark:divide-zinc-800/60">
+                    {userNotifications.length === 0 ? (
+                      <div className="p-6 text-center text-xs text-neutral-400">
+                        No new notifications
+                      </div>
+                    ) : (
+                      userNotifications.map(notification => (
+                        <div 
+                          key={notification.id} 
+                          onClick={() => {
+                            // mark as read
+                            setUserNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
+                          }}
+                          className={`p-3.5 hover:bg-neutral-50 dark:hover:bg-zinc-800/40 transition cursor-pointer text-xs ${!notification.read ? 'bg-indigo-50/25 dark:bg-indigo-950/10' : ''}`}
+                        >
+                          <p className={`text-neutral-800 dark:text-zinc-200 leading-normal font-sans ${!notification.read ? 'font-medium' : 'font-light'}`}>
+                            {notification.text}
+                          </p>
+                          <span className="block text-[9px] text-neutral-400 font-mono mt-1">{notification.time}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Google Sign In Widget for Site Visitors */}
             {authInitialized && (
               <div className="flex items-center gap-2">
@@ -3261,6 +3410,38 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
         {/* 🚀 LANDING PAGE SCREEN */}
         {currentScreen === 'landing' && (
+          <LandingPage 
+            onLaunchApp={() => {
+              setCurrentScreen('app');
+              window.scrollTo(0, 0);
+            }}
+            onUpgrade={() => {
+              setSelectedPlanCode('pro');
+              setShowStripeModal(true);
+              setStripePaymentSuccess(false);
+            }}
+            isPremium={isPremium}
+            visitorUser={visitorUser}
+            onGoogleSignIn={async () => {
+              const provider = new GoogleAuthProvider();
+              try {
+                setGoogleAuthError(null);
+                await signInWithPopup(auth, provider);
+              } catch (err: any) {
+                console.error('Google login failed:', err);
+                if (err.code !== 'auth/popup-closed-by-user') {
+                  setGoogleAuthError({
+                    message: err.message || String(err),
+                    code: err.code || ''
+                  });
+                }
+              }
+            }}
+          />
+        )}
+
+        {/* 🚀 OLD LANDING PAGE SCREEN BLOCKED */}
+        {false && currentScreen === 'landing' && (
           <div className="w-full flex flex-col items-center justify-start text-[#1d1d1f] antialiased bg-slate-50/10">
             
             {/* 1. HERO SECTION (Conversion-focused Split Layout) */}
@@ -4321,18 +4502,18 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           
             {/* Pitch & Generation Engine - Inputs */}
             <div className="col-span-1 lg:col-span-8 space-y-6">
-            <div className="bg-white rounded-3xl p-6 md:p-8 text-neutral-900 border border-black/[0.04] shadow-[0_8px_30px_rgba(0,0,0,0.02)] relative overflow-hidden">
+            <div className="bg-white dark:bg-zinc-900/60 rounded-3xl p-6 md:p-8 text-neutral-900 dark:text-zinc-100 border border-black/[0.04] dark:border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.02)] relative overflow-hidden">
               <div className="relative z-10 space-y-5">
-                <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/5 px-3 py-1 rounded-full text-[11px] font-mono font-medium text-[#0071e3] border border-[#0071e3]/10">
+                <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/5 dark:bg-[#0071e3]/10 px-3 py-1 rounded-full text-[11px] font-mono font-medium text-[#0071e3] border border-[#0071e3]/10">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Powered by Gemini 3.5 Flash</span>
                 </div>
                 
-                <h1 className="text-3xl md:text-4xl font-semibold font-display leading-[1.1] tracking-tight text-[#1d1d1f]">
+                <h1 className="text-3xl md:text-4xl font-semibold font-display leading-[1.1] tracking-tight text-[#1d1d1f] dark:text-zinc-50">
                   Stop Watching. <br />Start Repurposing.
                 </h1>
                 
-                <p className="text-[#86868b] text-sm md:text-base max-w-2xl leading-relaxed font-light">
+                <p className="text-[#86868b] dark:text-zinc-400 text-sm md:text-base max-w-2xl leading-relaxed font-light">
                   Turn any video (YouTube, Vimeo, website or direct stream files) into beautifully itemized chronologies, professional newsletters, blog writeups, templates, and social assets instantly.
                 </p>
 
@@ -4341,10 +4522,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   
                   {/* Mode Selector Toggle (Summary Mode vs Learn Mode) */}
                   <div className="flex flex-col gap-2 pt-1 pb-2">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#86868b] block text-left">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#86868b] dark:text-zinc-400 block text-left">
                       Select Workspace Mode
                     </span>
-                    <div className="flex bg-[#f2f2f7] p-1 items-center rounded-2xl w-full max-w-sm gap-1 border border-black/[0.04]">
+                    <div className="flex bg-[#f2f2f7] dark:bg-zinc-950 p-1 items-center rounded-2xl w-full max-w-sm gap-1 border border-black/[0.04] dark:border-zinc-800/60">
                       <button
                         type="button"
                         onClick={() => {
@@ -4357,8 +4538,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         }}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-xl transition duration-200 cursor-pointer ${
                           !learnMode
-                            ? 'bg-white text-neutral-900 shadow-sm'
-                            : 'text-[#86868b] hover:text-[#1d1d1f]'
+                            ? 'bg-white dark:bg-zinc-800 text-neutral-900 dark:text-zinc-50 shadow-xs'
+                            : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-950'
                         }`}
                       >
                         <FileText className="w-3.5 h-3.5 text-neutral-500" />
@@ -4391,24 +4572,171 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </div>
                   </div>
 
-                  <div className="flex flex-col md:flex-row gap-3">
-                    <div className="relative flex-1">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#86868b]">
-                        <Video className="w-4.5 h-4.5 text-[#86868b]" />
+                  {/* Input Source Type Selector Tabs */}
+                  <div className="flex flex-wrap gap-1 bg-neutral-100/60 dark:bg-zinc-950 p-1 rounded-2xl border border-black/[0.04] dark:border-zinc-800/60">
+                    {[
+                      { id: 'video', label: 'YouTube & Video', icon: Video },
+                      { id: 'website', label: 'Website Link', icon: Globe },
+                      { id: 'file', label: 'Documents & Audio', icon: FolderPlus },
+                      { id: 'text', label: 'Raw Text / Notes', icon: FileText }
+                    ].map((src) => {
+                      const SrcIcon = src.icon;
+                      const isSelected = inputSourceType === src.id;
+                      return (
+                        <button
+                          key={src.id}
+                          type="button"
+                          onClick={() => setInputSourceType(src.id as any)}
+                          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl cursor-pointer transition ${
+                            isSelected 
+                              ? 'bg-white dark:bg-zinc-800 text-neutral-900 dark:text-zinc-50 shadow-xs font-bold' 
+                              : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-900 dark:hover:text-zinc-100'
+                          }`}
+                        >
+                          <SrcIcon className="w-3.5 h-3.5 shrink-0" />
+                          <span>{src.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex flex-col md:flex-row gap-3 items-stretch">
+                    {inputSourceType === 'video' && (
+                      <div className="relative flex-1">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#86868b]">
+                          <Video className="w-4.5 h-4.5 text-[#86868b]" />
+                        </div>
+                        <input
+                          type="url"
+                          required={inputSourceType === 'video'}
+                          placeholder="Paste any YouTube, Vimeo, mp4, web links..."
+                          value={videoUrl}
+                          onChange={(e) => setVideoUrl(e.target.value)}
+                          className="w-full pl-11 pr-4 py-4 bg-neutral-100/60 dark:bg-zinc-900/60 hover:bg-neutral-100/90 dark:hover:bg-zinc-900 focus:bg-white dark:focus:bg-zinc-900 text-[#1d1d1f] dark:text-zinc-100 rounded-2xl border border-neutral-350 dark:border-zinc-800 hover:border-neutral-400 focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
+                        />
                       </div>
-                      <input
-                        type="url"
-                        required
-                        placeholder="Paste any video URL (YouTube, Vimeo, mp4, web links...)"
-                        value={videoUrl}
-                        onChange={(e) => setVideoUrl(e.target.value)}
-                        className="w-full pl-11 pr-4 py-4.5 bg-neutral-100/60 hover:bg-neutral-100/90 focus:bg-white text-[#1d1d1f] rounded-2xl border border-neutral-300 hover:border-neutral-400 focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
-                      />
-                    </div>
+                    )}
+
+                    {inputSourceType === 'website' && (
+                      <div className="relative flex-1">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#86868b]">
+                          <Globe className="w-4.5 h-4.5 text-[#86868b]" />
+                        </div>
+                        <input
+                          type="url"
+                          required={inputSourceType === 'website'}
+                          placeholder="Paste website or article link (e.g. https://example.com/research-paper)"
+                          value={inputWebsiteUrl}
+                          onChange={(e) => setInputWebsiteUrl(e.target.value)}
+                          className="w-full pl-11 pr-4 py-4 bg-neutral-100/60 dark:bg-zinc-900/60 hover:bg-neutral-100/90 dark:hover:bg-zinc-900 focus:bg-white dark:focus:bg-zinc-900 text-[#1d1d1f] dark:text-zinc-100 rounded-2xl border border-neutral-350 dark:border-zinc-800 hover:border-neutral-400 focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
+                        />
+                      </div>
+                    )}
+
+                    {inputSourceType === 'file' && (
+                      <div className="flex-1">
+                        <div
+                          onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
+                          onDragLeave={() => setIsDragActive(false)}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setIsDragActive(false);
+                            const files = Array.from(e.dataTransfer.files);
+                            files.forEach((f: any) => {
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                setUploadedFiles(prev => [...prev, {
+                                  name: f.name,
+                                  size: f.size,
+                                  type: f.type,
+                                  textContent: typeof event.target?.result === 'string' ? event.target.result : undefined
+                                }]);
+                              };
+                              reader.readAsText(f);
+                            });
+                          }}
+                          className={`border-2 border-dashed rounded-2xl p-6 text-center transition cursor-pointer ${
+                            isDragActive 
+                              ? 'border-[#0071e3] bg-[#0071e3]/5' 
+                              : 'border-neutral-300 dark:border-zinc-800 hover:border-neutral-450 bg-neutral-50 dark:bg-zinc-900/40'
+                          }`}
+                        >
+                          <input 
+                            type="file" 
+                            multiple 
+                            className="hidden" 
+                            id="file-upload-input"
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files || []);
+                              files.forEach((f: any) => {
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  setUploadedFiles(prev => [...prev, {
+                                    name: f.name,
+                                    size: f.size,
+                                    type: f.type,
+                                    textContent: typeof event.target?.result === 'string' ? event.target.result : undefined
+                                  }]);
+                                };
+                                reader.readAsText(f);
+                              });
+                            }}
+                          />
+                          <label htmlFor="file-upload-input" className="cursor-pointer space-y-1.5 block">
+                            <FolderPlus className="w-8 h-8 text-neutral-400 mx-auto" />
+                            <p className="text-xs font-semibold text-neutral-700 dark:text-zinc-300">Drag & drop files here or <span className="text-[#0071e3] hover:underline font-bold">browse files</span></p>
+                            <p className="text-[10px] text-neutral-400">Supports PDF, DOCX, PPTX, XLSX, MP3, MP4, TXT (Simultaneous multi-upload)</p>
+                          </label>
+                        </div>
+
+                        {uploadedFiles.length > 0 && (
+                          <div className="mt-3.5 space-y-1.5">
+                            {uploadedFiles.map((file, fIdx) => (
+                              <div key={fIdx} className="flex items-center justify-between p-2.5 bg-neutral-50 dark:bg-zinc-900 border border-black/[0.04] dark:border-zinc-800/80 rounded-xl text-xs">
+                                <span className="font-medium text-neutral-800 dark:text-zinc-200 flex items-center gap-1.5 truncate max-w-[200px]">
+                                  <FileText className="w-3.5 h-3.5 text-neutral-500 shrink-0" />
+                                  {file.name}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] text-neutral-400 font-mono">{(file.size / 1024).toFixed(1)} KB</span>
+                                  <button 
+                                    type="button" 
+                                    onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== fIdx))}
+                                    className="text-rose-500 hover:text-rose-700 font-bold shrink-0 w-5 h-5 flex items-center justify-center rounded-full hover:bg-rose-50"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {inputSourceType === 'text' && (
+                      <div className="relative flex-1">
+                        <textarea
+                          required={inputSourceType === 'text'}
+                          placeholder="Paste raw transcripts, book summaries, custom articles, meeting notes, script snippets..."
+                          rows={4}
+                          value={pastedContentText}
+                          onChange={(e) => setPastedContentText(e.target.value)}
+                          className="w-full p-4 bg-neutral-100/60 dark:bg-zinc-900/60 hover:bg-neutral-100/90 dark:hover:bg-zinc-900 focus:bg-white dark:focus:bg-zinc-900 text-[#1d1d1f] dark:text-zinc-100 rounded-2xl border border-neutral-350 dark:border-zinc-800 hover:border-neutral-400 focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
+                        />
+                      </div>
+                    )}
+
                     <button
                       type="submit"
-                      disabled={loading || !videoUrl}
-                      className={`font-semibold text-sm px-8 py-4 px-8 rounded-full active:scale-98 transition-all duration-200 flex items-center justify-center gap-2 h-13.5 disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-sm ${
+                      disabled={
+                        loading || 
+                        (inputSourceType === 'video' && !videoUrl) ||
+                        (inputSourceType === 'website' && !inputWebsiteUrl) ||
+                        (inputSourceType === 'file' && uploadedFiles.length === 0) ||
+                        (inputSourceType === 'text' && !pastedContentText)
+                      }
+                      className={`font-semibold text-sm px-8 py-4 px-8 rounded-full active:scale-98 transition-all duration-200 flex items-center justify-center gap-2 h-13.5 disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-sm shrink-0 self-end ${
                         learnMode 
                           ? 'bg-gradient-to-r from-teal-500 to-indigo-600 hover:opacity-90 text-white shadow-teal-500/10'
                           : 'bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-[#0071e3]/10'
@@ -4429,7 +4757,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           ) : (
                             <>
                               <Sparkles className="w-4 h-4" />
-                              <span>Summarize Video</span>
+                              <span>Analyze Source</span>
                             </>
                           )}
                         </>
@@ -4986,23 +5314,23 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             </div>
 
             {/* Shelf Persistence History Box */}
-            <div id="sandbox-library" className="bg-white rounded-3xl p-6 border border-black/[0.04] shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-5">
+            <div id="sandbox-library" className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-black/[0.04] dark:border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-5">
               
               {/* SECTION A: INDIVIDUAL SUMMARIES */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h3 className="text-base font-bold font-display text-[#1d1d1f] flex items-center gap-1.5">
-                      <History className="w-4 h-4 text-[#86868b]" />
+                    <h3 className="text-base font-bold font-display text-[#1d1d1f] dark:text-zinc-50 flex items-center gap-1.5">
+                      <History className="w-4 h-4 text-[#86868b] dark:text-zinc-400" />
                       Summaries Library
                     </h3>
-                    <p className="text-[#86868b] text-[11px] mt-0.5 font-light">
+                    <p className="text-[#86868b] dark:text-zinc-400 text-[11px] mt-0.5 font-light">
                       {isSelectingForStack ? 'Select 2+ summaries for Stack' : 'Your persistent offline sandbox shelf.'}
                     </p>
                   </div>
                   
                   {savedSummaries.length > 0 && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 shrink-0">
                       {!isSelectingForStack ? (
                         <button
                           onClick={() => {
@@ -5010,9 +5338,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             setSelectedStackVideoIds([]);
                             setStackNameInput('');
                           }}
-                          className="text-[10px] bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-bold px-2 py-1 rounded-lg cursor-pointer transition flex items-center gap-1"
+                          className="text-[10px] bg-indigo-50 dark:bg-indigo-950 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-900 text-indigo-700 dark:text-indigo-400 font-bold px-2 py-1 rounded-lg cursor-pointer transition flex items-center gap-1"
                         >
-                          <Sparkles className="w-3 h-3 text-indigo-600" />
+                          <Sparkles className="w-3 h-3 text-indigo-600 dark:text-indigo-450" />
                           <span>Create Stack</span>
                         </button>
                       ) : (
@@ -5022,7 +5350,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             setSelectedStackVideoIds([]);
                             setStackNameInput('');
                           }}
-                          className="text-[10px] text-neutral-500 hover:text-neutral-700 font-semibold cursor-pointer transition"
+                          className="text-[10px] text-neutral-500 hover:text-neutral-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-semibold cursor-pointer transition"
                         >
                           Cancel
                         </button>
@@ -5031,10 +5359,71 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   )}
                 </div>
 
+                {/* SEARCH INPUT BAR */}
+                {savedSummaries.length > 0 && (
+                  <div className="relative font-sans">
+                    <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-neutral-400 dark:text-zinc-500" />
+                    <input
+                      type="text"
+                      placeholder="Search title, author, or summary content..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 text-xs bg-neutral-100/60 dark:bg-zinc-950/60 border border-neutral-200 dark:border-zinc-800 rounded-xl outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/5 transition text-neutral-800 dark:text-zinc-100 placeholder:text-neutral-400"
+                    />
+                  </div>
+                )}
+
+                {/* HORIZONTAL COLLECTION / FOLDER SELECTOR PILLS */}
+                {savedSummaries.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCollection(null)}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition cursor-pointer ${
+                        !selectedCollection 
+                          ? 'bg-[#0071e3] text-white' 
+                          : 'bg-neutral-100 dark:bg-zinc-800 text-neutral-500 dark:text-zinc-400 hover:bg-neutral-200'
+                      }`}
+                    >
+                      All ({savedSummaries.length})
+                    </button>
+                    {collections.map(col => {
+                      const count = savedSummaries.filter(s => s.collection === col).length;
+                      return (
+                        <button
+                          key={col}
+                          type="button"
+                          onClick={() => setSelectedCollection(col)}
+                          className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition cursor-pointer flex items-center gap-1.5 ${
+                            selectedCollection === col
+                              ? 'bg-[#0071e3] text-white'
+                              : 'bg-neutral-100 dark:bg-zinc-800 text-neutral-500 dark:text-zinc-400 hover:bg-neutral-200'
+                          }`}
+                        >
+                          <span>{col}</span>
+                          <span className={`text-[8px] px-1 py-0.5 rounded leading-none ${selectedCollection === col ? 'bg-white/20 text-white' : 'bg-neutral-200 dark:bg-zinc-700 text-neutral-600 dark:text-zinc-350'}`}>{count}</span>
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const name = prompt("Enter new folder/collection name:");
+                        if (name && name.trim()) {
+                          handleAddCollection(name);
+                        }
+                      }}
+                      className="px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-50/80 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 border border-indigo-150/40 dark:border-indigo-900/40 hover:bg-indigo-100 transition cursor-pointer"
+                    >
+                      + New Folder
+                    </button>
+                  </div>
+                )}
+
                 {isSelectingForStack && (
-                  <div className="bg-indigo-50/50 border border-indigo-100 p-3 rounded-2xl space-y-3 animate-slideDown">
+                  <div className="bg-indigo-50/50 dark:bg-zinc-950/30 border border-indigo-100 dark:border-zinc-800 p-3 rounded-2xl space-y-3 animate-slideDown">
                     <div className="space-y-1">
-                      <label className="block text-[9px] font-mono font-bold text-indigo-700 uppercase">
+                      <label className="block text-[9px] font-mono font-bold text-indigo-700 dark:text-indigo-400 uppercase">
                         Knowledge Stack Name:
                       </label>
                       <input
@@ -5042,11 +5431,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         placeholder="e.g. Machine Learning Mastery"
                         value={stackNameInput}
                         onChange={(e) => setStackNameInput(e.target.value)}
-                        className="w-full text-xs p-2.5 rounded-xl border border-indigo-200 bg-white text-neutral-900 outline-none focus:border-indigo-500 transition"
+                        className="w-full text-xs p-2.5 rounded-xl border border-indigo-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-neutral-900 dark:text-zinc-100 outline-none focus:border-indigo-500 transition"
                       />
                     </div>
                     <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="text-neutral-600 font-medium">Selected: {selectedStackVideoIds.length} videos</span>
+                      <span className="text-neutral-600 dark:text-zinc-400 font-medium">Selected: {selectedStackVideoIds.length} videos</span>
                       <button
                         type="button"
                         disabled={selectedStackVideoIds.length < 2 || isSynthesizing || !stackNameInput.trim()}
@@ -5070,71 +5459,121 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 )}
 
                 {savedSummaries.length === 0 ? (
-                  <div className="text-center py-6 px-4 border border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
-                    <Bookmark className="w-6 h-6 text-neutral-300 mx-auto" />
-                    <p className="text-[#86868b] text-xs mt-2 font-light">No custom-summarized videos in history yet.</p>
-                    <p className="text-[#86868b]/70 text-[10px] mt-1 font-light">Paste a video URL above to build your catalog.</p>
+                  <div className="text-center py-6 px-4 border border-dashed border-neutral-200 dark:border-zinc-800 rounded-2xl bg-neutral-50/50 dark:bg-zinc-950/10">
+                    <Bookmark className="w-6 h-6 text-neutral-300 dark:text-zinc-700 mx-auto" />
+                    <p className="text-[#86868b] dark:text-zinc-400 text-xs mt-2 font-light">No custom-summarized content in history yet.</p>
+                    <p className="text-[#86868b]/70 dark:text-zinc-500 text-[10px] mt-1 font-light">Use the input panel above to build your catalog.</p>
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1 font-sans text-left">
-                    {savedSummaries.map((stored) => {
-                      const isSelected = selectedStackVideoIds.includes(stored.id);
+                  (() => {
+                    const query = searchQuery.toLowerCase();
+                    const filtered = savedSummaries.filter(item => {
+                      const matchesSearch = 
+                        item.response.metadata.title.toLowerCase().includes(query) ||
+                        (item.response.metadata.author && item.response.metadata.author.toLowerCase().includes(query)) ||
+                        (item.response.summary && item.response.summary.toLowerCase().includes(query));
+                      const matchesCollection = !selectedCollection || item.collection === selectedCollection;
+                      return matchesSearch && matchesCollection;
+                    });
+
+                    if (filtered.length === 0) {
                       return (
-                        <div
-                          key={stored.id}
-                          onClick={() => {
-                            if (isSelectingForStack) {
-                              if (isSelected) {
-                                setSelectedStackVideoIds((prev) => prev.filter((id) => id !== stored.id));
-                              } else {
-                                setSelectedStackVideoIds((prev) => [...prev, stored.id]);
-                              }
-                            } else {
-                              handleLoadStoredItem(stored.response);
-                              setActiveStack(null); // Clear stack view when individual is loaded
-                            }
-                          }}
-                          className={`group p-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between gap-3 ${
-                            isSelectingForStack
-                              ? isSelected
-                                ? 'bg-indigo-50 border-indigo-200 shadow-sm'
-                                : 'border-neutral-100 hover:bg-neutral-50'
-                              : activeSummary?.metadata.videoId === stored.id 
-                                ? 'bg-neutral-100/80 border-transparent shadow-inner' 
-                                : 'border-transparent bg-neutral-50 hover:bg-neutral-100/50 hover:shadow-sm'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 overflow-hidden min-w-0 flex-1">
-                            {isSelectingForStack && (
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                readOnly
-                                className="w-3.5 h-3.5 accent-indigo-600 shrink-0 cursor-pointer"
-                              />
-                            )}
-                            <div className="overflow-hidden min-w-0 flex-1">
-                              <p className="text-xs font-semibold text-[#1d1d1f] truncate leading-tight group-hover:text-black transition text-left">
-                                {stored.response.metadata.title}
-                              </p>
-                              <span className="text-[9px] font-mono text-[#86868b] mt-0.5 block text-left">
-                                Processed: {stored.savedAt}
-                              </span>
-                            </div>
-                          </div>
-                          {!isSelectingForStack && (
-                            <button
-                              onClick={(e) => handleDeleteShelfItem(stored.id, e)}
-                              className="p-1.5 text-neutral-300 hover:text-red-500 rounded-lg hover:bg-red-50 transition shrink-0"
-                              title="Delete from Shelf"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                        <div className="text-center py-6 px-4 border border-dashed border-neutral-200 dark:border-zinc-800 rounded-2xl bg-neutral-50/50 dark:bg-zinc-950/10">
+                          <Bookmark className="w-6 h-6 text-neutral-300 dark:text-zinc-700 mx-auto" />
+                          <p className="text-[#86868b] dark:text-zinc-400 text-xs mt-2 font-light">No matching summaries found.</p>
                         </div>
                       );
-                    })}
-                  </div>
+                    }
+
+                    return (
+                      <div className="space-y-2 max-h-60 overflow-y-auto pr-1 font-sans text-left">
+                        {filtered.map((stored) => {
+                          const isSelected = selectedStackVideoIds.includes(stored.id);
+                          return (
+                            <div
+                              key={stored.id}
+                              onClick={() => {
+                                if (isSelectingForStack) {
+                                  if (isSelected) {
+                                    setSelectedStackVideoIds((prev) => prev.filter((id) => id !== stored.id));
+                                  } else {
+                                    setSelectedStackVideoIds((prev) => [...prev, stored.id]);
+                                  }
+                                } else {
+                                  handleLoadStoredItem(stored.response);
+                                  setActiveStack(null); // Clear stack view when individual is loaded
+                                }
+                              }}
+                              className={`group p-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between gap-3 ${
+                                isSelectingForStack
+                                  ? isSelected
+                                    ? 'bg-indigo-50 border-indigo-200 shadow-sm'
+                                    : 'border-neutral-100 hover:bg-neutral-50'
+                                  : activeSummary?.metadata.videoId === stored.id 
+                                    ? 'bg-neutral-105/80 dark:bg-zinc-800/80 border-transparent shadow-inner' 
+                                    : 'border-transparent bg-neutral-50 dark:bg-zinc-950/40 hover:bg-neutral-100/50 dark:hover:bg-zinc-800/40 hover:shadow-sm'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 overflow-hidden min-w-0 flex-1">
+                                {isSelectingForStack && (
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    readOnly
+                                    className="w-3.5 h-3.5 accent-indigo-600 shrink-0 cursor-pointer"
+                                  />
+                                )}
+                                <div className="overflow-hidden min-w-0 flex-1">
+                                  <p className="text-xs font-semibold text-[#1d1d1f] dark:text-zinc-100 truncate leading-tight group-hover:text-black dark:group-hover:text-white transition text-left">
+                                    {stored.response.metadata.title}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-[9px] font-mono text-[#86868b] dark:text-zinc-500 leading-none shrink-0">
+                                      Processed: {stored.savedAt}
+                                    </span>
+                                    {stored.collection && (
+                                      <span className="bg-[#0071e3]/10 dark:bg-[#0071e3]/20 text-[#0071e3] dark:text-zinc-300 text-[8px] font-bold px-1 rounded uppercase font-sans tracking-wide leading-none shrink-0">
+                                        📁 {stored.collection}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {!isSelectingForStack && (
+                                <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                  {/* Folder Assignment select dropdown */}
+                                  <select
+                                    value={stored.collection || ''}
+                                    onChange={(e) => {
+                                      const val = e.target.value || undefined;
+                                      const updated = savedSummaries.map(s => s.id === stored.id ? { ...s, collection: val } : s);
+                                      saveToShelf(updated);
+                                    }}
+                                    className="text-[9px] bg-neutral-100/80 dark:bg-zinc-800 text-neutral-600 dark:text-zinc-300 rounded-md border-0 py-1 px-1.5 focus:ring-1 focus:ring-indigo-500 max-w-[80px] truncate outline-none cursor-pointer"
+                                    title="Assign folder"
+                                  >
+                                    <option value="">Move to...</option>
+                                    {collections.map(col => (
+                                      <option key={col} value={col}>{col}</option>
+                                    ))}
+                                  </select>
+
+                                  <button
+                                    onClick={(e) => handleDeleteShelfItem(stored.id, e)}
+                                    className="p-1.5 text-neutral-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition shrink-0 cursor-pointer"
+                                    title="Delete from Shelf"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()
                 )}
               </div>
 
@@ -6060,7 +6499,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 ) : (
                   <>
                     {/* Secondary Horizontal Interactive Tabs Menu styled as slider */}
-                    <div className="flex bg-black/[0.04] p-1 items-center rounded-2xl overflow-x-auto gap-1 mb-6 scrollbar-none border border-black/[0.01]">
+                    <div className="flex bg-black/[0.04] dark:bg-zinc-900 p-1 items-center rounded-2xl overflow-x-auto gap-1 mb-6 scrollbar-none border border-black/[0.01] dark:border-zinc-800/60">
                   {[
                     { id: 'overview', label: 'Summary', icon: BookOpen },
                     { id: 'chapters', label: 'Timeline & Chapters', icon: Video },
@@ -6068,6 +6507,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     { id: 'quiz', label: 'Interactive Quiz', icon: Award },
                     { id: 'monetize', label: 'Social & Repurposing', icon: Share2 },
                     { id: 'reel', label: 'Shortened Video', icon: Sparkles },
+                    { id: 'chat', label: 'AI Chat Q&A', icon: MessageSquare },
+                    { id: 'export', label: 'Export & Share', icon: Download },
                   ].map((tab) => {
                     const TabIcon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -7081,6 +7522,27 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </div>
                   );
                 })()}
+
+                {activeTab === 'chat' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <AIChatWithSummary 
+                      title={activeSummary.metadata.title}
+                      summary={activeSummary.summary}
+                      getHeaders={getHeaders}
+                    />
+                  </div>
+                )}
+
+                {activeTab === 'export' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <SummaryPremiumExporter 
+                      title={activeSummary.metadata.title}
+                      summary={activeSummary.summary}
+                      takeaways={activeSummary.takeaways}
+                      shareId={activeSummary.shareId}
+                    />
+                  </div>
+                )}
 
                   </>
                 )}

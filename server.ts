@@ -1266,6 +1266,42 @@ CRITICAL JSON FORMATTING INSTRUCTION:
   }
 });
 
+// Interactive AI Chat with Summary Content
+app.post('/api/chat', async (req, res) => {
+  const { title, summary, message, history } = req.body;
+  if (!message) {
+    return res.status(400).json({ error: 'Message is required.' });
+  }
+  try {
+    const ai = getGeminiClient(req);
+    const systemInstruction = `You are Zipytiny's AI assistant, an expert academic tutor, business strategist, and research analyst. You are helping a user analyze a piece of content: "${title}". 
+Here is the official summary of the content: 
+"""
+${summary}
+"""
+Answer the user's questions with absolute accuracy, deep insights, clear examples, and actionable advice. Keep answers clean, scannable, formatted in Markdown, and directly related to the source text. If they ask about something not in the summary, try to assist them based on your broader knowledge of "${title}" while being transparent.`;
+
+    const chatHistory = history || [];
+    const contents = [
+      ...chatHistory,
+      { role: 'user', parts: [{ text: message }] }
+    ];
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: contents,
+      config: {
+        systemInstruction: systemInstruction,
+      }
+    });
+
+    const reply = response.candidates?.[0]?.content?.parts?.[0]?.text || "I apologize, but I could not formulate a response at this moment.";
+    return res.json({ reply });
+  } catch (err: any) {
+    return handleGeminiError(err, res);
+  }
+});
+
 // Learning tracking & analytics storage (in-memory fallback + firestore)
 const fallbackAnalytics: any[] = [];
 

@@ -88,6 +88,7 @@ export interface SavedSummary {
   id: string; // Video ID
   savedAt: string;
   response: YouTubeSummaryResponse;
+  collection?: string; // Custom collection/folder tag
 }
 
 // =========================================================================
