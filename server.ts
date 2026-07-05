@@ -36,8 +36,74 @@ const ai = new GoogleGenAI({
 });
 
 // Extremely robust JSON cleaning, extraction, and repair engine to prevent parsing crashes
+function cleanEllipsesAndDotsOutsideStrings(jsonStr: string): string {
+  let inString = false;
+  let escape = false;
+  let result = "";
+  
+  for (let i = 0; i < jsonStr.length; i++) {
+    const char = jsonStr[i];
+    
+    if (escape) {
+      result += char;
+      escape = false;
+      continue;
+    }
+    
+    if (char === '\\') {
+      result += char;
+      escape = true;
+      continue;
+    }
+    
+    if (char === '"') {
+      inString = !inString;
+      result += char;
+      continue;
+    }
+    
+    if (inString) {
+      result += char;
+      continue;
+    }
+    
+    // Outside of a string:
+    if (char === '.') {
+      const prevChar = i > 0 ? jsonStr[i - 1] : '';
+      const nextChar = i < jsonStr.length - 1 ? jsonStr[i + 1] : '';
+      const isDecimalNumber = /\d/.test(prevChar) && /\d/.test(nextChar);
+      
+      if (isDecimalNumber) {
+        result += char;
+      } else {
+        // Dot or ellipsis outside string! Skip it.
+        // If the preceding non-whitespace character is a colon, append " null"
+        let temp = result.trim();
+        if (temp.endsWith(':')) {
+          result = result.substring(0, result.lastIndexOf(':') + 1) + " null";
+        }
+      }
+    } else {
+      result += char;
+    }
+  }
+  
+  // Post-processing regex cleanups on result:
+  // Replace colon followed by a comma with : null,
+  result = result.replace(/:\s*,/g, ': null,');
+  // Replace colon followed by a closing bracket or brace with : null
+  result = result.replace(/:\s*([}\]])/g, ': null$1');
+  // Clean up double/multiple commas
+  result = result.replace(/,\s*,+/g, ',');
+  // Clean up comma followed by closing bracket or brace
+  result = result.replace(/,\s*([}\]])/g, '$1');
+  
+  return result;
+}
+
 function looseJsonRepair(jsonStr: string): string {
-  let s = jsonStr.trim();
+  // First clean any invalid ellipses or dots outside strings
+  let s = cleanEllipsesAndDotsOutsideStrings(jsonStr.trim());
   
   // Balance brackets/braces and quotes
   let inString = false;
@@ -923,6 +989,11 @@ Please analyze this transcript and fill out the detailed JSON structure:
 7. quiz: Create 3-5 multiple-choice questions testing key video content. Include 4 options, the 0-based index of the correct option, and a helpful, educational explanation.
 8. mindmap: Create a structured concept map of ideas representing topics covered. Use "concept" (label of node), "category" (the parent group it belongs to), and "description" (a mini note).
 9. reelScript: Create a structured 30-60 second viral script specifically designed to summarize the main subject in a bite-sized video (TikTok, Shorts, IG Reels). The scenes must be precise chronological story steps. Make visualHook descriptions extremely punchy and voiceover sentences highly memorable.
+
+CRITICAL JSON FORMATTING INSTRUCTION:
+- You must output FULLY POPULATED details for every single key in the requested JSON structure.
+- NEVER under any circumstances output ellipses (like '...'), single dots (like '.'), or empty properties as placeholders. If some detailed content is missing or cannot be retrieved, you MUST utilize your historical knowledge, synthesis capabilities, or search results to invent and synthesize highly realistic, comprehensive, and detailed content.
+- Ensure every array is a fully populated array containing real items matching the schema, and every string has a complete text of at least 2-3 detailed sentences.
 `;
 
     const buildPromptWithoutTranscript = (videoTitle: string, inputChannel: string) => `
@@ -939,6 +1010,11 @@ Creator / Host: "${inputChannel}"
 Video URL: "${videoUrl}"
 
 Generate a complete, high-quality summary and promotional asset package matching the requested JSON structure.
+
+CRITICAL JSON FORMATTING INSTRUCTION:
+- You must output FULLY POPULATED details for every single key in the requested JSON structure.
+- NEVER under any circumstances output ellipses (like '...'), single dots (like '.'), or empty properties as placeholders. If some detailed content is missing or cannot be retrieved, you MUST utilize your historical knowledge, synthesis capabilities, or search results to invent and synthesize highly realistic, comprehensive, and detailed content.
+- Ensure every array is a fully populated array containing real items matching the schema, and every string has a complete text of at least 2-3 detailed sentences.
 `;
 
     if (transcript) {
