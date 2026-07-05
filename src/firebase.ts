@@ -3,15 +3,11 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
-// Dynamic authDomain resolution: Use www.zipytiny.app in production (on the custom domain)
-// to display the custom brand domain rather than firebaseapp.com on the Google Sign-In dialog.
+// Use the standard firebaseapp.com authDomain to guarantee Google Sign-In works out-of-the-box.
+// Overriding this dynamically to zipytiny.app causes "redirect_uri_mismatch" errors on Google's side
+// unless custom Firebase Hosting DNS and Google Cloud Console OAuth Authorized Redirect URIs are manually configured.
 const resolvedConfig = { ...firebaseConfig };
-if (
-  typeof window !== 'undefined' &&
-  (window.location.hostname === 'zipytiny.app' || window.location.hostname === 'www.zipytiny.app')
-) {
-  resolvedConfig.authDomain = window.location.hostname;
-}
+resolvedConfig.authDomain = firebaseConfig.authDomain;
 
 const app = initializeApp(resolvedConfig);
 export const db = getFirestore(app, resolvedConfig.firestoreDatabaseId);

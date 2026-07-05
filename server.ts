@@ -78,9 +78,9 @@ function cleanEllipsesAndDotsOutsideStrings(jsonStr: string): string {
       } else {
         // Dot or ellipsis outside string! Skip it.
         // If the preceding non-whitespace character is a colon, append " null"
-        let temp = result.trim();
-        if (temp.endsWith(':')) {
-          result = result.substring(0, result.lastIndexOf(':') + 1) + " null";
+        const trimmed = result.trimEnd();
+        if (trimmed.endsWith(':')) {
+          result = trimmed + " null";
         }
       }
     } else {

@@ -2321,13 +2321,21 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             const text = await response.text();
             if (text.includes('<body>') || text.includes('<!DOCTYPE')) {
               const cleanText = text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300);
-              errorMsg = `Server Error (${response.status}): ${cleanText}`;
+              if (response.status === 502 || response.status === 504) {
+                errorMsg = `Server Timeout or Gateway Interrupt (${response.status}). This is usually a temporary network hiccup or cold-start delay from Google's backend. Please try clicking the "Summarize Video" button again, or use the "Custom Transcript override" box to paste your text if the video is extremely long.`;
+              } else {
+                errorMsg = `Server Error (${response.status}): ${cleanText}`;
+              }
             } else {
               errorMsg = text.slice(0, 300) || errorMsg;
             }
           }
         } catch (e) {
-          errorMsg = `Server Error (${response.status}).`;
+          if (response.status === 502 || response.status === 504) {
+            errorMsg = `Server Timeout or Gateway Interrupt (${response.status}). This is usually a temporary network hiccup or cold-start delay from Google's backend. Please try clicking the "Summarize Video" button again, or use the "Custom Transcript override" box to paste your text if the video is extremely long.`;
+          } else {
+            errorMsg = `Server Error (${response.status}).`;
+          }
         }
         throw new Error(errorMsg);
       }
@@ -11153,7 +11161,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   Open your <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 font-bold underline hover:text-indigo-800">Firebase Console</a> and select your project.
                 </li>
                 <li>
-                  Navigate to <strong className="text-neutral-900">Build</strong> &rarr; <strong className="text-neutral-900">Authentication</strong>.
+                  Click on <strong className="text-neutral-900">Authentication</strong> in the left sidebar (located under <strong className="text-neutral-900">Project shortcuts</strong> or <strong className="text-neutral-900">Product categories</strong>).
                 </li>
                 <li>
                   Go to the <strong className="text-neutral-900">Settings</strong> tab at the top.
