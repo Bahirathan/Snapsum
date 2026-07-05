@@ -239,7 +239,65 @@ function getGeminiClient(req: express.Request): GoogleGenAI {
       },
     });
   }
+
+  const serverKey = process.env.GEMINI_API_KEY;
+  if (!serverKey || !serverKey.trim() || serverKey === 'MY_GEMINI_API_KEY') {
+    throw new Error('NO_SERVER_API_KEY_CONFIGURED');
+  }
+
   return ai;
+}
+
+// Global helper to map and handle all Gemini-related errors beautifully and instructively.
+function handleGeminiError(err: any, res: express.Response) {
+  console.error('Gemini API Error Encountered:', err);
+  let errorMessage = err.message || String(err);
+  let statusCode = 500;
+
+  if (typeof errorMessage === 'object') {
+    try {
+      errorMessage = JSON.stringify(errorMessage);
+    } catch {
+      errorMessage = String(errorMessage);
+    }
+  }
+
+  const isScopeError = 
+    errorMessage.includes('ACCESS_TOKEN_SCOPE_INSUFFICIENT') ||
+    errorMessage.includes('insufficient authentication scopes') ||
+    errorMessage.includes('authentication scopes') ||
+    (errorMessage.includes('PERMISSION_DENIED') && errorMessage.includes('generativelanguage'));
+
+  const isNoKeyError = 
+    errorMessage.includes('NO_SERVER_API_KEY_CONFIGURED') ||
+    errorMessage.includes('API key not found') ||
+    errorMessage.includes('API_KEY_INVALID') ||
+    errorMessage.includes('invalid key') ||
+    errorMessage.includes('unauthorized');
+
+  if (isScopeError || isNoKeyError) {
+    errorMessage = 'No valid Gemini API Key is configured on the server host. To resolve this: \n\n' +
+                   '1. If you are the owner, open the Settings panel in the Google AI Studio UI (gear/secrets icon in top right) and add a secret named GEMINI_API_KEY with your Google AI Studio Gemini API Key.\n\n' +
+                   '2. Alternatively, you can click the "Google Sign In" / Settings panel in the top right of this page (Zipytiny) and paste your own Gemini API key in the "Custom Gemini API Key" field to analyze videos instantly for free!';
+    statusCode = 400;
+  } else if (errorMessage === 'TIMEOUT_EXCEEDED') {
+    errorMessage = 'The summarization request timed out. This is usually due to temporary congestion on Google Gemini API backends, or the video being exceptionally long. Please try again, or use the "Custom Transcript override" box to paste the dialogue directly to bypass transcript-scraping delays!';
+    statusCode = 504;
+  } else if (
+    errorMessage.includes('quota') ||
+    errorMessage.includes('429') ||
+    errorMessage.includes('ResourceExhausted') ||
+    errorMessage.includes('limit')
+  ) {
+    errorMessage = 'The public Gemini API key quota has been exhausted due to high user traffic. To get instant, unlimited high-speed summaries with no waiting, please insert your own Gemini API key in the Settings (top-right icon) or upgrade your account!';
+    statusCode = 429;
+  } else {
+    errorMessage = 'Failed to generate summary. Details: ' + errorMessage;
+  }
+
+  return res.status(statusCode).json({
+    error: errorMessage,
+  });
 }
 
 // =========================================================================
@@ -1002,7 +1060,7 @@ The user wants to summarize the video titled "${videoTitle}" by creator "${input
 ${langInstruction}
 ${learnModeInstruction}
 
-Since direct transcript retrieval is not pre-extracted, use your Google Search tool or historical knowledge index to research and analyze this video, its core message, lessons, and content. If the URL points to a website, discover its content to draft an accurate analysis.
+Since direct transcript retrieval is not pre-extracted, use your rich historical knowledge index and synthesis capabilities to analyze this video, its core message, lessons, and content. If the URL points to a website, discover its content to draft an accurate analysis.
 Provide an extremely detailed, accurate summary, actionable chronological chapters, blog post copy, tweets, an educational quiz, structured mindmap nodes, and a viral short Reel script summarizing the main subject.
 
 Video Title: "${videoTitle}"
@@ -1156,14 +1214,12 @@ CRITICAL JSON FORMATTING INSTRUCTION:
       },
     };
 
-    // Enable search grounding as a smart fallback if transcript was missed, or if overridden by admin configuration
+    // Enable search grounding ONLY if explicitly overridden by custom header configuration
     const requestedSearchGrounding = req.headers['x-custom-search-grounding'] as string;
     if (requestedSearchGrounding === 'true') {
       config.tools = [{ googleSearch: {} }];
     } else if (requestedSearchGrounding === 'false') {
       delete config.tools;
-    } else if (!transcript) {
-      config.tools = [{ googleSearch: {} }];
     }
 
     // SECURITY/COST: previously a client could pick its own temperature AND model via
@@ -1173,11 +1229,20 @@ CRITICAL JSON FORMATTING INSTRUCTION:
     // left at the Gemini API default, model pinned to a known value).
     const requestedModel = 'gemini-3.5-flash';
     const activeAi = getGeminiClient(req);
-    const response = await activeAi.models.generateContent({
+
+    // Set up a 45-second timeout promise to avoid server gateway timeout errors (e.g., 502/504 Bad Gateway)
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 45000)
+    );
+
+    const generatePromise = activeAi.models.generateContent({
       model: requestedModel,
       contents: prompt,
       config,
     });
+
+    // Race the generation request against the timeout
+    const response = await Promise.race([generatePromise, timeoutPromise]);
 
     const outputText = response.text;
     if (!outputText) {
@@ -1197,10 +1262,7 @@ CRITICAL JSON FORMATTING INSTRUCTION:
 
     return res.json(richSummary);
   } catch (err: any) {
-    console.error('Error generating summary:', err);
-    return res.status(500).json({
-      error: 'Failed to generate summary. Details: ' + (err.message || String(err)),
-    });
+    return handleGeminiError(err, res);
   }
 });
 
@@ -2444,8 +2506,7 @@ Please perform a comprehensive cross-video synthesis and output a detailed JSON 
       ...result,
     });
   } catch (err: any) {
-    console.error('Stack synthesis failed:', err);
-    return res.status(500).json({ error: err.message || 'Failed to synthesize Knowledge Stack.' });
+    return handleGeminiError(err, res);
   }
 });
 
@@ -2475,7 +2536,8 @@ The script must have:
 Format the output clearly with [VISUAL] directions and spoken lines, keeping it high-paced, catchy, and trendy. Header/Subject of the video was: "${details || ''}".`;
     }
 
-    const response = await ai.models.generateContent({
+    const activeAi = getGeminiClient(req);
+    const response = await activeAi.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [{ parts: [{ text: finalPrompt }] }],
     });
@@ -2483,8 +2545,7 @@ Format the output clearly with [VISUAL] directions and spoken lines, keeping it 
     const resultText = response.candidates?.[0]?.content?.parts?.[0]?.text || 'Could not generate marketing materials.';
     return res.json({ result: resultText });
   } catch (err: any) {
-    console.error('Marketing generation failed:', err);
-    return res.status(500).json({ error: err.message || 'Gemini generation failed.' });
+    return handleGeminiError(err, res);
   }
 });
 
