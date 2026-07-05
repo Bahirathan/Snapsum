@@ -1,0 +1,6 @@
+{
+  "name": "Zipytiny - Universal Video Summarizer",
+  "description": "The ultimate AI Video Knowledge Engine. Instantly transform YouTube videos, lectures, meetings, and training sessions into structured summaries, key takeaways, interactive mindmaps, and actionable notes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

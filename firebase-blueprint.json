@@ -1,0 +1,106 @@
+{
+  "entities": {
+    "GoogleUser": {
+      "title": "GoogleUser",
+      "description": "Registered Google user profile logs",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "lastLoginAt": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "AdminSettings": {
+      "title": "AdminSettings",
+      "description": "Administrative configurations and bypass limits",
+      "type": "object",
+      "properties": {
+        "allowPremiumBypass": { "type": "boolean" },
+        "forceVipBypassCode": { "type": "string" },
+        "globalModelOverride": { "type": "string" },
+        "freeReqsLimit": { "type": "integer" },
+        "updatedAt": { "type": "string" },
+        "updatedBy": { "type": "string" }
+      }
+    },
+    "LearnAnalytics": {
+      "title": "LearnAnalytics",
+      "description": "Learning activities and summary logs",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "videoId": { "type": "string" },
+        "videoTitle": { "type": "string" },
+        "actionType": { "type": "string" },
+        "timestamp": { "type": "string" }
+      }
+    },
+    "Referral": {
+      "title": "Referral",
+      "description": "User referral codes and invitations tracking",
+      "type": "object",
+      "properties": {
+        "referralCode": { "type": "string" },
+        "referredIps": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["referralCode"]
+    },
+    "Summary": {
+      "title": "Summary",
+      "description": "Saved video educational summary records",
+      "type": "object",
+      "properties": {
+        "shareId": { "type": "string" },
+        "savedAt": { "type": "string" }
+      },
+      "required": ["shareId"]
+    },
+    "Subscription": {
+      "title": "Subscription",
+      "description": "Premium/VIP user billing tier records",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "plan": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["email", "plan", "status"]
+    }
+  },
+  "firestore": {
+    "google_users/{userId}": {
+      "schema": "GoogleUser",
+      "description": "Collection of logged in Google SSO visitors"
+    },
+    "admin_settings/{settingId}": {
+      "schema": "AdminSettings",
+      "description": "System-wide admin configurations"
+    },
+    "learn_analytics/{analyticId}": {
+      "schema": "LearnAnalytics",
+      "description": "User event and learning interactions logs"
+    },
+    "referrals/{referralId}": {
+      "schema": "Referral",
+      "description": "Logs and arrays of users invited by each referrer"
+    },
+    "summaries/{summaryId}": {
+      "schema": "Summary",
+      "description": "Cached study outlines and summaries of shared videos"
+    },
+    "subscriptions/{subscriptionId}": {
+      "schema": "Subscription",
+      "description": "Billing active subscription status records"
+    }
+  }
+}
