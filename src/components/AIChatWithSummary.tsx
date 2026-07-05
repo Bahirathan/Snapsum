@@ -62,10 +62,9 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
     setLoading(true);
 
     try {
-      <div className="flex flex-col h-[560px] bg-white dark:bg-zinc-900 border border-black/[0.05] dark:border-zinc-800/60 rounded-3xl overflow-hidden shadow-sm">
       const chatHistory = messages.map((m) => ({
         role: m.role,
-        <div className="px-5 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 flex items-center justify-between">
+        text: m.text,
       }));
 
       const res = await fetch('/api/chat', {
@@ -141,7 +140,6 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
       </div>
 
       {/* Messages Window */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-4 scrollbar-thin">
       <div className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-none bg-neutral-50 dark:bg-zinc-950/50">
         {messages.map((m) => {
           const isUser = m.role === 'user';

@@ -9251,7 +9251,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   {/* High-end decorative visual protection line */}
                   <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-neutral-900 via-neutral-600 to-neutral-900" />
 
-                      <div className="space-y-4">
+                  {!adminMfaRequired ? (
+                    <div className="space-y-4">
                         <div className="inline-flex items-center gap-2 bg-[#f5f5f7] border border-black/[0.04] px-3 py-1 rounded-full text-[10px] font-mono font-bold text-neutral-700 uppercase tracking-widest">
                           <span className="h-1.5 w-1.5 bg-zinc-500 rounded-full animate-ping" />
                           STAGE 1: CREDENTIAL CHALLENGE
@@ -9262,7 +9263,6 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <p className="text-xs text-neutral-500 font-sans leading-relaxed">
                           Verify administrative operator user name and identity key credentials to query core configurations.
                         </p>
-                      </div>
 
                       <form onSubmit={handleAdminAuth} className="space-y-4 text-left">
                         <div className="space-y-1.5 font-sans">
