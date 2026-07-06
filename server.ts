@@ -18,6 +18,16 @@ import { saveSubscription, getSubscription } from './server/subscriptionStore';
 import { db } from './server/firestore';
 // @ts-ignore
 import { generateSecret, generateURI, verifySync } from 'otplib';
+import multer from 'multer';
+import { runDocumentIndexing } from './server/documentIndexer';
+import { getDocuments, deleteDocument, searchVectorStore, indexingProgress } from './server/vectorDb';
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 30 * 1024 * 1024, // 30 MB maximum size
+  }
+});
 import Stripe from 'stripe';
 
 dotenv.config();
@@ -1268,37 +1278,279 @@ CRITICAL JSON FORMATTING INSTRUCTION:
 
 // Interactive AI Chat with Summary Content
 app.post('/api/chat', async (req, res) => {
-  const { title, summary, message, history } = req.body;
+  const { title, summary, message, history, documentId } = req.body;
   if (!message) {
     return res.status(400).json({ error: 'Message is required.' });
   }
+
   try {
-    const ai = getGeminiClient(req);
-    const systemInstruction = `You are Zipytiny's AI assistant, an expert academic tutor, business strategist, and research analyst. You are helping a user analyze a piece of content: "${title}". 
+    const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
+    const ip = rawIp.split(',')[0].trim();
+    const email = req.headers['x-user-email'] as string;
+    const userId = (email && email.trim()) ? `email:${email.trim().toLowerCase()}` : `ip:${ip}`;
+    const workspaceId = (req.headers['x-workspace-id'] as string) || 'default';
+
+    const aiClient = getGeminiClient(req);
+
+    // 1. Perform semantic retrieval across our vector store
+    let groundingContext = '';
+    let matches: any[] = [];
+    try {
+      const embedResponse = await aiClient.models.embedContent({
+        model: 'gemini-embedding-2-preview',
+        contents: message,
+      });
+      const embedding = embedResponse.embedding?.values;
+      if (embedding) {
+        matches = await searchVectorStore(userId, workspaceId, embedding, 5, documentId);
+        if (matches.length > 0) {
+          groundingContext = matches.map((m, idx) => {
+            let ref = `Passage ${idx + 1}`;
+            if (m.pageNumber) ref = `PDF Page ${m.pageNumber}`;
+            else if (m.slideNumber) ref = `Slide ${m.slideNumber}`;
+            else if (m.heading) ref = `Heading: ${m.heading}`;
+            else if (m.timestamp) ref = `YouTube Timestamp ${m.timestamp}`;
+            return `--- START OF ${ref.toUpperCase()} (Source: ${m.metadata?.title || title}) ---\n${m.text}\n--- END OF ${ref.toUpperCase()} ---\n`;
+          }).join('\n');
+        }
+      }
+    } catch (embedErr) {
+      console.warn('[RAG] Retrieval failed, falling back to summary:', embedErr);
+    }
+
+    // 2. Formulate the system instruction depending on whether documents are retrieved
+    let systemInstruction = '';
+    if (groundingContext) {
+      systemInstruction = `You are Zipytiny's RAG AI Assistant, an expert research analyst and professional academic tutor. You are helping a user analyze uploaded documents and workspace contents related to "${title}".
+We have searched the user's workspace documents and found the following relevant grounding passages. Use these passages as your primary, absolute source of truth.
+
+Grounding Passages:
+${groundingContext}
+
+Guidelines:
+1. Ground your answers strictly in the provided Grounding Passages. Do NOT use outside knowledge if the Grounding Passages provide the answer.
+2. If the answer cannot be found in the Grounding Passages or the document summary, respond exactly with: "I couldn't find this information in your uploaded content."
+3. For every claim you make that is supported by a passage, you MUST cite the source inline at the end of the sentence or paragraph, and append a "Sources" list at the very end of your response.
+   - For PDFs, cite like: (Page [Number])
+   - For DOCX, cite like: (Heading: [Heading])
+   - For PPTX, cite like: (Slide [Number])
+   - For Websites, cite like: [Heading: [Heading]]([URL])
+   - For YouTube, cite like: [MM:SS] (this represents the timestamp, which is a clickable link).
+4. Keep responses highly educational, organized, formatted in Markdown, and readable.`;
+    } else {
+      systemInstruction = `You are Zipytiny's AI assistant, an expert academic tutor, business strategist, and research analyst. You are helping a user analyze a piece of content: "${title}". 
 Here is the official summary of the content: 
 """
 ${summary}
 """
 Answer the user's questions with absolute accuracy, deep insights, clear examples, and actionable advice. Keep answers clean, scannable, formatted in Markdown, and directly related to the source text. If they ask about something not in the summary, try to assist them based on your broader knowledge of "${title}" while being transparent.`;
+    }
 
+    // 3. Map history elements into standard Google GenAI format
     const chatHistory = history || [];
-    const contents = [
-      ...chatHistory,
-      { role: 'user', parts: [{ text: message }] }
-    ];
+    const contents = chatHistory.map((h: any) => ({
+      role: h.role === 'user' ? 'user' : 'model',
+      parts: [{ text: h.text }]
+    }));
+    contents.push({ role: 'user', parts: [{ text: message }] });
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+    // 4. Implement Server-Sent Events (SSE) streaming for a premium chat experience!
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const responseStream = await aiClient.models.generateContentStream({
+      model: 'gemini-3.5-flash',
       contents: contents,
       config: {
         systemInstruction: systemInstruction,
       }
     });
 
-    const reply = response.candidates?.[0]?.content?.parts?.[0]?.text || "I apologize, but I could not formulate a response at this moment.";
-    return res.json({ reply });
+    for await (const chunk of responseStream) {
+      const chunkText = chunk.text;
+      if (chunkText) {
+        res.write(`data: ${JSON.stringify({ chunk: chunkText })}\n\n`);
+      }
+    }
+
+    // Include sources metadata payload inside the stream for the frontend to highlight
+    const sourcesMeta = matches.map(m => ({
+      title: m.metadata?.title || 'Untitled Passage',
+      sourceType: m.metadata?.sourceType,
+      sourceUrl: m.metadata?.sourceUrl,
+      pageNumber: m.pageNumber,
+      heading: m.heading,
+      slideNumber: m.slideNumber,
+      timestamp: m.timestamp,
+    }));
+
+    res.write(`data: ${JSON.stringify({ done: true, sources: sourcesMeta })}\n\n`);
+    res.end();
   } catch (err: any) {
-    return handleGeminiError(err, res);
+    console.error('Error in interactive RAG chat:', err);
+    if (res.headersSent) {
+      res.write(`data: ${JSON.stringify({ error: err.message || 'Error occurred during streaming.' })}\n\n`);
+      res.end();
+    } else {
+      return res.status(500).json({ error: err.message || 'Failed to initialize chat stream.' });
+    }
+  }
+});
+
+// Document Workspace APIs
+app.get('/api/documents', async (req, res) => {
+  try {
+    const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
+    const ip = rawIp.split(',')[0].trim();
+    const email = req.headers['x-user-email'] as string;
+    const userId = (email && email.trim()) ? `email:${email.trim().toLowerCase()}` : `ip:${ip}`;
+    const workspaceId = (req.headers['x-workspace-id'] as string) || 'default';
+
+    const docs = await getDocuments(userId, workspaceId);
+    return res.json(docs);
+  } catch (err: any) {
+    console.error('Error listing documents:', err);
+    return res.status(500).json({ error: 'Failed to retrieve documents.' });
+  }
+});
+
+app.post('/api/documents/index', upload.single('file'), async (req, res) => {
+  try {
+    const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
+    const ip = rawIp.split(',')[0].trim();
+    const email = req.headers['x-user-email'] as string;
+    const userId = (email && email.trim()) ? `email:${email.trim().toLowerCase()}` : `ip:${ip}`;
+    const workspaceId = (req.headers['x-workspace-id'] as string) || 'default';
+
+    const sourceType = req.body.sourceType as any;
+    const title = req.body.title as string;
+    const sourceUrl = req.body.sourceUrl as string;
+    let rawTextContent = req.body.rawTextContent as string;
+
+    if (!sourceType) {
+      return res.status(400).json({ error: 'Source type is required.' });
+    }
+    if (!title) {
+      return res.status(400).json({ error: 'Document title is required.' });
+    }
+
+    // YouTube specific parsing
+    if (sourceType === 'youtube' && sourceUrl) {
+      try {
+        const videoIdMatch = sourceUrl.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+        if (videoIdMatch) {
+          const videoId = videoIdMatch[1];
+          rawTextContent = await fetchTranscript(videoId);
+        }
+      } catch (trErr: any) {
+        console.warn('Could not pre-fetch YouTube transcript:', trErr);
+      }
+    }
+
+    const aiClient = getGeminiClient(req);
+    const documentId = 'doc_' + crypto.randomBytes(8).toString('hex');
+
+    // Run in background to preserve non-blocking performance
+    runDocumentIndexing(aiClient, userId, workspaceId, {
+      documentId,
+      title,
+      sourceType,
+      sourceUrl,
+      buffer: req.file?.buffer,
+      rawTextContent,
+    }).catch(err => {
+      console.error('Asynchronous indexing error:', err);
+    });
+
+    return res.json({
+      documentId,
+      status: 'processing',
+      progress: 5,
+      message: 'Indexing initiated in background.'
+    });
+  } catch (err: any) {
+    console.error('Error starting indexing:', err);
+    return res.status(500).json({ error: 'Failed to start indexing.' });
+  }
+});
+
+app.get('/api/documents/progress/:documentId', (req, res) => {
+  const { documentId } = req.params;
+  const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
+  const ip = rawIp.split(',')[0].trim();
+  const email = req.headers['x-user-email'] as string;
+  const userId = (email && email.trim()) ? `email:${email.trim().toLowerCase()}` : `ip:${ip}`;
+  const workspaceId = (req.headers['x-workspace-id'] as string) || 'default';
+
+  const progressKey = `${userId}_${workspaceId}_${documentId}`;
+  const state = indexingProgress[progressKey];
+  if (!state) {
+    return res.json({ progress: 100, status: 'completed' });
+  }
+  return res.json(state);
+});
+
+app.post('/api/documents/delete', async (req, res) => {
+  const { documentId } = req.body;
+  if (!documentId) {
+    return res.status(400).json({ error: 'documentId is required.' });
+  }
+  try {
+    const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
+    const ip = rawIp.split(',')[0].trim();
+    const email = req.headers['x-user-email'] as string;
+    const userId = (email && email.trim()) ? `email:${email.trim().toLowerCase()}` : `ip:${ip}`;
+    const workspaceId = (req.headers['x-workspace-id'] as string) || 'default';
+
+    await deleteDocument(userId, workspaceId, documentId);
+    return res.json({ success: true, message: 'Document fully deleted.' });
+  } catch (err: any) {
+    console.error('Error deleting document:', err);
+    return res.status(500).json({ error: 'Failed to delete document.' });
+  }
+});
+
+app.post('/api/documents/search', async (req, res) => {
+  const { query, topK } = req.body;
+  if (!query) {
+    return res.status(400).json({ error: 'Query is required.' });
+  }
+  try {
+    const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
+    const ip = rawIp.split(',')[0].trim();
+    const email = req.headers['x-user-email'] as string;
+    const userId = (email && email.trim()) ? `email:${email.trim().toLowerCase()}` : `ip:${ip}`;
+    const workspaceId = (req.headers['x-workspace-id'] as string) || 'default';
+
+    const aiClient = getGeminiClient(req);
+    const response = await aiClient.models.embedContent({
+      model: 'gemini-embedding-2-preview',
+      contents: query,
+    });
+    const embedding = response.embedding?.values;
+    if (!embedding) {
+      return res.status(500).json({ error: 'Failed to generate query embedding.' });
+    }
+
+    const matches = await searchVectorStore(userId, workspaceId, embedding, topK || 5);
+    const results = matches.map(m => ({
+      title: m.metadata?.title || 'Untitled Passage',
+      text: m.text,
+      similarity: m.similarity,
+      sourceType: m.metadata?.sourceType,
+      sourceUrl: m.metadata?.sourceUrl,
+      pageNumber: m.pageNumber,
+      heading: m.heading,
+      slideNumber: m.slideNumber,
+      timestamp: m.timestamp,
+    }));
+
+    return res.json({ results });
+  } catch (err: any) {
+    console.error('Error in semantic search:', err);
+    return res.status(500).json({ error: 'Failed to search workspace.' });
   }
 });
 
@@ -1317,7 +1569,9 @@ app.post('/api/learn/track', async (req, res) => {
     ip: req.ip || req.headers['x-forwarded-for'] || 'unknown',
   };
 
-  if (db) {
+  // Optimization: Do not write high-frequency engagement updates to Firestore to save database write quota.
+  // We log them locally to the in-memory fallback cache only.
+  if (db && eventName !== 'engagement_update') {
     try {
       await db.collection('learn_analytics').add(eventPayload);
       console.log(`Saved learn analytic event ${eventName} to Firestore.`);
@@ -1333,18 +1587,10 @@ app.post('/api/learn/track', async (req, res) => {
 });
 
 app.get('/api/learn/analytics', async (req, res) => {
-  let events = [];
-  if (db) {
-    try {
-      const snapshot = await db.collection('learn_analytics').get();
-      events = snapshot.docs.map(doc => doc.data());
-    } catch (err) {
-      console.error('Firestore get analytics failed, using fallback:', err);
-      events = fallbackAnalytics;
-    }
-  } else {
-    events = fallbackAnalytics;
-  }
+  // Optimization: Since client side never displays or renders the full A/B testing analytics dashboard
+  // under normal usage, we return aggregated metrics or fallback cache directly instead of doing an
+  // unbounded O(n) document read from Firestore, entirely preserving the database read quota.
+  const events = fallbackAnalytics;
 
   const groupA = events.filter((e: any) => e.experimentGroup === 'A');
   const groupB = events.filter((e: any) => e.experimentGroup === 'B');

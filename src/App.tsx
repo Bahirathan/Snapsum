@@ -78,6 +78,7 @@ const ActiveLearningDashboard = (props: any) => <Suspense fallback={<div classNa
 import AIChatWithSummary from './components/AIChatWithSummary';
 import SummaryPremiumExporter from './components/SummaryPremiumExporter';
 import LandingPage from './components/LandingPage';
+import FeaturePage from './components/FeaturePage';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
 
 const getEmbedUrl = (url: string) => {
@@ -890,7 +891,7 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // MVP Screen navigation state
-  const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin' | 'terms' | 'privacy'>(() => {
+  const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin' | 'terms' | 'privacy' | 'feature'>(() => {
     try {
       if (typeof window !== 'undefined') {
         const pathLower = window.location.pathname.toLowerCase();
@@ -898,8 +899,12 @@ export default function App() {
           return 'app';
         }
 
-        // 1. Prioritize clean pathname (e.g. /admin, /billing)
         const pathParts = pathLower.split('/').filter(Boolean);
+        if (pathParts[0] === 'features' && pathParts[1]) {
+          return 'feature';
+        }
+
+        // 1. Prioritize clean pathname (e.g. /admin, /billing)
         const pathScreen = pathParts[0];
         if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(pathScreen)) {
           return pathScreen as any;
@@ -908,7 +913,7 @@ export default function App() {
         // 2. Fallback to query params (?screen=admin)
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(qScreen.toLowerCase())) {
+        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature'].includes(qScreen.toLowerCase())) {
           return qScreen.toLowerCase() as any;
         }
         
@@ -919,7 +924,7 @@ export default function App() {
 
         // 3. Fallback to hash (#admin)
         const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
-        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(hash)) {
+        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature'].includes(hash)) {
           return hash as any;
         }
       }
@@ -927,6 +932,19 @@ export default function App() {
       console.warn('Initial route resolution failed:', e);
     }
     return 'landing';
+  });
+
+  const [currentFeatureSlug, setCurrentFeatureSlug] = useState<string>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const pathLower = window.location.pathname.toLowerCase();
+        const pathParts = pathLower.split('/').filter(Boolean);
+        if (pathParts[0] === 'features' && pathParts[1]) {
+          return pathParts[1];
+        }
+      }
+    } catch {}
+    return '';
   });
 
   // Synchronize browser URL navigation with active screen tab
@@ -940,6 +958,12 @@ export default function App() {
         }
         // Check clean pathname
         const pathParts = pathLower.split('/').filter(Boolean);
+        if (pathParts[0] === 'features' && pathParts[1]) {
+          setCurrentScreen('feature');
+          setCurrentFeatureSlug(pathParts[1]);
+          return;
+        }
+
         const pathScreen = pathParts[0];
         if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(pathScreen)) {
           setCurrentScreen(pathScreen as any);
@@ -949,7 +973,7 @@ export default function App() {
         // Check query
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(qScreen.toLowerCase())) {
+        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature'].includes(qScreen.toLowerCase())) {
           setCurrentScreen(qScreen.toLowerCase() as any);
           return;
         }
@@ -960,7 +984,7 @@ export default function App() {
 
         // Check hash
         const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
-        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(hash)) {
+        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature'].includes(hash)) {
           setCurrentScreen(hash as any);
         }
       } catch (err) {
@@ -982,6 +1006,13 @@ export default function App() {
       if (window.location.pathname.toLowerCase().startsWith('/s/')) {
         return;
       }
+      if (currentScreen === 'feature') {
+        const targetPath = `/features/${currentFeatureSlug}`;
+        if (window.location.pathname.toLowerCase() !== targetPath.toLowerCase()) {
+          window.history.pushState({ featureSlug: currentFeatureSlug }, document.title, targetPath + window.location.search);
+        }
+        return;
+      }
       const targetPath = currentScreen === 'landing' ? '/' : `/${currentScreen}`;
       if (window.location.pathname.toLowerCase() !== targetPath.toLowerCase()) {
         window.history.pushState(null, document.title, targetPath + window.location.search);
@@ -989,7 +1020,7 @@ export default function App() {
     } catch (e) {
       console.warn('Failed to push history status:', e);
     }
-  }, [currentScreen]);
+  }, [currentScreen, currentFeatureSlug]);
 
   // Startup handle for referral code registration & tracking
   useEffect(() => {
@@ -1908,43 +1939,10 @@ export default function App() {
 
   // Load A/B Testing Telemetry dynamically from API or Client Firestore fallback
   const refreshAnalyticsStats = async () => {
-    try {
-      const res = await fetch('/api/learn/analytics');
-      if (res.ok) {
-        const data = await res.json();
-        setAnalyticsStats(data);
-        return;
-      }
-    } catch (err) {
-      console.warn('Error fetching analytics from backend API:', err);
-    }
-
-    // Direct Firestore client fallback
-    try {
-      const { collection, getDocs } = await import('firebase/firestore');
-      const snapshot = await getDocs(collection(db, 'learn_analytics'));
-      const events: any[] = [];
-      snapshot.forEach(docSnap => {
-        events.push(docSnap.data());
-      });
-
-      const groupA = events.filter((e: any) => e.experimentGroup === 'A');
-      const groupB = events.filter((e: any) => e.experimentGroup === 'B');
-
-      setAnalyticsStats({
-        success: true,
-        summary: {
-          totalEvents: events.length,
-          groupACount: groupA.length,
-          groupBCount: groupB.length,
-          groupARetention: groupA.length > 0 ? (groupA.filter((e: any) => e.eventName === 'quiz_completed' || e.eventName === 'mindmap_explored').length / groupA.length) * 100 : 0,
-          groupBRetention: groupB.length > 0 ? (groupB.filter((e: any) => e.eventName === 'quiz_completed' || e.eventName === 'mindmap_explored').length / groupB.length) * 100 : 0,
-        },
-        events: events.slice(0, 50)
-      });
-    } catch (err) {
-      console.warn('Error fetching client-side Firestore learning analytics:', err);
-    }
+    // Optimization: Since analyticsStats is not rendered anywhere in the application UI,
+    // we bypass retrieving all analytics records from Firestore to completely eliminate
+    // O(n) document read calls, saving database usage and avoiding "Quota exceeded" errors.
+    return;
   };
 
   const trackEventClientSide = async (videoId: string, eventName: string, metadata: any) => {
@@ -1962,7 +1960,13 @@ export default function App() {
       }).catch(() => {});
     } catch (e) {}
 
-    // 2. Dual log to Firestore directly
+    // Optimization: Skip logging high-frequency engagement update events directly to Firestore
+    // to prevent rapid daily write/read quota exhaustion.
+    if (eventName === 'engagement_update') {
+      return;
+    }
+
+    // 2. Dual log to Firestore directly for non-high-frequency actions
     try {
       const { collection, addDoc } = await import('firebase/firestore');
       await addDoc(collection(db, 'learn_analytics'), {
@@ -1991,16 +1995,16 @@ export default function App() {
     const interval = setInterval(() => {
       if (activeSummary) {
         const key = `snapsum_eng_${activeSummary.metadata.videoId}`;
-        const currentSecs = parseInt(localStorage.getItem(key) || '0', 10) + 10;
+        const currentSecs = parseInt(localStorage.getItem(key) || '0', 10) + 60;
         localStorage.setItem(key, String(currentSecs));
 
         trackEventClientSide(
           activeSummary.metadata.videoId,
           'engagement_update',
-          { seconds: 10 }
+          { seconds: 60 }
         );
       }
-    }, 10000);
+    }, 60000);
     return () => clearInterval(interval);
   }, [activeSummary, experimentGroup, visitorUser]);
 
@@ -3449,6 +3453,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               }
               window.scrollTo(0, 0);
             }}
+            onNavigateToFeature={(slug) => {
+              setCurrentFeatureSlug(slug);
+              setCurrentScreen('feature');
+              window.scrollTo(0, 0);
+            }}
             onUpgrade={() => {
               setSelectedPlanCode('pro');
               setShowStripeModal(true);
@@ -3470,6 +3479,31 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   });
                 }
               }
+            }}
+          />
+        )}
+
+        {/* 🚀 INDIVIDUAL FEATURE PAGES (DEEP BROWSER LINKED) */}
+        {currentScreen === 'feature' && (
+          <FeaturePage 
+            featureSlug={currentFeatureSlug}
+            isDark={isDark}
+            onNavigateHome={() => {
+              setCurrentScreen('landing');
+              window.scrollTo(0, 0);
+            }}
+            onLaunchApp={(targetTab?: any, targetSubTab?: any) => {
+              setCurrentScreen('app');
+              if (targetTab) {
+                setActiveTab(targetTab);
+              }
+              if (targetSubTab) {
+                setLearnActiveTab(targetSubTab);
+              }
+              if (!activeSummary && PRELOADED_VIDEOS && PRELOADED_VIDEOS.length > 0) {
+                handleLoadStoredItem(PRELOADED_VIDEOS[0]);
+              }
+              window.scrollTo(0, 0);
             }}
           />
         )}

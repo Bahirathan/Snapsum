@@ -8,6 +8,7 @@ import {
 
 interface LandingPageProps {
   onLaunchApp: (targetTab?: string, targetSubTab?: string) => void;
+  onNavigateToFeature?: (featureSlug: string) => void;
   onUpgrade: () => void;
   isPremium: boolean;
   visitorUser: any;
@@ -35,7 +36,7 @@ function useCountUp(target: number, duration = 1800, startTrigger = true) {
   return count;
 }
 
-export default function LandingPage({ onLaunchApp, onUpgrade, isPremium, visitorUser, onGoogleSignIn }: LandingPageProps) {
+export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrade, isPremium, visitorUser, onGoogleSignIn }: LandingPageProps) {
   const [activeTab, setActiveTab] = useState<'summary' | 'key_insights' | 'chapters' | 'quiz'>('summary');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [statsVisible, setStatsVisible] = useState(false);
@@ -523,11 +524,16 @@ export default function LandingPage({ onLaunchApp, onUpgrade, isPremium, visitor
               };
               
               const handleTagClick = () => {
-                const target = tagToTabMap[tag];
-                if (target) {
-                  onLaunchApp(target.tab, target.subTab);
+                const slug = tag.toLowerCase().replace(/\s+/g, '-');
+                if (onNavigateToFeature) {
+                  onNavigateToFeature(slug);
                 } else {
-                  onLaunchApp();
+                  const target = tagToTabMap[tag];
+                  if (target) {
+                    onLaunchApp(target.tab, target.subTab);
+                  } else {
+                    onLaunchApp();
+                  }
                 }
               };
 
