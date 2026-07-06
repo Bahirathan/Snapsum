@@ -3435,8 +3435,18 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         {/* 🚀 LANDING PAGE SCREEN */}
         {currentScreen === 'landing' && (
           <LandingPage 
-            onLaunchApp={() => {
+            onLaunchApp={(targetTab?: any, targetSubTab?: any) => {
               setCurrentScreen('app');
+              if (targetTab) {
+                setActiveTab(targetTab);
+              }
+              if (targetSubTab) {
+                setLearnActiveTab(targetSubTab);
+              }
+              // Automatically load a curated quick demo video if none is active, so the user instantly sees the selected feature in action!
+              if (!activeSummary && PRELOADED_VIDEOS && PRELOADED_VIDEOS.length > 0) {
+                handleLoadStoredItem(PRELOADED_VIDEOS[0]);
+              }
               window.scrollTo(0, 0);
             }}
             onUpgrade={() => {

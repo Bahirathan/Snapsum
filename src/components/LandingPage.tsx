@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 interface LandingPageProps {
-  onLaunchApp: () => void;
+  onLaunchApp: (targetTab?: string, targetSubTab?: string) => void;
   onUpgrade: () => void;
   isPremium: boolean;
   visitorUser: any;
@@ -500,11 +500,47 @@ export default function LandingPage({ onLaunchApp, onUpgrade, isPremium, visitor
         <div className="mt-12 text-center">
           <p className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#86868b] dark:text-zinc-500 mb-4">Also Includes</p>
           <div className="flex flex-wrap justify-center gap-2">
-            {['Mind Maps', 'Flashcards', 'Podcast Gen', 'Study Notes', 'Quiz Gen', 'Timeline View', 'Executive Summary', 'Action Items', 'Meeting Minutes', 'Translation', 'Sentiment Analysis', 'Key Insights', 'Keywords', 'Follow-up Questions', 'Export to PDF', 'Export to Word', 'Export to Markdown', 'Share Link'].map((tag) => (
-              <span key={tag} className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-black/[0.05] dark:border-zinc-800 rounded-full text-[11px] font-medium text-neutral-600 dark:text-zinc-400 shadow-xs">
-                {tag}
-              </span>
-            ))}
+            {['Mind Maps', 'Flashcards', 'Podcast Gen', 'Study Notes', 'Quiz Gen', 'Timeline View', 'Executive Summary', 'Action Items', 'Meeting Minutes', 'Translation', 'Sentiment Analysis', 'Key Insights', 'Keywords', 'Follow-up Questions', 'Export to PDF', 'Export to Word', 'Export to Markdown', 'Share Link'].map((tag) => {
+              const tagToTabMap: Record<string, { tab: string; subTab?: string }> = {
+                'Mind Maps': { tab: 'mindmap' },
+                'Flashcards': { tab: 'quiz', subTab: 'flashcards' },
+                'Quiz Gen': { tab: 'quiz', subTab: 'quiz' },
+                'Study Notes': { tab: 'quiz', subTab: 'syllabus' },
+                'Timeline View': { tab: 'chapters' },
+                'Executive Summary': { tab: 'overview' },
+                'Action Items': { tab: 'overview' },
+                'Meeting Minutes': { tab: 'overview' },
+                'Translation': { tab: 'overview' },
+                'Sentiment Analysis': { tab: 'overview' },
+                'Key Insights': { tab: 'overview' },
+                'Keywords': { tab: 'overview' },
+                'Follow-up Questions': { tab: 'chat' },
+                'Export to PDF': { tab: 'export' },
+                'Export to Word': { tab: 'export' },
+                'Export to Markdown': { tab: 'export' },
+                'Share Link': { tab: 'export' },
+                'Podcast Gen': { tab: 'monetize' }
+              };
+              
+              const handleTagClick = () => {
+                const target = tagToTabMap[tag];
+                if (target) {
+                  onLaunchApp(target.tab, target.subTab);
+                } else {
+                  onLaunchApp();
+                }
+              };
+
+              return (
+                <button 
+                  key={tag} 
+                  onClick={handleTagClick}
+                  className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-black/[0.05] dark:border-zinc-800 rounded-full text-[11px] font-medium text-neutral-600 dark:text-zinc-400 hover:text-[#0071e3] dark:hover:text-sky-400 hover:border-[#0071e3]/30 dark:hover:border-sky-500/30 hover:bg-indigo-50/10 dark:hover:bg-indigo-950/10 transition-all duration-200 cursor-pointer active:scale-95 shadow-xs hover:shadow-sm"
+                >
+                  {tag}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
