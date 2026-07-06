@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
-import pdf from 'pdf-parse';
+import * as pdfImport from 'pdf-parse';
+const pdf = ((pdfImport as any).default || pdfImport) as any;
 import mammoth from 'mammoth';
 import AdmZip from 'adm-zip';
 import { 
@@ -238,8 +239,10 @@ async function getEmbeddingWithRetry(ai: GoogleGenAI, text: string, retries = 3)
         model: 'gemini-embedding-2-preview',
         contents: text,
       });
-      if (response.embedding?.values) {
-        return response.embedding.values;
+      const responseAny = response as any;
+      const embedding = responseAny.embedding?.values || responseAny.embeddings?.[0]?.values;
+      if (embedding) {
+        return embedding;
       }
       throw new Error('Empty embedding response from Google GenAI');
     } catch (err: any) {

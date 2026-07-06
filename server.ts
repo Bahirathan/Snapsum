@@ -1300,7 +1300,7 @@ app.post('/api/chat', async (req, res) => {
         model: 'gemini-embedding-2-preview',
         contents: message,
       });
-      const embedding = embedResponse.embedding?.values;
+      const embedding = (embedResponse as any).embedding?.values || (embedResponse as any).embeddings?.[0]?.values;
       if (embedding) {
         matches = await searchVectorStore(userId, workspaceId, embedding, 5, documentId);
         if (matches.length > 0) {
@@ -1529,7 +1529,7 @@ app.post('/api/documents/search', async (req, res) => {
       model: 'gemini-embedding-2-preview',
       contents: query,
     });
-    const embedding = response.embedding?.values;
+    const embedding = (response as any).embedding?.values || (response as any).embeddings?.[0]?.values;
     if (!embedding) {
       return res.status(500).json({ error: 'Failed to generate query embedding.' });
     }
