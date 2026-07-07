@@ -1220,6 +1220,7 @@ export default function App() {
 
   // AI Support Bot States
   const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [isSupportMinimized, setIsSupportMinimized] = useState(false);
   const [supportMessages, setSupportMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string; timestamp: string }>>([
     {
       role: 'assistant',
@@ -11838,14 +11839,15 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       </footer>
 
       {/* 💬 Zipytiny Elite AI Customer Support Hub */}
-      <div className="fixed bottom-6 right-6 z-50 font-sans text-left">
+      <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 font-sans text-left">
         {!isSupportOpen ? (
           <button
             onClick={() => {
               setIsSupportOpen(true);
+              setIsSupportMinimized(false);
               trackGAEvent?.('support_chat_opened', { timestamp: new Date().toISOString() });
             }}
-            className="bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full p-3.5 shadow-xl flex items-center gap-2 transition duration-200 cursor-pointer scale-100 hover:scale-105 shadow-blue-500/10 border border-blue-400/20"
+            className="bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full p-3.5 shadow-xl flex items-center gap-2 transition duration-200 cursor-pointer scale-100 hover:scale-105 shadow-blue-500/10 border border-blue-400/20 ml-auto"
             title="Zipytiny AI Customer Support"
           >
             <MessageSquare className="w-5 h-5 text-white animate-bounce" />
@@ -11855,9 +11857,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             </span>
           </button>
         ) : (
-          <div className="bg-white border border-neutral-200/80 rounded-3xl w-80 sm:w-96 shadow-2xl overflow-hidden animate-fadeIn flex flex-col h-[520px]">
+          <div className={`bg-white border border-neutral-200/80 rounded-3xl w-auto max-w-full sm:w-96 shadow-2xl overflow-hidden animate-fadeIn flex flex-col transition-all duration-300 ${
+            isSupportMinimized ? 'h-14' : 'h-[500px] max-h-[80vh]'
+          }`}>
             {/* Header */}
-            <div className="bg-[#0071e3] text-white p-4 flex items-center justify-between shrink-0 shadow-md">
+            <div 
+              onClick={() => setIsSupportMinimized(!isSupportMinimized)}
+              className="bg-[#0071e3] text-white p-4 flex items-center justify-between shrink-0 shadow-md cursor-pointer select-none"
+            >
               <div className="flex items-center gap-2.5">
                 <div className="bg-white/15 p-1.5 rounded-xl">
                   <Headphones className="w-4 h-4 text-white" />
@@ -11866,15 +11873,30 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   <h4 className="text-xs font-extrabold tracking-wider uppercase font-mono">
                     Zipytiny AI Support
                   </h4>
-                  <span className="text-[10px] text-blue-100 block -mt-0.5">Elite Knowledge Agent</span>
+                  <span className="text-[10px] text-blue-100 block -mt-0.5">
+                    {isSupportMinimized ? '💬 Click to expand chat' : 'Elite Knowledge Agent'}
+                  </span>
                 </div>
               </div>
-              <button
-                onClick={() => setIsSupportOpen(false)}
-                className="text-white/80 hover:text-white font-mono text-xs cursor-pointer p-1.5 rounded-full hover:bg-white/10 transition"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => setIsSupportMinimized(!isSupportMinimized)}
+                  className="text-white/80 hover:text-white font-bold text-sm cursor-pointer p-1 rounded-full hover:bg-white/10 transition flex items-center justify-center w-6 h-6 leading-none"
+                  title={isSupportMinimized ? "Expand chat" : "Minimize chat"}
+                >
+                  {isSupportMinimized ? '▲' : '−'}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsSupportOpen(false);
+                    setIsSupportMinimized(false);
+                  }}
+                  className="text-white/80 hover:text-white font-mono text-xs cursor-pointer p-1 rounded-full hover:bg-white/10 transition flex items-center justify-center w-6 h-6 leading-none"
+                  title="Close support chat"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             {/* Support Messages List */}
