@@ -19,12 +19,13 @@ export interface IndexedDocument {
   userId: string;
   workspaceId: string;
   title: string;
-  sourceType: 'pdf' | 'docx' | 'pptx' | 'txt' | 'markdown' | 'url' | 'youtube';
+  sourceType: 'pdf' | 'docx' | 'pptx' | 'txt' | 'markdown' | 'url' | 'youtube' | 'image';
   sourceUrl?: string;
   indexedAt: string;
   status: 'processing' | 'completed' | 'failed';
   progress: number;
   suggestions?: string[];
+  summary?: string;
 }
 
 // In-memory cache for ultra-fast, zero-read searches (saves Firestore read quota)

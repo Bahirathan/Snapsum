@@ -1292,7 +1292,7 @@ app.post('/api/chat', async (req, res) => {
 
     const aiClient = getGeminiClient(req);
 
-    // 1. Perform semantic retrieval across our vector store
+        // 1. Perform semantic retrieval across our vector store
     let groundingContext = '';
     let matches: any[] = [];
     try {
@@ -1318,25 +1318,42 @@ app.post('/api/chat', async (req, res) => {
       console.warn('[RAG] Retrieval failed, falling back to summary:', embedErr);
     }
 
+    // Try to fetch active document summary
+    let activeDocSummary = '';
+    if (documentId) {
+      try {
+        const docs = await getDocuments(userId, workspaceId);
+        const activeDoc = docs.find(d => d.documentId === documentId);
+        if (activeDoc && activeDoc.summary) {
+          activeDocSummary = activeDoc.summary;
+        }
+      } catch (docErr) {
+        console.warn('[RAG] Failed to load active document summary:', docErr);
+      }
+    }
+
     // 2. Formulate the system instruction depending on whether documents are retrieved
     let systemInstruction = '';
-    if (groundingContext) {
+    if (groundingContext || activeDocSummary) {
       systemInstruction = `You are Zipytiny's RAG AI Assistant, an expert research analyst and professional academic tutor. You are helping a user analyze uploaded documents and workspace contents related to "${title}".
-We have searched the user's workspace documents and found the following relevant grounding passages. Use these passages as your primary, absolute source of truth.
 
+${activeDocSummary ? `Here is the comprehensive Executive Summary, Key Takeaways, and Outline of the active document:\n"""\n${activeDocSummary}\n"""\n` : ''}
+
+${groundingContext ? `We have searched the user's workspace documents and found the following relevant grounding passages. Use these passages as your primary, absolute source of truth for specific queries:
 Grounding Passages:
-${groundingContext}
+${groundingContext}` : ''}
 
 Guidelines:
-1. Ground your answers strictly in the provided Grounding Passages. Do NOT use outside knowledge if the Grounding Passages provide the answer.
-2. If the answer cannot be found in the Grounding Passages or the document summary, respond exactly with: "I couldn't find this information in your uploaded content."
-3. For every claim you make that is supported by a passage, you MUST cite the source inline at the end of the sentence or paragraph, and append a "Sources" list at the very end of your response.
+1. Ground your answers strictly in the provided Grounding Passages and the Executive Summary of the document.
+2. If the user asks for an overview, outline, key takeaways, or summary of the document, synthesize a beautiful, structured response using the provided Executive Summary.
+3. If the answer cannot be found in the Grounding Passages or the document summary, respond exactly with: "I couldn't find this information in your uploaded content."
+4. For every claim you make that is supported by a passage, you MUST cite the source inline at the end of the sentence or paragraph, and append a "Sources" list at the very end of your response.
    - For PDFs, cite like: (Page [Number])
    - For DOCX, cite like: (Heading: [Heading])
    - For PPTX, cite like: (Slide [Number])
    - For Websites, cite like: [Heading: [Heading]]([URL])
    - For YouTube, cite like: [MM:SS] (this represents the timestamp, which is a clickable link).
-4. Keep responses highly educational, organized, formatted in Markdown, and readable.`;
+5. Keep responses highly educational, organized, formatted in Markdown, and readable.`;
     } else {
       systemInstruction = `You are Zipytiny's AI assistant, an expert academic tutor, business strategist, and research analyst. You are helping a user analyze a piece of content: "${title}". 
 Here is the official summary of the content: 

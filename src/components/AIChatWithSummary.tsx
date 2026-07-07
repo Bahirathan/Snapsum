@@ -12,6 +12,7 @@ import {
   Globe, 
   Youtube, 
   FileText, 
+  Image,
   CheckCircle2, 
   Loader2, 
   Play, 
@@ -45,11 +46,12 @@ interface ChatMessage {
 interface WorkspaceDocument {
   documentId: string;
   title: string;
-  sourceType: 'pdf' | 'docx' | 'pptx' | 'txt' | 'markdown' | 'url' | 'youtube';
+  sourceType: 'pdf' | 'docx' | 'pptx' | 'txt' | 'markdown' | 'url' | 'youtube' | 'image';
   sourceUrl?: string;
   status: 'processing' | 'completed' | 'failed';
   progress: number;
   suggestions?: string[];
+  summary?: string;
 }
 
 export default function AIChatWithSummary({ title, summary, getHeaders }: AIChatWithSummaryProps) {
@@ -186,10 +188,12 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
     formData.append('title', file.name);
 
     let detectedType: any = 'txt';
-    if (file.name.endsWith('.pdf')) detectedType = 'pdf';
-    else if (file.name.endsWith('.docx')) detectedType = 'docx';
-    else if (file.name.endsWith('.pptx')) detectedType = 'pptx';
-    else if (file.name.endsWith('.md')) detectedType = 'markdown';
+    const lowerName = file.name.toLowerCase();
+    if (lowerName.endsWith('.pdf')) detectedType = 'pdf';
+    else if (lowerName.endsWith('.docx')) detectedType = 'docx';
+    else if (lowerName.endsWith('.pptx')) detectedType = 'pptx';
+    else if (lowerName.endsWith('.md') || lowerName.endsWith('.markdown')) detectedType = 'markdown';
+    else if (lowerName.endsWith('.png') || lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) detectedType = 'image';
     formData.append('sourceType', detectedType);
 
     try {
@@ -673,6 +677,83 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
 
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-neutral-50/30 dark:bg-zinc-950/20">
+          {selectedDocId && (() => {
+            const activeDoc = documents.find(d => d.documentId === selectedDocId);
+            if (!activeDoc || activeDoc.status !== 'completed' || !activeDoc.summary) return null;
+            return (
+              <div className="bg-white dark:bg-zinc-900 border border-neutral-200/50 dark:border-zinc-800/40 rounded-2xl p-4 shadow-sm mb-4">
+                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-zinc-800/80 pb-2.5 mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+                      <FileText className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-[11px] font-bold text-neutral-800 dark:text-zinc-100 truncate max-w-[180px] sm:max-w-xs">
+                      "{activeDoc.title}" - Core Summary
+                    </span>
+                  </div>
+                  <span className="text-[8px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-bold px-1.5 py-0.5 rounded-full capitalize shrink-0">
+                    AI Summarized
+                  </span>
+                </div>
+                <div className="space-y-2 text-left text-[11px] leading-relaxed text-neutral-600 dark:text-zinc-300">
+                  {activeDoc.summary.split('\n').map((line, idx) => {
+                    const trimmed = line.trim();
+                    if (trimmed.startsWith('- **') || trimmed.startsWith('* **')) {
+                      const match = trimmed.match(/^[-*]\s+\*\*(.*?)\*\*:(.*)$/);
+                      if (match) {
+                        return (
+                          <div key={idx} className="flex gap-1.5 pl-1">
+                            <span className="text-indigo-500 shrink-0">•</span>
+                            <p>
+                              <strong className="font-bold text-neutral-800 dark:text-zinc-100">{match[1]}:</strong>
+                              {match[2]}
+                            </p>
+                          </div>
+                        );
+                      }
+                    }
+                    if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+                      return (
+                        <div key={idx} className="flex gap-1.5 pl-1">
+                          <span className="text-indigo-500 shrink-0">•</span>
+                          <p>{trimmed.slice(2)}</p>
+                        </div>
+                      );
+                    }
+                    if (trimmed.startsWith('### ')) {
+                      return (
+                        <h5 key={idx} className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 mt-2.5 mb-0.5">
+                          {trimmed.slice(4)}
+                        </h5>
+                      );
+                    }
+                    if (trimmed.startsWith('## ') || trimmed.startsWith('# ')) {
+                      const headerText = trimmed.replace(/^#+\s+/, '');
+                      return (
+                        <h4 key={idx} className="text-[11px] font-extrabold text-neutral-800 dark:text-zinc-200 mt-3 mb-1 uppercase tracking-wider font-mono text-[9px]">
+                          {headerText}
+                        </h4>
+                      );
+                    }
+                    if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+                      return (
+                        <p key={idx} className="font-bold text-neutral-800 dark:text-zinc-100 mt-2">
+                          {trimmed.slice(2, -2)}
+                        </p>
+                      );
+                    }
+                    if (!trimmed) return <div key={idx} className="h-1" />;
+                    return (
+                      <p key={idx} className="text-neutral-600 dark:text-zinc-300">
+                        {trimmed}
+                      </p>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
           {messages.map((m) => {
             const isUser = m.role === 'user';
             return (
@@ -930,6 +1011,7 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
                     let Icon = FileText;
                     if (res.sourceType === 'youtube') Icon = Youtube;
                     else if (res.sourceType === 'url') Icon = Globe;
+                    else if (res.sourceType === 'image') Icon = Image;
                     else if (res.sourceType === 'chat') Icon = MessageSquare;
 
                     return (
@@ -992,11 +1074,11 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
             >
               <Plus className="w-6 h-6 text-neutral-400 dark:text-zinc-500 mx-auto mb-1.5" />
               <p className="text-[11px] font-bold text-neutral-700 dark:text-zinc-200">Upload Workspace Document</p>
-              <p className="text-[9px] text-[#86868b] dark:text-zinc-500 mt-0.5">PDF, DOCX, PPTX, TXT or Markdown</p>
+              <p className="text-[9px] text-[#86868b] dark:text-zinc-500 mt-0.5">PDF, DOCX, PPTX, Images, TXT, MD</p>
               <input 
                 ref={fileInputRef}
                 type="file" 
-                accept=".pdf,.docx,.pptx,.txt,.md"
+                accept=".pdf,.docx,.pptx,.txt,.md,.markdown,.png,.jpg,.jpeg"
                 onChange={handleFileUpload}
                 className="hidden" 
               />
@@ -1097,6 +1179,7 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
                   let Icon = FileText;
                   if (doc.sourceType === 'youtube') Icon = Youtube;
                   else if (doc.sourceType === 'url') Icon = Globe;
+                  else if (doc.sourceType === 'image') Icon = Image;
 
                   return (
                     <div 
