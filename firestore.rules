@@ -35,5 +35,15 @@ service cloud.firestore {
     match /subscriptions/{docId} {
       allow read, write: if true;
     }
+
+    // Documents indexing metadata
+    match /documents/{docId} {
+      allow read, write: if true;
+    }
+
+    // Indexed document content chunks for RAG
+    match /document_chunks/{docId} {
+      allow read, write: if true;
+    }
   }
 }

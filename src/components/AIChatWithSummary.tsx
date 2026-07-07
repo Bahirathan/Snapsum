@@ -23,7 +23,8 @@ import {
   Share2, 
   ArrowLeft, 
   ArrowRight,
-  ExternalLink
+  ExternalLink,
+  Search
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -72,6 +73,13 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
   const [uploadStatus, setUploadStatus] = useState('');
   const [urlInput, setUrlInput] = useState('');
   const [urlType, setUrlType] = useState<'url' | 'youtube'>('url');
+
+  // Global Workspace Knowledge RAG Search states
+  const [shelfTab, setShelfTab] = useState<'library' | 'search'>('library');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
 
   // AI-Generated Quick suggestions
   const [suggestions, setSuggestions] = useState<string[]>([
@@ -301,6 +309,56 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
       }
     } catch (err) {
       showToast('❌ Failed to delete document.');
+    }
+  };
+
+  // Global Workspace Knowledge Search (Queries across all indexed documents, videos, and chat history)
+  const handleRAGSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setSearching(true);
+    setSearchError('');
+    setSearchResults([]);
+
+    try {
+      // 1. Semantic search over documents/videos via the API
+      const res = await fetch('/api/documents/search', {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ query: searchQuery, topK: 6 })
+      });
+
+      let docResults: any[] = [];
+      if (res.ok) {
+        const data = await res.json();
+        docResults = data.results || [];
+      }
+
+      // 2. Client-side search over chat history (videos & documents context chats)
+      const queryLower = searchQuery.toLowerCase();
+      const chatMatches = messages
+        .filter(m => m.id !== 'welcome' && m.text.toLowerCase().includes(queryLower))
+        .map(m => ({
+          title: m.role === 'user' ? 'Chat History: Your Query' : 'Chat History: AI Response',
+          text: m.text,
+          sourceType: 'chat' as const,
+          similarity: 0.99, // exact match relevance
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }));
+
+      // Combine both
+      const combined = [...chatMatches, ...docResults];
+      setSearchResults(combined);
+      
+      if (combined.length === 0) {
+        setSearchError('No matching passages or messages found in your workspace.');
+      }
+    } catch (err: any) {
+      console.error('RAG Search failed:', err);
+      setSearchError('Failed to perform global semantic query.');
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -766,22 +824,162 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
       {/* RIGHT COLUMN: Interactive Document & Indexing Manager Shelf */}
       <div className={`w-full md:w-[320px] bg-neutral-50 dark:bg-zinc-900/40 flex flex-col h-[520px] md:h-full ${activeTab === 'docs' ? 'flex' : 'hidden md:flex'}`}>
         
-        {/* Shelf Header */}
-        <div className="px-5 py-4 bg-white dark:bg-zinc-950 border-b border-neutral-200/50 dark:border-zinc-800/40 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            <Brain className="w-4.5 h-4.5 text-indigo-500" />
-            <h4 className="text-xs font-bold text-neutral-800 dark:text-zinc-100">Knowledge Shelf</h4>
+        {/* Shelf Tab Bar Header */}
+        <div className="bg-white dark:bg-zinc-950 border-b border-neutral-200/50 dark:border-zinc-800/40 shrink-0">
+          <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+            <h4 className="text-xs font-bold text-neutral-800 dark:text-zinc-100 uppercase tracking-wider font-mono">Workspace Engine</h4>
+            <button
+              onClick={() => setActiveTab('chat')}
+              className="md:hidden text-xs font-bold text-indigo-600 dark:text-indigo-400 px-2.5 py-1 bg-indigo-50 dark:bg-indigo-950/60 rounded-xl"
+            >
+              Back to Chat
+            </button>
           </div>
-          <button
-            onClick={() => setActiveTab('chat')}
-            className="md:hidden text-xs font-bold text-indigo-600 dark:text-indigo-400 px-2 py-1 hover:bg-neutral-100 rounded-lg"
-          >
-            Back to Chat
-          </button>
+          <div className="flex px-4 pb-2 gap-1">
+            <button
+              onClick={() => setShelfTab('library')}
+              className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                shelfTab === 'library'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-neutral-500 hover:text-neutral-700 dark:text-zinc-400 hover:dark:text-zinc-200 font-medium'
+              }`}
+            >
+              <Brain className="w-3.5 h-3.5" />
+              <span>Library & Index</span>
+            </button>
+            <button
+              onClick={() => setShelfTab('search')}
+              className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                shelfTab === 'search'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold'
+                  : 'text-neutral-500 hover:text-neutral-700 dark:text-zinc-400 hover:dark:text-zinc-200 font-medium'
+              }`}
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Global RAG Search</span>
+            </button>
+          </div>
         </div>
 
         {/* Shelf Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {shelfTab === 'search' ? (
+            <div className="space-y-4 animate-fadeIn">
+              {/* Search Form */}
+              <div className="bg-white dark:bg-zinc-900 border border-neutral-200/50 dark:border-zinc-800/40 rounded-2xl p-3.5 space-y-3 shadow-sm">
+                <span className="text-[9px] font-bold text-neutral-400 dark:text-zinc-500 font-mono tracking-widest block uppercase">Query Workspace Knowledge</span>
+                <form onSubmit={handleRAGSearch} className="space-y-2">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search files, videos, chat..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-8 pr-3 py-2.5 text-[11px] bg-neutral-100 dark:bg-zinc-950 border border-neutral-200/50 dark:border-zinc-800 rounded-xl outline-none font-semibold text-neutral-700 dark:text-zinc-100 placeholder:text-neutral-400"
+                    />
+                    <Search className="absolute left-2.5 top-3 w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={searching || !searchQuery.trim()}
+                    className="w-full py-2 bg-gradient-to-br from-indigo-600 to-violet-600 hover:opacity-95 text-white rounded-xl text-[11px] font-bold transition active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 font-sans"
+                  >
+                    {searching ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Scanning Workspace...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Search className="w-3.5 h-3.5" />
+                        <span>Semantic RAG Search</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              </div>
+
+              {/* Search Results */}
+              <div className="space-y-2.5">
+                <span className="text-[9px] font-bold text-neutral-400 dark:text-zinc-500 font-mono tracking-widest block uppercase px-1">
+                  Matched Passages ({searchResults.length})
+                </span>
+
+                {searching && (
+                  <div className="py-12 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-indigo-500 mx-auto mb-2" />
+                    <p className="text-[10px] text-neutral-500 font-semibold font-mono">Comparing vectors & history...</p>
+                  </div>
+                )}
+
+                {searchError && (
+                  <p className="text-[10px] font-medium text-amber-600 text-center leading-relaxed bg-amber-50 dark:bg-amber-950/25 p-3 rounded-2xl border border-amber-200/50 dark:border-amber-900/40">
+                    {searchError}
+                  </p>
+                )}
+
+                {!searching && searchResults.length === 0 && !searchError && (
+                  <div className="text-center py-10 border border-dashed border-neutral-200 dark:border-zinc-800 rounded-2xl px-3">
+                    <Search className="w-6 h-6 text-neutral-300 mx-auto mb-1.5" />
+                    <p className="text-[10px] text-neutral-400 font-semibold leading-relaxed">Enter query to perform high-fidelity global search across workspace documents, video transcripts, and chat history.</p>
+                  </div>
+                )}
+
+                <div className="space-y-2.5 max-h-[340px] overflow-y-auto scrollbar-none pr-0.5">
+                  {searchResults.map((res, idx) => {
+                    let Icon = FileText;
+                    if (res.sourceType === 'youtube') Icon = Youtube;
+                    else if (res.sourceType === 'url') Icon = Globe;
+                    else if (res.sourceType === 'chat') Icon = MessageSquare;
+
+                    return (
+                      <div
+                        key={idx}
+                        className="bg-white dark:bg-zinc-900 border border-neutral-200/50 dark:border-zinc-800/40 hover:border-indigo-200 dark:hover:border-indigo-900/60 rounded-xl p-3 space-y-2 transition shadow-sm hover:shadow"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Icon className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                            <span className="text-[10px] font-bold text-neutral-700 dark:text-zinc-200 truncate" title={res.title}>
+                              {res.title}
+                            </span>
+                          </div>
+                          <span className="text-[8px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-md">
+                            {res.sourceType === 'chat' ? 'CHAT' : `SIM ${(res.similarity * 100).toFixed(0)}%`}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-neutral-600 dark:text-zinc-400 line-clamp-3 text-left leading-relaxed font-sans">
+                          {res.text}
+                        </p>
+                        <div className="flex items-center justify-between pt-1.5 border-t border-black/[0.04] dark:border-zinc-800/40">
+                          {res.pageNumber && (
+                            <span className="text-[8px] font-bold text-neutral-400 font-mono">Page {res.pageNumber}</span>
+                          )}
+                          {res.timestamp && (
+                            <span className="text-[8px] font-bold text-neutral-400 font-mono">Timestamp {res.timestamp}</span>
+                          )}
+                          {!res.pageNumber && !res.timestamp && <div />}
+                          
+                          <button
+                            onClick={() => {
+                              setInput(`Regarding what is stated in "${res.title}": ${res.text.slice(0, 80)}... can you elaborate on this?`);
+                              setActiveTab('chat');
+                              showToast('📥 Query injected into Chat!');
+                            }}
+                            className="text-[9px] font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 flex items-center gap-0.5 cursor-pointer font-sans"
+                          >
+                            <span>Query AI</span>
+                            <ChevronRight className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
           
           {/* Quick Upload Action */}
           <div className="bg-white dark:bg-zinc-900 border border-neutral-200/50 dark:border-zinc-800/40 rounded-2xl p-3.5 space-y-3.5 shadow-sm">
@@ -960,6 +1158,8 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
               )}
             </div>
           </div>
+            </>
+          )}
         </div>
       </div>
 

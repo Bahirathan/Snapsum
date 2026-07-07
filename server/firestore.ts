@@ -1,5 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, orderBy, getDocs, updateDoc } from 'firebase/firestore';
+import { 
+  getFirestore, doc, getDoc, setDoc, collection, addDoc, query, orderBy, getDocs, updateDoc,
+  where, limit, deleteDoc, writeBatch
+} from 'firebase/firestore';
 import admin from 'firebase-admin';
 import { getApps, initializeApp as initAdminApp, getApp } from 'firebase-admin/app';
 import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
@@ -33,6 +36,10 @@ class ClientFirestoreAdapter {
   collection(collectionName: string) {
     return new CollectionRefAdapter(this.dbInstance, collectionName);
   }
+
+  batch() {
+    return new WriteBatchAdapter(this.dbInstance);
+  }
 }
 
 class CollectionRefAdapter {
@@ -48,8 +55,19 @@ class CollectionRefAdapter {
     return new DocumentRefAdapter(this.dbInstance, `${this.pathStr}/${docRef.id}`);
   }
 
+  where(field: string, op: string, value: any) {
+    const q = new QueryRefAdapter(this.dbInstance, this.pathStr);
+    return q.where(field, op, value);
+  }
+
   orderBy(field: string, direction: 'asc' | 'desc' = 'asc') {
-    return new QueryRefAdapter(this.dbInstance, this.pathStr, [field, direction]);
+    const q = new QueryRefAdapter(this.dbInstance, this.pathStr);
+    return q.orderBy(field, direction);
+  }
+
+  limit(n: number) {
+    const q = new QueryRefAdapter(this.dbInstance, this.pathStr);
+    return q.limit(n);
   }
 
   async get() {
@@ -61,6 +79,10 @@ class CollectionRefAdapter {
 
 class DocumentRefAdapter {
   constructor(private dbInstance: any, private docPath: string) {}
+
+  getDocPath() {
+    return this.docPath;
+  }
 
   async get() {
     const pathParts = this.docPath.split('/');
@@ -82,16 +104,73 @@ class DocumentRefAdapter {
     await updateDoc(docRef, data);
     return this;
   }
+
+  async delete() {
+    const pathParts = this.docPath.split('/');
+    const docRef = doc(this.dbInstance, pathParts[0], ...pathParts.slice(1));
+    await deleteDoc(docRef);
+    return this;
+  }
 }
 
 class QueryRefAdapter {
-  constructor(private dbInstance: any, private pathStr: string, private orderRule: [string, 'asc' | 'desc']) {}
+  private constraints: any[] = [];
+
+  constructor(private dbInstance: any, private pathStr: string) {}
+
+  where(field: string, op: string, value: any) {
+    this.constraints.push(where(field, op as any, value));
+    return this;
+  }
+
+  orderBy(field: string, direction: 'asc' | 'desc' = 'asc') {
+    this.constraints.push(orderBy(field, direction));
+    return this;
+  }
+
+  limit(n: number) {
+    this.constraints.push(limit(n));
+    return this;
+  }
 
   async get() {
     const colRef = collection(this.dbInstance, this.pathStr);
-    const q = query(colRef, orderBy(this.orderRule[0], this.orderRule[1]));
+    const q = query(colRef, ...this.constraints);
     const snapshot = await getDocs(q);
     return new QuerySnapshotAdapter(snapshot);
+  }
+}
+
+class WriteBatchAdapter {
+  private batchInstance: any;
+
+  constructor(private dbInstance: any) {
+    this.batchInstance = writeBatch(dbInstance);
+  }
+
+  delete(docRefAdapter: DocumentRefAdapter) {
+    const pathParts = docRefAdapter.getDocPath().split('/');
+    const docRef = doc(this.dbInstance, pathParts[0], ...pathParts.slice(1));
+    this.batchInstance.delete(docRef);
+    return this;
+  }
+
+  set(docRefAdapter: DocumentRefAdapter, data: any, options?: { merge?: boolean }) {
+    const pathParts = docRefAdapter.getDocPath().split('/');
+    const docRef = doc(this.dbInstance, pathParts[0], ...pathParts.slice(1));
+    this.batchInstance.set(docRef, data, options);
+    return this;
+  }
+
+  update(docRefAdapter: DocumentRefAdapter, data: any) {
+    const pathParts = docRefAdapter.getDocPath().split('/');
+    const docRef = doc(this.dbInstance, pathParts[0], ...pathParts.slice(1));
+    this.batchInstance.update(docRef, data);
+    return this;
+  }
+
+  async commit() {
+    await this.batchInstance.commit();
   }
 }
 
@@ -126,6 +205,10 @@ class DocumentSnapshotAdapter {
 
   get exists() {
     return this.docSnap.exists();
+  }
+
+  get ref() {
+    return new DocumentRefAdapter(this.docSnap.ref.firestore, this.docSnap.ref.path);
   }
 
   data() {

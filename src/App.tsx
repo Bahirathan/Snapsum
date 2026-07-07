@@ -1229,6 +1229,16 @@ export default function App() {
   ]);
   const [supportInput, setSupportInput] = useState('');
   const [isSupportTyping, setIsSupportTyping] = useState(false);
+  const supportEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll support chat to bottom
+  useEffect(() => {
+    if (isSupportOpen) {
+      setTimeout(() => {
+        supportEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 80);
+    }
+  }, [supportMessages, isSupportTyping, isSupportOpen]);
 
   // Google Analytics state management & diagnostics
   const [adminGaMeasurementId, setAdminGaMeasurementId] = useState(() => {
@@ -11895,6 +11905,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   <span className="h-1.5 w-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               )}
+              <div ref={supportEndRef} />
             </div>
 
             {/* Quick Suggestions Pills */}
