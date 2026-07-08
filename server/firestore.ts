@@ -237,7 +237,26 @@ function getDbInstance() {
 
     const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
-    // Try initializing via Firebase Admin SDK (bypasses security rules server-side)
+    // Try initializing via Firebase Client SDK first (works robustly with apiKey and respects firestore.rules)
+    try {
+      const app = initializeApp({
+        apiKey: config.apiKey,
+        authDomain: config.authDomain,
+        projectId: config.projectId,
+        storageBucket: config.storageBucket,
+        messagingSenderId: config.messagingSenderId,
+        appId: config.appId
+      });
+
+      const clientDb = getFirestore(app, config.firestoreDatabaseId || '(default)');
+      cachedDb = new ClientFirestoreAdapter(clientDb, config.projectId);
+      console.log(`Firebase Client SDK initialized on backend with project: ${config.projectId}, database: ${config.firestoreDatabaseId || '(default)'}`);
+      return cachedDb;
+    } catch (clientErr) {
+      console.warn('Firebase Client SDK initialization failed, falling back to Admin SDK:', clientErr);
+    }
+
+    // Fallback: Try initializing via Firebase Admin SDK
     try {
       if (getApps().length === 0) {
         initAdminApp({
@@ -252,22 +271,8 @@ function getDbInstance() {
       console.log(`Firebase Admin SDK initialized successfully on backend with project: ${config.projectId}, database: ${config.firestoreDatabaseId || '(default)'}`);
       return cachedDb;
     } catch (adminErr) {
-      console.warn('Firebase Admin SDK initialization failed, falling back to Client SDK:', adminErr);
+      console.warn('Firebase Admin SDK fallback failed:', adminErr);
     }
-
-    const app = initializeApp({
-      apiKey: config.apiKey,
-      authDomain: config.authDomain,
-      projectId: config.projectId,
-      storageBucket: config.storageBucket,
-      messagingSenderId: config.messagingSenderId,
-      appId: config.appId
-    });
-
-    const clientDb = getFirestore(app, config.firestoreDatabaseId || '(default)');
-    cachedDb = new ClientFirestoreAdapter(clientDb, config.projectId);
-    console.log(`Firebase Client SDK initialized on backend with project: ${config.projectId}`);
-    return cachedDb;
   } catch (error: any) {
     console.error('Failed to initialize Firestore on backend:', error);
     initError = error;
