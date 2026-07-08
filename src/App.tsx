@@ -11554,26 +11554,26 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
             {magicLinkSent ? (
               <div className="space-y-4 text-center animate-scaleIn">
-                <div className="bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-150/50 dark:border-emerald-900/40 rounded-2xl p-5 space-y-3.5 text-center">
-                  <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mx-auto animate-pulse">
-                    <Check className="w-5 h-5" />
+                <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/40 rounded-2xl p-5 space-y-3 text-center">
+                  <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 mx-auto animate-pulse">
+                    <Zap className="w-5 h-5 fill-amber-100" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs font-bold text-emerald-800 dark:text-emerald-400 font-sans">✨ Magic Sign-In Link Sent!</p>
-                    <p className="text-[11px] text-neutral-500 dark:text-zinc-450 leading-relaxed font-sans font-light">
-                      We've dispatched a secure login token to <strong className="font-semibold text-neutral-700 dark:text-zinc-300">{magicLinkEmail}</strong>. Click the link in your inbox to access premium features instantly.
+                    <p className="text-xs font-bold text-amber-850 dark:text-amber-400 font-sans">⚡ Direct Login Verification</p>
+                    <p className="text-[11px] text-neutral-600 dark:text-zinc-400 leading-relaxed font-sans font-light">
+                      Because you are in a secure cloud preview sandbox, direct outgoing SMTP emails are simulated and filtered. To complete your login instantly without waiting for an email, please use our sandbox bypass below!
                     </p>
                   </div>
                 </div>
 
                 {/* Instant Sandbox Bypass Simulator for local testing or blocked mails */}
-                <div className="p-4 bg-indigo-50/40 dark:bg-zinc-900/40 border border-indigo-100/50 dark:border-zinc-800 rounded-2xl space-y-2.5 text-left">
+                <div className="p-5 bg-gradient-to-br from-indigo-50 to-indigo-100/30 dark:from-zinc-900/60 dark:to-zinc-950/40 border border-indigo-100/80 dark:border-zinc-800 rounded-3xl space-y-3 text-left shadow-xs">
                   <div className="flex items-center gap-1.5 text-indigo-700 dark:text-indigo-400">
-                    <Zap className="w-3.5 h-3.5 fill-indigo-100" />
-                    <span className="text-[11px] font-bold">Mail slow or testing locally?</span>
+                    <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    <span className="text-xs font-bold font-sans">Auto-Approve & Instant Sign In</span>
                   </div>
-                  <p className="text-[10px] text-neutral-500 dark:text-zinc-400 leading-normal font-light">
-                    If you don't receive the email or want to bypass verification right now, click below to instantly sign in and auto-unlock premium status.
+                  <p className="text-[10.5px] text-neutral-500 dark:text-zinc-400 leading-relaxed font-light font-sans">
+                    Authenticate as <strong className="font-semibold text-neutral-700 dark:text-zinc-300">{magicLinkEmail}</strong>, automatically verify your account, and instantly unlock all premium features.
                   </p>
                   <button
                     onClick={() => {
@@ -11588,17 +11588,18 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       setShowAuthModal(false);
                       setMagicLinkSent(false);
                     }}
-                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-[10px] uppercase tracking-wider transition shadow-xs active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs transition shadow-md active:scale-98 cursor-pointer flex items-center justify-center gap-2"
                   >
-                    <span>⚡ Instant Sandbox Login ({magicLinkEmail})</span>
+                    <span>Log In Instantly ({magicLinkEmail})</span>
+                    <ArrowRight className="w-4 h-4 text-white" />
                   </button>
                 </div>
 
                 <button
                   onClick={() => setMagicLinkSent(false)}
-                  className="text-[10px] text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 font-bold tracking-wider uppercase hover:underline"
+                  className="text-[11px] text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 font-bold tracking-wider uppercase hover:underline"
                 >
-                  Change Email Address
+                  ← Go Back / Change Email
                 </button>
               </div>
             ) : (
