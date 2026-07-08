@@ -13,6 +13,7 @@ interface LandingPageProps {
   isPremium: boolean;
   visitorUser: any;
   onGoogleSignIn: () => void;
+  onStartFreeSummary?: (url: string) => void;
 }
 
 // Animated counter hook
@@ -36,11 +37,13 @@ function useCountUp(target: number, duration = 1800, startTrigger = true) {
   return count;
 }
 
-export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrade, isPremium, visitorUser, onGoogleSignIn }: LandingPageProps) {
+export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrade, isPremium, visitorUser, onGoogleSignIn, onStartFreeSummary }: LandingPageProps) {
   const [activeTab, setActiveTab] = useState<'summary' | 'key_insights' | 'chapters' | 'quiz'>('summary');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [statsVisible, setStatsVisible] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
+  const [ytUrl, setYtUrl] = useState('');
+  const [urlError, setUrlError] = useState('');
 
   // Trigger counters when stats section scrolls into view
   useEffect(() => {
@@ -116,58 +119,86 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
-            {/* Left Column: Title, Copy, CTAs */}
+            {/* Left Column: Title, Copy, URL input box, and CTA */}
             <div className="col-span-1 lg:col-span-7 space-y-6 text-left">
               <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/10 dark:bg-[#0071e3]/20 px-3 py-1 rounded-full text-[11px] font-mono font-medium text-[#0071e3] dark:text-sky-400">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Next-Gen Universal AI Knowledge Engine</span>
+                <span>Value First AI Learning Engine</span>
               </div>
               
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-display tracking-tight leading-[1.08] text-[#1d1d1f] dark:text-zinc-50">
-                Turn Any Content <br />
-                Into a <span className="bg-gradient-to-r from-[#0071e3] to-indigo-600 bg-clip-text text-transparent">60-Second</span> Summary
+              <h1 id="landing-hero-headline" className="text-4xl sm:text-5xl md:text-6xl font-bold font-display tracking-tight leading-[1.08] text-[#1d1d1f] dark:text-zinc-50">
+                Understand Any <br />
+                <span className="bg-gradient-to-r from-[#0071e3] to-indigo-600 bg-clip-text text-transparent">YouTube Video</span> in Minutes
               </h1>
               
               <p className="text-[#86868b] dark:text-zinc-400 text-base sm:text-lg max-w-2xl leading-relaxed font-light">
-                Summarize YouTube videos, custom website links, pasted articles, PDFs, Word docs, Excel sheets, and audio recordings instantly. Extract mind maps, interactive study quizzes, viral video scripts, and custom social assets in one click.
+                Paste any YouTube link and instantly get AI-generated summaries, mind maps, flashcards, quizzes, and key insights.
               </p>
+
+              {/* 🎯 CONVERSION-OPTIMIZED YOUTUBE INPUT BOX */}
+              <div className="w-full max-w-2xl">
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!ytUrl.trim()) {
+                      setUrlError('Please enter a valid YouTube URL');
+                      return;
+                    }
+                    setUrlError('');
+                    if (onStartFreeSummary) {
+                      onStartFreeSummary(ytUrl.trim());
+                    }
+                  }}
+                  className="relative flex flex-col sm:flex-row items-stretch gap-2 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 p-2 rounded-2xl shadow-lg focus-within:border-[#0071e3] focus-within:ring-2 focus-within:ring-[#0071e3]/15 transition-all"
+                >
+                  <div className="flex-1 flex items-center gap-3 pl-3">
+                    <Video className="w-5 h-5 text-rose-500 shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Paste any YouTube video URL (e.g. https://youtube.com/watch?v=...)"
+                      value={ytUrl}
+                      onChange={(e) => {
+                        setYtUrl(e.target.value);
+                        if (urlError) setUrlError('');
+                      }}
+                      className="w-full bg-transparent border-0 outline-none focus:ring-0 focus:outline-none text-sm text-neutral-800 dark:text-zinc-100 placeholder-neutral-400 dark:placeholder-zinc-505"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="bg-[#0071e3] hover:bg-[#0077ed] text-white px-6 py-3.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0 group cursor-pointer active:scale-98 shadow-sm"
+                  >
+                    <span>Generate Free Summary</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </form>
+
+                {urlError && (
+                  <p className="text-xs text-rose-500 mt-2 ml-3 font-medium animate-fadeIn">{urlError}</p>
+                )}
+
+                <p className="text-xs text-[#86868b] dark:text-zinc-400 mt-3 ml-3 font-light flex items-center gap-2">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Instant generation.</span>
+                  <span className="font-semibold text-neutral-800 dark:text-zinc-300">No account required.</span>
+                </p>
+              </div>
 
               {/* Supported Formats Badge Grid */}
               <div className="space-y-2 pt-2">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#86868b] dark:text-zinc-400">Supported Formats</span>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#86868b] dark:text-zinc-400">Also supports other formats inside the Workspace</span>
                 <div className="flex flex-wrap gap-2 text-xs">
-                  {['YouTube', 'PDF', 'Word/Doc', 'Excel', 'PowerPoint', 'Audio/MP3', 'Video/MP4', 'Web Articles', 'Image OCR'].map((fmt) => (
-                    <span key={fmt} className="px-3 py-1.5 bg-white dark:bg-zinc-900 border border-black/[0.04] dark:border-zinc-800 rounded-lg shadow-xs font-semibold text-neutral-700 dark:text-zinc-300">
+                  {['Websites', 'PDFs', 'Word/Doc', 'PowerPoint', 'Audio/MP3', 'Video/MP4'].map((fmt) => (
+                    <span key={fmt} className="px-2.5 py-1 bg-neutral-100 dark:bg-zinc-900 border border-black/[0.03] dark:border-zinc-800 rounded-lg text-[11px] font-medium text-neutral-600 dark:text-zinc-400">
                       {fmt}
                     </span>
                   ))}
                 </div>
               </div>
 
-              {/* CTAs */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <button
-                  onClick={onLaunchApp}
-                  className="bg-[#0071e3] hover:bg-[#0077ed] text-white px-8 py-4 rounded-full font-semibold text-sm transition-all flex items-center justify-center gap-2 group cursor-pointer shadow-md shadow-[#0071e3]/20 hover:translate-y-[-1px] active:scale-98"
-                >
-                  <span>Launch Free Workspace</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
-                
-                {!isPremium && (
-                  <button
-                    onClick={onUpgrade}
-                    className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 text-neutral-800 dark:text-zinc-200 hover:bg-neutral-50 dark:hover:bg-zinc-800 px-8 py-4 rounded-full font-semibold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98"
-                  >
-                    <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
-                    <span>Get Premium Access</span>
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-center gap-6 pt-4 text-xs text-[#86868b] dark:text-zinc-400 font-light">
-                <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> No credit card required</span>
-                <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> 100% Secure cloud data</span>
+              <div className="flex items-center gap-6 pt-2 text-xs text-[#86868b] dark:text-zinc-400 font-light">
+                <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Free daily summaries</span>
+                <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> High-fidelity mind maps</span>
               </div>
             </div>
 

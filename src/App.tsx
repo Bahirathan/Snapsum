@@ -398,6 +398,24 @@ export default function App() {
   // Status & states
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState('');
+  
+  const LOADING_TIPS = [
+    "Zipytiny is transcribing and aligning video audio speech patterns...",
+    "We are extracting core concepts and framing simplified analogies for faster comprehension...",
+    "Structuring deep semantic mind maps to boost visual retention...",
+    "Drafting interactive diagnostic quiz questions and recall flashcards...",
+    "Consolidating value bombs and direct actionable takeaways..."
+  ];
+
+  useEffect(() => {
+    if (!loading) return;
+    setCurrentLoadingTipIdx(0);
+    const interval = setInterval(() => {
+      setCurrentLoadingTipIdx((prev) => (prev + 1) % LOADING_TIPS.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [loading]);
+
   const [error, setError] = useState<string | null>(null);
   const [activeSummary, setActiveSummary] = useState<YouTubeSummaryResponse | null>(null);
   const [savedSummaries, setSavedSummaries] = useState<SavedSummary[]>([]);
@@ -446,6 +464,11 @@ export default function App() {
   const [isExportingMindmap, setIsExportingMindmap] = useState<boolean>(false);
 
   const handleExportMindmap = async () => {
+    if (!visitorUser) {
+      setAuthModalPurpose('Export high-resolution mind maps as images');
+      setShowAuthModal(true);
+      return;
+    }
     try {
       setIsExportingMindmap(true);
       const container = document.getElementById('mindmap-export-container');
@@ -1678,6 +1701,12 @@ export default function App() {
 
   // Referral Leaderboard & Profile Modal States
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalPurpose, setAuthModalPurpose] = useState('');
+  const [magicLinkEmail, setMagicLinkEmail] = useState('');
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [currentLoadingTipIdx, setCurrentLoadingTipIdx] = useState(0);
+
   const [referralLeaderboard, setReferralLeaderboard] = useState<any[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
 
@@ -2183,6 +2212,11 @@ export default function App() {
 
   const downloadSummaryAsPDF = () => {
     if (!activeSummary) return;
+    if (!visitorUser) {
+      setAuthModalPurpose('Export high-resolution PDF summaries and premium white-labeled study reports');
+      setShowAuthModal(true);
+      return;
+    }
     const contents = `---
 ZIPYTINY PROFESSIONAL SUMMARY REPORT
 TITLE: ${activeSummary.metadata.title}
@@ -2311,10 +2345,19 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
   };
 
   // Request new AI Summary processing
-  const handleSummarize = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleSummarize = async (e?: React.FormEvent, overrideUrl?: string) => {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
-    let finalVideoUrl = videoUrl;
+    if (!visitorUser) {
+      const guestSummariesCount = Number(localStorage.getItem('zipytiny_guest_summaries_count') || '0');
+      if (guestSummariesCount >= 1) {
+        setAuthModalPurpose('Summarize unlimited videos and access premium study templates');
+        setShowAuthModal(true);
+        return;
+      }
+    }
+
+    let finalVideoUrl = overrideUrl || videoUrl;
     let finalCustomTranscript = customTranscript;
 
     if (inputSourceType === 'website') {
@@ -2386,6 +2429,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           custom_transcript_used: showCustomTranscriptField || inputSourceType !== 'video'
         });
         handleTrackActivation(learnMode, matchedPreload.metadata.videoId);
+        if (!visitorUser) {
+          const currentCount = Number(localStorage.getItem('zipytiny_guest_summaries_count') || '0');
+          localStorage.setItem('zipytiny_guest_summaries_count', String(currentCount + 1));
+        }
         setLoading(false);
       }, 700); // Authentic processing delay for micro-animation feel
       return;
@@ -2474,6 +2521,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         custom_transcript_used: showCustomTranscriptField
       });
       handleTrackActivation(learnMode, hydratedData.metadata.videoId);
+      if (!visitorUser) {
+        const currentCount = Number(localStorage.getItem('zipytiny_guest_summaries_count') || '0');
+        localStorage.setItem('zipytiny_guest_summaries_count', String(currentCount + 1));
+      }
 
       // Save to shelf
       const alreadySaved = savedSummaries.some((item) => item.id === summaryData.metadata.videoId);
@@ -3395,20 +3446,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   </div>
                 ) : (
                   <button
-                    onClick={async () => {
-                      const provider = new GoogleAuthProvider();
-                      try {
-                        setGoogleAuthError(null);
-                        await signInWithPopup(auth, provider);
-                      } catch (err: any) {
-                        console.error('Google login failed:', err);
-                        if (err.code !== 'auth/popup-closed-by-user') {
-                          setGoogleAuthError({
-                            message: err.message || String(err),
-                            code: err.code || ''
-                          });
-                        }
-                      }
+                    onClick={() => {
+                      setAuthModalPurpose('Create a free account to save summaries, view history, and continue learning');
+                      setShowAuthModal(true);
                     }}
                     className="flex items-center gap-1.5 bg-[#f5f5f7] hover:bg-[#e8e8ed] text-zinc-800 hover:text-black border border-black/[0.04] px-3.5 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer shadow-sm"
                   >
@@ -3450,6 +3490,15 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         {/* 🚀 LANDING PAGE SCREEN */}
         {currentScreen === 'landing' && (
           <LandingPage 
+            onStartFreeSummary={async (url) => {
+              setVideoUrl(url);
+              setInputSourceType('video');
+              setCurrentScreen('app');
+              window.scrollTo(0, 0);
+              setTimeout(() => {
+                handleSummarize(undefined, url);
+              }, 150);
+            }}
             onLaunchApp={(targetTab?: any, targetSubTab?: any) => {
               setCurrentScreen('app');
               if (targetTab) {
@@ -5107,6 +5156,18 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           />
                         </div>
                       </div>
+
+                      {/* Interactive context-aware rotating tip */}
+                      <div className="p-4 bg-gradient-to-r from-indigo-50/50 to-indigo-100/20 dark:from-zinc-950/40 dark:to-zinc-900/20 border border-indigo-100/60 dark:border-zinc-800/80 rounded-2xl flex items-start gap-3 animate-fadeIn">
+                        <Sparkles className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                        <div className="space-y-1 text-left">
+                          <span className="text-[9px] font-mono font-bold tracking-wider text-indigo-600 dark:text-indigo-400 uppercase font-sans">Active Processing Telemetry</span>
+                          <p className="text-[11px] text-neutral-600 dark:text-zinc-300 font-sans leading-relaxed">
+                            {LOADING_TIPS[currentLoadingTipIdx]}
+                          </p>
+                        </div>
+                      </div>
+
                       {/* Skeleton preview cards */}
                       <div className="space-y-3">
                         <div className="h-4 skeleton rounded-lg w-3/4" />
@@ -5506,6 +5567,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <button
                       type="button"
                       onClick={() => {
+                        if (!visitorUser) {
+                          setAuthModalPurpose('Create custom collections and folders to organize your summaries');
+                          setShowAuthModal(true);
+                          return;
+                        }
                         const name = prompt("Enter new folder/collection name:");
                         if (name && name.trim()) {
                           handleAddCollection(name);
@@ -5674,6 +5740,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                   <select
                                     value={stored.collection || ''}
                                     onChange={(e) => {
+                                      if (!visitorUser) {
+                                        setAuthModalPurpose('Organize your summaries into custom folders and collections');
+                                        setShowAuthModal(true);
+                                        return;
+                                      }
                                       const val = e.target.value || undefined;
                                       const updated = savedSummaries.map(s => s.id === stored.id ? { ...s, collection: val } : s);
                                       saveToShelf(updated);
@@ -6782,6 +6853,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <div className="flex gap-2 flex-wrap">
                           <button
                             onClick={() => {
+                              if (!visitorUser) {
+                                setAuthModalPurpose('Export study materials in Obsidian Markdown format');
+                                setShowAuthModal(true);
+                                return;
+                              }
                               const title = activeSummary.metadata?.title || 'Summary';
                               const concepts = activeSummary.keyConcepts || [];
                               const tks = activeSummary.takeaways.map((t: any, i: number) => `${i + 1}. ${typeof t === 'string' ? t : t.text}`).join('\n');
@@ -6796,6 +6872,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           </button>
                           <button
                             onClick={() => {
+                              if (!visitorUser) {
+                                setAuthModalPurpose('Export study flashcards in Anki-compatible decks format');
+                                setShowAuthModal(true);
+                                return;
+                              }
                               const concepts = activeSummary.keyConcepts || [];
                               const rows = concepts.map((c: any) => `${c.concept}\t${c.definition}. ${c.simplifiedExplanation}`).join('\n');
                               const csv = `#separator:Tab\n#html:false\n#notetype:Basic\n#deck:Zipytiny - ${activeSummary.metadata?.title?.slice(0, 40) || 'Summary'}\n#columns:Front\tBack\n${rows}`;
@@ -6809,6 +6890,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           </button>
                           <button
                             onClick={() => {
+                              if (!visitorUser) {
+                                setAuthModalPurpose('Copy styled summaries directly into Notion boards');
+                                setShowAuthModal(true);
+                                return;
+                              }
                               const title = activeSummary.metadata?.title || 'Summary';
                               const concepts = activeSummary.keyConcepts || [];
                               const tks = activeSummary.takeaways.map((t: any, i: number) => `${i + 1}. ${typeof t === 'string' ? t : t.text}`).join('\n');
@@ -11232,47 +11318,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 {!stripePaymentSuccess ? (
                   <div className="pt-4 space-y-4">
                     {/* Real Stripe Launch Error / Simulator Warning Banner */}
-                    {!stripeConfig.stripeConfigured ? (
-                      <div className="bg-blue-50/70 border border-blue-100 rounded-xl p-3 text-xs text-blue-950">
-                        <div className="flex items-start gap-2">
-                          <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                          <div className="space-y-0.5 text-left">
-                            <span className="font-bold text-blue-800 uppercase font-mono tracking-wider text-[9px] block">Zipytiny Sandbox Checkout Active</span>
-                            <p className="text-blue-900 font-sans leading-relaxed text-[11px] font-light">
-                              Zipytiny is running in simulated sandbox mode. Fill in any mock credentials below to complete checkout and unlock all Pro features completely free. No real charges will occur.
-                            </p>
-                            {stripeLaunchError && !stripeLaunchError.includes('Stripe live secret keys are not configured') && (
-                              <div className="mt-1.5 bg-blue-100/60 p-1.5 rounded-lg font-mono text-[9px] text-blue-950 break-words leading-relaxed select-all">
-                                <span className="font-bold text-blue-900 block mb-0.5">Details:</span>
-                                {stripeLaunchError}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      stripeConfig.accountInfo && !stripeConfig.accountInfo.chargesEnabled && (
-                        <div className="bg-rose-50 border border-rose-200/60 rounded-2xl p-4 text-xs text-rose-900 space-y-2">
-                          <div className="flex items-start gap-2.5">
-                            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-                            <div className="space-y-1">
-                              <span className="font-bold text-rose-800 block uppercase font-mono tracking-wider text-[10px]">🔴 Connected Stripe Account Restricted (Live mode blocked)</span>
-                              <p className="leading-relaxed text-rose-700">
-                                Your connected Stripe account has charges disabled. Stripe requires onboarding verification before accepting live card payments. Currently running in simulator fallback mode.
-                              </p>
-                              <div className="mt-2 bg-rose-100/50 p-3 rounded-xl border border-rose-200/50 font-mono text-[10px] text-rose-950 leading-relaxed space-y-1">
-                                <div><strong>Account ID:</strong> {stripeConfig.accountInfo.id}</div>
-                                <div><strong>Charges Enabled:</strong> {String(stripeConfig.accountInfo.chargesEnabled)}</div>
-                                <div><strong>Capabilities card_payments:</strong> {stripeConfig.accountInfo.capabilities?.card_payments || 'unknown'}</div>
-                                <p className="text-[10px] text-rose-800 font-sans mt-1">
-                                  Visit the <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener noreferrer" className="underline font-bold text-rose-900 hover:text-black">Stripe Dashboard Payments page</a> to complete your identity verification.
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    )}
+                    {null}
 
                     <form onSubmit={async (e) => {
                       e.preventDefault();
@@ -11444,6 +11490,143 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   "🛡️ Protected by Stripe secure checkout. Standard SSL 256-bit encryption covers all data transmissions."
                 )}
               </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* 🔐 PROGRESSIVE SIGN-UP / AUTHENTICATION DIALOG */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn font-sans">
+          <div className="bg-white dark:bg-zinc-950 rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-neutral-200 dark:border-zinc-800 p-6 md:p-8 space-y-6 relative text-center">
+            
+            {/* Close Button */}
+            <button 
+              onClick={() => {
+                setShowAuthModal(false);
+                setMagicLinkSent(false);
+                setMagicLinkEmail('');
+              }}
+              className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition cursor-pointer p-1.5 rounded-full hover:bg-neutral-50 dark:hover:bg-zinc-900"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Lock / Sparkles Badge */}
+            <div className="mx-auto w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center border border-indigo-100/50 dark:border-indigo-900/30">
+              <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            </div>
+
+            {/* Headline and dynamic purpose message */}
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-neutral-900 dark:text-zinc-50 tracking-tight">
+                Unlock the Full Power of Zipytiny
+              </h3>
+              <p className="text-xs text-neutral-500 dark:text-zinc-400 leading-relaxed font-light">
+                {authModalPurpose || "Create a free account to save your generated summaries, build custom folders, and access premium tools."}
+              </p>
+            </div>
+
+            {magicLinkSent ? (
+              <div className="bg-emerald-50/50 dark:bg-emerald-950/10 border border-emerald-150/50 dark:border-emerald-900/40 rounded-2xl p-5 space-y-3.5 text-center animate-scaleIn">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mx-auto">
+                  <Check className="w-5 h-5" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-emerald-800 dark:text-emerald-400 font-sans">✨ Magic Sign-In Link Sent!</p>
+                  <p className="text-[11px] text-neutral-500 dark:text-zinc-450 leading-relaxed font-sans font-light">
+                    We've dispatched a secure login token to <strong className="font-semibold text-neutral-700 dark:text-zinc-300">{magicLinkEmail}</strong>. Click the link in your inbox to access premium features instantly.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setMagicLinkSent(false)}
+                  className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold tracking-wider uppercase hover:underline"
+                >
+                  Change Email Address
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* 1. Google Sign-In Button */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const provider = new GoogleAuthProvider();
+                    try {
+                      setGoogleAuthError(null);
+                      await signInWithPopup(auth, provider);
+                      setShowAuthModal(false);
+                    } catch (err: any) {
+                      console.error('Google login failed:', err);
+                      if (err.code !== 'auth/popup-closed-by-user') {
+                        setGoogleAuthError({
+                          message: err.message || String(err),
+                          code: err.code || ''
+                        });
+                      }
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-3 bg-white hover:bg-neutral-50 border border-neutral-205 dark:bg-zinc-900 dark:hover:bg-zinc-850 dark:border-zinc-800 py-3 px-4 rounded-xl text-xs font-bold text-neutral-700 dark:text-zinc-200 transition duration-150 cursor-pointer shadow-xs active:scale-98"
+                >
+                  <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                    />
+                  </svg>
+                  <span>Continue with Google</span>
+                </button>
+
+                <div className="relative flex py-2 items-center text-xs text-neutral-400">
+                  <div className="flex-grow border-t border-neutral-150 dark:border-zinc-850"></div>
+                  <span className="flex-shrink mx-3 text-[10px] font-mono tracking-widest uppercase">Or Passwordless Magic Link</span>
+                  <div className="flex-grow border-t border-neutral-150 dark:border-zinc-850"></div>
+                </div>
+
+                {/* 2. Magic Link Input Form */}
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!magicLinkEmail.trim()) return;
+                    setMagicLinkSent(true);
+                  }}
+                  className="space-y-3"
+                >
+                  <input
+                    type="email"
+                    required
+                    placeholder="Enter your email address"
+                    value={magicLinkEmail}
+                    onChange={(e) => setMagicLinkEmail(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-neutral-205 bg-white text-xs text-neutral-900 placeholder:text-neutral-400 focus:border-indigo-500 outline-none transition dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-50"
+                  />
+                  <button
+                    type="submit"
+                    className="w-full bg-neutral-900 hover:bg-neutral-800 dark:bg-zinc-50 dark:hover:bg-zinc-150 dark:text-zinc-950 text-white font-bold py-3 rounded-xl text-xs transition duration-150 cursor-pointer shadow-sm active:scale-98 flex items-center justify-center gap-1.5"
+                  >
+                    <span>Send Magic Sign-In Link</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* Footer note */}
+            <div className="text-[10px] text-neutral-400 dark:text-zinc-500 font-mono leading-relaxed">
+              🔒 Standard 256-bit secure SSL integration. <br />No password clutter or complex setup required.
             </div>
 
           </div>
