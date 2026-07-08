@@ -132,7 +132,7 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
               </h1>
               
               <p className="text-[#86868b] dark:text-zinc-400 text-base sm:text-lg max-w-2xl leading-relaxed font-light">
-                Paste any YouTube link and instantly get AI-generated summaries, mind maps, flashcards, quizzes, and key insights.
+                Paste any YouTube link, Vimeo URL, MP4 video, or MP3 audio file, and instantly get AI-generated summaries, mind maps, flashcards, quizzes, and key insights.
               </p>
 
               {/* 🎯 CONVERSION-OPTIMIZED YOUTUBE INPUT BOX */}
