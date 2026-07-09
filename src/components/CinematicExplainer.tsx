@@ -109,8 +109,122 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
   const [currentTime, setCurrentTime] = useState<number>(0); 
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [playSpeed, setPlaySpeed] = useState<number>(1);
-  const [activeTab, setActiveTab] = useState<'simulation' | 'script' | 'structure' | 'voiceover'>('simulation');
+  const [activeTab, setActiveTab] = useState<'simulation' | 'script' | 'voiceover' | 'recorder'>('simulation');
   const [audioSupported, setAudioSupported] = useState<boolean>(true);
+  
+  // Built-in Screen Recorder State
+  const [recorderStatus, setRecorderStatus] = useState<'idle' | 'recording' | 'finished'>('idle');
+  const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
+  const [recordingSeconds, setRecordingSeconds] = useState<number>(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recordingTimerRef = useRef<any>(null);
+
+  const startRecording = async () => {
+    try {
+      setRecordedChunks([]);
+      setRecordingSeconds(0);
+      playSynthBeep(440, 'sine', 0.1);
+
+      // Request display stream (tab or screen) with audio
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          displaySurface: "browser",
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          frameRate: { ideal: 30 }
+        },
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        }
+      } as any);
+
+      streamRef.current = stream;
+
+      // Determine MIME Type supported by browser
+      let options = { mimeType: 'video/webm;codecs=vp9,opus' };
+      if (typeof MediaRecorder !== 'undefined') {
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options = { mimeType: 'video/webm;codecs=vp8,opus' };
+        }
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options = { mimeType: 'video/webm' };
+        }
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options = { mimeType: '' }; 
+        }
+
+        const mediaRecorder = new MediaRecorder(stream, options);
+        mediaRecorderRef.current = mediaRecorder;
+
+        const chunks: Blob[] = [];
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data && e.data.size > 0) {
+            chunks.push(e.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          setRecordedChunks(chunks);
+          setRecorderStatus('finished');
+          playPositiveChime();
+          
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+          }
+          if (recordingTimerRef.current) {
+            clearInterval(recordingTimerRef.current);
+          }
+        };
+
+        // Start recording
+        mediaRecorder.start(1000); 
+        setRecorderStatus('recording');
+
+        // Start timer
+        recordingTimerRef.current = setInterval(() => {
+          setRecordingSeconds(prev => prev + 1);
+        }, 1000);
+
+        // If user clicks "Stop Sharing" on browser default bar
+        stream.getVideoTracks()[0].onended = () => {
+          if (mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+          }
+        };
+      }
+
+    } catch (err) {
+      console.error("Screen recording failed to start:", err);
+      playNegativeChime();
+      alert("Could not start recording. Note: Many browsers block screen recording inside sandboxed iframes. Please click 'Open in a New Tab' in the top right, or visit https://www.zipytiny.app first!");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      playSynthBeep(330, 'sine', 0.15);
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  const downloadRecording = () => {
+    if (recordedChunks.length === 0) return;
+    playSynthBeep(523.25, 'sine', 0.15);
+    
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `zipytiny-demo-recording-${new Date().toISOString().slice(0,10)}.webm`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+  };
   
   const [isVerticalMode, setIsVerticalMode] = useState<boolean>(false);
   const [isExportingVertical, setIsExportingVertical] = useState<boolean>(false);
@@ -1437,7 +1551,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
 
           {/* Quick tab controls */}
           <div className="flex bg-black/[0.04] p-0.5 rounded-lg border border-black/[0.02] flex-wrap gap-y-0.5">
-            {(['simulation', 'script', 'structure', 'voiceover'] as const).map((tab) => (
+            {(['simulation', 'script', 'voiceover', 'recorder'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
@@ -1450,7 +1564,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                     : 'text-neutral-500 hover:text-neutral-800'
                 }`}
               >
-                {tab === 'voiceover' ? '🎙️ Voiceover' : tab}
+                {tab === 'voiceover' ? '🎙️ Voiceover' : tab === 'recorder' ? '📹 Recorder' : tab}
               </button>
             ))}
           </div>
@@ -1520,58 +1634,93 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
             </div>
           )}
 
-          {activeTab === 'structure' && (
+          {activeTab === 'recorder' && (
             <div className="space-y-4 animate-fadeIn">
-              <p className="text-[11px] text-neutral-500 leading-normal font-light">
-                Continuous active design schema for premium SaaS interactive demos.
-              </p>
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-medium text-neutral-800">📹 Built-in Tab & Screen Recorder</p>
+                <p className="text-[10px] text-neutral-500 leading-relaxed font-light">
+                  Capture a high-fidelity video of your interactive Zipytiny tour directly from your browser to create your ad!
+                </p>
+              </div>
 
-              <div className="space-y-3 pt-1 text-[10px] font-mono text-neutral-600">
-                <div className="flex items-start gap-2.5 border-b border-black/[0.04] pb-2">
-                  <span className="font-bold text-indigo-600 shrink-0">0-12s</span>
-                  <div>
-                    <strong className="text-neutral-800 block">1. Cognitive Overload</strong>
-                    <span className="text-[9px]">Drowning passively under endless timelines, scrolling exhaustion, context loss.</span>
+              {/* Recorder UI Card */}
+              <div className="bg-white border border-black/5 p-4 rounded-2xl shadow-xs space-y-4">
+                <div className="flex items-center justify-between border-b border-black/[0.03] pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${recorderStatus === 'recording' ? 'bg-red-500 animate-pulse' : 'bg-neutral-300'}`}></span>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-600">
+                      {recorderStatus === 'idle' && 'Recorder Idle'}
+                      {recorderStatus === 'recording' && 'Recording Active'}
+                      {recorderStatus === 'finished' && 'Ready to Export'}
+                    </span>
                   </div>
+                  {recorderStatus === 'recording' && (
+                    <span className="text-[11px] font-mono font-bold text-red-500">
+                      {Math.floor(recordingSeconds / 60).toString().padStart(2, '0')}:
+                      {(recordingSeconds % 60).toString().padStart(2, '0')}
+                    </span>
+                  )}
                 </div>
 
-                <div className="flex items-start gap-2.5 border-b border-black/[0.04] pb-2">
-                  <span className="font-bold text-indigo-600 shrink-0">12-25s</span>
-                  <div>
-                    <strong className="text-neutral-800 block">2. Ingestion Wave</strong>
-                    <span className="text-[9px]">Paste link module initiates compile framework. Zero setup, immediate parse target.</span>
-                  </div>
+                {/* Main Action Trigger Buttons */}
+                <div className="space-y-2">
+                  {recorderStatus === 'idle' && (
+                    <button
+                      onClick={startRecording}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white font-bold text-[11px] py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse"></span>
+                      Start Recording App Screen
+                    </button>
+                  )}
+
+                  {recorderStatus === 'recording' && (
+                    <button
+                      onClick={stopRecording}
+                      className="w-full bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-[11px] py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <span className="w-2.5 h-2.5 bg-white rounded-xs"></span>
+                      Stop Recording & Compile
+                    </button>
+                  )}
+
+                  {recorderStatus === 'finished' && (
+                    <div className="space-y-2">
+                      <button
+                        onClick={downloadRecording}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 shadow-sm"
+                      >
+                        📥 Download High-Quality Demo Video
+                      </button>
+                      <button
+                        onClick={() => setRecorderStatus('idle')}
+                        className="w-full bg-white border border-black/10 hover:bg-neutral-50 text-neutral-700 font-bold text-[10px] py-1.5 px-4 rounded-xl transition"
+                      >
+                        Reset Recorder
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-start gap-2.5 border-b border-black/[0.04] pb-2">
-                  <span className="font-bold text-indigo-600 shrink-0">25-40s</span>
-                  <div>
-                    <strong className="text-neutral-800 block">3. Multi-Tier Compiler</strong>
-                    <span className="text-[9px]">Segmenting speech streams into custom Nav chapters, Analogous Metaphers, and Retrieval gameplay.</span>
+                {/* Instructions steps inside the card */}
+                <div className="space-y-2 pt-1 border-t border-black/[0.03] text-[9.5px] text-neutral-500 font-light leading-relaxed">
+                  <div className="flex gap-2">
+                    <span className="font-mono text-indigo-600 font-bold">1.</span>
+                    <p>
+                      <strong>Open in a New Tab</strong>: For the best results and to bypass frame/sandbox security rules, please click the <strong>Open in New Tab</strong> icon in the top right of this page before recording.
+                    </p>
                   </div>
-                </div>
-
-                <div className="flex items-start gap-2.5 border-b border-black/[0.04] pb-2">
-                  <span className="font-bold text-indigo-600 shrink-0">40-65s</span>
-                  <div>
-                    <strong className="text-neutral-800 block">4. Live Workspace Tour</strong>
-                    <span className="text-[9px]">Play interactive quiz questions, navigate timeline triggers, and check retention score streaks.</span>
+                  <div className="flex gap-2">
+                    <span className="font-mono text-indigo-600 font-bold">2.</span>
+                    <p>
+                      <strong>Capture Audio</strong>: When the browser asks which screen or tab to share, click <strong>"This Tab"</strong> (or "Zipytiny") and make sure to check the <strong>"Share tab audio"</strong> checkbox in the bottom left!
+                    </p>
                   </div>
-                </div>
-
-                <div className="flex items-start gap-2.5 border-b border-black/[0.04] pb-2">
-                  <span className="font-bold text-indigo-600 shrink-0">65-80s</span>
-                  <div>
-                    <strong className="text-neutral-800 block">5. Empirical Split</strong>
-                    <span className="text-[9px]">Slide range controls to contrast passive scrolling decay vs. structured active retrieval.</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-1.5">
-                  <span className="font-bold text-indigo-600 shrink-0">80-95s</span>
-                  <div>
-                    <strong className="text-neutral-800 block">6. Intellectual Mastery</strong>
-                    <span className="text-[9px]">Outro summary, flow-state indicators, and conversion launch button to workspace.</span>
+                  <div className="flex gap-2">
+                    <span className="font-mono text-indigo-600 font-bold">3.</span>
+                    <p>
+                      <strong>Record & Interact</strong>: Play the cinematic walkthrough, toggle sound up, interact with quizzes, and download your flawless demo video file when complete!
+                    </p>
                   </div>
                 </div>
               </div>
