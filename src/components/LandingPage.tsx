@@ -5,6 +5,7 @@ import {
   Upload, Brain, Share2, Star, TrendingUp, Clock, Shield, Cpu,
   BarChart2, Layers, BookOpen, Mic, PenTool, Hash, ChevronRight
 } from 'lucide-react';
+import { CinematicExplainer } from './CinematicExplainer';
 
 interface LandingPageProps {
   onLaunchApp: (targetTab?: string, targetSubTab?: string) => void;
@@ -407,6 +408,30 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* 🎬 INTERACTIVE TOUR & RECORDER THEATER */}
+      <section id="interactive-tour-theater" className="w-full bg-[#f5f5f7] dark:bg-zinc-900/40 py-16 sm:py-20 border-y border-black/[0.03] dark:border-zinc-800/60 scroll-mt-20 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-radial-gradient from-indigo-500/[0.02] via-transparent to-transparent pointer-events-none"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          
+          <div className="space-y-4 max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950 border border-indigo-150 dark:border-indigo-900 px-3.5 py-1 rounded-full text-xs font-mono font-bold text-indigo-700 dark:text-indigo-400 uppercase shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 fill-indigo-600/10" />
+              <span>Interactive Cinematic Tour & Built-in Recorder</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-neutral-900 dark:text-zinc-50 leading-tight">
+              Test-Drive Zipytiny Interactive Tour & Capture Videos
+            </h2>
+            <p className="text-neutral-500 dark:text-zinc-400 font-light text-base sm:text-lg max-w-2xl mx-auto">
+              Play with the active live-rendered simulation below. You can listen to studio-grade voiceover narrations, take real-time interactive quizzes, or use the <strong>built-in video recorder</strong> to download your customized demo video!
+            </p>
+          </div>
+
+          <div className="transition duration-500 hover:shadow-xl rounded-3xl">
+            <CinematicExplainer onStartLearning={() => onLaunchApp('app')} />
+          </div>
         </div>
       </section>
 
