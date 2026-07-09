@@ -943,7 +943,7 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // MVP Screen navigation state
-  const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin' | 'terms' | 'privacy' | 'feature'>(() => {
+  const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin' | 'terms' | 'privacy' | 'feature' | 'explainer'>(() => {
     try {
       if (typeof window !== 'undefined') {
         const pathLower = window.location.pathname.toLowerCase();
@@ -958,14 +958,14 @@ export default function App() {
 
         // 1. Prioritize clean pathname (e.g. /admin, /billing)
         const pathScreen = pathParts[0];
-        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(pathScreen)) {
+        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'explainer'].includes(pathScreen)) {
           return pathScreen as any;
         }
 
         // 2. Fallback to query params (?screen=admin)
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature'].includes(qScreen.toLowerCase())) {
+        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer'].includes(qScreen.toLowerCase())) {
           return qScreen.toLowerCase() as any;
         }
         
@@ -976,7 +976,7 @@ export default function App() {
 
         // 3. Fallback to hash (#admin)
         const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
-        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature'].includes(hash)) {
+        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer'].includes(hash)) {
           return hash as any;
         }
       }
@@ -1165,7 +1165,8 @@ export default function App() {
         domain: 'Domain Configuration | Zipytiny',
         billing: 'Premium Plans & Upgrades | Zipytiny',
         marketing: 'AI Viral Creator Hub | Zipytiny',
-        admin: 'Administrative Console | Zipytiny'
+        admin: 'Administrative Console | Zipytiny',
+        explainer: 'Interactive Cinematic Tour & Screen Recorder | Zipytiny'
       };
       document.title = titles[currentScreen] || 'Zipytiny - Instant AI Video Knowledge Engine';
     } catch (err) {
@@ -3275,6 +3276,19 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               <span className="hidden sm:inline">Workspace</span>
             </button>
 
+            {/* Recorder & Tour */}
+            <button
+              onClick={() => setCurrentScreen('explainer')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                currentScreen === 'explainer'
+                  ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-sm font-semibold'
+                  : 'text-[#86868b] dark:text-zinc-400 hover:text-[#1d1d1f] dark:hover:text-zinc-100'
+              }`}
+            >
+              <Video className="w-3.5 h-3.5 shrink-0" />
+              <span>📹 Recorder & Tour</span>
+            </button>
+
             {/* History — visible only when summaries exist */}
             {savedSummaries.length > 0 && currentScreen === 'app' && (
               <button
@@ -3590,6 +3604,32 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               window.scrollTo(0, 0);
             }}
           />
+        )}
+
+        {/* 🚀 TOUR & RECORDER SCREEN */}
+        {currentScreen === 'explainer' && (
+          <div className="space-y-8 animate-fadeIn text-center max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="space-y-4 max-w-3xl mx-auto">
+              <div className="inline-flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950 border border-indigo-150 dark:border-indigo-900 px-3.5 py-1 rounded-full text-xs font-mono font-bold text-indigo-700 dark:text-indigo-400 uppercase shadow-xs">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 fill-indigo-600/10" />
+                <span>Interactive Cinematic Tour & Built-in Recorder</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight text-neutral-900 dark:text-zinc-50 leading-tight">
+                Interactive Tour & Capture Videos
+              </h2>
+              <p className="text-neutral-500 dark:text-zinc-400 font-light text-base sm:text-lg max-w-2xl mx-auto">
+                Play with the active live-rendered simulation below. Listen to studio-grade voiceover narrations, take real-time interactive quizzes, or use the <strong>built-in screen recorder</strong> to download your customized demo video!
+              </p>
+            </div>
+            <div className="transition duration-500 hover:shadow-xl rounded-3xl bg-white dark:bg-zinc-900 p-2 sm:p-4 border border-black/5 dark:border-zinc-800 text-left">
+              <Suspense fallback={<div className="animate-pulse h-[500px] rounded-3xl bg-neutral-100 dark:bg-zinc-800" />}>
+                <CinematicExplainer onStartLearning={() => {
+                  setCurrentScreen('app');
+                  window.scrollTo(0, 0);
+                }} />
+              </Suspense>
+            </div>
+          </div>
         )}
 
         {/* 🚀 OLD LANDING PAGE SCREEN BLOCKED */}
