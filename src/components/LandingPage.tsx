@@ -46,6 +46,65 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
   const [ytUrl, setYtUrl] = useState('');
   const [urlError, setUrlError] = useState('');
 
+  // 🌟 Automated & Interactive Hero AI Flow Simulation
+  const [demoStep, setDemoStep] = useState<'before' | 'analyzing' | 'generating' | 'after'>('before');
+  const [demoProgress, setDemoProgress] = useState(0);
+  const [demoActiveTab, setDemoActiveTab] = useState<'summary' | 'key_concepts' | 'mindmap' | 'flashcard'>('summary');
+  const [flashcardFlipped, setFlashcardFlipped] = useState(false);
+  const [isPlayingFlow, setIsPlayingFlow] = useState(true);
+
+  // Auto-progression logic for the mockup simulation
+  useEffect(() => {
+    if (!isPlayingFlow) return;
+
+    let timer: NodeJS.Timeout;
+    let progressTimer: NodeJS.Timeout;
+
+    if (demoStep === 'before') {
+      timer = setTimeout(() => {
+        setDemoStep('analyzing');
+        setDemoProgress(0);
+      }, 3500);
+    } else if (demoStep === 'analyzing') {
+      let currentProgress = 0;
+      progressTimer = setInterval(() => {
+        currentProgress += 5;
+        if (currentProgress >= 50) {
+          clearInterval(progressTimer);
+          setDemoProgress(50);
+          setDemoStep('generating');
+        } else {
+          setDemoProgress(currentProgress);
+        }
+      }, 150);
+    } else if (demoStep === 'generating') {
+      let currentProgress = 50;
+      progressTimer = setInterval(() => {
+        currentProgress += 5;
+        if (currentProgress >= 100) {
+          clearInterval(progressTimer);
+          setDemoProgress(100);
+          setDemoStep('after');
+        } else {
+          setDemoProgress(currentProgress);
+        }
+      }, 150);
+    } else if (demoStep === 'after') {
+      // Stay on the finished state for 12 seconds to let the user play, then loop back
+      timer = setTimeout(() => {
+        setDemoStep('before');
+        setDemoProgress(0);
+        setDemoActiveTab('summary');
+        setFlashcardFlipped(false);
+      }, 12000);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(progressTimer);
+    };
+  }, [demoStep, isPlayingFlow]);
+
   // Trigger counters when stats section scrolls into view
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -139,10 +198,13 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
               
               <p className="text-[#86868b] dark:text-zinc-400 text-base sm:text-lg max-w-2xl leading-relaxed font-light">
                 Convert lectures, tutorials, and educational videos into notes, mind maps, flashcards, quizzes, and structured learning materials in minutes.
+                <span className="block mt-2.5 font-medium text-neutral-850 dark:text-zinc-200 text-sm sm:text-base border-l-2 border-[#0071e3] pl-3 italic">
+                  Spend less time watching and more time understanding. Stop watching videos twice. Learn once and remember more.
+                </span>
               </p>
 
               {/* Frictionless Landing Page CTA Buttons */}
-              <div className="flex flex-wrap items-center gap-4 pt-2">
+              <div className="flex flex-wrap items-center gap-4 pt-3">
                 <button
                   type="button"
                   onClick={() => {
@@ -152,7 +214,8 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                       inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                   }}
-                  className="bg-[#0071e3] hover:bg-[#0077ed] text-white px-8 py-3.5 rounded-full font-semibold text-sm transition-all shadow-md active:scale-98 cursor-pointer"
+                  className="bg-[#0071e3] hover:bg-[#005bb5] hover:scale-[1.02] text-white px-9 py-4 rounded-full font-bold text-sm transition-all shadow-lg shadow-[#0071e3]/20 hover:shadow-xl hover:shadow-[#0071e3]/35 active:scale-98 cursor-pointer duration-300"
+                  aria-label="Start Learning Free"
                 >
                   Start Learning Free
                 </button>
@@ -161,15 +224,16 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                   onClick={() => {
                     document.getElementById('interactive-tour-theater')?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="bg-transparent hover:bg-neutral-100 dark:hover:bg-zinc-900 text-[#0071e3] dark:text-sky-400 px-6 py-3.5 rounded-full font-semibold text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
+                  className="bg-neutral-100/60 dark:bg-zinc-900/60 hover:bg-neutral-200/60 dark:hover:bg-zinc-800/60 text-neutral-800 dark:text-zinc-200 px-6 py-4 rounded-full font-semibold text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-2 border border-neutral-250 dark:border-zinc-800/80"
+                  aria-label="Watch Demo Video"
                 >
-                  <Play className="w-4 h-4 text-[#0071e3] dark:text-sky-400 fill-current" />
+                  <Play className="w-4 h-4 text-[#0071e3] dark:text-sky-400 fill-[#0071e3] dark:fill-sky-400" />
                   <span>Watch Demo</span>
                 </button>
               </div>
 
               {/* 🎯 CONVERSION-OPTIMIZED YOUTUBE INPUT BOX */}
-              <div className="w-full max-w-2xl pt-4">
+              <div className="w-full max-w-2xl pt-2">
                 <form 
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -217,21 +281,61 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                 </p>
               </div>
 
-              {/* Trust Section Below Hero */}
-              <div className="grid grid-cols-2 gap-4 pt-6 border-t border-black/[0.04] dark:border-zinc-800/60 w-full max-w-2xl">
-                {[
-                  { text: "No credit card required", icon: <Shield className="w-4 h-4 text-emerald-500" /> },
-                  { text: "Free daily summaries", icon: <Sparkles className="w-4 h-4 text-[#0071e3]" /> },
-                  { text: "AI-powered study assistant", icon: <Brain className="w-4 h-4 text-indigo-500" /> },
-                  { text: "Supports YouTube, PDF, PPT & docs", icon: <FileText className="w-4 h-4 text-amber-500" /> }
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-[11px] sm:text-xs text-neutral-650 dark:text-zinc-400">
-                    <div className="shrink-0 p-1 bg-neutral-100 dark:bg-zinc-900 rounded-lg">
-                      {item.icon}
-                    </div>
-                    <span className="font-semibold">{item.text}</span>
+              {/* 📊 PROMINENT TIME SAVINGS METRICS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                {/* Metric 1: Average Time Saved */}
+                <div className="bg-gradient-to-br from-[#0071e3]/8 to-[#0071e3]/3 dark:from-indigo-950/40 dark:to-zinc-900/40 border border-[#0071e3]/15 dark:border-indigo-900/30 rounded-2xl p-4 flex items-center gap-4 shadow-xs">
+                  <div className="h-12 w-12 rounded-xl bg-white dark:bg-zinc-850 shadow-md flex flex-col items-center justify-center border border-black/[0.03] dark:border-zinc-750 shrink-0">
+                    <span className="text-xl font-extrabold text-[#0071e3] dark:text-sky-400 font-display">2h</span>
+                    <span className="text-[7px] font-mono font-bold text-[#86868b] dark:text-zinc-500 -mt-1 uppercase">SAVED</span>
                   </div>
-                ))}
+                  <div className="text-left">
+                    <h4 className="text-xs font-bold text-neutral-900 dark:text-zinc-150 uppercase tracking-wider font-mono">Average Time Saved</h4>
+                    <p className="text-[10px] text-neutral-500 dark:text-zinc-400 font-light leading-tight mt-0.5">Per learning session. Learn once and remember more.</p>
+                  </div>
+                </div>
+
+                {/* Metric 2: Speedup Ratio */}
+                <div className="bg-gradient-to-br from-emerald-500/8 to-emerald-500/3 dark:from-emerald-950/30 dark:to-zinc-900/40 border border-emerald-500/15 dark:border-emerald-900/20 rounded-2xl p-4 flex items-center gap-4 shadow-xs">
+                  <div className="h-12 w-12 rounded-xl bg-white dark:bg-zinc-850 shadow-md flex flex-col items-center justify-center border border-black/[0.03] dark:border-zinc-750 shrink-0">
+                    <span className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 font-display">10x</span>
+                    <span className="text-[7px] font-mono font-bold text-emerald-600/70 dark:text-emerald-500 -mt-1 uppercase">SPEED</span>
+                  </div>
+                  <div className="text-left">
+                    <h4 className="text-xs font-bold text-neutral-900 dark:text-zinc-150 uppercase tracking-wider font-mono">Learn Faster with AI</h4>
+                    <p className="text-[10px] text-neutral-500 dark:text-zinc-400 font-light leading-tight mt-0.5">Finish a 2-Hour lecture in 15 minutes of structured study.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trust Section Below Hero */}
+              <div className="pt-6 border-t border-black/[0.04] dark:border-zinc-800/60 w-full max-w-2xl space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex text-amber-500 shrink-0">
+                    {[1,2,3,4,5].map((star) => (
+                      <Star key={star} className="w-3.5 h-3.5 fill-current text-amber-500" />
+                    ))}
+                  </div>
+                  <span className="text-xs font-bold text-neutral-700 dark:text-zinc-350">
+                    Loved by Early Users • Trusted by Students, Professionals & Lifelong Learners
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { text: "No credit card required", icon: <Shield className="w-4 h-4 text-emerald-500" /> },
+                    { text: "Free daily learning workspaces", icon: <Sparkles className="w-4 h-4 text-[#0071e3] dark:text-sky-400" /> },
+                    { text: "AI-powered study assistant", icon: <Brain className="w-4 h-4 text-indigo-500" /> },
+                    { text: "Supports YouTube, PDF, PPT & docs", icon: <FileText className="w-4 h-4 text-amber-500" /> }
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2 text-[11px] sm:text-xs text-neutral-650 dark:text-zinc-400">
+                      <div className="shrink-0 p-1 bg-neutral-100 dark:bg-zinc-900 rounded-lg">
+                        {item.icon}
+                      </div>
+                      <span className="font-semibold">{item.text}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
