@@ -58,6 +58,7 @@ import {
   FolderOpen
 } from 'lucide-react';
 import { PRELOADED_VIDEOS } from './preloadedData';
+import { ARABIC_PRELOADED_VIDEOS } from './utils/arabicPreloadedData';
 import { translations } from './utils/translations';
 import { toPng } from 'html-to-image';
 import { YouTubeSummaryResponse, SavedSummary, SynthesizedStack } from './types';
@@ -2122,6 +2123,16 @@ export default function App() {
     
     // Customized fine-tuned content for preloaded lecture #1: Steve Jobs
     if (summary.metadata.videoId === 'UF8uR6Z6KLc') {
+      if (outputLanguage === 'ar') {
+        const arVideo = ARABIC_PRELOADED_VIDEOS['UF8uR6Z6KLc'];
+        return {
+          ...summary,
+          keyConcepts: arVideo.keyConcepts,
+          flashcards: arVideo.flashcards,
+          rememberSummary: arVideo.rememberSummary,
+          learnModeEnabled: true
+        };
+      }
       const concepts = [
         {
           concept: 'Connecting the Dots',
@@ -2168,6 +2179,16 @@ export default function App() {
 
     // Customized fine-tuned content for preloaded lecture #2: Simon Sinek
     if (summary.metadata.videoId === 'qp0HIF3SfI4') {
+      if (outputLanguage === 'ar') {
+        const arVideo = ARABIC_PRELOADED_VIDEOS['qp0HIF3SfI4'];
+        return {
+          ...summary,
+          keyConcepts: arVideo.keyConcepts,
+          flashcards: arVideo.flashcards,
+          rememberSummary: arVideo.rememberSummary,
+          learnModeEnabled: true
+        };
+      }
       const concepts = [
         {
           concept: 'The Golden Circle',
@@ -2251,6 +2272,43 @@ export default function App() {
       learnModeEnabled: true
     };
   };
+
+  // Synchronize preloaded videos based on selected output language
+  useEffect(() => {
+    if (activeSummary) {
+      const vidId = activeSummary.metadata.videoId;
+      if (vidId === 'UF8uR6Z6KLc' || vidId === 'qp0HIF3SfI4') {
+        if (outputLanguage === 'ar') {
+          const arVideo = ARABIC_PRELOADED_VIDEOS[vidId];
+          if (arVideo && activeSummary.summary !== arVideo.summary) {
+            setActiveSummary(ensureLearnModeStructures(arVideo));
+          }
+        } else {
+          const enVideo = PRELOADED_VIDEOS.find(v => v.metadata.videoId === vidId);
+          if (enVideo && activeSummary.summary !== enVideo.summary) {
+            setActiveSummary(ensureLearnModeStructures(enVideo));
+          }
+        }
+      }
+    }
+
+    if (demoActiveVideo) {
+      const vidId = demoActiveVideo.metadata.videoId;
+      if (vidId === 'UF8uR6Z6KLc' || vidId === 'qp0HIF3SfI4') {
+        if (outputLanguage === 'ar') {
+          const arVideo = ARABIC_PRELOADED_VIDEOS[vidId];
+          if (arVideo && demoActiveVideo.summary !== arVideo.summary) {
+            setDemoActiveVideo(arVideo);
+          }
+        } else {
+          const enVideo = PRELOADED_VIDEOS.find(v => v.metadata.videoId === vidId);
+          if (enVideo && demoActiveVideo.summary !== enVideo.summary) {
+            setDemoActiveVideo(enVideo);
+          }
+        }
+      }
+    }
+  }, [outputLanguage, activeSummary?.metadata.videoId, demoActiveVideo?.metadata.videoId]);
 
   const downloadSummaryAsPDF = () => {
     if (!activeSummary) return;
@@ -5457,13 +5515,13 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     
                     <div className="space-y-0.5 overflow-hidden flex flex-col justify-center">
                       <div className="text-[9px] font-mono text-[#86868b] font-medium">
-                        {demo.metadata.author}
+                        {outputLanguage === 'ar' && ARABIC_PRELOADED_VIDEOS[demo.metadata.videoId]
+                          ? ARABIC_PRELOADED_VIDEOS[demo.metadata.videoId].metadata.author
+                          : demo.metadata.author}
                       </div>
                       <h4 className="text-[#1d1d1f] text-xs font-semibold line-clamp-2 leading-tight group-hover:text-black transition">
-                        {outputLanguage === 'ar' && demo.metadata.title.includes("Steve Jobs")
-                          ? t('steveJobs')
-                          : outputLanguage === 'ar' && demo.metadata.title.includes("Simon Sinek")
-                          ? t('simonSinek')
+                        {outputLanguage === 'ar' && ARABIC_PRELOADED_VIDEOS[demo.metadata.videoId]
+                          ? ARABIC_PRELOADED_VIDEOS[demo.metadata.videoId].metadata.title
                           : demo.metadata.title}
                       </h4>
                     </div>
