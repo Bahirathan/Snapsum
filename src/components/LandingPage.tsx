@@ -48,8 +48,8 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
   const [urlError, setUrlError] = useState('');
 
   // 🌟 Automated & Interactive Hero AI Flow Simulation
-  const [demoStep, setDemoStep] = useState<'before' | 'analyzing' | 'generating' | 'after'>('before');
-  const [demoProgress, setDemoProgress] = useState(0);
+  const [demoStep, setDemoStep] = useState<'before' | 'analyzing' | 'generating' | 'after'>('after');
+  const [demoProgress, setDemoProgress] = useState(100);
   const [demoActiveTab, setDemoActiveTab] = useState<'summary' | 'notes' | 'mindmap' | 'flashcard' | 'quiz'>('summary');
   const [flashcardFlipped, setFlashcardFlipped] = useState(false);
   const [isPlayingFlow, setIsPlayingFlow] = useState(true);
@@ -108,12 +108,11 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
         } else if (subStep === 5) {
           setDemoActiveTab('quiz');
         } else if (subStep === 6) {
-          setDemoStep('before');
-          setDemoProgress(0);
           setDemoActiveTab('summary');
           setFlashcardFlipped(false);
+          subStep = 0;
         }
-      }, 3200);
+      }, 3000);
     }
 
     return () => {
@@ -198,7 +197,7 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             {/* Left Column: Title, Copy, URL input box, and CTA */}
-            <div className="col-span-1 lg:col-span-6 space-y-6 text-left">
+            <div className="col-span-1 lg:col-span-5 space-y-6 text-left">
               <div className="space-y-3.5">
                 <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/10 dark:bg-[#0071e3]/20 px-3 py-1 rounded-full text-[11px] font-mono font-medium text-[#0071e3] dark:text-sky-400 w-fit">
                   <Sparkles className="w-3.5 h-3.5 animate-pulse" />
@@ -382,7 +381,7 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
             </div>
 
             {/* Right Column: Live Premium Interactive Wow-Moment Mockup */}
-            <div className="col-span-1 lg:col-span-6 relative mt-6 lg:mt-0 font-sans">
+            <div className="col-span-1 lg:col-span-7 relative mt-6 lg:mt-0 font-sans">
               <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500 via-indigo-500 to-[#0071e3] rounded-3xl opacity-15 blur-2xl dark:opacity-25 animate-pulse"></div>
               
               <div className="bg-white dark:bg-zinc-900 border border-black/[0.05] dark:border-zinc-800/80 rounded-3xl shadow-2xl overflow-hidden relative z-10 transition-all duration-300 hover:shadow-indigo-500/10 dark:hover:shadow-indigo-500/5">
