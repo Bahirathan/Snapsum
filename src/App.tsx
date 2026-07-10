@@ -429,6 +429,7 @@ export default function App() {
   // Status & states
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState('');
+  const [showWowMoment, setShowWowMoment] = useState(false);
   
   const LOADING_TIPS = [
     "Zipytiny is transcribing and aligning video audio speech patterns...",
@@ -2126,10 +2127,7 @@ export default function App() {
       if (outputLanguage === 'ar') {
         const arVideo = ARABIC_PRELOADED_VIDEOS['UF8uR6Z6KLc'];
         return {
-          ...summary,
-          keyConcepts: arVideo.keyConcepts,
-          flashcards: arVideo.flashcards,
-          rememberSummary: arVideo.rememberSummary,
+          ...arVideo,
           learnModeEnabled: true
         };
       }
@@ -2182,10 +2180,7 @@ export default function App() {
       if (outputLanguage === 'ar') {
         const arVideo = ARABIC_PRELOADED_VIDEOS['qp0HIF3SfI4'];
         return {
-          ...summary,
-          keyConcepts: arVideo.keyConcepts,
-          flashcards: arVideo.flashcards,
-          rememberSummary: arVideo.rememberSummary,
+          ...arVideo,
           learnModeEnabled: true
         };
       }
@@ -2534,6 +2529,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           localStorage.setItem('zipytiny_guest_summaries_count', String(currentCount + 1));
         }
         setLoading(false);
+        setShowWowMoment(true);
       }, 700); // Authentic processing delay for micro-animation feel
       return;
     }
@@ -2644,6 +2640,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         ];
         saveToShelf(updatedShelf);
       }
+
+      setShowWowMoment(true);
 
       // Scroll to summary content cleanly
       setTimeout(() => {
@@ -11821,6 +11819,126 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             {/* Footer note */}
             <div className="text-[10px] text-neutral-400 dark:text-zinc-500 font-mono leading-relaxed">
               🔒 Standard 256-bit secure SSL integration. <br />No password clutter or complex setup required.
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* 🌟 WOW MOMENT CELEBRATION MODAL */}
+      {showWowMoment && activeSummary && (
+        <div className="fixed inset-0 z-50 bg-neutral-950/60 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn font-sans">
+          <div className="bg-white dark:bg-zinc-950 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-neutral-200 dark:border-zinc-800 p-6 md:p-8 space-y-6 relative text-center animate-scaleIn">
+            
+            {/* Close Button */}
+            <button 
+              onClick={() => setShowWowMoment(false)}
+              className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition cursor-pointer p-1.5 rounded-full hover:bg-neutral-50 dark:hover:bg-zinc-900"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Celebration Sparkles Badge */}
+            <div className="mx-auto w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center border border-emerald-100 dark:border-emerald-900/30">
+              <Sparkles className="w-8 h-8 text-emerald-600 dark:text-emerald-400 fill-emerald-100 dark:fill-emerald-950" />
+            </div>
+
+            {/* Headline */}
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold text-neutral-900 dark:text-zinc-50 tracking-tight">
+                Your Learning Workspace is Ready!
+              </h3>
+              <p className="text-sm text-neutral-500 dark:text-zinc-400 font-light">
+                We processed <span className="font-semibold text-neutral-800 dark:text-zinc-200">"{activeSummary.metadata.title}"</span> and built your custom AI Workspace.
+              </p>
+            </div>
+
+            {/* Checklist of Value */}
+            <div className="bg-neutral-50 dark:bg-zinc-900/60 border border-neutral-150 dark:border-zinc-800 rounded-2xl p-5 space-y-3.5 text-left">
+              <div className="flex items-center gap-3">
+                <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                <span className="text-sm text-neutral-700 dark:text-zinc-300">
+                  <strong className="font-semibold text-neutral-900 dark:text-zinc-100">{activeSummary.metadata.duration || '15'}-minute</strong> visual summary created
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                <span className="text-sm text-neutral-700 dark:text-zinc-300">
+                  <strong className="font-semibold text-neutral-900 dark:text-zinc-100">{activeSummary.keyConcepts?.length || '25'} key concepts</strong> extracted with plain-English analogies
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                <span className="text-sm text-neutral-700 dark:text-zinc-300">
+                  <strong className="font-semibold text-neutral-900 dark:text-zinc-100">{activeSummary.flashcards?.length || '10'} active recall flashcards</strong> generated
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                <span className="text-sm text-neutral-700 dark:text-zinc-300">
+                  Interactive <strong className="font-semibold text-neutral-900 dark:text-zinc-100 font-medium">diagnostic quiz</strong> prepared
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                <span className="text-sm text-neutral-700 dark:text-zinc-300">
+                  Semantic <strong className="font-semibold text-neutral-900 dark:text-zinc-100 font-medium">mind map & memory network</strong> created
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Check className="w-5 h-5 text-emerald-500 shrink-0" />
+                <span className="text-sm text-neutral-700 dark:text-zinc-300">
+                  Custom <strong className="font-semibold text-neutral-900 dark:text-zinc-100 font-medium">spaced repetition plan</strong> generated
+                </span>
+              </div>
+            </div>
+
+            {/* Signup CTA or Dismiss */}
+            <div className="space-y-3 pt-2">
+              {!visitorUser ? (
+                <>
+                  <div className="space-y-1">
+                    <p className="text-xs text-neutral-500 dark:text-zinc-400 font-light">
+                      Secure your learning statistics and sync progress across your devices.
+                    </p>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const provider = new GoogleAuthProvider();
+                      try {
+                        setGoogleAuthError(null);
+                        await signInWithPopup(auth, provider);
+                        setShowWowMoment(false);
+                      } catch (err: any) {
+                        console.error('Google login failed:', err);
+                        if (err.code !== 'auth/popup-closed-by-user') {
+                          setGoogleAuthError({
+                            message: err.message || String(err),
+                            code: err.code || ''
+                          });
+                        }
+                      }
+                    }}
+                    className="w-full flex items-center justify-center gap-2 bg-[#0071e3] hover:bg-[#0077ed] text-white py-3.5 px-4 rounded-xl text-sm font-semibold transition duration-150 cursor-pointer shadow-md shadow-[#0071e3]/10 active:scale-98"
+                  >
+                    <span>Save Workspace to My Profile</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setShowWowMoment(false)}
+                    className="text-xs text-neutral-450 hover:text-neutral-600 dark:text-zinc-500 dark:hover:text-zinc-300 transition block mx-auto underline font-light cursor-pointer"
+                  >
+                    Explore Workspace as Guest
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowWowMoment(false)}
+                  className="w-full bg-[#1d1d1f] hover:bg-[#2d2d2f] dark:bg-zinc-100 dark:hover:bg-zinc-50 text-white dark:text-neutral-900 py-3.5 px-4 rounded-xl text-sm font-semibold transition cursor-pointer active:scale-98"
+                >
+                  Start Learning Now
+                </button>
+              )}
             </div>
 
           </div>

@@ -1001,6 +1001,38 @@ app.post('/api/summarize', summarizeLimiter, async (req, res) => {
       };
     }
 
+    // Translate title and author into Arabic if outputLanguage === 'ar' to ensure consistent Arabic experience
+    if (outputLanguage === 'ar') {
+      try {
+        const translationPrompt = `Translate the following video/webpage details into natural, fluent Arabic.
+Video Title: "${metadata.title}"
+Author/Creator: "${metadata.author}"
+
+Output JSON only in this exact format:
+{
+  "title": "Arabic translation",
+  "author": "Arabic translation"
+}`;
+        const translationAi = getGeminiClient(req);
+        const transResponse = await translationAi.models.generateContent({
+          model: 'gemini-3.5-flash',
+          contents: translationPrompt,
+          config: { responseMimeType: 'application/json' }
+        });
+        const transResult = JSON.parse(transResponse.text || '{}');
+        if (transResult.title) {
+          metadata.title = transResult.title;
+          fullMetadata.title = transResult.title;
+        }
+        if (transResult.author) {
+          metadata.author = transResult.author;
+          fullMetadata.author = transResult.author;
+        }
+      } catch (transErr) {
+        console.warn('Failed to translate metadata to Arabic:', transErr);
+      }
+    }
+
     // 2. Fetch transcript or use manual custom pasted transcript
     let transcript = customTranscript || '';
 

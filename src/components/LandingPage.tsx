@@ -127,17 +127,44 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                 <span>Value First AI Learning Engine</span>
               </div>
               
-              <h1 id="landing-hero-headline" className="text-4xl sm:text-5xl md:text-6xl font-bold font-display tracking-tight leading-[1.08] text-[#1d1d1f] dark:text-zinc-50">
-                Understand Any <br />
-                <span className="bg-gradient-to-r from-[#0071e3] to-indigo-600 bg-clip-text text-transparent">YouTube Video</span> in Minutes
+              <h1 id="landing-hero-headline" className="text-4xl sm:text-5xl md:text-6xl font-bold font-display tracking-tight leading-[1.1] text-[#1d1d1f] dark:text-zinc-50">
+                Turn Any Video Into a <br />
+                <span className="bg-gradient-to-r from-[#0071e3] to-indigo-600 bg-clip-text text-transparent">Complete AI Learning Workspace</span>
               </h1>
               
               <p className="text-[#86868b] dark:text-zinc-400 text-base sm:text-lg max-w-2xl leading-relaxed font-light">
-                Paste any YouTube link, Vimeo URL, MP4 video, or MP3 audio file, and instantly get AI-generated summaries, mind maps, flashcards, quizzes, and key insights.
+                Convert lectures, tutorials, and educational videos into notes, mind maps, flashcards, quizzes, and structured learning materials in minutes.
               </p>
 
+              {/* Frictionless Landing Page CTA Buttons */}
+              <div className="flex flex-wrap items-center gap-4 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const inputEl = document.querySelector('input[placeholder*="YouTube video URL"]') as HTMLInputElement;
+                    if (inputEl) {
+                      inputEl.focus();
+                      inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }}
+                  className="bg-[#0071e3] hover:bg-[#0077ed] text-white px-8 py-3.5 rounded-full font-semibold text-sm transition-all shadow-md active:scale-98 cursor-pointer"
+                >
+                  Start Learning Free
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    document.getElementById('interactive-tour-theater')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="bg-neutral-100/80 hover:bg-neutral-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-neutral-800 dark:text-zinc-200 border border-neutral-250 dark:border-zinc-800 px-8 py-3.5 rounded-full font-semibold text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Play className="w-4 h-4 text-[#1d1d1f] dark:text-zinc-50 fill-current" />
+                  <span>Watch Demo</span>
+                </button>
+              </div>
+
               {/* 🎯 CONVERSION-OPTIMIZED YOUTUBE INPUT BOX */}
-              <div className="w-full max-w-2xl">
+              <div className="w-full max-w-2xl pt-4">
                 <form 
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -162,14 +189,14 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                         setYtUrl(e.target.value);
                         if (urlError) setUrlError('');
                       }}
-                      className="w-full bg-transparent border-0 outline-none focus:ring-0 focus:outline-none text-sm text-neutral-800 dark:text-zinc-100 placeholder-neutral-400 dark:placeholder-zinc-505"
+                      className="w-full bg-transparent border-0 outline-none focus:ring-0 focus:outline-none text-sm text-neutral-800 dark:text-zinc-100 placeholder-neutral-400 dark:placeholder-zinc-500"
                     />
                   </div>
                   <button
                     type="submit"
                     className="bg-[#0071e3] hover:bg-[#0077ed] text-white px-6 py-3.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0 group cursor-pointer active:scale-98 shadow-sm"
                   >
-                    <span>Generate Free Summary</span>
+                    <span>Generate Learning Workspace</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </form>
