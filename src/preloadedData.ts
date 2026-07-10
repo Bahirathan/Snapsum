@@ -275,4 +275,102 @@ Your time is limited, so don't waste it living someone else's life. Be brave eno
       },
     ],
   },
+  {
+    metadata: {
+      videoId: 'intro-ai',
+      videoUrl: 'https://www.youtube.com/watch?v=intro-ai',
+      title: 'Introduction to Artificial Intelligence (MIT 6.S091)',
+      author: 'MIT OpenCourseWare',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=600&q=80',
+      duration: '45 mins',
+    },
+    summary: 'This session provides a comprehensive foundation to Artificial Intelligence, detailing the evolution of Machine Learning, Neural Networks, and modern Generative Large Language Models. We cover the transition from symbolic AI and expert systems to data-driven deep neural networks, culminating in the transformer architecture that powers today’s agentic systems.',
+    takeaways: [
+      'Symbolic AI vs. Neural Nets: Early AI relied on manual rules (expert systems), whereas modern AI learns patterns directly from data.',
+      'Supervised Learning Basics: Neural Networks adjust their internal weights using gradient descent and backpropagation based on labeled examples.',
+      'The Transformer Revolution: Self-attention mechanisms allow models to process sequence-based information in parallel, scaling context windows massively.',
+      'Generative AI & Agentic loops: Modern AI is shifting from static chat completions to dynamic, goal-oriented agentic workflows.',
+    ],
+    chapters: [
+      {
+        timestamp: '00:00',
+        secondsCount: 0,
+        title: 'Evolution of Artificial Intelligence',
+        takeaway: 'Contrasting early heuristic-based symbolic engines with modern gradient-based neural networks.',
+      },
+      {
+        timestamp: '12:30',
+        secondsCount: 750,
+        title: 'Neural Networks & Deep Learning',
+        takeaway: 'How multilayer perceptrons process inputs, calculate errors, and optimize weights via backpropagation.',
+      },
+      {
+        timestamp: '25:15',
+        secondsCount: 1515,
+        title: 'Transformers and Attention Mechanisms',
+        takeaway: 'A deep dive into how self-attention weights context tokens relative to each other dynamically.',
+      },
+      {
+        timestamp: '38:40',
+        secondsCount: 2320,
+        title: 'The Shift to Agentic Workspaces',
+        takeaway: 'Moving past simple text generation towards autonomous planning, reasoning, and tool use.',
+      },
+    ],
+    blogPost: `# Masterclass: Introduction to Artificial Intelligence\n\nArtificial Intelligence has transitioned from a niche academic pursuit in the 1950s to the foundational technology defining the 21st century. In this masterclass outline, we unpack how modern AI models learn, scale, and function.\n\n## From Rules to Neural Representations\nHistorically, AI attempted to solve problems through **symbolic logic**—manually writing if/then statements for every possible scenario. This approach breaks down in complex environments like image recognition or translation.\n\nModern deep learning flips this model on its head: we provide thousands of inputs and outputs, and let high-dimensional matrices adjust themselves to find the mathematical function linking them.\n\n## The Transformer Architecture\nThe breakthrough powering modern agents is the **Transformer**, introduced in 2017. Transformers use a mechanism called **Self-Attention** to process entire sentences at once, unlocking parallel training and allowing models to build context maps across hundreds of thousands of words.`,
+    twitterThread: [
+      '1/ How does modern AI actually work? Moving past the buzzwords, here is a breakdown of Artificial Intelligence from its symbolic origins to modern neural architectures: 👇',
+      '2/ Early AI (1950-1990) relied on Symbolic Logic & Expert Systems. It was static, manual, and couldn\'t handle real-world uncertainty. Modern AI is connectionist: it models pathways similar to biological neurons.',
+      '3/ At the heart of Deep Learning is the neural network. By stacking layers of parameters, networks can model highly complex non-linear functions, learning purely from feedback loops like backpropagation.',
+      '4/ The 2017 Transformer paper changed everything. Self-attention lets models see relations between all words simultaneously, leading to massive contextual awareness and the creation of Generative LLMs.',
+      '5/ The next frontier: Agentic systems. AI is moving from standard question-answering into proactive, multi-step problem solvers capable of self-correction. 🚀',
+    ],
+    socialSnippet: '🤖 Deepen your understanding of AI! From symbolic heuristics to generative transformer networks and agentic workflows, explore our custom MIT-aligned Artificial Intelligence study kit! #ArtificialIntelligence #MachineLearning #TechEducation #MIT',
+    quiz: [
+      {
+        question: 'What mathematical technique is used to adjust neural network weights during training?',
+        options: [
+          'Backpropagation & Gradient Descent',
+          'Heuristic Guess-and-Check',
+          'Linear Regression Projection',
+          'Symbolic Logic Inference'
+        ],
+        answerIndex: 0,
+        explanation: 'Backpropagation calculates the derivative of the loss function with respect to weights, which gradient descent uses to optimize the model.',
+      },
+      {
+        question: 'What structural innovation enabled parallel training and modern Large Language Models?',
+        options: [
+          'The Self-Attention Transformer Mechanism',
+          'Recurrent Neural Network loops',
+          'Manual if/then Expert Systems',
+          'Static Relational Database Indexes'
+        ],
+        answerIndex: 0,
+        explanation: 'Self-attention allows the network to process entire sequences simultaneously, bypassing sequential recurrent bottlenecks.',
+      },
+    ],
+    mindmap: [
+      {
+        concept: 'Artificial Intelligence',
+        category: 'Core Field',
+        description: 'Systems capable of performing human-like cognitive tasks.',
+      },
+      {
+        concept: 'Machine Learning',
+        category: 'Artificial Intelligence',
+        description: 'Algorithms that train on data rather than relying on explicit programming.',
+      },
+      {
+        concept: 'Deep Neural Networks',
+        category: 'Machine Learning',
+        description: 'Stacking layer nodes to approximate high-dimensional relationships.',
+      },
+      {
+        concept: 'Transformer Architecture',
+        category: 'Deep Neural Networks',
+        description: 'Self-attention layers processing tokens in parallel blocks.',
+      },
+    ],
+  },
 ];

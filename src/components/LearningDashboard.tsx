@@ -27,7 +27,10 @@ import {
   ChevronRight,
   RefreshCw,
   Star,
-  Activity
+  Activity,
+  Clock,
+  Shield,
+  Brain
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -1409,8 +1412,83 @@ export function ActiveLearningDashboard({
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6 animate-fadeIn text-left">
       
+      {/* 🧠 Personal AI Tutor Outcomes Panel */}
+      <div className="bg-gradient-to-br from-indigo-500/5 via-teal-500/[0.02] to-transparent border border-indigo-100/50 dark:border-zinc-800 rounded-3xl p-5 md:p-6 text-left relative overflow-hidden shadow-sm">
+        <div className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl"></div>
+        
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100/30 px-2.5 py-1 rounded-full text-[10px] font-semibold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider font-mono">
+              <Sparkles className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '4s' }} />
+              <span>Personal AI Study Mentor</span>
+            </div>
+            <h3 className="text-lg font-bold font-display text-neutral-900 dark:text-zinc-100 tracking-tight leading-tight">
+              Welcome to Your Learning Workspace
+            </h3>
+            <p className="text-xs text-neutral-500 dark:text-zinc-400 max-w-xl leading-relaxed">
+              I've synthesized this video into structural learning milestones. Let's master these concepts together!
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-3 bg-white/85 dark:bg-zinc-900/80 px-4 py-2.5 rounded-2xl border border-black/[0.04] dark:border-zinc-800 shrink-0">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></div>
+            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 font-mono">
+              TUTOR ACTIVE & SYNCED
+            </span>
+          </div>
+        </div>
+
+        {/* Learning Outcome Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 pt-5 border-t border-black/[0.04] dark:border-zinc-800/60 relative z-10">
+          {[
+            { 
+              label: "Learning Progress", 
+              value: "85%", 
+              color: "text-emerald-600 dark:text-emerald-400",
+              sub: "Ready for recall quiz",
+              icon: <Award className="w-4 h-4 text-emerald-500" />
+            },
+            { 
+              label: "Difficulty", 
+              value: "Intermediate", 
+              color: "text-indigo-600 dark:text-indigo-400",
+              sub: "Undergrad standard",
+              icon: <Brain className="w-4 h-4 text-indigo-500" />
+            },
+            { 
+              label: "Est. Study Time", 
+              value: "15 minutes", 
+              color: "text-amber-600 dark:text-amber-400",
+              sub: "90% time saved",
+              icon: <Clock className="w-4 h-4 text-amber-500" />
+            },
+            { 
+              label: "Concepts Learned", 
+              value: "25 Total", 
+              color: "text-teal-600 dark:text-teal-400",
+              sub: "Spaced-repetition active",
+              icon: <BookOpen className="w-4 h-4 text-teal-500" />
+            },
+          ].map((m, idx) => (
+            <div key={idx} className="bg-white/40 dark:bg-zinc-900/40 p-3.5 rounded-2xl border border-black/[0.02] dark:border-zinc-800/50">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-neutral-450 dark:text-zinc-500 uppercase tracking-widest font-mono">
+                {m.icon}
+                <span>{m.label}</span>
+              </div>
+              <strong className={`text-base md:text-lg font-extrabold block mt-1.5 tracking-tight ${m.color}`}>
+                {m.value}
+              </strong>
+              <span className="text-[10px] text-neutral-450 dark:text-zinc-400 mt-0.5 block font-mono">
+                {m.sub}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* SECTION MASTER CONTROL TABS (4 PANELS BAR) */}
       <div className="flex bg-neutral-100 p-1 rounded-2xl gap-1 items-center justify-between border">
         {[

@@ -122,9 +122,14 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
             
             {/* Left Column: Title, Copy, URL input box, and CTA */}
             <div className="col-span-1 lg:col-span-7 space-y-6 text-left">
-              <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/10 dark:bg-[#0071e3]/20 px-3 py-1 rounded-full text-[11px] font-mono font-medium text-[#0071e3] dark:text-sky-400">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Value First AI Learning Engine</span>
+              <div className="space-y-3.5">
+                <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/10 dark:bg-[#0071e3]/20 px-3 py-1 rounded-full text-[11px] font-mono font-medium text-[#0071e3] dark:text-sky-400 w-fit">
+                  <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                  <span>Value First AI Learning Engine</span>
+                </div>
+                <p className="text-xs sm:text-sm font-bold tracking-wide text-indigo-600 dark:text-indigo-400 uppercase font-mono">
+                  AI Study Assistant for Students, Professionals & Lifelong Learners
+                </p>
               </div>
               
               <h1 id="landing-hero-headline" className="text-4xl sm:text-5xl md:text-6xl font-bold font-display tracking-tight leading-[1.1] text-[#1d1d1f] dark:text-zinc-50">
@@ -156,9 +161,9 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                   onClick={() => {
                     document.getElementById('interactive-tour-theater')?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="bg-neutral-100/80 hover:bg-neutral-200 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-neutral-800 dark:text-zinc-200 border border-neutral-250 dark:border-zinc-800 px-8 py-3.5 rounded-full font-semibold text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
+                  className="bg-transparent hover:bg-neutral-100 dark:hover:bg-zinc-900 text-[#0071e3] dark:text-sky-400 px-6 py-3.5 rounded-full font-semibold text-sm transition-all active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <Play className="w-4 h-4 text-[#1d1d1f] dark:text-zinc-50 fill-current" />
+                  <Play className="w-4 h-4 text-[#0071e3] dark:text-sky-400 fill-current" />
                   <span>Watch Demo</span>
                 </button>
               </div>
@@ -212,29 +217,29 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                 </p>
               </div>
 
-              {/* Supported Formats Badge Grid */}
-              <div className="space-y-2 pt-2">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#86868b] dark:text-zinc-400">Also supports other formats inside the Workspace</span>
-                <div className="flex flex-wrap gap-2 text-xs">
-                  {['Websites', 'PDFs', 'Word/Doc', 'PowerPoint', 'Audio/MP3', 'Video/MP4'].map((fmt) => (
-                    <span key={fmt} className="px-2.5 py-1 bg-neutral-100 dark:bg-zinc-900 border border-black/[0.03] dark:border-zinc-800 rounded-lg text-[11px] font-medium text-neutral-600 dark:text-zinc-400">
-                      {fmt}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-6 pt-2 text-xs text-[#86868b] dark:text-zinc-400 font-light">
-                <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Free daily summaries</span>
-                <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> High-fidelity mind maps</span>
+              {/* Trust Section Below Hero */}
+              <div className="grid grid-cols-2 gap-4 pt-6 border-t border-black/[0.04] dark:border-zinc-800/60 w-full max-w-2xl">
+                {[
+                  { text: "No credit card required", icon: <Shield className="w-4 h-4 text-emerald-500" /> },
+                  { text: "Free daily summaries", icon: <Sparkles className="w-4 h-4 text-[#0071e3]" /> },
+                  { text: "AI-powered study assistant", icon: <Brain className="w-4 h-4 text-indigo-500" /> },
+                  { text: "Supports YouTube, PDF, PPT & docs", icon: <FileText className="w-4 h-4 text-amber-500" /> }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-[11px] sm:text-xs text-neutral-650 dark:text-zinc-400">
+                    <div className="shrink-0 p-1 bg-neutral-100 dark:bg-zinc-900 rounded-lg">
+                      {item.icon}
+                    </div>
+                    <span className="font-semibold">{item.text}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Right Column: Live Interactive Product Mockup */}
-            <div className="col-span-1 lg:col-span-5 relative mt-6 lg:mt-0">
-              <div className="absolute -inset-4 bg-gradient-to-r from-indigo-500 to-sky-500 rounded-3xl opacity-10 blur-xl dark:opacity-20"></div>
+            {/* Right Column: Live Premium Interactive Wow-Moment Mockup */}
+            <div className="col-span-1 lg:col-span-5 relative mt-6 lg:mt-0 font-sans">
+              <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-3xl opacity-10 blur-xl dark:opacity-20 animate-pulse"></div>
               
-              <div className="bg-white dark:bg-zinc-900 border border-black/[0.05] dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden relative z-10">
+              <div className="bg-white dark:bg-zinc-900 border border-black/[0.05] dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden relative z-10 transition-all duration-300 hover:scale-[1.01]">
                 {/* Mockup Header */}
                 <div className="px-5 py-4 bg-neutral-50 dark:bg-zinc-950 border-b border-black/[0.04] dark:border-zinc-800/80 flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -242,107 +247,104 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                     <div className="h-2.5 w-2.5 rounded-full bg-amber-400"></div>
                     <div className="h-2.5 w-2.5 rounded-full bg-emerald-400"></div>
                   </div>
-                  <span className="text-[10px] font-mono text-[#86868b] dark:text-zinc-400">zipytiny-interactive-preview.json</span>
+                  <span className="text-[10px] font-mono text-[#86868b] dark:text-zinc-400">zipytiny-learning-transformation.json</span>
                   <div className="w-8"></div>
                 </div>
 
-                {/* Mockup Tab Switches */}
-                <div className="flex bg-neutral-100 dark:bg-zinc-950 p-1 gap-1 m-4 rounded-xl border border-black/[0.02] dark:border-zinc-800/60">
-                  {[
-                    { id: 'summary', label: 'Summary' },
-                    { id: 'key_insights', label: 'Key Insights' },
-                    { id: 'chapters', label: 'Timeline' },
-                    { id: 'quiz', label: 'Interactive Quiz' }
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
-                      className={`flex-1 py-1.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
-                        activeTab === tab.id
-                          ? 'bg-white dark:bg-zinc-900 text-neutral-900 dark:text-zinc-100 shadow-xs'
-                          : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-950'
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Mockup Main Panel */}
-                <div className="p-5 h-[230px] overflow-y-auto text-left scrollbar-none">
-                  {activeTab === 'summary' && (
-                    <div className="space-y-3 animate-fadeIn">
-                      <div className="flex items-center gap-1.5 text-[#0071e3] text-[10px] font-bold font-mono uppercase tracking-wide">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Executive Briefing</span>
+                {/* Main Content inside the preview block */}
+                <div className="p-6 space-y-6">
+                  
+                  {/* BEFORE: Long exhausting lecture */}
+                  <div className="bg-neutral-50 dark:bg-zinc-950/60 rounded-2xl p-4 border border-neutral-150 dark:border-zinc-850/80 text-left relative overflow-hidden group">
+                    <div className="absolute top-0 left-0 bottom-0 w-1 bg-red-500"></div>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-[9px] font-bold font-mono text-red-500 uppercase tracking-widest bg-red-500/10 px-2 py-0.5 rounded">BEFORE</span>
+                        <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-200 mt-2 flex items-center gap-1.5">
+                          <Video className="w-4 h-4 text-rose-500" />
+                          <span>2 hour 15 minute lecture</span>
+                        </h4>
+                        <p className="text-[11px] text-[#86868b] dark:text-zinc-400 font-light mt-1">
+                          Tedious video scrubbing, lost focus, and hours spent writing manual notes.
+                        </p>
                       </div>
-                      <p className="text-xs leading-relaxed text-neutral-800 dark:text-zinc-300 font-light whitespace-pre-line">{previewData.summary}</p>
+                      <span className="text-xs font-mono font-medium text-red-500 whitespace-nowrap bg-red-50 dark:bg-red-950/20 px-2 py-1 rounded-lg border border-red-100 dark:border-red-900/30">135 min video</span>
                     </div>
-                  )}
+                  </div>
 
-                  {activeTab === 'key_insights' && (
-                    <div className="space-y-2.5 animate-fadeIn">
-                      <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold font-mono uppercase tracking-wide">
-                        <Award className="w-3.5 h-3.5" />
-                        <span>Actionable Insights</span>
-                      </div>
-                      <ul className="space-y-1.5">
-                        {previewData.key_insights.map((insight, idx) => (
-                          <li key={idx} className="text-xs text-neutral-700 dark:text-zinc-300 flex items-start gap-2">
-                            <span className="text-[#0071e3] font-bold mt-0.5">•</span>
-                            <span className="font-light">{insight}</span>
-                          </li>
-                        ))}
-                      </ul>
+                  {/* DOWN ARROW CONNECTOR */}
+                  <div className="flex justify-center -my-3">
+                    <div className="h-7 w-7 rounded-full bg-indigo-50 dark:bg-indigo-950 border border-indigo-150 dark:border-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400 animate-bounce shadow-sm">
+                      <ChevronDown className="w-4 h-4" />
                     </div>
-                  )}
+                  </div>
 
-                  {activeTab === 'chapters' && (
-                    <div className="space-y-2.5 animate-fadeIn">
-                      <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold font-mono uppercase tracking-wide">
-                        <Video className="w-3.5 h-3.5" />
-                        <span>Timeline Chapters</span>
-                      </div>
-                      <div className="space-y-1.5">
-                        {previewData.chapters.map((ch, idx) => (
-                          <div key={idx} className="flex justify-between items-center text-xs p-2 bg-neutral-50 dark:bg-zinc-950 rounded-lg border border-black/[0.02] dark:border-zinc-850">
-                            <span className="font-semibold text-neutral-800 dark:text-zinc-200">{ch.title}</span>
-                            <span className="font-mono bg-neutral-200 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-[9px] text-neutral-600 dark:text-zinc-400">{ch.time}</span>
-                          </div>
-                        ))}
+                  {/* AFTER: Beautiful optimized study toolkit */}
+                  <div className="bg-gradient-to-br from-emerald-500/5 via-indigo-500/[0.02] to-transparent dark:from-emerald-950/10 dark:via-transparent dark:to-transparent rounded-2xl p-5 border border-emerald-500/25 dark:border-emerald-500/10 text-left relative">
+                    <div className="absolute top-0 left-0 bottom-0 w-1 bg-emerald-500"></div>
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="space-y-1">
+                        <span className="text-[9px] font-bold font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-0.5 rounded">AFTER WITH ZIPYTINY</span>
+                        <h4 className="text-base font-extrabold text-neutral-900 dark:text-zinc-50 tracking-tight mt-1.5 flex items-center gap-1.5">
+                          <Sparkles className="w-4.5 h-4.5 text-emerald-500 fill-emerald-100 dark:fill-emerald-950" />
+                          <span>Your AI Learning Workspace is Ready</span>
+                        </h4>
                       </div>
                     </div>
-                  )}
 
-                  {activeTab === 'quiz' && (
-                    <div className="space-y-3.5 animate-fadeIn">
-                      <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 text-[10px] font-bold font-mono uppercase tracking-wide">
-                        <Zap className="w-3.5 h-3.5" />
-                        <span>AI Study Quiz</span>
+                    {/* Features checklist */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-2 mt-4 text-[11px] font-semibold text-neutral-700 dark:text-zinc-300">
+                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>Executive Summary</span>
                       </div>
-                      <div className="space-y-2 text-xs">
-                        <p className="font-semibold text-neutral-800 dark:text-zinc-200">{previewData.quiz.question}</p>
-                        <div className="grid grid-cols-1 gap-1.5">
-                          {previewData.quiz.options.map((opt, oIdx) => (
-                            <div key={oIdx} className={`p-2.5 rounded-lg border text-left cursor-pointer transition ${
-                              oIdx === 0 
-                                ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300 text-emerald-800 dark:text-emerald-300 font-semibold' 
-                                : 'bg-white dark:bg-zinc-900 border-neutral-100 dark:border-zinc-800 text-neutral-600 dark:text-zinc-400 hover:bg-neutral-50'
-                            }`}>
-                              {opt}
-                            </div>
-                          ))}
-                        </div>
-                        <p className="text-[10px] text-neutral-450 leading-relaxed font-sans">{previewData.quiz.explanation}</p>
+                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>15 Key Concepts</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>Interactive Mind Map</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>25 Practice Flashcards</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>10-Question Smart Quiz</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>Smart Notes</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800 sm:col-span-2">
+                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>7-Day Spaced Repetition Plan</span>
                       </div>
                     </div>
-                  )}
+
+                    {/* EMOTIONAL SAVINGS ACCENT BADGE */}
+                    <div className="mt-5 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/25 dark:border-emerald-500/15 p-3 rounded-xl flex items-center justify-between text-xs font-semibold text-emerald-700 dark:text-emerald-400 animate-pulse">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-emerald-500" />
+                        <span>Average Study Efficiency</span>
+                      </div>
+                      <span className="bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide uppercase">
+                        Saved 2 hours of study time
+                      </span>
+                    </div>
+
+                  </div>
                 </div>
 
                 {/* Mockup footer */}
                 <div className="p-4 bg-neutral-50 dark:bg-zinc-950/80 border-t border-black/[0.03] dark:border-zinc-800/60 flex items-center justify-between text-[11px] font-mono text-[#86868b]">
-                  <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Compiled Successfully</span>
-                  <span className="font-semibold text-neutral-700 dark:text-zinc-300">100% Score</span>
+                  <span className="flex items-center gap-1">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> 
+                    <span>Study Package Synthesized Successfully</span>
+                  </span>
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">10x Speed</span>
                 </div>
               </div>
             </div>
@@ -395,26 +397,26 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
             {
               step: '01',
               icon: <Upload className="w-6 h-6 text-[#0071e3]" />,
-              title: 'Paste or Upload',
-              description: 'Drop in a YouTube URL, website link, PDF, Word doc, audio file, or paste raw text. Zipytiny accepts all major formats instantly.',
+              title: 'Paste any video',
+              description: 'Drop in any YouTube video link. We\'ll transcribe and ingest the entire content immediately, bypassing tedious manual video scrubbing.',
               color: 'bg-[#0071e3]/10 dark:bg-[#0071e3]/20',
-              badge: 'YouTube · PDF · Word · Audio · Web',
+              badge: 'YouTube · Uploads · Documents',
             },
             {
               step: '02',
               icon: <Brain className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />,
-              title: 'AI Processes & Structures',
-              description: 'Gemini AI extracts the core ideas, creates a timeline, identifies key insights, generates quiz questions, and builds a mind map — automatically.',
+              title: 'AI creates your learning workspace',
+              description: 'Our system synthesizes the material into a complete study kit: an executive summary, explained core concepts, an interactive mind map, and practice aids.',
               color: 'bg-indigo-500/10 dark:bg-indigo-500/20',
-              badge: 'Gemini AI · Instant · No config',
+              badge: 'Summary · Mind Map · Repetition',
             },
             {
               step: '03',
               icon: <Share2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />,
-              title: 'Use, Export & Share',
-              description: 'Study with flashcards, chat with your content, export to PDF/Word/Notion, or share a public link. Your knowledge, your way.',
+              title: 'Learn faster with notes, quizzes & flashcards',
+              description: 'Interact directly with study aids tailored perfectly to the lecture. Complete self-quizzes, flip flashcards, and lock in comprehension with 10x efficiency.',
               color: 'bg-emerald-500/10 dark:bg-emerald-500/20',
-              badge: 'PDF · Word · Notion · Share Link',
+              badge: 'Notes · Flashcards · Smart Quizzes',
             },
           ].map((item, idx) => (
             <div key={idx} className="relative z-10 bg-white dark:bg-zinc-900 border border-black/[0.04] dark:border-zinc-800 rounded-3xl p-8 text-left flex flex-col gap-5 hover:shadow-lg transition-shadow duration-300">

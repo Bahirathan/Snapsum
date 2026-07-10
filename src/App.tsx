@@ -2443,15 +2443,6 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
   const handleSummarize = async (e?: React.FormEvent, overrideUrl?: string) => {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
-    if (!visitorUser) {
-      const guestSummariesCount = Number(localStorage.getItem('zipytiny_guest_summaries_count') || '0');
-      if (guestSummariesCount >= 1) {
-        setAuthModalPurpose('Summarize unlimited videos and access premium study templates');
-        setShowAuthModal(true);
-        return;
-      }
-    }
-
     let finalVideoUrl = overrideUrl || videoUrl;
     let finalCustomTranscript = customTranscript;
 
@@ -2467,8 +2458,52 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       if (!pastedContentText) return;
       finalVideoUrl = 'https://www.zipytiny.app/pasted-text';
       finalCustomTranscript = pastedContentText;
-    } else {
-      if (!videoUrl) return;
+    }
+
+    // 🌟 Frictionless Demo Interceptor for Guest Users (No Login Required)
+    if (!visitorUser) {
+      let matchedPreload = PRELOADED_VIDEOS.find(
+        (video) => finalVideoUrl && (finalVideoUrl.includes(video.metadata.videoId) || video.metadata.videoUrl === finalVideoUrl)
+      );
+      if (!matchedPreload) {
+        matchedPreload = PRELOADED_VIDEOS.find(v => v.metadata.videoId === 'intro-ai');
+      }
+
+      if (matchedPreload) {
+        setLoading(true);
+        setError(null);
+        setQuizSubmitted(false);
+        setSelectedAnswers({});
+        setYtStartSeconds(null);
+        
+        // Reset TTS audio
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
+        setAudioUrl(null);
+        setIsPlaying(false);
+
+        setLoadingStep('Ingesting video data & transcribing core lecture audio...');
+        setTimeout(() => {
+          setLoadingStep('Extracting key concepts & compiling learning nodes...');
+          setTimeout(() => {
+            setLoadingStep('Designing mind map workspace & building practice aids...');
+            setTimeout(() => {
+              const hydratedMock = ensureLearnModeStructures(matchedPreload!);
+              setActiveSummary(hydratedMock);
+              setLearnMode(true);
+              localStorage.setItem('snapsum_learn_mode', 'true');
+              setLoading(false);
+              setShowWowMoment(true);
+              
+              // Increment guest count
+              const currentCount = Number(localStorage.getItem('zipytiny_guest_summaries_count') || '0');
+              localStorage.setItem('zipytiny_guest_summaries_count', String(currentCount + 1));
+            }, 500);
+          }, 500);
+        }, 500);
+        return;
+      }
     }
 
     setLoading(true);
@@ -6355,6 +6390,33 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         {activeSummary && (
           <div id="summary-dashboard" dir={isRtl ? 'rtl' : 'ltr'} className={`bg-white dark:bg-zinc-900 rounded-3xl border border-neutral-200/80 dark:border-zinc-800 shadow-sm overflow-hidden animate-fadeIn ${isRtl ? 'text-right' : 'text-left'}`}>
             
+            {/* Guest Promo Conversion Header Callout */}
+            {!visitorUser && (
+              <div className="bg-gradient-to-r from-indigo-600 via-[#0071e3] to-indigo-600 text-white px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 border-b border-white/10 animate-fadeIn font-sans">
+                <div className="flex items-center gap-3 text-left">
+                  <div className="p-2.5 bg-white/15 rounded-xl shrink-0 border border-white/10">
+                    <Sparkles className="w-5 h-5 text-amber-300 animate-pulse fill-amber-300/10" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold tracking-tight">Viewing Guest Learning Workspace Demo</h4>
+                    <p className="text-xs text-white/85 font-light mt-0.5">
+                      Create your free account to lock in your workspace, track progress, save custom flashcards, and study anytime.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthModalPurpose('Save your active learning workspace, custom flashcards, and progress tracking');
+                    setShowAuthModal(true);
+                  }}
+                  className="bg-white hover:bg-neutral-100 text-[#0071e3] px-6 py-2.5 rounded-full text-xs font-bold transition-all shadow-md active:scale-98 whitespace-nowrap cursor-pointer"
+                >
+                  Create Free Account & Save
+                </button>
+              </div>
+            )}
+
             {/* Header Content Info Banner */}
             <div className="bg-white/80 backdrop-blur-md p-6 md:p-8 text-[#1d1d1f] border-b border-black/[0.04] flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
               <div className="space-y-2 max-w-3xl">
