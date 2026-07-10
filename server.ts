@@ -465,6 +465,7 @@ const summarizeLimiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_SUMMARIZE_MAX || '10', 10),
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV !== 'production' || process.env.DISABLE_RATE_LIMITS === 'true',
   message: { error: 'Too many summarize requests from this IP. Please wait 15 minutes or add your own Gemini API key.', rateLimited: true },
 });
 
@@ -473,6 +474,7 @@ const ttsLimiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_TTS_MAX || '20', 10),
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV !== 'production' || process.env.DISABLE_RATE_LIMITS === 'true',
   message: { error: 'Too many TTS requests from this IP. Please wait 15 minutes or upgrade to PRO.', rateLimited: true },
 });
 
