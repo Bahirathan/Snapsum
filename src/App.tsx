@@ -58,6 +58,7 @@ import {
   FolderOpen
 } from 'lucide-react';
 import { PRELOADED_VIDEOS } from './preloadedData';
+import { translations } from './utils/translations';
 import { toPng } from 'html-to-image';
 import { YouTubeSummaryResponse, SavedSummary, SynthesizedStack } from './types';
 import { auth, db } from './firebase';
@@ -476,6 +477,17 @@ export default function App() {
   
   // Is active loaded summary in Arabic RTL language or selected output language is Arabic
   const isRtl = outputLanguage === 'ar' || !!(activeSummary && /[\u0600-\u06FF]/.test(activeSummary.summary || ''));
+  
+  const t = (key: keyof typeof translations['en'], params?: Record<string, string | number>) => {
+    const dict = translations[outputLanguage] || translations['en'];
+    let val = dict[key] || translations['en'][key] || '';
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        val = val.replace(`{${k}}`, String(v));
+      });
+    }
+    return val;
+  };
   
   const [referralCode, setReferralCode] = useState<string>('');
   const [referralCount, setReferralCount] = useState<number>(0);
@@ -3273,7 +3285,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden sm:inline">Workspace</span>
+              <span className="hidden sm:inline">{t('workspace')}</span>
             </button>
 
             {/* Recorder & Tour */}
@@ -3286,7 +3298,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               }`}
             >
               <Video className="w-3.5 h-3.5 shrink-0" />
-              <span>📹 Recorder & Tour</span>
+              <span>{t('recorderTour')}</span>
             </button>
 
             {/* History — visible only when summaries exist */}
@@ -4700,15 +4712,19 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               <div className="relative z-10 space-y-5">
                 <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/5 dark:bg-[#0071e3]/10 px-3 py-1 rounded-full text-[11px] font-mono font-medium text-[#0071e3] border border-[#0071e3]/10">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Powered by Gemini 3.5 Flash</span>
+                  <span>{outputLanguage === 'en' ? 'Powered by Gemini 3.5 Flash' : 'مدعوم بواسطة Gemini 3.5 Flash'}</span>
                 </div>
                 
                 <h1 className="text-3xl md:text-4xl font-semibold font-display leading-[1.1] tracking-tight text-[#1d1d1f] dark:text-zinc-50">
-                  Stop Watching. <br />Start Repurposing.
+                  {outputLanguage === 'en' ? (
+                    <>Stop Watching. <br />Start Repurposing.</>
+                  ) : (
+                    <>توقف عن المشاهدة فحسب. <br />وابدأ الاستفادة الفعالة.</>
+                  )}
                 </h1>
                 
                 <p className="text-[#86868b] dark:text-zinc-400 text-sm md:text-base max-w-2xl leading-relaxed font-light">
-                  Turn any video (YouTube, Vimeo, website or direct stream files) into beautifully itemized chronologies, professional newsletters, blog writeups, templates, and social assets instantly.
+                  {t('description')}
                 </p>
 
                 {/* Form Input Engine */}
@@ -4717,7 +4733,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   {/* Mode Selector Toggle (Summary Mode vs Learn Mode) */}
                   <div className="flex flex-col gap-2 pt-1 pb-2">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#86868b] dark:text-zinc-400 block text-left">
-                      Select Workspace Mode
+                      {t('selectWorkspaceMode')}
                     </span>
                     <div className="flex bg-[#f2f2f7] dark:bg-zinc-950 p-1 items-center rounded-2xl w-full max-w-sm gap-1 border border-black/[0.04] dark:border-zinc-800/60">
                       <button
@@ -4737,7 +4753,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         }`}
                       >
                         <FileText className="w-3.5 h-3.5 text-neutral-500" />
-                        <span>Summary Mode</span>
+                        <span>{t('summaryMode')}</span>
                       </button>
                       <button
                         type="button"
@@ -4760,7 +4776,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         }`}
                       >
                         <Zap className="w-3.5 h-3.5 text-[#bf5af2] fill-[#bf5af2]" />
-                        <span>Learn Mode</span>
+                        <span>{t('learnMode')}</span>
                         <span className="bg-[#bf5af2]/20 text-[#bf5af2] text-[8px] font-bold px-1.5 py-0.5 rounded uppercase font-mono tracking-wide">AI</span>
                       </button>
                     </div>
@@ -4769,10 +4785,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   {/* Input Source Type Selector Tabs */}
                   <div className="flex flex-wrap gap-1 bg-neutral-100/60 dark:bg-zinc-950 p-1 rounded-2xl border border-black/[0.04] dark:border-zinc-800/60">
                     {[
-                      { id: 'video', label: 'YouTube & Video', icon: Video },
-                      { id: 'website', label: 'Website Link', icon: Globe },
-                      { id: 'file', label: 'Documents & Audio', icon: FolderPlus },
-                      { id: 'text', label: 'Raw Text / Notes', icon: FileText }
+                      { id: 'video', label: t('youtubeVideo'), icon: Video },
+                      { id: 'website', label: t('websiteLink'), icon: Globe },
+                      { id: 'file', label: t('documentsAudio'), icon: FolderPlus },
+                      { id: 'text', label: t('rawTextNotes'), icon: FileText }
                     ].map((src) => {
                       const SrcIcon = src.icon;
                       const isSelected = inputSourceType === src.id;
@@ -4803,7 +4819,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <input
                           type="url"
                           required={inputSourceType === 'video'}
-                          placeholder="Paste any YouTube, Vimeo, mp4, web links..."
+                          placeholder={t('pasteVideoPlaceholder')}
                           value={videoUrl}
                           onChange={(e) => setVideoUrl(e.target.value)}
                           className="w-full pl-11 pr-4 py-4 bg-neutral-100/60 dark:bg-zinc-900/60 hover:bg-neutral-100/90 dark:hover:bg-zinc-900 focus:bg-white dark:focus:bg-zinc-900 text-[#1d1d1f] dark:text-zinc-100 rounded-2xl border border-neutral-350 dark:border-zinc-800 hover:border-neutral-400 focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
@@ -4819,7 +4835,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <input
                           type="url"
                           required={inputSourceType === 'website'}
-                          placeholder="Paste website or article link (e.g. https://example.com/research-paper)"
+                          placeholder={t('pasteWebsitePlaceholder')}
                           value={inputWebsiteUrl}
                           onChange={(e) => setInputWebsiteUrl(e.target.value)}
                           className="w-full pl-11 pr-4 py-4 bg-neutral-100/60 dark:bg-zinc-900/60 hover:bg-neutral-100/90 dark:hover:bg-zinc-900 focus:bg-white dark:focus:bg-zinc-900 text-[#1d1d1f] dark:text-zinc-100 rounded-2xl border border-neutral-350 dark:border-zinc-800 hover:border-neutral-400 focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
@@ -4878,8 +4894,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           />
                           <label htmlFor="file-upload-input" className="cursor-pointer space-y-1.5 block">
                             <FolderPlus className="w-8 h-8 text-neutral-400 mx-auto" />
-                            <p className="text-xs font-semibold text-neutral-700 dark:text-zinc-300">Drag & drop files here or <span className="text-[#0071e3] hover:underline font-bold">browse files</span></p>
-                            <p className="text-[10px] text-neutral-400">Supports PDF, DOCX, PPTX, XLSX, MP3, MP4, TXT (Simultaneous multi-upload)</p>
+                            <p className="text-xs font-semibold text-neutral-700 dark:text-zinc-300">
+                              {outputLanguage === 'en' ? (
+                                <>Drag & drop files here or <span className="text-[#0071e3] hover:underline font-bold">browse files</span></>
+                              ) : (
+                                <>اسحب وأسقط الملفات هنا أو <span className="text-[#0071e3] hover:underline font-bold">تصفح الملفات</span></>
+                              )}
+                            </p>
+                            <p className="text-[10px] text-neutral-400">{t('supportsFiles')}</p>
                           </label>
                         </div>
 
@@ -4912,7 +4934,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <div className="relative flex-1">
                         <textarea
                           required={inputSourceType === 'text'}
-                          placeholder="Paste raw transcripts, book summaries, custom articles, meeting notes, script snippets..."
+                          placeholder={t('pasteRawTextPlaceholder')}
                           rows={4}
                           value={pastedContentText}
                           onChange={(e) => setPastedContentText(e.target.value)}
@@ -4939,19 +4961,19 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       {loading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Processing...
+                          <span>{outputLanguage === 'en' ? 'Processing...' : 'جاري المعالجة...'}</span>
                         </>
                       ) : (
                         <>
                           {learnMode ? (
                             <>
                               <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
-                              <span>👉 Start Learning</span>
+                              <span>{t('startLearning')}</span>
                             </>
                           ) : (
                             <>
                               <Sparkles className="w-4 h-4" />
-                              <span>Analyze Source</span>
+                              <span>{t('analyzeSource')}</span>
                             </>
                           )}
                         </>
@@ -4964,12 +4986,12 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     {isPremium || usageTracker.vipBypassActive ? (
                       <span className="text-emerald-600 font-semibold flex items-center gap-1.5">
                         <CheckCircle className="w-3.5 h-3.5 fill-emerald-50 text-emerald-600 shrink-0" />
-                        ✨ Unlimited summary engine activated (Premium/VIP Plan)
+                        {t('unlimitedSummaryEngine')}
                       </span>
                     ) : (
                       <span className="text-[#86868b] font-light flex items-center gap-1.5 font-sans">
                         <AlertCircle className="w-3.5 h-3.5 text-[#86868b] shrink-0" />
-                        <span>guest allocation remaining: <strong className="font-semibold text-neutral-800">{usageTracker.remaining}</strong> of <strong className="font-semibold text-neutral-800">{usageTracker.limit}</strong> daily video analyses.</span>
+                        <span>{t('guestAllocationRemaining')}<strong className="font-semibold text-neutral-800">{usageTracker.remaining}</strong>{t('of')}<strong className="font-semibold text-neutral-800">{usageTracker.limit}</strong>{t('dailyAnalyses')}</span>
                       </span>
                     )}
 
@@ -4978,14 +5000,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       onClick={() => setCurrentScreen('billing')}
                       className="text-[#0071e3] hover:underline font-semibold text-left sm:text-right cursor-pointer"
                     >
-                      {isPremium || usageTracker.vipBypassActive ? 'Manage Connection Hub →' : 'Upgrade to bypass limits →'}
+                      {isPremium || usageTracker.vipBypassActive ? t('manageConnectionHub') : t('upgradeBypassLimits')}
                     </button>
                   </div>
 
                   {/* Synthesis Tone Preset Selection Gated Module */}
                   <div className="space-y-2 pt-2">
                     <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
-                      Synthesis Tone Preset (Locked Conversion Module)
+                      {t('synthesisTone')}
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <button
@@ -4997,8 +5019,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
                         }`}
                       >
-                        <span>Short Script</span>
-                        <span className={`text-[8px] font-mono leading-none font-bold px-1.5 py-0.5 rounded ${selectedTone === 'standard' ? 'bg-white/20 text-white' : 'bg-black/[0.04] text-[#86868b]'}`}>Free</span>
+                        <span>{t('shortScript')}</span>
+                        <span className={`text-[8px] font-mono leading-none font-bold px-1.5 py-0.5 rounded ${selectedTone === 'standard' ? 'bg-white/20 text-white' : 'bg-black/[0.04] text-[#86868b]'}`}>{t('free')}</span>
                       </button>
 
                       <button
@@ -5020,9 +5042,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       >
                         <span className="flex items-center gap-1.5 min-w-0">
                           {!isPremium && <Lock className="w-3 h-3 text-[#86868b] shrink-0" />}
-                          <span className="truncate">Academic Study</span>
+                          <span className="truncate">{t('academicStudy')}</span>
                         </span>
-                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">PRO</span>
+                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">{t('pro')}</span>
                       </button>
 
                       <button
@@ -5044,9 +5066,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       >
                         <span className="flex items-center gap-1.5 min-w-0">
                           {!isPremium && <Lock className="w-3 h-3 text-[#86868b] shrink-0" />}
-                          <span className="truncate">Viral Bulletin</span>
+                          <span className="truncate">{t('viralBulletin')}</span>
                         </span>
-                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">PRO</span>
+                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">{t('pro')}</span>
                       </button>
 
                       <button
@@ -5071,9 +5093,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       >
                         <span className="flex items-center gap-1.5 min-w-0">
                           {!isPremium && <Lock className="w-3 h-3 text-[#86868b] shrink-0" />}
-                          <span className="truncate">Shortened Video</span>
+                          <span className="truncate">{t('shortenedVideo')}</span>
                         </span>
-                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">PRO</span>
+                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">{t('pro')}</span>
                       </button>
                     </div>
                   </div>
@@ -5085,17 +5107,17 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       onClick={() => setShowCustomTranscriptField(!showCustomTranscriptField)}
                       className="text-xs text-[#515154] hover:text-[#1d1d1f] transition duration-200 inline-flex items-center gap-1 font-medium bg-black/[0.03] hover:bg-black/[0.05] px-3 py-1.5 rounded-full border border-black/[0.02] cursor-pointer"
                     >
-                      <span>{showCustomTranscriptField ? 'Hide' : 'Show'} Custom Transcript override (Optional)</span>
+                      <span>{showCustomTranscriptField ? t('hideCustomTranscript') : t('showCustomTranscript')}</span>
                       {showCustomTranscriptField ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                     </button>
 
                     {showCustomTranscriptField && (
                       <div className="mt-3 space-y-1.5 animate-fadeIn">
                         <label className="block text-[10px] font-mono font-bold uppercase text-[#86868b]">
-                          Pasted Transcript Text Block
+                          {t('pastedTranscriptLabel')}
                         </label>
                         <textarea
-                          placeholder="If standard subtitle scraping hits a barrier or is gated by YouTube restrictions, paste the text transcript here. We'll summarize your custom text directly!"
+                          placeholder={t('transcriptHelp')}
                           rows={4}
                           value={customTranscript}
                           onChange={(e) => setCustomTranscript(e.target.value)}
@@ -5108,7 +5130,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   {/* Target Language Selector */}
                   <div className="space-y-2 pt-2">
                     <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
-                      Target Output Language (Translational Synthesis)
+                      {t('targetLanguage')}
                     </label>
                     <div className="grid grid-cols-2 gap-2">
                       <button
@@ -5121,7 +5143,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         }`}
                       >
                         <span className="text-sm">🇺🇸</span>
-                        <span>English (Default)</span>
+                        <span>{t('englishDefault')}</span>
                       </button>
 
                       <button
@@ -5134,7 +5156,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         }`}
                       >
                         <span className="text-sm">🇸🇦</span>
-                        <span>Arabic (العربية)</span>
+                        <span>{t('arabicLanguage')}</span>
                       </button>
                     </div>
                   </div>
@@ -5398,13 +5420,13 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             <div className="bg-white rounded-3xl p-6 border border-black/[0.04] shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-5">
               <div>
                 <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#86868b]">
-                  Ready-To-Test Models
+                  {t('readyToTest')}
                 </span>
                 <h3 className="text-lg font-bold font-display text-[#1d1d1f]">
-                  Curated Quick Demos
+                  {t('curatedDemos')}
                 </h3>
                 <p className="text-[#86868b] text-xs mt-1 font-light">
-                  Click a real demo card below to preview processed assets instantly.
+                  {t('clickDemoCard')}
                 </p>
               </div>
 
@@ -5438,7 +5460,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         {demo.metadata.author}
                       </div>
                       <h4 className="text-[#1d1d1f] text-xs font-semibold line-clamp-2 leading-tight group-hover:text-black transition">
-                        {demo.metadata.title}
+                        {outputLanguage === 'ar' && demo.metadata.title.includes("Steve Jobs")
+                          ? t('steveJobs')
+                          : outputLanguage === 'ar' && demo.metadata.title.includes("Simon Sinek")
+                          ? t('simonSinek')
+                          : demo.metadata.title}
                       </h4>
                     </div>
                   </button>
@@ -5451,10 +5477,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <span className="inline-flex items-center gap-1 bg-indigo-100/80 px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold text-indigo-700 uppercase">
-                    ⚡ viral referral invite
+                    {t('viralReferralInvite')}
                   </span>
                   <h3 className="text-base font-bold font-display text-neutral-900 mt-1.5">
-                    Unlock Free Premium Access
+                    {t('unlockPremium')}
                   </h3>
                 </div>
                 <button
@@ -5464,17 +5490,17 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   }}
                   className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer bg-white border border-indigo-150 shadow-sm px-2.5 py-1.5 rounded-xl transition shrink-0 active:scale-95"
                 >
-                  🏆 Leaderboard
+                  {t('leaderboard')}
                 </button>
               </div>
               <p className="text-[#86868b] text-[11px] mt-0.5 font-light leading-relaxed font-sans">
-                Refer just <strong className="font-semibold text-neutral-800">2 friends</strong> to bypass all guest limitations and unlock daily unlimited processing!
+                {t('referralBonusDesc')}
               </p>
 
               {/* Progress Milestones */}
               <div className="bg-white/80 border border-indigo-100 p-3.5 rounded-2xl space-y-2 font-sans">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-neutral-600">Referred Visitors</span>
+                  <span className="font-medium text-neutral-600">{t('referredVisitors')}</span>
                   <span className="font-bold text-indigo-700 font-mono">{referralCount} / 2</span>
                 </div>
                 
@@ -5489,11 +5515,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 {referralUnlocked || referralCount >= 2 ? (
                   <p className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
                     <CheckCircle className="w-3.5 h-3.5 fill-emerald-50 text-emerald-600 shrink-0" />
-                    <span>Unlocked! Unlimited summaries active!</span>
+                    <span>{t('unlockedPremium')}</span>
                   </p>
                 ) : (
                   <p className="text-[10px] text-indigo-600 font-medium">
-                    🎯 Need {Math.max(0, 2 - referralCount)} more referrals to unlock premium status.
+                    {t('needMoreReferrals', { count: Math.max(0, 2 - referralCount) })}
                   </p>
                 )}
               </div>
@@ -5501,7 +5527,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               {/* Referral Code Share Action */}
               <div className="space-y-1.5 font-sans text-left">
                 <label className="block text-[10px] font-mono font-bold text-neutral-500 uppercase">
-                  Your Unique Referral Invite link
+                  {t('uniqueReferralLink')}
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -5545,10 +5571,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   <div>
                     <h3 className="text-base font-bold font-display text-[#1d1d1f] dark:text-zinc-50 flex items-center gap-1.5">
                       <History className="w-4 h-4 text-[#86868b] dark:text-zinc-400" />
-                      Summaries Library
+                      {t('summariesLibrary')}
                     </h3>
                     <p className="text-[#86868b] dark:text-zinc-400 text-[11px] mt-0.5 font-light">
-                      {isSelectingForStack ? 'Select 2+ summaries for Stack' : 'Your persistent offline sandbox shelf.'}
+                      {isSelectingForStack ? (outputLanguage === 'en' ? 'Select 2+ summaries for Stack' : 'اختر ملخصين أو أكثر لإنشاء حزمة') : t('persistentShelf')}
                     </p>
                   </div>
                   
@@ -5564,7 +5590,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           className="text-[10px] bg-indigo-50 dark:bg-indigo-950 hover:bg-indigo-100 border border-indigo-200 dark:border-indigo-900 text-indigo-700 dark:text-indigo-400 font-bold px-2 py-1 rounded-lg cursor-pointer transition flex items-center gap-1"
                         >
                           <Sparkles className="w-3 h-3 text-indigo-600 dark:text-indigo-450" />
-                          <span>Create Stack</span>
+                          <span>{t('createStack')}</span>
                         </button>
                       ) : (
                         <button
@@ -5575,7 +5601,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           }}
                           className="text-[10px] text-neutral-500 hover:text-neutral-700 dark:text-zinc-400 dark:hover:text-zinc-200 font-semibold cursor-pointer transition"
                         >
-                          Cancel
+                          {outputLanguage === 'en' ? 'Cancel' : 'إلغاء'}
                         </button>
                       )}
                     </div>
@@ -5588,7 +5614,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-neutral-400 dark:text-zinc-500" />
                     <input
                       type="text"
-                      placeholder="Search title, author, or summary content..."
+                      placeholder={outputLanguage === 'en' ? 'Search title, author, or summary content...' : 'بحث في العنوان، الكاتب، أو محتوى التلخيص...'}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-9 pr-3 py-2 text-xs bg-neutral-100/60 dark:bg-zinc-950/60 border border-neutral-200 dark:border-zinc-800 rounded-xl outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/5 transition text-neutral-800 dark:text-zinc-100 placeholder:text-neutral-400"
@@ -6738,7 +6764,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                   }}
                                   className="text-xs text-neutral-500 hover:text-neutral-850 font-semibold cursor-pointer"
                                 >
-                                  Restart Quiz
+                                  {t('restartQuiz')}
                                 </button>
                               </div>
                             )}
@@ -6748,7 +6774,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         {/* What You Should Remember Summary Section */}
                         <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-250 rounded-2xl p-5 space-y-2.5 pt-3">
                           <h4 className="text-xs font-bold text-amber-950 flex items-center gap-1.5 font-display uppercase tracking-wider">
-                            🌟 What You Should Remember Summary
+                            {t('shouldRemember')}
                           </h4>
                           <div className="text-xs leading-relaxed text-amber-900 font-sans text-left ml-2 whitespace-pre-line">
                             {activeSummary.rememberSummary}
@@ -6764,14 +6790,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     {/* Secondary Horizontal Interactive Tabs Menu styled as slider */}
                     <div className="flex bg-black/[0.04] dark:bg-zinc-900 p-1 items-center rounded-2xl overflow-x-auto gap-1 mb-6 scrollbar-none border border-black/[0.01] dark:border-zinc-800/60">
                   {[
-                    { id: 'overview', label: 'Summary', icon: BookOpen },
-                    { id: 'chapters', label: 'Timeline', icon: Video },
-                    { id: 'mindmap', label: 'Mind Map', icon: Network },
-                    { id: 'quiz', label: 'Quiz', icon: Award },
-                    { id: 'monetize', label: 'Repurposing', icon: Share2 },
-                    { id: 'reel', label: 'Short Video', icon: Sparkles },
-                    { id: 'chat', label: 'AI Chat', icon: MessageSquare },
-                    { id: 'export', label: 'Export', icon: Download },
+                    { id: 'overview', label: t('summaryTab'), icon: BookOpen },
+                    { id: 'chapters', label: t('timelineTab'), icon: Video },
+                    { id: 'mindmap', label: t('mindmapTab'), icon: Network },
+                    { id: 'quiz', label: t('quizTab'), icon: Award },
+                    { id: 'monetize', label: t('repurposingTab'), icon: Share2 },
+                    { id: 'reel', label: t('shortVideoTab'), icon: Sparkles },
+                    { id: 'chat', label: t('aiChatTab'), icon: MessageSquare },
+                    { id: 'export', label: t('exportTab'), icon: Download },
                   ].map((tab) => {
                     const TabIcon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -12141,12 +12167,12 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               trackGAEvent?.('support_chat_opened', { timestamp: new Date().toISOString() });
             }}
             className="bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-full p-3.5 shadow-xl flex items-center gap-2 transition duration-200 cursor-pointer scale-100 hover:scale-105 shadow-blue-500/10 border border-blue-400/20 ml-auto"
-            title="Zipytiny AI Customer Support"
+            title={t('supportHeaderTitle')}
           >
             <MessageSquare className="w-5 h-5 text-white animate-bounce" />
-            <span className="text-xs font-semibold pr-1.5">AI Customer Support</span>
+            <span className="text-xs font-semibold pr-1.5">{t('aiSupportLabel')}</span>
             <span className="bg-emerald-500 text-black font-bold font-mono text-[9px] px-1.5 py-0.5 rounded-full uppercase leading-none animate-pulse">
-              Online
+              {t('onlineAiSupport')}
             </span>
           </button>
         ) : (
@@ -12164,10 +12190,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 </div>
                 <div>
                   <h4 className="text-xs font-extrabold tracking-wider uppercase font-mono">
-                    Zipytiny AI Support
+                    {t('supportHeaderTitle')}
                   </h4>
                   <span className="text-[10px] text-blue-100 block -mt-0.5">
-                    {isSupportMinimized ? '💬 Click to expand chat' : 'Elite Knowledge Agent'}
+                    {isSupportMinimized ? (outputLanguage === 'en' ? '💬 Click to expand chat' : '💬 انقر لتوسيع الدردشة') : (outputLanguage === 'en' ? 'Elite Knowledge Agent' : 'خبير الدعم الفني بالذكاء الاصطناعي')}
                   </span>
                 </div>
               </div>
