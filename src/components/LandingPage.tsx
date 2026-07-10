@@ -3,7 +3,8 @@ import {
   Sparkles, Zap, ArrowRight, CheckCircle, FileText, Globe, MessageSquare, 
   Video, Play, Bookmark, Headphones, Users, ChevronDown, Download, Award,
   Upload, Brain, Share2, Star, TrendingUp, Clock, Shield, Cpu,
-  BarChart2, Layers, BookOpen, Mic, PenTool, Hash, ChevronRight
+  BarChart2, Layers, BookOpen, Mic, PenTool, Hash, ChevronRight,
+  Youtube, Presentation, HelpCircle
 } from 'lucide-react';
 import { CinematicExplainer } from './CinematicExplainer';
 
@@ -49,7 +50,7 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
   // 🌟 Automated & Interactive Hero AI Flow Simulation
   const [demoStep, setDemoStep] = useState<'before' | 'analyzing' | 'generating' | 'after'>('before');
   const [demoProgress, setDemoProgress] = useState(0);
-  const [demoActiveTab, setDemoActiveTab] = useState<'summary' | 'key_concepts' | 'mindmap' | 'flashcard'>('summary');
+  const [demoActiveTab, setDemoActiveTab] = useState<'summary' | 'notes' | 'mindmap' | 'flashcard' | 'quiz'>('summary');
   const [flashcardFlipped, setFlashcardFlipped] = useState(false);
   const [isPlayingFlow, setIsPlayingFlow] = useState(true);
 
@@ -59,6 +60,7 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
 
     let timer: NodeJS.Timeout;
     let progressTimer: NodeJS.Timeout;
+    let cycleInterval: NodeJS.Timeout;
 
     if (demoStep === 'before') {
       timer = setTimeout(() => {
@@ -90,18 +92,34 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
         }
       }, 150);
     } else if (demoStep === 'after') {
-      // Stay on the finished state for 12 seconds to let the user play, then loop back
-      timer = setTimeout(() => {
-        setDemoStep('before');
-        setDemoProgress(0);
-        setDemoActiveTab('summary');
-        setFlashcardFlipped(false);
-      }, 12000);
+      // Auto cycle tabs to demonstrate all generated workspaces dynamically!
+      let subStep = 0;
+      cycleInterval = setInterval(() => {
+        subStep += 1;
+        if (subStep === 1) {
+          setDemoActiveTab('notes');
+        } else if (subStep === 2) {
+          setDemoActiveTab('mindmap');
+        } else if (subStep === 3) {
+          setDemoActiveTab('flashcard');
+          setFlashcardFlipped(false);
+        } else if (subStep === 4) {
+          setFlashcardFlipped(true);
+        } else if (subStep === 5) {
+          setDemoActiveTab('quiz');
+        } else if (subStep === 6) {
+          setDemoStep('before');
+          setDemoProgress(0);
+          setDemoActiveTab('summary');
+          setFlashcardFlipped(false);
+        }
+      }, 3200);
     }
 
     return () => {
       clearTimeout(timer);
       clearInterval(progressTimer);
+      clearInterval(cycleInterval);
     };
   }, [demoStep, isPlayingFlow]);
 
@@ -180,7 +198,7 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             
             {/* Left Column: Title, Copy, URL input box, and CTA */}
-            <div className="col-span-1 lg:col-span-7 space-y-6 text-left">
+            <div className="col-span-1 lg:col-span-6 space-y-6 text-left">
               <div className="space-y-3.5">
                 <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/10 dark:bg-[#0071e3]/20 px-3 py-1 rounded-full text-[11px] font-mono font-medium text-[#0071e3] dark:text-sky-400 w-fit">
                   <Sparkles className="w-3.5 h-3.5 animate-pulse" />
@@ -208,7 +226,7 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                 <button
                   type="button"
                   onClick={() => {
-                    const inputEl = document.querySelector('input[placeholder*="YouTube video URL"]') as HTMLInputElement;
+                    const inputEl = document.querySelector('input[placeholder*="YouTube"]') as HTMLInputElement;
                     if (inputEl) {
                       inputEl.focus();
                       inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -252,7 +270,7 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                     <Video className="w-5 h-5 text-rose-500 shrink-0" />
                     <input
                       type="text"
-                      placeholder="Paste any YouTube video URL (e.g. https://youtube.com/watch?v=...)"
+                      placeholder="Paste a YouTube video URL to instantly create your AI learning workspace..."
                       value={ytUrl}
                       onChange={(e) => {
                         setYtUrl(e.target.value);
@@ -265,16 +283,40 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                     type="submit"
                     className="bg-[#0071e3] hover:bg-[#0077ed] text-white px-6 py-3.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0 group cursor-pointer active:scale-98 shadow-sm"
                   >
-                    <span>Generate Learning Workspace</span>
+                    <span>Generate My Learning Workspace</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </form>
+
+                {/* 📂 Small monochrome supported formats icons */}
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 mt-3 ml-3 text-[11px] font-mono font-medium text-neutral-400 dark:text-zinc-500 select-none">
+                  <span className="uppercase font-bold tracking-wider text-[9px] text-neutral-400 dark:text-zinc-500">Supports:</span>
+                  <div className="flex items-center gap-1 text-neutral-500 dark:text-zinc-400 transition-colors hover:text-neutral-800 dark:hover:text-zinc-200">
+                    <Youtube className="w-3.5 h-3.5 opacity-70" />
+                    <span>YouTube</span>
+                  </div>
+                  <span className="opacity-30">•</span>
+                  <div className="flex items-center gap-1 text-neutral-500 dark:text-zinc-400 transition-colors hover:text-neutral-800 dark:hover:text-zinc-200">
+                    <FileText className="w-3.5 h-3.5 opacity-70" />
+                    <span>PDF</span>
+                  </div>
+                  <span className="opacity-30">•</span>
+                  <div className="flex items-center gap-1 text-neutral-500 dark:text-zinc-400 transition-colors hover:text-neutral-800 dark:hover:text-zinc-200">
+                    <Presentation className="w-3.5 h-3.5 opacity-70" />
+                    <span>PowerPoint</span>
+                  </div>
+                  <span className="opacity-30">•</span>
+                  <div className="flex items-center gap-1 text-neutral-500 dark:text-zinc-400 transition-colors hover:text-neutral-800 dark:hover:text-zinc-200">
+                    <FileText className="w-3.5 h-3.5 opacity-70" />
+                    <span>DOCX</span>
+                  </div>
+                </div>
 
                 {urlError && (
                   <p className="text-xs text-rose-500 mt-2 ml-3 font-medium animate-fadeIn">{urlError}</p>
                 )}
 
-                <p className="text-xs text-[#86868b] dark:text-zinc-400 mt-3 ml-3 font-light flex items-center gap-2">
+                <p className="text-xs text-[#86868b] dark:text-zinc-400 mt-3.5 ml-3 font-light flex items-center gap-2">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   <span>Instant generation.</span>
                   <span className="font-semibold text-neutral-800 dark:text-zinc-300">No account required.</span>
@@ -317,7 +359,7 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                     ))}
                   </div>
                   <span className="text-xs font-bold text-neutral-700 dark:text-zinc-350">
-                    Loved by Early Users • Trusted by Students, Professionals & Lifelong Learners
+                    Growing Community of Learners
                   </span>
                 </div>
                 
@@ -340,7 +382,7 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
             </div>
 
             {/* Right Column: Live Premium Interactive Wow-Moment Mockup */}
-            <div className="col-span-1 lg:col-span-5 relative mt-6 lg:mt-0 font-sans">
+            <div className="col-span-1 lg:col-span-6 relative mt-6 lg:mt-0 font-sans">
               <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500 via-indigo-500 to-[#0071e3] rounded-3xl opacity-15 blur-2xl dark:opacity-25 animate-pulse"></div>
               
               <div className="bg-white dark:bg-zinc-900 border border-black/[0.05] dark:border-zinc-800/80 rounded-3xl shadow-2xl overflow-hidden relative z-10 transition-all duration-300 hover:shadow-indigo-500/10 dark:hover:shadow-indigo-500/5">
@@ -497,12 +539,13 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                       </div>
 
                       {/* Workspace Tabs */}
-                      <div className="flex bg-neutral-100 dark:bg-zinc-950 p-1 gap-1 rounded-xl border border-black/[0.02] dark:border-zinc-800/60">
+                      <div className="flex bg-neutral-100 dark:bg-zinc-950 p-1 gap-1 rounded-xl border border-black/[0.02] dark:border-zinc-800/60 overflow-x-auto scrollbar-none">
                         {[
                           { id: 'summary', label: 'Summary' },
-                          { id: 'key_concepts', label: 'Key Concepts' },
+                          { id: 'notes', label: 'Notes' },
                           { id: 'mindmap', label: 'Mind Map' },
-                          { id: 'flashcard', label: 'Flashcard' }
+                          { id: 'flashcard', label: 'Flashcards' },
+                          { id: 'quiz', label: 'Quiz' }
                         ].map((tab) => (
                           <button
                             key={tab.id}
@@ -511,7 +554,7 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                               // Pause autoplays to allow interactive exploration
                               setIsPlayingFlow(false);
                             }}
-                            className={`flex-1 py-1.5 text-[10px] font-extrabold rounded-lg transition-all cursor-pointer ${
+                            className={`flex-1 py-1.5 px-2 text-[10px] font-extrabold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                               demoActiveTab === tab.id
                                 ? 'bg-white dark:bg-zinc-900 text-neutral-900 dark:text-zinc-100 shadow-sm border border-black/[0.02] dark:border-zinc-800'
                                 : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-950 dark:hover:text-zinc-200'
@@ -540,23 +583,25 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                           </div>
                         )}
 
-                        {demoActiveTab === 'key_concepts' && (
+                        {demoActiveTab === 'notes' && (
                           <div className="space-y-2 animate-fadeIn">
-                            <h4 className="text-xs font-bold text-neutral-900 dark:text-zinc-150 flex items-center gap-1.5 mb-2">
-                              <Award className="w-3.5 h-3.5 text-indigo-500" />
-                              <span>Actionable Core Takeaways</span>
+                            <h4 className="text-xs font-bold text-neutral-900 dark:text-zinc-150 flex items-center gap-1.5 mb-1">
+                              <BookOpen className="w-3.5 h-3.5 text-indigo-500" />
+                              <span>Core Lecture Notes</span>
                             </h4>
-                            <div className="space-y-1.5">
-                              {[
-                                { title: 'Machine Learning', desc: 'Systems that learn and improve automatically through experience.' },
-                                { title: 'Neural Networks', desc: 'Connected algorithmic layers optimized for processing sensory signals.' },
-                                { title: 'Deep Learning', desc: 'Complex multi-layered structures built for precise feature extraction.' }
-                              ].map((concept, idx) => (
-                                <div key={idx} className="text-[11px]">
-                                  <span className="font-bold text-neutral-800 dark:text-zinc-200">{concept.title}: </span>
-                                  <span className="text-neutral-500 dark:text-zinc-400 font-light">{concept.desc}</span>
-                                </div>
-                              ))}
+                            <div className="space-y-2 text-[11px]">
+                              <div>
+                                <span className="font-bold text-neutral-800 dark:text-zinc-200">1. Core Paradigm:</span>
+                                <p className="text-neutral-500 dark:text-zinc-400 font-light ml-3 leading-tight mt-0.5">
+                                  Traditional coding relies on explicit rules. Machine learning instead infers those rules from input-output training patterns.
+                                </p>
+                              </div>
+                              <div>
+                                <span className="font-bold text-neutral-800 dark:text-zinc-200">2. Weight Optimization:</span>
+                                <p className="text-neutral-500 dark:text-zinc-400 font-light ml-3 leading-tight mt-0.5">
+                                  Backpropagation calculates error gradients backwards through neural layers, tuning node weights via gradient descent.
+                                </p>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -582,7 +627,7 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                           <div className="animate-fadeIn flex flex-col items-center justify-center py-2 h-full">
                             <div 
                               onClick={() => setFlashcardFlipped(!flashcardFlipped)}
-                              className="w-full max-w-xs bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 hover:border-[#0071e3] dark:hover:border-sky-400 rounded-xl p-4 shadow-sm cursor-pointer transition-all duration-300 hover:scale-[1.02] relative min-h-[140px] flex flex-col justify-between"
+                              className="w-full max-w-xs bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 hover:border-[#0071e3] dark:hover:border-sky-400 rounded-xl p-3 shadow-sm cursor-pointer transition-all duration-300 hover:scale-[1.02] relative min-h-[140px] flex flex-col justify-between"
                             >
                               <div className="flex justify-between items-center text-[8px] font-mono font-bold uppercase tracking-widest text-[#86868b] dark:text-zinc-500">
                                 <span>Flashcard #1 of 25</span>
@@ -603,6 +648,27 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
 
                               <div className="text-[9px] text-[#86868b] dark:text-zinc-500 text-center font-semibold font-sans mt-1">
                                 🔄 Click card to flip and reveal answer
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {demoActiveTab === 'quiz' && (
+                          <div className="space-y-2 animate-fadeIn text-[11px] text-left">
+                            <h4 className="text-xs font-bold text-neutral-900 dark:text-zinc-150 flex items-center gap-1.5 mb-1">
+                              <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
+                              <span>Comprehension Check: Question 1 of 10</span>
+                            </h4>
+                            <p className="font-semibold text-neutral-800 dark:text-zinc-200 mb-1 leading-tight">
+                              What is the main role of weights in a neural network?
+                            </p>
+                            <div className="space-y-1">
+                              <div className="p-1.5 rounded-lg border border-neutral-200 dark:border-zinc-850 text-neutral-500 dark:text-zinc-400 font-medium text-[10px]">
+                                A) To serve as absolute labels for training data
+                              </div>
+                              <div className="p-1.5 rounded-lg border border-emerald-500 dark:border-emerald-500/80 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 font-semibold flex items-center justify-between text-[10px]">
+                                <span>B) To represent connection strength & adjust during training</span>
+                                <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                               </div>
                             </div>
                           </div>
