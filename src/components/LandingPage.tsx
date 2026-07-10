@@ -341,117 +341,316 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
 
             {/* Right Column: Live Premium Interactive Wow-Moment Mockup */}
             <div className="col-span-1 lg:col-span-5 relative mt-6 lg:mt-0 font-sans">
-              <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-3xl opacity-10 blur-xl dark:opacity-20 animate-pulse"></div>
+              <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500 via-indigo-500 to-[#0071e3] rounded-3xl opacity-15 blur-2xl dark:opacity-25 animate-pulse"></div>
               
-              <div className="bg-white dark:bg-zinc-900 border border-black/[0.05] dark:border-zinc-800 rounded-3xl shadow-2xl overflow-hidden relative z-10 transition-all duration-300 hover:scale-[1.01]">
+              <div className="bg-white dark:bg-zinc-900 border border-black/[0.05] dark:border-zinc-800/80 rounded-3xl shadow-2xl overflow-hidden relative z-10 transition-all duration-300 hover:shadow-indigo-500/10 dark:hover:shadow-indigo-500/5">
                 {/* Mockup Header */}
-                <div className="px-5 py-4 bg-neutral-50 dark:bg-zinc-950 border-b border-black/[0.04] dark:border-zinc-800/80 flex items-center justify-between">
+                <div className="px-5 py-3.5 bg-neutral-50 dark:bg-zinc-950/80 border-b border-black/[0.04] dark:border-zinc-800/80 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-2.5 w-2.5 rounded-full bg-rose-400"></div>
                     <div className="h-2.5 w-2.5 rounded-full bg-amber-400"></div>
                     <div className="h-2.5 w-2.5 rounded-full bg-emerald-400"></div>
                   </div>
-                  <span className="text-[10px] font-mono text-[#86868b] dark:text-zinc-400">zipytiny-learning-transformation.json</span>
-                  <div className="w-8"></div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#86868b] dark:text-zinc-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span>zipytiny-live-demo-engine.json</span>
+                  </div>
+                  <button 
+                    onClick={() => setIsPlayingFlow(!isPlayingFlow)}
+                    className="text-[10px] bg-neutral-100 dark:bg-zinc-850 hover:bg-neutral-200 dark:hover:bg-zinc-800 px-2 py-1 rounded text-neutral-600 dark:text-zinc-300 transition-all active:scale-95 cursor-pointer flex items-center gap-1 font-semibold"
+                  >
+                    <span>{isPlayingFlow ? 'Pause Auto' : 'Play Auto'}</span>
+                  </button>
                 </div>
 
                 {/* Main Content inside the preview block */}
-                <div className="p-6 space-y-6">
+                <div className="p-6 min-h-[380px] flex flex-col justify-between">
                   
-                  {/* BEFORE: Long exhausting lecture */}
-                  <div className="bg-neutral-50 dark:bg-zinc-950/60 rounded-2xl p-4 border border-neutral-150 dark:border-zinc-850/80 text-left relative overflow-hidden group">
-                    <div className="absolute top-0 left-0 bottom-0 w-1 bg-red-500"></div>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="text-[9px] font-bold font-mono text-red-500 uppercase tracking-widest bg-red-500/10 px-2 py-0.5 rounded">BEFORE</span>
-                        <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-200 mt-2 flex items-center gap-1.5">
-                          <Video className="w-4 h-4 text-rose-500" />
-                          <span>2 hour 15 minute lecture</span>
-                        </h4>
-                        <p className="text-[11px] text-[#86868b] dark:text-zinc-400 font-light mt-1">
-                          Tedious video scrubbing, lost focus, and hours spent writing manual notes.
+                  {/* PHASE 1: BEFORE */}
+                  {demoStep === 'before' && (
+                    <div className="space-y-5 animate-fadeIn text-left">
+                      <div className="bg-neutral-50 dark:bg-zinc-950/60 rounded-2xl p-4 border border-neutral-150 dark:border-zinc-850/80 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 bottom-0 w-1.5 bg-rose-500"></div>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-[9px] font-extrabold font-mono text-rose-500 uppercase tracking-widest bg-rose-500/10 dark:bg-rose-500/20 px-2 py-0.5 rounded">
+                              INPUT: EXHAUSTING SOURCE
+                            </span>
+                            <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-200 mt-2.5 flex items-center gap-2">
+                              <Video className="w-4.5 h-4.5 text-rose-500 shrink-0" />
+                              <span>2 Hour 15 Minute Lecture Video</span>
+                            </h4>
+                            <p className="text-[11px] text-[#86868b] dark:text-zinc-400 font-light mt-1.5 leading-relaxed">
+                              Hours of tedious scrubbing, lost focus, and struggle to outline main takeaways or memorize details.
+                            </p>
+                          </div>
+                          <span className="text-[11px] font-mono font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/20 px-2.5 py-1 rounded-lg border border-rose-100 dark:border-rose-900/30 shrink-0">
+                            135 Min
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-center my-1">
+                        <div className="h-8 w-8 rounded-full bg-neutral-100 dark:bg-zinc-800 border border-neutral-200 dark:border-zinc-700 flex items-center justify-center text-[#86868b]">
+                          <ChevronDown className="w-5 h-5 animate-bounce" />
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setDemoStep('analyzing');
+                          setDemoProgress(0);
+                        }}
+                        className="w-full bg-[#0071e3] hover:bg-[#005bb5] text-white p-4 rounded-2xl font-bold text-xs tracking-wide uppercase transition-all duration-300 shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                      >
+                        <Sparkles className="w-4 h-4 text-amber-300 fill-amber-300/25 animate-spin" />
+                        <span>Transcribe & Synthesize with AI</span>
+                      </button>
+
+                      <div className="text-center">
+                        <p className="text-[10px] text-[#86868b] dark:text-zinc-500 font-medium">
+                          Click button or wait to witness the automatic learning transformation.
                         </p>
                       </div>
-                      <span className="text-xs font-mono font-medium text-red-500 whitespace-nowrap bg-red-50 dark:bg-red-950/20 px-2 py-1 rounded-lg border border-red-100 dark:border-red-900/30">135 min video</span>
                     </div>
-                  </div>
+                  )}
 
-                  {/* DOWN ARROW CONNECTOR */}
-                  <div className="flex justify-center -my-3">
-                    <div className="h-7 w-7 rounded-full bg-indigo-50 dark:bg-indigo-950 border border-indigo-150 dark:border-indigo-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400 animate-bounce shadow-sm">
-                      <ChevronDown className="w-4 h-4" />
-                    </div>
-                  </div>
+                  {/* PHASE 2: ANALYZING & GENERATING */}
+                  {(demoStep === 'analyzing' || demoStep === 'generating') && (
+                    <div className="space-y-6 animate-fadeIn text-left my-auto">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-bold text-[#0071e3] dark:text-sky-400 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                            <Cpu className="w-4 h-4 animate-spin" />
+                            {demoStep === 'analyzing' ? 'Analyzing Lecture...' : 'Generating Study Workspace...'}
+                          </span>
+                          <span className="font-mono font-bold text-neutral-800 dark:text-zinc-100">{demoProgress}%</span>
+                        </div>
+                        <div className="w-full bg-neutral-100 dark:bg-zinc-800 h-2 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-gradient-to-r from-[#0071e3] via-indigo-500 to-emerald-500 h-full rounded-full transition-all duration-150"
+                            style={{ width: `${demoProgress}%` }}
+                          ></div>
+                        </div>
+                      </div>
 
-                  {/* AFTER: Beautiful optimized study toolkit */}
-                  <div className="bg-gradient-to-br from-emerald-500/5 via-indigo-500/[0.02] to-transparent dark:from-emerald-950/10 dark:via-transparent dark:to-transparent rounded-2xl p-5 border border-emerald-500/25 dark:border-emerald-500/10 text-left relative">
-                    <div className="absolute top-0 left-0 bottom-0 w-1 bg-emerald-500"></div>
-                    <div className="flex justify-between items-start gap-4">
-                      <div className="space-y-1">
-                        <span className="text-[9px] font-bold font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-0.5 rounded">AFTER WITH ZIPYTINY</span>
-                        <h4 className="text-base font-extrabold text-neutral-900 dark:text-zinc-50 tracking-tight mt-1.5 flex items-center gap-1.5">
-                          <Sparkles className="w-4.5 h-4.5 text-emerald-500 fill-emerald-100 dark:fill-emerald-950" />
-                          <span>Your AI Learning Workspace is Ready</span>
+                      <div className="bg-neutral-50 dark:bg-zinc-950/60 rounded-2xl p-4 border border-neutral-150 dark:border-zinc-850/80 space-y-3.5">
+                        <h4 className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#86868b] dark:text-zinc-500">
+                          Active Pipelines
                         </h4>
+                        <div className="space-y-2.5">
+                          <div className="flex items-center justify-between text-xs font-semibold">
+                            <span className="flex items-center gap-2 text-neutral-700 dark:text-zinc-350">
+                              <span className={`h-2 w-2 rounded-full ${demoProgress >= 25 ? 'bg-emerald-500' : 'bg-[#0071e3] animate-ping'}`}></span>
+                              <span>High-Fidelity Audio Transcription</span>
+                            </span>
+                            <span className="text-[10px] font-mono font-medium text-[#86868b] dark:text-zinc-500">
+                              {demoProgress >= 25 ? 'Complete' : 'Processing...'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs font-semibold">
+                            <span className="flex items-center gap-2 text-neutral-700 dark:text-zinc-350">
+                              <span className={`h-2 w-2 rounded-full ${demoProgress >= 50 ? 'bg-emerald-500' : demoProgress >= 25 ? 'bg-indigo-500 animate-ping' : 'bg-neutral-300 dark:bg-zinc-800'}`}></span>
+                              <span>Core Concepts Synthesis (15 Concepts)</span>
+                            </span>
+                            <span className="text-[10px] font-mono font-medium text-[#86868b] dark:text-zinc-500">
+                              {demoProgress >= 50 ? 'Complete' : demoProgress >= 25 ? 'Extracting...' : 'Pending'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs font-semibold">
+                            <span className="flex items-center gap-2 text-neutral-700 dark:text-zinc-350">
+                              <span className={`h-2 w-2 rounded-full ${demoProgress >= 75 ? 'bg-emerald-500' : demoProgress >= 50 ? 'bg-purple-500 animate-ping' : 'bg-neutral-300 dark:bg-zinc-800'}`}></span>
+                              <span>Mind Map Structure Formulation</span>
+                            </span>
+                            <span className="text-[10px] font-mono font-medium text-[#86868b] dark:text-zinc-500">
+                              {demoProgress >= 75 ? 'Complete' : demoProgress >= 50 ? 'Mapping...' : 'Pending'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs font-semibold">
+                            <span className="flex items-center gap-2 text-neutral-700 dark:text-zinc-350">
+                              <span className={`h-2 w-2 rounded-full ${demoProgress >= 100 ? 'bg-emerald-500' : demoProgress >= 75 ? 'bg-emerald-500 animate-ping' : 'bg-neutral-300 dark:bg-zinc-800'}`}></span>
+                              <span>Interactive Quiz & Flashcard Set</span>
+                            </span>
+                            <span className="text-[10px] font-mono font-medium text-[#86868b] dark:text-zinc-500">
+                              {demoProgress >= 100 ? 'Complete' : demoProgress >= 75 ? 'Compiling...' : 'Pending'}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
+                  )}
 
-                    {/* Features checklist */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-2 mt-4 text-[11px] font-semibold text-neutral-700 dark:text-zinc-300">
-                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800">
-                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>Executive Summary</span>
+                  {/* PHASE 3: AFTER (INTERACTIVE WORKSPACE) */}
+                  {demoStep === 'after' && (
+                    <div className="space-y-4 animate-fadeIn text-left">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-extrabold font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-widest bg-emerald-500/10 dark:bg-emerald-500/20 px-2.5 py-0.5 rounded">
+                          ✓ COMPLETED AI WORKSPACE
+                        </span>
+                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>Saved 2 Hours</span>
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800">
-                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>15 Key Concepts</span>
+
+                      {/* Workspace Tabs */}
+                      <div className="flex bg-neutral-100 dark:bg-zinc-950 p-1 gap-1 rounded-xl border border-black/[0.02] dark:border-zinc-800/60">
+                        {[
+                          { id: 'summary', label: 'Summary' },
+                          { id: 'key_concepts', label: 'Key Concepts' },
+                          { id: 'mindmap', label: 'Mind Map' },
+                          { id: 'flashcard', label: 'Flashcard' }
+                        ].map((tab) => (
+                          <button
+                            key={tab.id}
+                            onClick={() => {
+                              setDemoActiveTab(tab.id as any);
+                              // Pause autoplays to allow interactive exploration
+                              setIsPlayingFlow(false);
+                            }}
+                            className={`flex-1 py-1.5 text-[10px] font-extrabold rounded-lg transition-all cursor-pointer ${
+                              demoActiveTab === tab.id
+                                ? 'bg-white dark:bg-zinc-900 text-neutral-900 dark:text-zinc-100 shadow-sm border border-black/[0.02] dark:border-zinc-800'
+                                : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-950 dark:hover:text-zinc-200'
+                            }`}
+                          >
+                            {tab.label}
+                          </button>
+                        ))}
                       </div>
-                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800">
-                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>Interactive Mind Map</span>
+
+                      {/* Tab Contents */}
+                      <div className="bg-neutral-50 dark:bg-zinc-950/40 border border-neutral-150 dark:border-zinc-850 rounded-2xl p-4 min-h-[220px] max-h-[220px] overflow-y-auto scrollbar-thin flex flex-col justify-between">
+                        
+                        {demoActiveTab === 'summary' && (
+                          <div className="space-y-2 animate-fadeIn">
+                            <h4 className="text-xs font-bold text-neutral-900 dark:text-zinc-150 flex items-center gap-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-[#0071e3] dark:text-sky-400" />
+                              <span>Executive Briefing: Modern AI Architecture</span>
+                            </h4>
+                            <p className="text-[11px] leading-relaxed text-neutral-600 dark:text-zinc-400 font-light">
+                              Artificial Intelligence enables machines to perform tasks that normally require human intelligence. This 135-minute lecture breaks down artificial neural networks, deep learning mechanics, and historical milestones. Deep learning models replicate cognitive processes, adjusting weighted nodes to optimize error functions.
+                            </p>
+                            <p className="text-[10px] text-[#86868b] dark:text-zinc-500 font-medium">
+                              → Synthesized into a comprehensive, key concept study system.
+                            </p>
+                          </div>
+                        )}
+
+                        {demoActiveTab === 'key_concepts' && (
+                          <div className="space-y-2 animate-fadeIn">
+                            <h4 className="text-xs font-bold text-neutral-900 dark:text-zinc-150 flex items-center gap-1.5 mb-2">
+                              <Award className="w-3.5 h-3.5 text-indigo-500" />
+                              <span>Actionable Core Takeaways</span>
+                            </h4>
+                            <div className="space-y-1.5">
+                              {[
+                                { title: 'Machine Learning', desc: 'Systems that learn and improve automatically through experience.' },
+                                { title: 'Neural Networks', desc: 'Connected algorithmic layers optimized for processing sensory signals.' },
+                                { title: 'Deep Learning', desc: 'Complex multi-layered structures built for precise feature extraction.' }
+                              ].map((concept, idx) => (
+                                <div key={idx} className="text-[11px]">
+                                  <span className="font-bold text-neutral-800 dark:text-zinc-200">{concept.title}: </span>
+                                  <span className="text-neutral-500 dark:text-zinc-400 font-light">{concept.desc}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {demoActiveTab === 'mindmap' && (
+                          <div className="space-y-2 animate-fadeIn font-mono text-[10px]">
+                            <h4 className="text-xs font-bold text-neutral-900 dark:text-zinc-150 flex items-center gap-1.5 font-sans mb-1.5">
+                              <Brain className="w-3.5 h-3.5 text-emerald-500" />
+                              <span>Interactive Mind Map Blueprint</span>
+                            </h4>
+                            <div className="bg-neutral-100 dark:bg-zinc-950 p-2.5 rounded-lg border border-black/[0.03] dark:border-zinc-850/80 leading-relaxed text-neutral-700 dark:text-zinc-400">
+                              <div className="font-extrabold text-[#0071e3] dark:text-sky-400">🧠 Artificial Intelligence</div>
+                              <div className="pl-3">├── 🤖 Machine Learning</div>
+                              <div className="pl-6">├── Supervised Learning</div>
+                              <div className="pl-6">└── Deep Neural Networks</div>
+                              <div className="pl-3">├── 💬 Natural Language Processing</div>
+                              <div className="pl-3">└── 👁️ Computer Vision</div>
+                            </div>
+                          </div>
+                        )}
+
+                        {demoActiveTab === 'flashcard' && (
+                          <div className="animate-fadeIn flex flex-col items-center justify-center py-2 h-full">
+                            <div 
+                              onClick={() => setFlashcardFlipped(!flashcardFlipped)}
+                              className="w-full max-w-xs bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 hover:border-[#0071e3] dark:hover:border-sky-400 rounded-xl p-4 shadow-sm cursor-pointer transition-all duration-300 hover:scale-[1.02] relative min-h-[140px] flex flex-col justify-between"
+                            >
+                              <div className="flex justify-between items-center text-[8px] font-mono font-bold uppercase tracking-widest text-[#86868b] dark:text-zinc-500">
+                                <span>Flashcard #1 of 25</span>
+                                <span>{flashcardFlipped ? 'Answer Side' : 'Question Side'}</span>
+                              </div>
+                              
+                              <div className="my-auto text-center py-2">
+                                {flashcardFlipped ? (
+                                  <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 leading-relaxed">
+                                    "A subset of AI where systems improve automatically through training on dataset examples without explicit coding."
+                                  </p>
+                                ) : (
+                                  <p className="text-xs font-extrabold text-neutral-800 dark:text-zinc-150">
+                                    What is the core definition of Machine Learning?
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="text-[9px] text-[#86868b] dark:text-zinc-500 text-center font-semibold font-sans mt-1">
+                                🔄 Click card to flip and reveal answer
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Speed summary inside card footer */}
+                        <div className="border-t border-black/[0.04] dark:border-zinc-800/60 pt-2.5 flex items-center justify-between text-[10px] font-bold text-emerald-600 dark:text-emerald-400 font-sans">
+                          <span>✓ 10x Studying Speedup</span>
+                          <span className="font-mono bg-emerald-500/10 px-2 py-0.5 rounded text-[9px]">
+                            135 Min Video → 15 Min Study Workspace
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800">
-                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>25 Practice Flashcards</span>
-                      </div>
-                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800">
-                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>10-Question Smart Quiz</span>
-                      </div>
-                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800">
-                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>Smart Notes</span>
-                      </div>
-                      <div className="flex items-center gap-2 bg-white/65 dark:bg-zinc-900/55 px-2.5 py-1.5 rounded-lg border border-black/[0.02] dark:border-zinc-800 sm:col-span-2">
-                        <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                        <span>7-Day Spaced Repetition Plan</span>
+
+                      {/* Progress loop restart trigger */}
+                      <div className="flex items-center justify-between text-[11px] font-medium text-neutral-500 dark:text-zinc-400 pt-1">
+                        <span className="flex items-center gap-1">
+                          <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                          <span>Interactive Preview Enabled</span>
+                        </span>
+                        <button
+                          onClick={() => {
+                            setDemoStep('before');
+                            setDemoProgress(0);
+                            setDemoActiveTab('summary');
+                            setFlashcardFlipped(false);
+                          }}
+                          className="text-[#0071e3] hover:underline cursor-pointer font-bold"
+                        >
+                          Restart Demo Simulation
+                        </button>
                       </div>
                     </div>
+                  )}
 
-                    {/* EMOTIONAL SAVINGS ACCENT BADGE */}
-                    <div className="mt-5 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/25 dark:border-emerald-500/15 p-3 rounded-xl flex items-center justify-between text-xs font-semibold text-emerald-700 dark:text-emerald-400 animate-pulse">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-emerald-500" />
-                        <span>Average Study Efficiency</span>
-                      </div>
-                      <span className="bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wide uppercase">
-                        Saved 2 hours of study time
-                      </span>
-                    </div>
-
-                  </div>
                 </div>
 
                 {/* Mockup footer */}
                 <div className="p-4 bg-neutral-50 dark:bg-zinc-950/80 border-t border-black/[0.03] dark:border-zinc-800/60 flex items-center justify-between text-[11px] font-mono text-[#86868b]">
-                  <span className="flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> 
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> 
                     <span>Study Package Synthesized Successfully</span>
                   </span>
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">10x Speed</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">10x Speed</span>
                 </div>
               </div>
             </div>
+
 
           </div>
         </div>
@@ -483,8 +682,8 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
 
       {/* HOW IT WORKS */}
       <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="space-y-3 text-center max-w-2xl mx-auto mb-16">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#0071e3]">Simple & Fast</span>
+        <div className="space-y-3 text-center max-w-2xl mx-auto mb-16 animate-fadeIn">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#0071e3] dark:text-sky-400">Simple & Fast</span>
           <h2 className="text-3xl md:text-4xl font-bold font-display tracking-tight text-[#1d1d1f] dark:text-zinc-50">
             Go From Content to Knowledge in 3 Steps
           </h2>
@@ -501,34 +700,38 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
             {
               step: '01',
               icon: <Upload className="w-6 h-6 text-[#0071e3]" />,
-              title: 'Paste any video',
-              description: 'Drop in any YouTube video link. We\'ll transcribe and ingest the entire content immediately, bypassing tedious manual video scrubbing.',
+              title: 'Paste or Upload',
+              description: 'Paste any YouTube video or upload a document.',
               color: 'bg-[#0071e3]/10 dark:bg-[#0071e3]/20',
-              badge: 'YouTube · Uploads · Documents',
+              badge: 'YouTube, PDF, PPT & Docs',
             },
             {
               step: '02',
               icon: <Brain className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />,
-              title: 'AI creates your learning workspace',
-              description: 'Our system synthesizes the material into a complete study kit: an executive summary, explained core concepts, an interactive mind map, and practice aids.',
+              title: 'AI Synthesis',
+              description: 'AI instantly creates your personalized learning workspace.',
               color: 'bg-indigo-500/10 dark:bg-indigo-500/20',
-              badge: 'Summary · Mind Map · Repetition',
+              badge: '10x Faster Comprehension',
             },
             {
               step: '03',
               icon: <Share2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />,
-              title: 'Learn faster with notes, quizzes & flashcards',
-              description: 'Interact directly with study aids tailored perfectly to the lecture. Complete self-quizzes, flip flashcards, and lock in comprehension with 10x efficiency.',
+              title: 'Master Content',
+              description: 'Study using summaries, quizzes, flashcards, notes, and mind maps.',
               color: 'bg-emerald-500/10 dark:bg-emerald-500/20',
-              badge: 'Notes · Flashcards · Smart Quizzes',
+              badge: 'Interactive Quizzes & Cards',
             },
           ].map((item, idx) => (
-            <div key={idx} className="relative z-10 bg-white dark:bg-zinc-900 border border-black/[0.04] dark:border-zinc-800 rounded-3xl p-8 text-left flex flex-col gap-5 hover:shadow-lg transition-shadow duration-300">
+            <div 
+              key={idx} 
+              className="relative z-10 bg-white dark:bg-zinc-900 border border-black/[0.04] dark:border-zinc-800 rounded-3xl p-8 text-left flex flex-col gap-5 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fadeIn"
+              style={{ animationDelay: `${idx * 150}ms` }}
+            >
               <div className="flex items-start justify-between">
                 <div className={`h-12 w-12 ${item.color} rounded-2xl flex items-center justify-center shrink-0`}>
                   {item.icon}
                 </div>
-                <span className="font-mono text-5xl font-black text-neutral-100 dark:text-zinc-800 leading-none select-none">{item.step}</span>
+                <span className="font-mono text-5xl font-black text-neutral-150 dark:text-zinc-800 leading-none select-none">{item.step}</span>
               </div>
               <div>
                 <h3 className="text-base font-bold font-display text-neutral-900 dark:text-zinc-100 mb-2">{item.title}</h3>
