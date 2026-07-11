@@ -15,7 +15,7 @@ interface LandingPageProps {
   isPremium: boolean;
   visitorUser: any;
   onGoogleSignIn: () => void;
-  onStartFreeSummary?: (url: string) => void;
+  onStartFreeSummary?: (input: string, type?: 'video' | 'website' | 'file' | 'text', filesList?: any[]) => void;
 }
 
 // Animated counter hook
@@ -46,6 +46,11 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
   const statsRef = useRef<HTMLDivElement>(null);
   const [ytUrl, setYtUrl] = useState('');
   const [urlError, setUrlError] = useState('');
+  const [landingSourceType, setLandingSourceType] = useState<'video' | 'website' | 'file' | 'text'>('video');
+  const [landingWebsiteUrl, setLandingWebsiteUrl] = useState('');
+  const [landingPastedText, setLandingPastedText] = useState('');
+  const [landingFiles, setLandingFiles] = useState<{name: string; size: number; type: string; textContent?: string}[]>([]);
+  const [landingIsDragActive, setLandingIsDragActive] = useState(false);
 
   // 🌟 Automated & Interactive Hero AI Flow Simulation
   const [demoStep, setDemoStep] = useState<'before' | 'analyzing' | 'generating' | 'after'>('after');
@@ -225,7 +230,7 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                 <button
                   type="button"
                   onClick={() => {
-                    const inputEl = document.querySelector('input[placeholder*="YouTube"]') as HTMLInputElement;
+                    const inputEl = document.getElementById('landing-main-input') as HTMLInputElement;
                     if (inputEl) {
                       inputEl.focus();
                       inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -249,35 +254,184 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                 </button>
               </div>
 
-              {/* 🎯 CONVERSION-OPTIMIZED YOUTUBE INPUT BOX */}
-              <div className="w-full max-w-2xl pt-2">
+              {/* 🎯 CONVERSION-OPTIMIZED MULTI-SOURCE INPUT BOX */}
+              <div className="w-full max-w-3xl pt-4">
+                {/* Source Selection Tabs */}
+                <div className="flex flex-wrap gap-1 mb-3.5 bg-neutral-100/80 dark:bg-zinc-900/60 p-1 rounded-2xl w-fit border border-neutral-250 dark:border-zinc-800/60 shadow-xs">
+                  {[
+                    { id: 'video', label: 'YouTube Video', icon: Video, color: 'text-red-500 bg-red-500/10' },
+                    { id: 'website', label: 'Website Link', icon: Globe, color: 'text-emerald-500 bg-emerald-500/10' },
+                    { id: 'file', label: 'Document Upload', icon: Upload, color: 'text-amber-500 bg-amber-500/10' },
+                    { id: 'text', label: 'Pasted Notes', icon: FileText, color: 'text-blue-500 bg-blue-500/10' },
+                  ].map((tab) => {
+                    const TabIcon = tab.icon;
+                    const isSelected = landingSourceType === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => {
+                          setLandingSourceType(tab.id as any);
+                          setUrlError('');
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer active:scale-95 duration-150 ${
+                          isSelected
+                            ? 'bg-white dark:bg-zinc-800 text-neutral-900 dark:text-zinc-100 shadow-sm border border-neutral-200 dark:border-zinc-700'
+                            : 'text-neutral-500 dark:text-zinc-400 hover:text-neutral-800 dark:hover:text-zinc-200 hover:bg-neutral-200/50 dark:hover:bg-zinc-800/40'
+                        }`}
+                      >
+                        <TabIcon className={`w-3.5 h-3.5 ${isSelected ? tab.color.split(' ')[0] : 'text-neutral-400'}`} />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <form 
                   onSubmit={(e) => {
                     e.preventDefault();
-                    if (!ytUrl.trim()) {
-                      setUrlError('Please enter a valid YouTube URL');
-                      return;
-                    }
-                    setUrlError('');
-                    if (onStartFreeSummary) {
-                      onStartFreeSummary(ytUrl.trim());
+                    if (landingSourceType === 'video') {
+                      if (!ytUrl.trim()) {
+                        setUrlError('Please enter a valid YouTube URL');
+                        return;
+                      }
+                      setUrlError('');
+                      if (onStartFreeSummary) {
+                        onStartFreeSummary(ytUrl.trim(), 'video');
+                      }
+                    } else if (landingSourceType === 'website') {
+                      if (!landingWebsiteUrl.trim()) {
+                        setUrlError('Please enter a valid website URL');
+                        return;
+                      }
+                      setUrlError('');
+                      if (onStartFreeSummary) {
+                        onStartFreeSummary(landingWebsiteUrl.trim(), 'website');
+                      }
+                    } else if (landingSourceType === 'text') {
+                      if (!landingPastedText.trim()) {
+                        setUrlError('Please paste your notes or transcript to analyze');
+                        return;
+                      }
+                      setUrlError('');
+                      if (onStartFreeSummary) {
+                        onStartFreeSummary(landingPastedText.trim(), 'text');
+                      }
+                    } else if (landingSourceType === 'file') {
+                      if (landingFiles.length === 0) {
+                        setUrlError('Please select or drop at least one document first');
+                        return;
+                      }
+                      setUrlError('');
+                      if (onStartFreeSummary) {
+                        onStartFreeSummary('https://www.zipytiny.app/uploaded-files', 'file', landingFiles);
+                      }
                     }
                   }}
                   className="relative flex flex-col sm:flex-row items-stretch gap-2 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 p-2 rounded-2xl shadow-lg focus-within:border-[#0071e3] focus-within:ring-2 focus-within:ring-[#0071e3]/15 transition-all"
                 >
-                  <div className="flex-1 flex items-center gap-3 pl-3">
-                    <Video className="w-5 h-5 text-rose-500 shrink-0" />
-                    <input
-                      type="text"
-                      placeholder="Paste a YouTube video URL to instantly create your AI learning workspace..."
-                      value={ytUrl}
-                      onChange={(e) => {
-                        setYtUrl(e.target.value);
-                        if (urlError) setUrlError('');
-                      }}
-                      className="w-full bg-transparent border-0 outline-none focus:ring-0 focus:outline-none text-sm text-neutral-800 dark:text-zinc-100 placeholder-neutral-400 dark:placeholder-zinc-500"
-                    />
-                  </div>
+                  {landingSourceType === 'video' && (
+                    <div className="flex-1 flex items-center gap-3 pl-3">
+                      <Video className="w-5 h-5 text-red-500 shrink-0" />
+                      <input
+                        id="landing-main-input"
+                        type="text"
+                        placeholder="Paste a YouTube video URL to instantly create your AI learning workspace..."
+                        value={ytUrl}
+                        onChange={(e) => {
+                          setYtUrl(e.target.value);
+                          if (urlError) setUrlError('');
+                        }}
+                        className="w-full bg-transparent border-0 outline-none focus:ring-0 focus:outline-none text-sm text-neutral-800 dark:text-zinc-100 placeholder-neutral-400 dark:placeholder-zinc-500"
+                      />
+                    </div>
+                  )}
+
+                  {landingSourceType === 'website' && (
+                    <div className="flex-1 flex items-center gap-3 pl-3">
+                      <Globe className="w-5 h-5 text-[#0071e3] shrink-0" />
+                      <input
+                        id="landing-main-input"
+                        type="text"
+                        placeholder="Paste a website link or article URL to start analyzing..."
+                        value={landingWebsiteUrl}
+                        onChange={(e) => {
+                          setLandingWebsiteUrl(e.target.value);
+                          if (urlError) setUrlError('');
+                        }}
+                        className="w-full bg-transparent border-0 outline-none focus:ring-0 focus:outline-none text-sm text-neutral-800 dark:text-zinc-100 placeholder-neutral-400 dark:placeholder-zinc-500"
+                      />
+                    </div>
+                  )}
+
+                  {landingSourceType === 'text' && (
+                    <div className="flex-1 flex items-center gap-3 pl-3">
+                      <FileText className="w-5 h-5 text-blue-500 shrink-0" />
+                      <input
+                        id="landing-main-input"
+                        type="text"
+                        placeholder="Paste text notes, books, transcripts or materials to summarize..."
+                        value={landingPastedText}
+                        onChange={(e) => {
+                          setLandingPastedText(e.target.value);
+                          if (urlError) setUrlError('');
+                        }}
+                        className="w-full bg-transparent border-0 outline-none focus:ring-0 focus:outline-none text-sm text-neutral-800 dark:text-zinc-100 placeholder-neutral-400 dark:placeholder-zinc-500"
+                      />
+                    </div>
+                  )}
+
+                  {landingSourceType === 'file' && (
+                    <div className="flex-1 flex flex-col pl-3 justify-center min-h-[44px] py-1">
+                      <div className="flex items-center gap-2.5">
+                        <Upload className="w-5 h-5 text-amber-500 shrink-0 animate-pulse" />
+                        <label className="text-xs font-semibold text-neutral-700 dark:text-zinc-300 cursor-pointer flex items-center gap-1.5 hover:text-[#0071e3] transition">
+                          <span>Upload documents:</span>
+                          <input
+                            type="file"
+                            accept=".pdf,.docx,.pptx,.txt"
+                            multiple
+                            onChange={(e) => {
+                              if (e.target.files) {
+                                const files = Array.from(e.target.files);
+                                files.forEach((f: File) => {
+                                  const reader = new FileReader();
+                                  reader.onload = (event) => {
+                                    setLandingFiles(prev => [...prev, {
+                                      name: f.name,
+                                      size: f.size,
+                                      type: f.type,
+                                      textContent: typeof event.target?.result === 'string' ? event.target.result : undefined
+                                    }]);
+                                  };
+                                  reader.readAsText(f);
+                                });
+                              }
+                            }}
+                            className="hidden"
+                          />
+                          <span className="text-[#0071e3] font-bold underline">Click here to select files</span>
+                        </label>
+                      </div>
+                      {landingFiles.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {landingFiles.map((file, idx) => (
+                            <span key={idx} className="inline-flex items-center gap-1 bg-neutral-100 dark:bg-zinc-800 text-[10px] text-neutral-600 dark:text-zinc-300 px-2 py-0.5 rounded-md border border-neutral-200 dark:border-zinc-700">
+                              <span className="truncate max-w-[120px]">{file.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => setLandingFiles(prev => prev.filter((_, i) => i !== idx))}
+                                className="text-neutral-400 hover:text-rose-500 font-bold ml-1 font-sans text-[9px]"
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <button
                     type="submit"
                     className="bg-[#0071e3] hover:bg-[#0077ed] text-white px-6 py-3.5 rounded-xl font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0 group cursor-pointer active:scale-98 shadow-sm"
@@ -287,27 +441,28 @@ export default function LandingPage({ onLaunchApp, onNavigateToFeature, onUpgrad
                   </button>
                 </form>
 
-                {/* 📂 Small monochrome supported formats icons */}
-                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 mt-3 ml-3 text-[11px] font-mono font-medium text-neutral-400 dark:text-zinc-500 select-none">
-                  <span className="uppercase font-bold tracking-wider text-[9px] text-neutral-400 dark:text-zinc-500">Supports:</span>
-                  <div className="flex items-center gap-1 text-neutral-500 dark:text-zinc-400 transition-colors hover:text-neutral-800 dark:hover:text-zinc-200">
-                    <Youtube className="w-3.5 h-3.5 opacity-70" />
-                    <span>YouTube</span>
+                {/* 📂 Small premium supported formats icons */}
+                <div className="flex flex-wrap items-center gap-2 mt-4 ml-1 select-none">
+                  <span className="uppercase font-bold tracking-wider text-[10px] text-neutral-400 dark:text-zinc-500 mr-1.5">Formats Supported:</span>
+                  
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 dark:bg-red-500/15 border border-red-500/20 rounded-full text-red-600 dark:text-red-400 text-xs font-semibold shadow-xs">
+                    <Youtube className="w-3.5 h-3.5" />
+                    <span>YouTube Links</span>
                   </div>
-                  <span className="opacity-30">•</span>
-                  <div className="flex items-center gap-1 text-neutral-500 dark:text-zinc-400 transition-colors hover:text-neutral-800 dark:hover:text-zinc-200">
-                    <FileText className="w-3.5 h-3.5 opacity-70" />
-                    <span>PDF</span>
+
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/10 dark:bg-rose-500/15 border border-rose-500/20 rounded-full text-rose-600 dark:text-rose-400 text-xs font-semibold shadow-xs">
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>PDF Documents</span>
                   </div>
-                  <span className="opacity-30">•</span>
-                  <div className="flex items-center gap-1 text-neutral-500 dark:text-zinc-400 transition-colors hover:text-neutral-800 dark:hover:text-zinc-200">
-                    <Presentation className="w-3.5 h-3.5 opacity-70" />
-                    <span>PowerPoint</span>
+
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/20 rounded-full text-amber-600 dark:text-amber-500 text-xs font-semibold shadow-xs">
+                    <Presentation className="w-3.5 h-3.5" />
+                    <span>PPTX Presentations</span>
                   </div>
-                  <span className="opacity-30">•</span>
-                  <div className="flex items-center gap-1 text-neutral-500 dark:text-zinc-400 transition-colors hover:text-neutral-800 dark:hover:text-zinc-200">
-                    <FileText className="w-3.5 h-3.5 opacity-70" />
-                    <span>DOCX</span>
+
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/10 dark:bg-blue-500/15 border border-blue-500/20 rounded-full text-blue-600 dark:text-blue-400 text-xs font-semibold shadow-xs">
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>DOCX Word Files</span>
                   </div>
                 </div>
 

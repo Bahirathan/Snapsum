@@ -3631,14 +3631,42 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         {/* 🚀 LANDING PAGE SCREEN */}
         {currentScreen === 'landing' && (
           <LandingPage 
-            onStartFreeSummary={async (url) => {
-              setVideoUrl(url);
-              setInputSourceType('video');
-              setCurrentScreen('app');
-              window.scrollTo(0, 0);
-              setTimeout(() => {
-                handleSummarize(undefined, url);
-              }, 150);
+            onStartFreeSummary={async (input, type = 'video', filesList = []) => {
+              setInputSourceType(type);
+              if (type === 'video') {
+                setVideoUrl(input);
+                setCurrentScreen('app');
+                window.scrollTo(0, 0);
+                setTimeout(() => {
+                  handleSummarize(undefined, input);
+                }, 150);
+              } else if (type === 'website') {
+                setInputWebsiteUrl(input);
+                setCurrentScreen('app');
+                window.scrollTo(0, 0);
+                setTimeout(() => {
+                  handleSummarize(undefined, input);
+                }, 150);
+              } else if (type === 'text') {
+                setPastedContentText(input);
+                setCurrentScreen('app');
+                window.scrollTo(0, 0);
+                setTimeout(() => {
+                  handleSummarize(undefined, 'https://www.zipytiny.app/pasted-text');
+                }, 150);
+              } else if (type === 'file') {
+                if (filesList && filesList.length > 0) {
+                  setUploadedFiles(filesList);
+                  setCurrentScreen('app');
+                  window.scrollTo(0, 0);
+                  setTimeout(() => {
+                    handleSummarize(undefined, 'https://www.zipytiny.app/uploaded-files');
+                  }, 150);
+                } else {
+                  setCurrentScreen('app');
+                  window.scrollTo(0, 0);
+                }
+              }
             }}
             onLaunchApp={(targetTab?: any, targetSubTab?: any) => {
               setCurrentScreen('app');
@@ -7016,15 +7044,18 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </div>
 
                     {/* Premium PDF Export Support Gated Segment */}
-                    <div className="bg-neutral-50 border border-neutral-205 rounded-2xl p-4.5 flex flex-col sm:flex-row items-center justify-between gap-4">
-                      <div className="space-y-1 text-center sm:text-left">
-                        <span className="text-[10px] font-mono font-bold text-neutral-400 block uppercase">Premium Publication Export</span>
+                    <div 
+                      dir={isRtl ? 'rtl' : 'ltr'}
+                      className="bg-neutral-50 border border-neutral-205 rounded-2xl p-4.5 flex flex-col sm:flex-row items-center justify-between gap-4"
+                    >
+                      <div className={`space-y-1 text-center ${isRtl ? 'sm:text-right' : 'sm:text-left'}`}>
+                        <span className="text-[10px] font-mono font-bold text-neutral-400 block uppercase">{t('premiumPublicationExport')}</span>
                         <h4 className="text-xs font-bold text-neutral-800 flex items-center justify-center sm:justify-start gap-1">
                           <FileText className="w-4 h-4 text-neutral-700" />
-                          White-labeled Study Report (.MD / PDF Format)
+                          {t('whiteLabeledStudyReport')}
                         </h4>
                         <p className="text-[11px] text-neutral-500 leading-normal max-w-sm">
-                          Assemble complete thesis structures, chronology benchmarks, and mindmap catalogs into raw styled markdown documents ready for digital distribution.
+                          {t('assembleCompleteThesis')}
                         </p>
                       </div>
 
@@ -7034,7 +7065,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           className="bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs px-5 py-3 rounded-xl transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 self-center shadow-sm"
                         >
                           <Download className="w-4 h-4 text-white" />
-                          <span>Export Summary Report</span>
+                          <span>{t('exportSummaryReport')}</span>
                         </button>
                       ) : (
                         <button
@@ -7046,7 +7077,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           className="bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs px-5 py-3 rounded-xl transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 self-center shadow-sm"
                         >
                           <Lock className="w-3.5 h-3.5" />
-                          <span>Unlock Pro Export</span>
+                          <span>{t('unlockPremiumReport')}</span>
                         </button>
                       )}
                     </div>
@@ -8341,20 +8372,23 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
                   </div>
                 ) : (
-                  <div className="bg-white border border-black/[0.04] rounded-2xl p-5 shadow-sm space-y-3.5 text-xs text-[#515154] leading-relaxed font-sans text-left">
+                  <div 
+                    dir={isRtl ? 'rtl' : 'ltr'}
+                    className={`bg-white border border-black/[0.04] rounded-2xl p-5 shadow-sm space-y-3.5 text-xs text-[#515154] leading-relaxed font-sans ${isRtl ? 'text-right' : 'text-left'}`}
+                  >
                     <h4 className="font-bold text-[#1d1d1f] flex items-center gap-1.5 text-sm">
-                      🚀 Creator Monetization Blueprint
+                      {t('monetizationBlueprintTitle')}
                     </h4>
                     <p>
-                      This application translates lengthy digital broadcasts into ready-for-market content streams. By pairing summaries with newsletters, tweet threads, flash quizzes, and conceptual outlines:
+                      {t('monetizationBlueprintDesc')}
                     </p>
-                    <ul className="list-disc pl-4 space-y-1 text-[#86868b]">
-                      <li><strong className="text-[#515154]">Ad-revenue streams</strong> by embedding affiliate offers adjacent to text digests.</li>
-                      <li><strong className="text-[#515154]">Digital products</strong> like study maps or trivia certifications for course creators.</li>
-                      <li><strong className="text-[#515154]">Email directories</strong> built by locking TTS files of key briefings behind a subscription block.</li>
+                    <ul className={`list-disc space-y-1 text-[#86868b] ${isRtl ? 'pr-4' : 'pl-4'}`}>
+                      <li><strong className="text-[#515154]">{t('monetizationAdRevenueLabel')}</strong> {t('monetizationAdRevenueDesc')}</li>
+                      <li><strong className="text-[#515154]">{t('monetizationDigitalProductsLabel')}</strong> {t('monetizationDigitalProductsDesc')}</li>
+                      <li><strong className="text-[#515154]">{t('monetizationEmailDirectoriesLabel')}</strong> {t('monetizationEmailDirectoriesDesc')}</li>
                     </ul>
                     <div className="pt-2 border-t border-black/[0.04] text-[9px] text-[#86868b] font-mono leading-none">
-                      Created for the Google AI Studio Builders Challenge.
+                      {t('monetizationCreatedForChallenge')}
                     </div>
                   </div>
                 )}
