@@ -82,6 +82,7 @@ const LearningProgressDashboard = (props: any) => <Suspense fallback={<div class
 const ActiveLearningDashboard = (props: any) => <Suspense fallback={<div className="animate-pulse h-64 rounded-3xl bg-neutral-100 dark:bg-zinc-800" />}><ActiveLearningDashboardModule {...props} /></Suspense>;
 import AIChatWithSummary from './components/AIChatWithSummary';
 import SummaryPremiumExporter from './components/SummaryPremiumExporter';
+import LearningWorkspace from './components/LearningWorkspace';
 import LandingPage from './components/LandingPage';
 import FeaturePage from './components/FeaturePage';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
@@ -6417,8 +6418,36 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         {/* Dynamic Display Board - Generated Output Dashboard */}
         {activeSummary && (
           <div id="summary-dashboard" dir={isRtl ? 'rtl' : 'ltr'} className={`bg-white dark:bg-zinc-900 rounded-3xl border border-neutral-200/80 dark:border-zinc-800 shadow-sm overflow-hidden animate-fadeIn ${isRtl ? 'text-right' : 'text-left'}`}>
-            
-            {/* Guest Promo Conversion Header Callout */}
+            <LearningWorkspace
+              activeSummary={activeSummary}
+              onBackToCenter={() => setActiveSummary(null)}
+              ytStartSeconds={ytStartSeconds}
+              onJumpToTimestamp={handleJumpToTimestamp}
+              onResetJump={() => setYtStartSeconds(null)}
+              isPremium={isPremium}
+              visitorUser={visitorUser}
+              setShowAuthModal={setShowAuthModal}
+              setAuthModalPurpose={setAuthModalPurpose}
+              setShowStripeModal={setShowStripeModal}
+              setSelectedPlanCode={setSelectedPlanCode}
+              setStripePaymentSuccess={setStripePaymentSuccess}
+              downloadSummaryAsPDF={downloadSummaryAsPDF}
+              handleGenerateTTS={handleGenerateTTS}
+              ttsLoading={ttsLoading}
+              audioUrl={audioUrl}
+              isPlaying={isPlaying}
+              togglePlay={togglePlay}
+              audioProgress={audioProgress}
+              audioDuration={audioDuration}
+              formatTime={formatTime}
+              isRtl={isRtl}
+              t={t}
+              getHeaders={getHeaders}
+              trackGAEvent={trackGAEvent}
+            />
+            {false && (
+              <>
+              {/* Guest Promo Conversion Header Callout */}
             {!visitorUser && (
               <div className="bg-gradient-to-r from-indigo-600 via-[#0071e3] to-indigo-600 text-white px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 border-b border-white/10 animate-fadeIn font-sans">
                 <div className="flex items-center gap-3 text-left">
@@ -8394,6 +8423,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 )}
               </div>
             </div>
+            </>
+            )}
           </div>
         )}
       </div>
