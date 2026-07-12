@@ -2424,7 +2424,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     document.body.removeChild(link);
   };
 
-  // Load saved summaries and default to the first preloaded summary
+  // Load saved summaries on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem('youtube_summarizer_shelf');
@@ -2435,8 +2435,6 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     } catch (e) {
       console.warn('Failed parsing local storage histories', e);
     }
-    // Default to Steve Jobs lecture for rich quick onboarding
-    setActiveSummary(PRELOADED_VIDEOS[0]);
   }, []);
 
   // Update localStorage when savedSummaries list changes
@@ -4922,7 +4920,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         {currentScreen === 'app' && (
           <div className="space-y-8 animate-fadeIn">
             {/* Dynamic Split Action Panel */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {!activeSummary && !activeStack && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
             {/* Pitch & Generation Engine - Inputs */}
             <div className="col-span-1 lg:col-span-8 space-y-6 relative">
@@ -6306,6 +6305,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             </div>
           </div>
         </div>
+      )}
 
         {/* Knowledge Stack Comparative Dashboard */}
         {activeStack && (
@@ -12250,7 +12250,13 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               <div className="flex items-center gap-3">
                 <Check className="w-5 h-5 text-emerald-500 shrink-0" />
                 <span className="text-sm text-neutral-700 dark:text-zinc-300">
-                  <strong className="font-semibold text-neutral-900 dark:text-zinc-100">{activeSummary.metadata.duration || '15'}-minute</strong> visual summary created
+                  <strong className="font-semibold text-neutral-900 dark:text-zinc-100">
+                    {(() => {
+                      const dur = activeSummary.metadata.duration || '15';
+                      return dur.replace(/min(s)?|minute(s)?/gi, '').trim();
+                    })()}-minute
+                  </strong>{' '}
+                  visual summary created
                 </span>
               </div>
               <div className="flex items-center gap-3">
