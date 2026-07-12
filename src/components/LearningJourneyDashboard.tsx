@@ -152,7 +152,7 @@ export default function LearningJourneyDashboard({
   const [showHint, setShowHint] = useState<boolean>(false);
 
   // Connected Knowledge System tabs & layout
-  const [activeDashboardTab, setActiveDashboardTab] = useState<'graph' | 'vault'>('graph');
+  const [activeDashboardTab, setActiveDashboardTab] = useState<'graph' | 'vault' | 'stats'>('graph');
   const [selectedGraphNode, setSelectedGraphNode] = useState<GraphNode | null>(null);
   const [recentlyViewed, setRecentlyViewed] = useState<GraphNode[]>([]);
   
@@ -173,6 +173,49 @@ export default function LearningJourneyDashboard({
   const [newFolderName, setNewFolderName] = useState<string>('');
   const [showAddFolderInput, setShowAddFolderInput] = useState<boolean>(false);
 
+  // Study Reminders states
+  const [reminderEnabled, setReminderEnabled] = useState<boolean>(() => localStorage.getItem('zipytiny_reminder_enabled') === 'true');
+  const [reminderTime, setReminderTime] = useState<string>(() => localStorage.getItem('zipytiny_reminder_time') || '09:00');
+  const [reminderFreq, setReminderFreq] = useState<string>(() => localStorage.getItem('zipytiny_reminder_freq') || 'daily');
+  const [reminderMessage, setReminderMessage] = useState<string | null>(null);
+
+  // Daily goal tracking states
+  const [reviewedTodayCount, setReviewedTodayCount] = useState<number>(() => {
+    const saved = localStorage.getItem('zipytiny_reviewed_today_' + new Date().toDateString());
+    return saved ? parseInt(saved, 10) : 0;
+  });
+  const [insightsSavedToday, setInsightsSavedToday] = useState<boolean>(() => {
+    return localStorage.getItem('zipytiny_insights_today_' + new Date().toDateString()) === 'true';
+  });
+  const [dailyBonusClaimed, setDailyBonusClaimed] = useState<boolean>(() => {
+    return localStorage.getItem('zipytiny_daily_bonus_' + new Date().toDateString()) === 'true';
+  });
+
+  // Study calendar tracking state
+  const [studyCalendar, setStudyCalendar] = useState<string[]>(() => {
+    const stored = localStorage.getItem('zipytiny_study_calendar');
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
+
+  const logStudyActivity = () => {
+    const todayStr = new Date().toDateString();
+    setStudyCalendar((prev) => {
+      if (!prev.includes(todayStr)) {
+        const next = [...prev, todayStr];
+        localStorage.setItem('zipytiny_study_calendar', JSON.stringify(next));
+        return next;
+      }
+      return prev;
+    });
+  };
+
   // Sync graph state
   useEffect(() => {
     const loaded = loadMemoryGraph();
@@ -187,6 +230,20 @@ export default function LearningJourneyDashboard({
       }
       loaded.lastActiveDate = today;
       saveMemoryGraph(loaded);
+    }
+    
+    // Seed calendar dates if empty
+    const calendarSaved = localStorage.getItem('zipytiny_study_calendar');
+    if (!calendarSaved) {
+      const dates = [];
+      const todayDate = new Date();
+      for (let i = 0; i < loaded.streak; i++) {
+        const d = new Date(todayDate);
+        d.setDate(todayDate.getDate() - i);
+        dates.push(d.toDateString());
+      }
+      localStorage.setItem('zipytiny_study_calendar', JSON.stringify(dates));
+      setStudyCalendar(dates);
     }
     
     setGraph(loaded);
@@ -458,6 +515,11 @@ export default function LearningJourneyDashboard({
 
     const gUpdate = { ...graph };
     awardXpPoints(30, gUpdate);
+
+    // Track daily goal and log study activity
+    localStorage.setItem('zipytiny_insights_today_' + new Date().toDateString(), 'true');
+    setInsightsSavedToday(true);
+    logStudyActivity();
   };
 
   // Add Tag
@@ -492,6 +554,11 @@ export default function LearningJourneyDashboard({
     }
 
     setNodeTagInput('');
+
+    // Track daily goal and log study activity
+    localStorage.setItem('zipytiny_insights_today_' + new Date().toDateString(), 'true');
+    setInsightsSavedToday(true);
+    logStudyActivity();
   };
 
   // Remove Tag
@@ -574,6 +641,7 @@ export default function LearningJourneyDashboard({
       localStorage.setItem('snapsum_daily_done_' + todayStr, 'true');
       setDailyCompleted(true);
       awardXpPoints(150, g);
+      logStudyActivity();
     }
   };
 
@@ -653,6 +721,12 @@ export default function LearningJourneyDashboard({
     
     setRevisionFeedback(`🧠 **Retention Pathway Updated (${ratingLabel})!**\n\nYour recall effort was recorded. Based on SM-2 spacing parameters, the next review session for "${updatedConcept.concept}" is scheduled in **${interval} day${interval > 1 ? 's' : ''}** (**${formattedDate}**).\n\nMastery score: ${prevMastery}% ➔ ${masteryUpdate}%.\nAwarded **+${xpAwarded} XP**.`);
     awardXpPoints(xpAwarded, g);
+
+    // Track daily recall goal & calendar
+    const nextCount = reviewedTodayCount + 1;
+    setReviewedTodayCount(nextCount);
+    localStorage.setItem('zipytiny_reviewed_today_' + new Date().toDateString(), String(nextCount));
+    logStudyActivity();
   };
 
   const handleProceedToAssess = () => {
@@ -873,6 +947,18 @@ export default function LearningJourneyDashboard({
         >
           <LayoutDashboard className="w-4 h-4" />
           <span>Cognitive Knowledge Vault</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveDashboardTab('stats')}
+          className={`pb-3 px-6 text-sm font-bold border-b-2 transition flex items-center gap-2 cursor-pointer ${
+            activeDashboardTab === 'stats'
+              ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 font-bold'
+              : 'border-transparent text-neutral-500 dark:text-zinc-400 hover:text-neutral-900 dark:hover:text-zinc-100'
+          }`}
+        >
+          <Trophy className="w-4 h-4" />
+          <span>Scholar Profile & Performance</span>
         </button>
       </div>
 
@@ -2191,6 +2277,631 @@ export default function LearningJourneyDashboard({
         </div>
       </div>
       </div>
+      )}
+
+      {activeDashboardTab === 'stats' && (
+        <div className="space-y-6 animate-fadeIn text-left">
+          {/* Two-column Layout for Scholar Statistics & Gamification */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            {/* Left Column: Achievements Heatmap & Study Reminders */}
+            <div className="lg:col-span-8 space-y-6">
+              
+              {/* Achievements Card */}
+              <div className="bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 p-6 rounded-3xl shadow-sm space-y-4">
+                <div>
+                  <h3 className="text-base font-bold font-display text-neutral-950 dark:text-zinc-100 flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                    <span>Academic Achievements</span>
+                  </h3>
+                  <p className="text-neutral-400 text-xs font-light">
+                    Sustained engagement milestones and neural retention badges.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    {
+                      id: "pioneer",
+                      title: "Cognitive Pioneer",
+                      desc: "Process your first AI-synthesized workspace.",
+                      unlocked: savedSummaries.length >= 1,
+                      metric: `${savedSummaries.length} / 1`,
+                      progress: Math.min((savedSummaries.length / 1) * 100, 100),
+                      icon: <Compass className="w-4 h-4" />
+                    },
+                    {
+                      id: "collector",
+                      title: "Concept Collector",
+                      desc: "Harvest 3 core mental models from summaries.",
+                      unlocked: totalConceptsCount >= 3,
+                      metric: `${totalConceptsCount} / 3`,
+                      progress: Math.min((totalConceptsCount / 3) * 100, 100),
+                      icon: <Brain className="w-4 h-4" />
+                    },
+                    {
+                      id: "architect",
+                      title: "Synaptic Architect",
+                      desc: "Bridge 2 topics using relationship links.",
+                      unlocked: graphNodesState.filter(n => n.crossLinks && n.crossLinks.length > 0).length >= 2,
+                      metric: `${graphNodesState.filter(n => n.crossLinks && n.crossLinks.length > 0).length} / 2`,
+                      progress: Math.min((graphNodesState.filter(n => n.crossLinks && n.crossLinks.length > 0).length / 2) * 100, 100),
+                      icon: <Network className="w-4 h-4" />
+                    },
+                    {
+                      id: "scholar",
+                      title: "Spaced Scholar",
+                      desc: "Execute 10 active recall spacing evaluations.",
+                      unlocked: flashcardsReviewedCount >= 10,
+                      metric: `${flashcardsReviewedCount} / 10`,
+                      progress: Math.min((flashcardsReviewedCount / 10) * 100, 100),
+                      icon: <BookOpenCheck className="w-4 h-4" />
+                    },
+                    {
+                      id: "unbroken",
+                      title: "Unbroken Diligence",
+                      desc: "Build strong habits with a 5-day active streak.",
+                      unlocked: graph.streak >= 5,
+                      metric: `${graph.streak} / 5`,
+                      progress: Math.min((graph.streak / 5) * 100, 100),
+                      icon: <Flame className="w-4 h-4" />
+                    },
+                    {
+                      id: "perfectionist",
+                      title: "Quiz Perfectionist",
+                      desc: "Score 100% on any comprehensive evaluation drill.",
+                      unlocked: graph.quizHistory?.some(q => q.score === q.total) || false,
+                      metric: graph.quizHistory?.some(q => q.score === q.total) ? "100% Score" : "Locked",
+                      progress: graph.quizHistory?.some(q => q.score === q.total) ? 100 : 0,
+                      icon: <Award className="w-4 h-4" />
+                    }
+                  ].map((ach) => (
+                    <div 
+                      key={ach.id}
+                      className={`p-4 rounded-2xl border transition-all duration-300 flex items-start gap-3.5 relative overflow-hidden group ${
+                        ach.unlocked 
+                          ? 'bg-neutral-50/50 dark:bg-zinc-800/20 border-neutral-200/80 dark:border-zinc-800/80 hover:border-indigo-500/30' 
+                          : 'bg-neutral-50/20 dark:bg-zinc-900/10 border-dashed border-neutral-200 dark:border-zinc-800 opacity-60'
+                      }`}
+                    >
+                      <div className={`p-2.5 rounded-xl border shrink-0 transition-transform duration-300 group-hover:scale-105 ${
+                        ach.unlocked 
+                          ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/60' 
+                          : 'bg-neutral-100 dark:bg-zinc-800 text-neutral-400 dark:text-zinc-500 border-neutral-200 dark:border-zinc-700'
+                      }`}>
+                        {ach.icon}
+                      </div>
+
+                      <div className="space-y-1 flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="text-xs font-bold text-neutral-900 dark:text-zinc-100 truncate">
+                            {ach.title}
+                          </h4>
+                          {ach.unlocked && (
+                            <span className="text-[8px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-mono font-bold px-1.5 py-0.5 rounded-md uppercase">
+                              Active
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-neutral-400 dark:text-zinc-500 leading-normal font-light">
+                          {ach.desc}
+                        </p>
+
+                        <div className="space-y-1 pt-1.5">
+                          <div className="flex justify-between text-[9px] font-mono text-neutral-400">
+                            <span>Progress</span>
+                            <span>{ach.metric}</span>
+                          </div>
+                          <div className="w-full bg-neutral-100 dark:bg-zinc-800 h-1 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-1 rounded-full transition-all duration-500 ${
+                                ach.unlocked ? 'bg-indigo-600 dark:bg-indigo-500' : 'bg-neutral-300 dark:bg-zinc-700'
+                              }`}
+                              style={{ width: `${ach.progress}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Minimalist Heatmap Grid (Learning Calendar) */}
+              <div className="bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 p-6 rounded-3xl shadow-sm space-y-4">
+                <div>
+                  <h3 className="text-base font-bold font-display text-neutral-950 dark:text-zinc-100 flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                    <span>Learning Calendar Heatmap</span>
+                  </h3>
+                  <p className="text-neutral-400 text-xs font-light">
+                    Visual tracking of daily cognitive activity across a rolling 4-week grid.
+                  </p>
+                </div>
+
+                {/* Calendar Grid Representation */}
+                <div className="border border-neutral-100 dark:border-zinc-800/80 rounded-2xl p-4.5 bg-neutral-50/30 dark:bg-zinc-900/50">
+                  <div className="grid grid-cols-7 gap-2 max-w-lg mx-auto">
+                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                      <span key={i} className="text-[10px] font-mono font-bold text-neutral-400 text-center pb-2">
+                        {day}
+                      </span>
+                    ))}
+                    {(() => {
+                      const daysInRollingGrid = 28;
+                      const squares = [];
+                      const todayDate = new Date();
+                      
+                      // Align starting date offset to Sunday
+                      const startOffset = new Date(todayDate);
+                      startOffset.setDate(todayDate.getDate() - (daysInRollingGrid - 1));
+                      const startDay = startOffset.getDay();
+                      
+                      // Render empty pre-offset cells if needed
+                      for (let i = 0; i < startDay; i++) {
+                        squares.push(<div key={`empty-${i}`} className="aspect-square bg-transparent rounded-lg" />);
+                      }
+
+                      for (let i = 0; i < daysInRollingGrid; i++) {
+                        const cellDate = new Date(startOffset);
+                        cellDate.setDate(startOffset.getDate() + i);
+                        const cellDateStr = cellDate.toDateString();
+                        
+                        const isToday = cellDateStr === todayDate.toDateString();
+                        const isStudied = studyCalendar.includes(cellDateStr);
+                        
+                        squares.push(
+                          <div 
+                            key={cellDateStr}
+                            className={`aspect-square rounded-lg border transition-all duration-300 flex flex-col items-center justify-center relative group select-none cursor-default ${
+                              isStudied 
+                                ? 'bg-indigo-600 border-indigo-600 text-white shadow-xs' 
+                                : isToday
+                                  ? 'bg-neutral-100 dark:bg-zinc-800 border-indigo-400 dark:border-indigo-500 text-neutral-900 dark:text-white'
+                                  : 'bg-white dark:bg-zinc-900 border-neutral-200 dark:border-zinc-800 text-neutral-500 dark:text-zinc-500 hover:border-indigo-400'
+                            }`}
+                            title={`${cellDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}: ${isStudied ? 'Studied' : 'Inactive'}`}
+                          >
+                            <span className="text-[10px] font-mono font-bold leading-none">
+                              {cellDate.getDate()}
+                            </span>
+                            {isStudied && (
+                              <span className="absolute bottom-1 w-1 h-1 bg-white rounded-full" />
+                            )}
+                          </div>
+                        );
+                      }
+                      return squares;
+                    })()}
+                  </div>
+
+                  <div className="flex justify-between items-center mt-5 pt-4 border-t border-neutral-100 dark:border-zinc-850 max-w-lg mx-auto">
+                    <div className="flex gap-4 items-center">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-3.5 h-3.5 rounded-md bg-indigo-600 border border-indigo-600" />
+                        <span className="text-[10px] text-neutral-400 font-mono">Active day</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-3.5 h-3.5 rounded-md bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800" />
+                        <span className="text-[10px] text-neutral-400 font-mono">Rest day</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono text-neutral-400">
+                      Total: {studyCalendar.length} Active Days
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Study Reminders Card */}
+              <div className="bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 p-6 rounded-3xl shadow-sm space-y-4">
+                <div>
+                  <h3 className="text-base font-bold font-display text-neutral-950 dark:text-zinc-100 flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                    <span>Study Reminders & Notifications</span>
+                  </h3>
+                  <p className="text-neutral-400 text-xs font-light">
+                    Establish recurring intervals to feed your memory graph and maintain retention pathways.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center bg-neutral-50/40 dark:bg-zinc-900/40 p-4.5 rounded-2xl border dark:border-zinc-800">
+                  <div className="space-y-4">
+                    {/* Toggle Switch */}
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5 text-left">
+                        <span className="text-xs font-bold text-neutral-900 dark:text-zinc-100 block">Push Notifications</span>
+                        <span className="text-[10px] text-neutral-400 font-light block">Get alerted for due spaced recall decks.</span>
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const next = !reminderEnabled;
+                          setReminderEnabled(next);
+                          localStorage.setItem('zipytiny_reminder_enabled', String(next));
+                          if (next) {
+                            setReminderMessage("Reminders enabled successfully.");
+                            setTimeout(() => setReminderMessage(null), 3000);
+                          }
+                        }}
+                        className={`w-10 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors duration-300 ${
+                          reminderEnabled ? 'bg-indigo-600' : 'bg-neutral-350 dark:bg-zinc-700'
+                        }`}
+                      >
+                        <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${
+                          reminderEnabled ? 'translate-x-4' : 'translate-x-0'
+                        }`} />
+                      </button>
+                    </div>
+
+                    {/* Time Selector */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-neutral-400 uppercase font-mono tracking-wider block">Reminder Time</span>
+                      <div className="flex gap-2">
+                        {['09:00', '12:00', '18:00', '21:00'].map((time) => (
+                          <button
+                            key={time}
+                            type="button"
+                            onClick={() => {
+                              setReminderTime(time);
+                              localStorage.setItem('zipytiny_reminder_time', time);
+                              setReminderMessage(`Reminders scheduled for ${time} daily.`);
+                              setTimeout(() => setReminderMessage(null), 3000);
+                            }}
+                            className={`flex-1 text-xs font-mono font-bold py-2 rounded-xl border transition ${
+                              reminderTime === time
+                                ? 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-950/40 dark:border-indigo-900 dark:text-indigo-400'
+                                : 'bg-white border-neutral-200 hover:border-neutral-350 dark:bg-zinc-900 dark:border-zinc-850 text-neutral-700 dark:text-zinc-300'
+                            }`}
+                          >
+                            {time}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Frequency Selector */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-neutral-400 uppercase font-mono tracking-wider block">Frequency Interval</span>
+                      <div className="flex gap-2">
+                        {[
+                          { key: 'daily', label: 'Daily' },
+                          { key: 'weekdays', label: 'Weekdays' },
+                          { key: 'weekends', label: 'Weekends' }
+                        ].map((freq) => (
+                          <button
+                            key={freq.key}
+                            type="button"
+                            onClick={() => {
+                              setReminderFreq(freq.key);
+                              localStorage.setItem('zipytiny_reminder_freq', freq.key);
+                              setReminderMessage(`Frequency set to ${freq.label.toLowerCase()}.`);
+                              setTimeout(() => setReminderMessage(null), 3000);
+                            }}
+                            className={`flex-1 text-[10px] font-bold py-2 rounded-xl border transition ${
+                              reminderFreq === freq.key
+                                ? 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-950/40 dark:border-indigo-900 dark:text-indigo-400'
+                                : 'bg-white border-neutral-200 hover:border-neutral-350 dark:bg-zinc-900 dark:border-zinc-850 text-neutral-700 dark:text-zinc-300'
+                            }`}
+                          >
+                            {freq.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-center md:border-l border-neutral-150 dark:border-zinc-800 md:pl-6 space-y-3 flex flex-col items-center justify-center min-h-[140px]">
+                    <Clock className="w-8 h-8 text-indigo-500/80 animate-pulse" />
+                    <div className="space-y-1">
+                      <span className="text-xs font-bold text-neutral-950 dark:text-zinc-100 block">
+                        {reminderEnabled ? 'Active Schedule' : 'Schedule Standby'}
+                      </span>
+                      <p className="text-[10px] text-neutral-400 dark:text-zinc-500 font-light max-w-xs mx-auto leading-normal">
+                        {reminderEnabled 
+                          ? `Alerts configured for ${reminderFreq === 'daily' ? 'every day' : reminderFreq === 'weekdays' ? 'Monday to Friday' : 'Saturday and Sunday'} at ${reminderTime}.`
+                          : 'Reminders are currently off. Turn them on above to configure delivery channels.'
+                        }
+                      </p>
+                    </div>
+
+                    {reminderMessage && (
+                      <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 font-bold px-2 py-1 rounded-md animate-fadeIn">
+                        {reminderMessage}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Right Column: Goal Hub, Progress Ring, Statistics & Mastery Breakdown */}
+            <div className="lg:col-span-4 space-y-6">
+              
+              {/* Daily Goals Hub (incorporating Progress Ring & Completion Percentage) */}
+              {(() => {
+                const totalGoals = 3;
+                const goalsCompletedCount = (dailyCompleted ? 1 : 0) + (reviewedTodayCount >= 2 ? 1 : 0) + (insightsSavedToday ? 1 : 0);
+                const percentCompleted = Math.round((goalsCompletedCount / totalGoals) * 100);
+                
+                // SVG circular progress dimensions
+                const radius = 38;
+                const circumference = 2 * Math.PI * radius;
+                const offset = circumference - (percentCompleted / 100) * circumference;
+
+                return (
+                  <div className="bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 p-6 rounded-3xl shadow-sm space-y-5 text-left">
+                    <div className="flex items-center justify-between border-b border-neutral-100 dark:border-zinc-850 pb-3">
+                      <div>
+                        <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 uppercase font-mono tracking-wider block">Daily Focus</span>
+                        <h4 className="text-sm font-bold text-neutral-900 dark:text-zinc-100">Daily Objectives</h4>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-md">
+                        {goalsCompletedCount} / {totalGoals} Done
+                      </span>
+                    </div>
+
+                    {/* Progress Ring Visualizer */}
+                    <div className="flex items-center gap-4 bg-neutral-50/50 dark:bg-zinc-900/40 p-3.5 rounded-2xl border dark:border-zinc-850">
+                      <div className="relative flex items-center justify-center shrink-0 w-24 h-24">
+                        <svg className="w-full h-full transform -rotate-90">
+                          <circle
+                            cx="48"
+                            cy="48"
+                            r={radius}
+                            className="text-neutral-100 dark:text-zinc-800"
+                            strokeWidth="5"
+                            stroke="currentColor"
+                            fill="transparent"
+                          />
+                          <circle
+                            cx="48"
+                            cy="48"
+                            r={radius}
+                            className="text-indigo-600 dark:text-indigo-500 transition-all duration-700"
+                            strokeWidth="5"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={offset}
+                            strokeLinecap="round"
+                            stroke="currentColor"
+                            fill="transparent"
+                          />
+                        </svg>
+                        <div className="absolute flex flex-col items-center">
+                          <span className="text-sm font-bold font-mono text-neutral-900 dark:text-zinc-100">
+                            {percentCompleted}%
+                          </span>
+                          <span className="text-[8px] text-neutral-400 font-mono">GOAL</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-neutral-900 dark:text-zinc-100 block">Today's Progress</span>
+                        <p className="text-[10px] text-neutral-400 dark:text-zinc-500 font-light leading-normal">
+                          {percentCompleted === 100 
+                            ? 'Excellent! All daily goals achieved. Bonus XP awarded.'
+                            : 'Fulfill each objective below to maintain streaks and claim daily XP boosts.'
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Objectives Checklist */}
+                    <div className="space-y-3.5 pt-1">
+                      {[
+                        {
+                          id: "g1",
+                          title: "Resolve Daily Challenge",
+                          desc: "Complete the neural challenge question",
+                          done: dailyCompleted,
+                          sub: "150 XP Reward"
+                        },
+                        {
+                          id: "g2",
+                          title: "Spaced Spacing Drill",
+                          desc: "Review 2 spacing terms in due deck",
+                          done: reviewedTodayCount >= 2,
+                          sub: `${reviewedTodayCount} / 2 completed`
+                        },
+                        {
+                          id: "g3",
+                          title: "Cognitive Insights Saved",
+                          desc: "Draft a note or attach tag to nodes",
+                          done: insightsSavedToday,
+                          sub: "30 XP Reward"
+                        }
+                      ].map((item) => (
+                        <div key={item.id} className="flex items-start gap-3">
+                          <div className={`mt-0.5 p-0.5 rounded-lg border transition-all duration-300 ${
+                            item.done 
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-500 dark:bg-emerald-950/20 dark:border-emerald-900' 
+                              : 'bg-white border-neutral-200 text-neutral-400 dark:bg-zinc-900 dark:border-zinc-800'
+                          }`}>
+                            <Check className={`w-3.5 h-3.5 transition-all duration-300 ${item.done ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`} />
+                          </div>
+                          <div className="space-y-0.5 text-left flex-1 min-w-0">
+                            <span className={`text-xs font-bold leading-tight block ${item.done ? 'text-neutral-500 dark:text-zinc-400 line-through' : 'text-neutral-900 dark:text-zinc-100'}`}>
+                              {item.title}
+                            </span>
+                            <span className="text-[10px] text-neutral-400 dark:text-zinc-500 block font-light">
+                              {item.desc}
+                            </span>
+                            <span className="text-[9px] text-indigo-500 font-mono font-bold block">
+                              {item.sub}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Claim Daily Bonus Button */}
+                    {percentCompleted === 100 && (
+                      <button
+                        type="button"
+                        disabled={dailyBonusClaimed}
+                        onClick={() => {
+                          setDailyBonusClaimed(true);
+                          localStorage.setItem('zipytiny_daily_bonus_' + new Date().toDateString(), 'true');
+                          const gUpdate = { ...graph };
+                          awardXpPoints(50, gUpdate);
+                          setReminderMessage("Successfully claimed +50 XP Diligence Bonus!");
+                          setTimeout(() => setReminderMessage(null), 3000);
+                        }}
+                        className={`w-full py-3 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2 ${
+                          dailyBonusClaimed
+                            ? 'bg-neutral-100 text-neutral-400 dark:bg-zinc-850 dark:text-zinc-600'
+                            : 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-xs active:scale-95'
+                        }`}
+                      >
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        <span>{dailyBonusClaimed ? "Daily Bonus Claimed" : "Claim +50 XP Bonus"}</span>
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Weekly Goals Hub */}
+              {(() => {
+                const wsGoal = Math.min(savedSummaries.length, 2);
+                const bridgeGoal = Math.min(graphNodesState.filter(n => n.crossLinks && n.crossLinks.length > 0).length, 2);
+                const masteryGoal = Math.min(conceptsArray.filter(c => c.masteryLevel >= 80).length, 3);
+                
+                const wsPercent = Math.round((wsGoal / 2) * 100);
+                const bridgePercent = Math.round((bridgeGoal / 2) * 100);
+                const masteryPercent = Math.round((masteryGoal / 3) * 100);
+
+                const overallWeeklyPercent = Math.round((wsPercent + bridgePercent + masteryPercent) / 3);
+
+                return (
+                  <div className="bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 p-6 rounded-3xl shadow-sm space-y-4 text-left">
+                    <div className="flex items-center justify-between border-b border-neutral-100 dark:border-zinc-850 pb-3">
+                      <div>
+                        <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 uppercase font-mono tracking-wider block">Weekly Objectives</span>
+                        <h4 className="text-sm font-bold text-neutral-900 dark:text-zinc-100">Weekly Habits progress</h4>
+                      </div>
+                      <span className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        {overallWeeklyPercent}%
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* WS progress */}
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-[10px] font-mono text-neutral-400">
+                          <span>Synthesize 2 New Workspaces</span>
+                          <span>{wsGoal} / 2</span>
+                        </div>
+                        <div className="w-full bg-neutral-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-indigo-600 h-1.5 rounded-full"
+                            style={{ width: `${wsPercent}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Bridge progress */}
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-[10px] font-mono text-neutral-400">
+                          <span>Bridge 2 Topic Crossovers</span>
+                          <span>{bridgeGoal} / 2</span>
+                        </div>
+                        <div className="w-full bg-neutral-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-[#bf5af2] h-1.5 rounded-full"
+                            style={{ width: `${bridgePercent}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Mastery progress */}
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-[10px] font-mono text-neutral-400">
+                          <span>3 Concepts with Mastery &gt;= 80%</span>
+                          <span>{masteryGoal} / 3</span>
+                        </div>
+                        <div className="w-full bg-neutral-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-emerald-500 h-1.5 rounded-full"
+                            style={{ width: `${masteryPercent}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Personal Statistics panel */}
+              <div className="bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 p-6 rounded-3xl shadow-sm space-y-4 text-left">
+                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-zinc-850 pb-3">
+                  <div>
+                    <span className="text-[9px] font-bold text-neutral-400 uppercase font-mono tracking-wider block">Performance Logs</span>
+                    <h4 className="text-sm font-bold text-neutral-900 dark:text-zinc-100">Personal Statistics</h4>
+                  </div>
+                  <Activity className="w-4 h-4 text-indigo-500" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3.5">
+                  {[
+                    { label: "Active Streak", val: `${graph.streak} Days`, icon: <Flame className="w-3.5 h-3.5 text-amber-500" /> },
+                    { label: "Level Rank", val: `Level ${graph.level}`, icon: <Award className="w-3.5 h-3.5 text-indigo-500" /> },
+                    { label: "Overall XP", val: `${graph.xp} XP`, icon: <Zap className="w-3.5 h-3.5 text-[#bf5af2]" /> },
+                    { label: "Drill Accuracy", val: `${averageQuizPercent}%`, icon: <GraduationCap className="w-3.5 h-3.5 text-emerald-500" /> },
+                    { label: "Models Captured", val: totalConceptsCount, icon: <Brain className="w-3.5 h-3.5 text-pink-500" /> },
+                    { label: "Drills Taken", val: quizzesTakenCount, icon: <BookOpenCheck className="w-3.5 h-3.5 text-teal-500" /> }
+                  ].map((stat, i) => (
+                    <div key={i} className="bg-neutral-50/50 dark:bg-zinc-900/50 p-3 rounded-2xl border dark:border-zinc-850 flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-lg bg-white dark:bg-zinc-850 border dark:border-zinc-800 shrink-0">
+                        {stat.icon}
+                      </div>
+                      <div className="text-left min-w-0">
+                        <span className="text-[8px] font-mono font-bold text-neutral-400 uppercase tracking-wider block">{stat.label}</span>
+                        <span className="text-xs font-bold font-mono text-neutral-900 dark:text-zinc-100 block truncate">{stat.val}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mastery Levels rank breakdown */}
+              <div className="bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 p-6 rounded-3xl shadow-sm space-y-4 text-left">
+                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-zinc-850 pb-3">
+                  <div>
+                    <span className="text-[9px] font-bold text-neutral-400 uppercase font-mono tracking-wider block">Retention Weights</span>
+                    <h4 className="text-sm font-bold text-neutral-900 dark:text-zinc-100">Mastery Levels Breakdown</h4>
+                  </div>
+                  <Brain className="w-4 h-4 text-pink-500" />
+                </div>
+
+                <div className="space-y-3 pt-1">
+                  {[
+                    { label: "Level 4: Mastery", range: "80 - 100%", count: conceptsArray.filter(c => c.masteryLevel >= 80).length, color: "bg-emerald-500" },
+                    { label: "Level 3: Proficient", range: "60 - 79%", count: conceptsArray.filter(c => c.masteryLevel >= 60 && c.masteryLevel < 80).length, color: "bg-indigo-500" },
+                    { label: "Level 2: Apprentice", range: "30 - 59%", count: conceptsArray.filter(c => c.masteryLevel >= 30 && c.masteryLevel < 60).length, color: "bg-amber-500" },
+                    { label: "Level 1: Novice", range: "0 - 29%", count: conceptsArray.filter(c => c.masteryLevel < 30).length, color: "bg-red-500" }
+                  ].map((level, i) => (
+                    <div key={i} className="flex items-center justify-between gap-4 p-2 rounded-xl hover:bg-neutral-50 dark:hover:bg-zinc-850/40 transition">
+                      <div className="flex items-center gap-2 text-left">
+                        <span className={`w-2 h-2 rounded-full ${level.color}`} />
+                        <div>
+                          <span className="text-xs font-bold text-neutral-950 dark:text-zinc-100 block">{level.label}</span>
+                          <span className="text-[9px] text-neutral-400 font-mono block">Score range: {level.range}</span>
+                        </div>
+                      </div>
+                      <span className="text-xs font-mono font-bold bg-neutral-100 dark:bg-zinc-800 text-neutral-600 dark:text-zinc-300 px-2 py-1 rounded-lg">
+                        {level.count} model{level.count !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
       )}
 
     </div>
