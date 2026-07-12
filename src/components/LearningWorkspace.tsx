@@ -297,7 +297,34 @@ export default function LearningWorkspace({
   const isSharedPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/s/');
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 sm:p-6 md:p-8 lg:p-10 space-y-6 lg:space-y-8 bg-slate-50/10 dark:bg-zinc-950/10">
+
+      {/* 🧭 PREMIUM WORKSPACE HEADER TOP BAR */}
+      <div className="flex items-center justify-between pb-4 border-b border-neutral-100 dark:border-zinc-800/80">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onBackToCenter}
+            className="flex items-center gap-2 px-3.5 py-1.5 text-xs font-semibold text-neutral-600 hover:text-neutral-900 dark:text-zinc-400 dark:hover:text-zinc-100 bg-neutral-100/80 hover:bg-neutral-200/80 dark:bg-zinc-800 dark:hover:bg-zinc-700/80 rounded-xl transition-all duration-150 cursor-pointer active:scale-95"
+          >
+            <span>←</span>
+            <span>Exit Workspace</span>
+          </button>
+          <div className="h-4 w-px bg-neutral-200 dark:bg-zinc-800" />
+          <span className="text-xs font-medium text-neutral-400 dark:text-zinc-500 font-sans truncate max-w-[150px] sm:max-w-md">
+            Zipytiny AI Study Engine / {activeSummary.metadata.title}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {/* Status Dot */}
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span className="text-[10px] font-mono font-bold tracking-wider text-emerald-600 dark:text-emerald-400 uppercase">
+            ACTIVE COGNITION
+          </span>
+        </div>
+      </div>
 
       {isSharedPath && (
         <div className="bg-gradient-to-r from-indigo-700 to-indigo-850 text-white rounded-3xl p-4.5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md border border-white/10 animate-fadeIn">
