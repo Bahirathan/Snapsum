@@ -30,7 +30,18 @@ import {
   Activity,
   Clock,
   Shield,
-  Brain
+  Brain,
+  FileText,
+  Folder,
+  Calendar,
+  Plus,
+  ChevronLeft,
+  LayoutDashboard,
+  Flame,
+  Book,
+  GraduationCap,
+  FolderPlus,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -41,6 +52,7 @@ import {
   QuizQuestion,
   DailyChallengeQuestion
 } from '../types';
+import LearningJourneyDashboard from './LearningJourneyDashboard';
 
 // =========================================================================
 // DEFAULT DATA FOR BOOTSTRAPPING USER KNOWLEDGE GRAPH (AESTHETIC FILLER)
@@ -217,12 +229,24 @@ export function saveMemoryGraph(graph: LearningMemoryGraph) {
 // 1. LEARNING PROGRESS DASHBOARD (REPLACES HOME PAGE IN LEARN MODE)
 // =========================================================================
 
-interface LearningProgressDashboardProps {
+export interface LearningProgressDashboardProps {
   onLoadVideo: (videoId: string, isSummary: boolean) => void;
   onActivateDemo: (response: YouTubeSummaryResponse) => void;
+  onLoadStack?: (stack: any) => void;
+  savedSummaries?: any[];
+  savedStacks?: any[];
+  collections?: string[];
+  onAddCollection?: (name: string) => void;
+  visitorUser?: any;
+  setShowAuthModal?: (show: boolean) => void;
+  setAuthModalPurpose?: (purpose: string) => void;
 }
 
-export function LearningProgressDashboard({ onLoadVideo, onActivateDemo }: LearningProgressDashboardProps) {
+export function LearningProgressDashboard(props: LearningProgressDashboardProps) {
+  return <LearningJourneyDashboard {...props} />;
+}
+
+export function Disabled_LearningProgressDashboard({ onLoadVideo, onActivateDemo }: any) {
   const [graph, setGraph] = useState<LearningMemoryGraph | null>(null);
   const [selectedNode, setSelectedNode] = useState<MemoryConcept | null>(null);
   const [dailyCompleted, setDailyCompleted] = useState<boolean>(false);

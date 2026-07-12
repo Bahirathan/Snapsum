@@ -5529,6 +5529,20 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 <LearningProgressDashboard 
                   onLoadVideo={handleLoadVideoById}
                   onActivateDemo={handleLoadStoredItem}
+                  onLoadStack={(stack) => {
+                    setActiveStack(stack);
+                    setActiveStackTab('overview');
+                    setStackQuizAnswers({});
+                    setStackQuizSubmitted(false);
+                    setActiveSummary(null);
+                  }}
+                  savedSummaries={savedSummaries}
+                  savedStacks={savedStacks}
+                  collections={collections}
+                  onAddCollection={handleAddCollection}
+                  visitorUser={visitorUser}
+                  setShowAuthModal={setShowAuthModal}
+                  setAuthModalPurpose={setAuthModalPurpose}
                 />
               </div>
             )}
