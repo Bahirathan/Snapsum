@@ -134,6 +134,10 @@ export default function LearningWorkspace({
   const [xpPoints, setXpPoints] = useState<number>(() => {
     return parseInt(localStorage.getItem('zipytiny_user_xp') || '320', 10);
   });
+  const [streakClaimed, setStreakClaimed] = useState<boolean>(() => {
+    return localStorage.getItem('zipytiny_checked_today') === new Date().toDateString();
+  });
+  const [showStreakCelebration, setShowStreakCelebration] = useState<boolean>(false);
 
   // Quiz States
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
@@ -1369,14 +1373,35 @@ export default function LearningWorkspace({
           </div>
 
           {/* Gamified study operating core */}
-          <div className="bg-gradient-to-br from-slate-900 to-[#1d1d1f] text-white rounded-3xl p-6 border border-white/10 shadow-lg space-y-4 text-left">
+          <div className="bg-gradient-to-br from-slate-900 to-[#1d1d1f] text-white rounded-3xl p-6 border border-white/10 shadow-lg space-y-4 text-left relative overflow-hidden">
+            {showStreakCelebration && (
+              <div className="absolute inset-0 bg-emerald-650/95 flex flex-col items-center justify-center text-center p-4 z-20 animate-fadeIn">
+                <Sparkles className="w-8 h-8 text-amber-300 animate-spin mb-2" />
+                <h5 className="font-extrabold text-sm text-white">Streak Reward Claimed!</h5>
+                <p className="text-[11px] text-emerald-105 font-light mt-1">
+                  🔥 +55 XP added. Keep learning tomorrow to multiply your progress.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowStreakCelebration(false)}
+                  className="mt-3 bg-white/20 hover:bg-white/30 text-white font-semibold text-[10px] px-3 py-1 rounded-lg transition"
+                >
+                  Awesome!
+                </button>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <Trophy className="w-4.5 h-4.5 text-amber-400" />
                 <h4 className="font-bold font-display text-sm text-white">Comprehension Master</h4>
               </div>
-              <div className="flex items-center gap-1 bg-amber-400/10 text-amber-400 border border-amber-400/20 px-2.5 py-0.5 rounded-full text-[9px] font-bold font-mono">
-                CLAIMABLE TODAY
+              <div className={`flex items-center gap-1 border px-2.5 py-0.5 rounded-full text-[9px] font-bold font-mono ${
+                streakClaimed 
+                  ? 'bg-zinc-800/80 text-zinc-400 border-zinc-700/50' 
+                  : 'bg-amber-400/10 text-amber-400 border-amber-400/20 animate-pulse'
+              }`}>
+                {streakClaimed ? 'COMPLETED TODAY' : 'CLAIMABLE TODAY'}
               </div>
             </div>
 
@@ -1397,7 +1422,10 @@ export default function LearningWorkspace({
             <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
               <div className="bg-white/5 border border-white/5 p-3 rounded-xl">
                 <span className="text-neutral-400 text-[10px] uppercase font-mono block">Streak active</span>
-                <strong className="text-sm text-white font-mono mt-0.5 block">{streakDays} Days 🔥</strong>
+                <strong className="text-sm text-white font-mono mt-0.5 block flex items-center gap-1">
+                  <span>{streakDays} Days</span>
+                  <span className="text-amber-500 animate-pulse">🔥</span>
+                </strong>
               </div>
               <div className="bg-white/5 border border-white/5 p-3 rounded-xl">
                 <span className="text-neutral-400 text-[10px] uppercase font-mono block">Accuracy rate</span>
@@ -1407,23 +1435,26 @@ export default function LearningWorkspace({
               </div>
             </div>
 
-            <button 
-              type="button"
-              onClick={() => {
-                const checkedToday = localStorage.getItem('zipytiny_checked_today');
-                if (checkedToday === new Date().toDateString()) {
-                  alert('Streak reward already claimed! Check back tomorrow morning to keep driving your active daily streak.');
-                  return;
-                }
-                localStorage.setItem('zipytiny_checked_today', new Date().toDateString());
-                awardXp(55);
-                setStreakDays(prev => prev + 1);
-                alert('🔥 Learning Streak claimed! +55 XP added to your experience catalog.');
-              }}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-xl text-xs font-bold transition duration-150 cursor-pointer text-center"
-            >
-              Claim Streak Check-In Reward (+55 XP)
-            </button>
+            {streakClaimed ? (
+              <div className="w-full bg-zinc-800/50 border border-zinc-750 text-zinc-400 py-2.5 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-1.5">
+                <CheckCircle className="w-4 h-4 text-emerald-500" />
+                <span>Streak Safeguarded For Today</span>
+              </div>
+            ) : (
+              <button 
+                type="button"
+                onClick={() => {
+                  localStorage.setItem('zipytiny_checked_today', new Date().toDateString());
+                  awardXp(55);
+                  setStreakDays(prev => prev + 1);
+                  setStreakClaimed(true);
+                  setShowStreakCelebration(true);
+                }}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-xs font-bold transition duration-150 cursor-pointer text-center flex items-center justify-center gap-1.5 hover:shadow-md active:scale-98"
+              >
+                <span>Claim Streak Check-In Reward (+55 XP)</span>
+              </button>
+            )}
           </div>
 
           {/* Quick study instructions guidelines card */}

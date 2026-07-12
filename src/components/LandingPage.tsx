@@ -4,7 +4,7 @@ import {
   Video, Play, Bookmark, Headphones, Users, ChevronDown, Download, Award,
   Upload, Brain, Share2, Star, TrendingUp, Clock, Shield, Cpu,
   BarChart2, Layers, BookOpen, Mic, PenTool, Hash, ChevronRight,
-  Youtube, Presentation, HelpCircle, Lock
+  Youtube, Presentation, HelpCircle, Lock, Calculator
 } from 'lucide-react';
 import { CinematicExplainer } from './CinematicExplainer';
 
@@ -143,6 +143,7 @@ export default function LandingPage({
   const [demoActiveTab, setDemoActiveTab] = useState<'summary' | 'notes' | 'mindmap' | 'flashcard' | 'quiz'>('summary');
   const [flashcardFlipped, setFlashcardFlipped] = useState(false);
   const [isPlayingFlow, setIsPlayingFlow] = useState(true);
+  const [weeklyHours, setWeeklyHours] = useState(12);
 
   // Auto-progression logic for the mockup simulation
   useEffect(() => {
@@ -496,6 +497,57 @@ export default function LandingPage({
                 {urlError && (
                   <p className="text-xs text-rose-500 mt-2 ml-3 font-semibold animate-fadeIn">{urlError}</p>
                 )}
+
+                {/* 🌟 ONE-CLICK INTERACTIVE DEMO PILLS (Growth-optimized) */}
+                <div className="mt-4 pt-4 border-t border-dashed border-neutral-200 dark:border-zinc-850">
+                  <p className="text-[11px] font-semibold text-neutral-600 dark:text-zinc-400 mb-2 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />
+                    <span>🔥 One-Click Sandbox: Test drive with standard curation (No URL needed):</span>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { 
+                        title: 'Steve Jobs', 
+                        subtitle: 'Stanford Address',
+                        url: 'https://www.youtube.com/watch?v=UF8uR6Z6KLc',
+                        color: 'hover:border-indigo-400 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 bg-indigo-50/10 dark:bg-indigo-950/5 border-indigo-200/50 dark:border-indigo-900/30',
+                        duration: '15m'
+                      },
+                      { 
+                        title: 'Simon Sinek', 
+                        subtitle: 'Golden Circle',
+                        url: 'https://www.youtube.com/watch?v=qp0HIF3SfI4',
+                        color: 'hover:border-amber-400 hover:bg-amber-50/30 dark:hover:bg-amber-950/20 text-amber-600 dark:text-amber-400 bg-amber-50/10 dark:bg-amber-950/5 border-amber-200/50 dark:border-amber-900/30',
+                        duration: '18m'
+                      },
+                      { 
+                        title: 'MIT: Intro to AI', 
+                        subtitle: 'Core Mechanics',
+                        url: 'https://www.youtube.com/watch?v=intro-ai',
+                        color: 'hover:border-emerald-400 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 bg-emerald-50/10 dark:bg-emerald-950/5 border-emerald-200/50 dark:border-emerald-900/30',
+                        duration: '25m'
+                      },
+                    ].map((pill, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setLandingSourceType('video');
+                          setYtUrl(pill.url);
+                          setUrlError('');
+                          if (onStartFreeSummary) {
+                            onStartFreeSummary(pill.url, 'video');
+                          }
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border transition cursor-pointer active:scale-95 duration-150 ${pill.color}`}
+                      >
+                        <Video className="w-3.5 h-3.5 shrink-0" />
+                        <span>{pill.title} <span className="font-light opacity-80">({pill.subtitle})</span></span>
+                        <span className="font-mono text-[9px] bg-white/40 dark:bg-zinc-800/60 px-1 py-0.2 rounded-md font-extrabold">{pill.duration}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 <div className="flex items-center justify-between mt-3.5 px-1">
                   <p className="text-[11px] text-[#86868b] dark:text-zinc-450 font-light flex items-center gap-2 select-none">
@@ -1001,6 +1053,149 @@ export default function LandingPage({
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* 🌟 DYNAMIC ROI CALCULATOR SECTION */}
+      <section className="py-20 w-full bg-linear-to-b from-white to-slate-50/50 dark:from-zinc-950 dark:to-zinc-900 border-b border-black/[0.02] dark:border-zinc-900">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          
+          <div className="space-y-4 text-center max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-150 dark:border-indigo-900/30 px-3 py-1 rounded-full text-xs font-mono font-bold text-indigo-700 dark:text-indigo-400">
+              <Calculator className="w-3.5 h-3.5" />
+              <span>Zipytiny Cognitive Savings Estimator</span>
+            </div>
+            <h2 className="text-2xl sm:text-3.5xl font-extrabold font-display tracking-tight text-neutral-900 dark:text-zinc-50">
+              Calculate Your Learning ROI & Hours Saved
+            </h2>
+            <p className="text-neutral-500 dark:text-zinc-400 font-light text-sm">
+              Standard watching is passive and slow. Slide to estimate how many hours of video lectures, webinars, and audio materials you consume weekly, and see your dynamic cognitive speedup.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch bg-white dark:bg-zinc-900/80 p-6 sm:p-8 rounded-3xl border border-neutral-200 dark:border-zinc-800 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-2xl"></div>
+            
+            {/* Left: Input Slider */}
+            <div className="col-span-1 md:col-span-6 flex flex-col justify-between space-y-6 pr-0 md:pr-4 border-b md:border-b-0 md:border-r border-neutral-150 dark:border-zinc-800/80 pb-6 md:pb-0">
+              <div className="space-y-4 text-left">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider font-mono">My Study Load</span>
+                  <span className="text-2xl font-extrabold font-mono text-[#0071e3] dark:text-sky-400 bg-blue-50 dark:bg-blue-950/30 px-3.5 py-1 rounded-xl">
+                    {weeklyHours} Hrs <span className="text-xs font-medium text-neutral-500">/ wk</span>
+                  </span>
+                </div>
+                
+                <p className="text-xs text-neutral-500 dark:text-zinc-400 font-light leading-relaxed">
+                  Adjust the slider to your average weekly volume of YouTube lectures, webinars, podcasts, or online tutorials.
+                </p>
+
+                <div className="pt-4 space-y-2">
+                  <input
+                    type="range"
+                    min="1"
+                    max="40"
+                    value={weeklyHours}
+                    onChange={(e) => setWeeklyHours(parseInt(e.target.value, 10))}
+                    className="w-full h-2 bg-neutral-200 dark:bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-[#0071e3] focus:outline-none"
+                  />
+                  <div className="flex justify-between text-[10px] font-mono text-neutral-400">
+                    <span>1 Hour (Casual)</span>
+                    <span>20 Hours (Intense)</span>
+                    <span>40 Hours (Maximum)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Conversion CTA Trigger */}
+              <div className="pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const inputEl = document.getElementById('landing-main-input') as HTMLInputElement;
+                    if (inputEl) {
+                      inputEl.focus();
+                      inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }}
+                  className="w-full bg-[#0071e3] hover:bg-[#0077ed] text-white py-3.5 px-6 rounded-xl font-bold text-xs sm:text-sm transition-all shadow-md active:scale-98 flex items-center justify-center gap-2 cursor-pointer group"
+                >
+                  <span>Maximize My Learning Efficiency</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+              </div>
+            </div>
+
+            {/* Right: Dynamic Calculation Visualizer */}
+            <div className="col-span-1 md:col-span-6 grid grid-cols-2 gap-4 pl-0 md:pl-4 text-left">
+              
+              {/* Box 1: Weekly Hours Saved */}
+              <div className="bg-slate-50/50 dark:bg-zinc-950/40 p-4.5 rounded-2xl border border-neutral-150 dark:border-zinc-850/60 flex flex-col justify-between">
+                <div>
+                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider font-mono mt-3">Time Saved Weekly</h4>
+                </div>
+                <div className="mt-4">
+                  <span className="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-500">
+                    ~{Math.max(1, Math.round(weeklyHours * 0.85))}
+                  </span>
+                  <span className="text-xs font-semibold text-neutral-500 dark:text-zinc-400 block mt-1">Hours Returned To You</span>
+                </div>
+              </div>
+
+              {/* Box 2: Retention Improvement */}
+              <div className="bg-slate-50/50 dark:bg-zinc-950/40 p-4.5 rounded-2xl border border-neutral-150 dark:border-zinc-850/60 flex flex-col justify-between">
+                <div>
+                  <div className="h-8 w-8 rounded-lg bg-[#0071e3]/10 text-[#0071e3] flex items-center justify-center">
+                    <Brain className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider font-mono mt-3">Active Comprehension</h4>
+                </div>
+                <div className="mt-4">
+                  <span className="text-2xl sm:text-3xl font-extrabold font-mono text-[#0071e3] dark:text-sky-400">
+                    10x
+                  </span>
+                  <span className="text-xs font-semibold text-neutral-500 dark:text-zinc-400 block mt-1">Faster Information Digest</span>
+                </div>
+              </div>
+
+              {/* Box 3: Yearly Hours Saved */}
+              <div className="bg-slate-50/50 dark:bg-zinc-950/40 p-4.5 rounded-2xl border border-neutral-150 dark:border-zinc-850/60 flex flex-col justify-between">
+                <div>
+                  <div className="h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider font-mono mt-3">Yearly Time Saved</h4>
+                </div>
+                <div className="mt-4">
+                  <span className="text-2xl sm:text-3xl font-extrabold font-mono text-indigo-500">
+                    ~{Math.max(10, Math.round(weeklyHours * 0.85 * 52))}
+                  </span>
+                  <span className="text-xs font-semibold text-neutral-500 dark:text-zinc-400 block mt-1">Hours Recovered / Year</span>
+                </div>
+              </div>
+
+              {/* Box 4: Productivity Index */}
+              <div className="bg-slate-50/50 dark:bg-zinc-950/40 p-4.5 rounded-2xl border border-neutral-150 dark:border-zinc-850/60 flex flex-col justify-between">
+                <div>
+                  <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <h4 className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider font-mono mt-3">Focus Coefficient</h4>
+                </div>
+                <div className="mt-4">
+                  <span className="text-2xl sm:text-3xl font-extrabold font-mono text-amber-500">
+                    +{Math.round(weeklyHours * 9.5)}
+                  </span>
+                  <span className="text-xs font-semibold text-neutral-500 dark:text-zinc-400 block mt-1">Est. Learning XP Points</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
         </div>
       </section>
 
