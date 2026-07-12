@@ -234,6 +234,7 @@ export interface LearningProgressDashboardProps {
   onActivateDemo: (response: YouTubeSummaryResponse) => void;
   onLoadStack?: (stack: any) => void;
   savedSummaries?: any[];
+  onUpdateSavedSummaries?: (updated: any[]) => void;
   savedStacks?: any[];
   collections?: string[];
   onAddCollection?: (name: string) => void;

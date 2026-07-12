@@ -5537,6 +5537,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     setActiveSummary(null);
                   }}
                   savedSummaries={savedSummaries}
+                  onUpdateSavedSummaries={saveToShelf}
                   savedStacks={savedStacks}
                   collections={collections}
                   onAddCollection={handleAddCollection}

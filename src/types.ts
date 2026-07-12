@@ -89,6 +89,11 @@ export interface SavedSummary {
   savedAt: string;
   response: YouTubeSummaryResponse;
   collection?: string; // Custom collection/folder tag
+  tags?: string[];
+  bookmarks?: Array<{ id: string; title: string; timestamp: string; secondsCount: number; note?: string }>;
+  personalNotes?: string;
+  recentlyViewedAt?: string;
+  crossLinks?: string[]; // Connected workspace/video IDs
 }
 
 // =========================================================================
@@ -109,6 +114,11 @@ export interface MemoryConcept {
   easeFactor?: number; // SM-2 ease factor
   repetitions?: number; // Number of consecutive successful reviews
   dueDate?: string; // ISO date string of next review
+  tags?: string[];
+  bookmarks?: boolean;
+  personalNotes?: string;
+  crossLinks?: string[]; // Connected concept IDs or source video IDs
+  relationshipNotes?: Record<string, string>; // Description of relationship to other nodes
 }
 
 export interface VideoLearningSession {

@@ -44,7 +44,12 @@ import {
   Trash2,
   FolderOpen,
   Search,
-  BookOpenCheck
+  BookOpenCheck,
+  Tag,
+  Link2,
+  X,
+  Compass,
+  TrendingUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -57,6 +62,7 @@ import {
   SavedSummary
 } from '../types';
 import { loadMemoryGraph, saveMemoryGraph } from './LearningDashboard';
+import KnowledgeGraphVisualizer, { GraphNode, GraphLink } from './KnowledgeGraphVisualizer';
 
 // Custom interface matching App.tsx states passed down
 interface LearningJourneyDashboardProps {
@@ -64,6 +70,7 @@ interface LearningJourneyDashboardProps {
   onActivateDemo: (response: YouTubeSummaryResponse) => void;
   onLoadStack?: (stack: any) => void;
   savedSummaries?: SavedSummary[];
+  onUpdateSavedSummaries?: (updated: SavedSummary[]) => void;
   savedStacks?: any[];
   collections?: string[];
   onAddCollection?: (name: string) => void;
@@ -123,6 +130,7 @@ export default function LearningJourneyDashboard({
   onActivateDemo,
   onLoadStack,
   savedSummaries = [],
+  onUpdateSavedSummaries,
   savedStacks = [],
   collections = [],
   onAddCollection,
@@ -142,6 +150,21 @@ export default function LearningJourneyDashboard({
   const [revisionStage, setRevisionStage] = useState<'type' | 'assess' | 'done'>('type');
   const [showAllConcepts, setShowAllConcepts] = useState<boolean>(false);
   const [showHint, setShowHint] = useState<boolean>(false);
+
+  // Connected Knowledge System tabs & layout
+  const [activeDashboardTab, setActiveDashboardTab] = useState<'graph' | 'vault'>('graph');
+  const [selectedGraphNode, setSelectedGraphNode] = useState<GraphNode | null>(null);
+  const [recentlyViewed, setRecentlyViewed] = useState<GraphNode[]>([]);
+  
+  // Custom sidebar/editor inputs
+  const [nodePersonalNotes, setNodePersonalNotes] = useState<string>('');
+  const [nodeTagInput, setNodeTagInput] = useState<string>('');
+  const [crossLinkTargetId, setCrossLinkTargetId] = useState<string>('');
+  const [crossLinkDescription, setCrossLinkDescription] = useState<string>('');
+  
+  // Active coordinate simulation state
+  const [graphNodesState, setGraphNodesState] = useState<GraphNode[]>([]);
+  const [graphLinksState, setGraphLinksState] = useState<GraphLink[]>([]);
 
   // Redesigned dashboard states
   const [activeFilter, setActiveFilter] = useState<'all' | 'videos' | 'documents' | 'courses' | 'collections'>('all');
@@ -225,6 +248,317 @@ export default function LearningJourneyDashboard({
     }
     saveMemoryGraph(updatedGraph);
     setGraph({ ...updatedGraph });
+  };
+
+  // Synchronize graph nodes and links whenever savedSummaries or graph.concepts change
+  useEffect(() => {
+    if (!graph) return;
+    
+    const conceptsArray = Object.values(graph.concepts) as MemoryConcept[];
+    
+    // Create base nodes list
+    const workspaceNodes = savedSummaries.map((item) => {
+      return {
+        id: `w-${item.id}`,
+        type: 'workspace' as const,
+        label: item.response?.metadata?.title || 'Untitled Workspace',
+        tags: item.tags || [],
+        bookmarks: item.bookmarks && item.bookmarks.length > 0,
+        personalNotes: item.personalNotes || '',
+        crossLinks: item.crossLinks || [],
+        rawObject: item
+      };
+    });
+
+    const conceptNodes = conceptsArray.map((c) => ({
+      id: `c-${c.id}`,
+      type: 'concept' as const,
+      label: c.concept,
+      sourceId: c.sourceVideoId,
+      mastery: c.masteryLevel,
+      tags: c.tags || [],
+      bookmarks: c.bookmarks || false,
+      personalNotes: c.personalNotes || '',
+      crossLinks: c.crossLinks || [],
+      rawObject: c
+    }));
+
+    const combinedNodes = [...workspaceNodes, ...conceptNodes];
+
+    // Compute positions, preserving existing coordinates if already simulated
+    setGraphNodesState((prevNodes) => {
+      const centerX = 350;
+      const centerY = 220;
+      const radius = 160;
+
+      return combinedNodes.map((node, index) => {
+        const match = prevNodes.find((pn) => pn.id === node.id);
+        if (match) {
+          return {
+            ...node,
+            x: match.x,
+            y: match.y,
+            vx: match.vx,
+            vy: match.vy
+          };
+        } else {
+          const angle = (index / (combinedNodes.length || 1)) * 2 * Math.PI;
+          return {
+            ...node,
+            x: centerX + radius * Math.cos(angle) + (Math.random() - 0.5) * 40,
+            y: centerY + radius * Math.sin(angle) + (Math.random() - 0.5) * 40,
+            vx: 0,
+            vy: 0
+          };
+        }
+      });
+    });
+
+    // Compute Links
+    const computedLinks: any[] = [];
+
+    // Link concepts to their source workspaces
+    conceptNodes.forEach((cn) => {
+      if (cn.sourceId) {
+        computedLinks.push({
+          source: cn.id,
+          target: `w-${cn.sourceId}`,
+          type: 'source'
+        });
+      }
+    });
+
+    // Link nodes based on manual crossLinks
+    combinedNodes.forEach((node) => {
+      if (node.crossLinks) {
+        node.crossLinks.forEach((targetId) => {
+          const actualTargetId = targetId.startsWith('w-') || targetId.startsWith('c-') 
+            ? targetId 
+            : `w-${targetId}`;
+
+          const alreadyLinked = computedLinks.some(
+            (l) => (l.source === node.id && l.target === actualTargetId) || 
+                   (l.source === actualTargetId && l.target === node.id)
+          );
+
+          if (!alreadyLinked && combinedNodes.some((n) => n.id === actualTargetId)) {
+            let notes = '';
+            if (node.type === 'concept' && (node.rawObject as MemoryConcept).relationshipNotes) {
+              notes = (node.rawObject as MemoryConcept).relationshipNotes?.[targetId] || '';
+            }
+
+            computedLinks.push({
+              source: node.id,
+              target: actualTargetId,
+              type: 'custom',
+              notes
+            });
+          }
+        });
+      }
+    });
+
+    // Link concepts sharing identical tags (topic relationships!)
+    conceptNodes.forEach((c1, i) => {
+      conceptNodes.slice(i + 1).forEach((c2) => {
+        const sharedTags = c1.tags?.filter((t) => c2.tags?.includes(t));
+        if (sharedTags && sharedTags.length > 0) {
+          computedLinks.push({
+            source: c1.id,
+            target: c2.id,
+            type: 'tag'
+          });
+        }
+      });
+    });
+
+    setGraphLinksState(computedLinks);
+
+  }, [graph, savedSummaries]);
+
+  // Sync selected node with latest external state (e.g. on detail saves)
+  useEffect(() => {
+    if (!selectedGraphNode) return;
+    const match = graphNodesState.find(n => n.id === selectedGraphNode.id);
+    if (match) {
+      setSelectedGraphNode(match);
+    }
+  }, [graphNodesState]);
+
+  const handleSelectNodeFromGraph = (node: GraphNode) => {
+    setSelectedGraphNode(node);
+    
+    // Add to recently viewed queue (up to 5 unique nodes)
+    setRecentlyViewed((prev) => {
+      const filtered = prev.filter((item) => item.id !== node.id);
+      return [node, ...filtered].slice(0, 5);
+    });
+
+    // Populate sidebar editor fields
+    setNodePersonalNotes(node.personalNotes || '');
+    setNodeTagInput('');
+    setCrossLinkTargetId('');
+    setCrossLinkDescription('');
+  };
+
+  // Save Bookmarks
+  const handleToggleBookmark = (node: GraphNode) => {
+    if (!graph) return;
+    
+    if (node.type === 'workspace') {
+      const updated = savedSummaries.map((s) => {
+        if (s.id === node.rawObject.id) {
+          const hasBookmarked = s.bookmarks && s.bookmarks.length > 0;
+          return {
+            ...s,
+            bookmarks: hasBookmarked 
+              ? [] 
+              : [{ id: 'fav', title: 'Favorite', timestamp: '00:00', secondsCount: 0 }]
+          };
+        }
+        return s;
+      });
+      if (onUpdateSavedSummaries) {
+        onUpdateSavedSummaries(updated);
+      }
+    } else {
+      const g = { ...graph };
+      const concept = g.concepts[node.rawObject.id];
+      if (concept) {
+        concept.bookmarks = !concept.bookmarks;
+        saveMemoryGraph(g);
+        setGraph(g);
+      }
+    }
+  };
+
+  // Save Personal Notes
+  const handleSavePersonalNotes = (node: GraphNode, notes: string) => {
+    if (!graph) return;
+
+    if (node.type === 'workspace') {
+      const updated = savedSummaries.map((s) => {
+        if (s.id === node.rawObject.id) {
+          return { ...s, personalNotes: notes };
+        }
+        return s;
+      });
+      if (onUpdateSavedSummaries) {
+        onUpdateSavedSummaries(updated);
+      }
+    } else {
+      const g = { ...graph };
+      const concept = g.concepts[node.rawObject.id];
+      if (concept) {
+        concept.personalNotes = notes;
+        saveMemoryGraph(g);
+        setGraph(g);
+      }
+    }
+
+    const gUpdate = { ...graph };
+    awardXpPoints(30, gUpdate);
+  };
+
+  // Add Tag
+  const handleAddTag = (node: GraphNode, tagText: string) => {
+    if (!tagText.trim() || !graph) return;
+    const cleanTag = tagText.trim().toLowerCase();
+
+    if (node.type === 'workspace') {
+      const updated = savedSummaries.map((s) => {
+        if (s.id === node.rawObject.id) {
+          const tags = s.tags || [];
+          if (!tags.includes(cleanTag)) {
+            return { ...s, tags: [...tags, cleanTag] };
+          }
+        }
+        return s;
+      });
+      if (onUpdateSavedSummaries) {
+        onUpdateSavedSummaries(updated);
+      }
+    } else {
+      const g = { ...graph };
+      const concept = g.concepts[node.rawObject.id];
+      if (concept) {
+        const tags = concept.tags || [];
+        if (!tags.includes(cleanTag)) {
+          concept.tags = [...tags, cleanTag];
+          saveMemoryGraph(g);
+          setGraph(g);
+        }
+      }
+    }
+
+    setNodeTagInput('');
+  };
+
+  // Remove Tag
+  const handleRemoveTag = (node: GraphNode, tagToRemove: string) => {
+    if (!graph) return;
+
+    if (node.type === 'workspace') {
+      const updated = savedSummaries.map((s) => {
+        if (s.id === node.rawObject.id) {
+          return { ...s, tags: (s.tags || []).filter((t) => t !== tagToRemove) };
+        }
+        return s;
+      });
+      if (onUpdateSavedSummaries) {
+        onUpdateSavedSummaries(updated);
+      }
+    } else {
+      const g = { ...graph };
+      const concept = g.concepts[node.rawObject.id];
+      if (concept) {
+        concept.tags = (concept.tags || []).filter((t) => t !== tagToRemove);
+        saveMemoryGraph(g);
+        setGraph(g);
+      }
+    }
+  };
+
+  // Add manual Relationship Link (cross-video linking / topic relationships)
+  const handleAddRelationshipLink = (node: GraphNode, targetId: string, description: string) => {
+    if (!targetId || !graph) return;
+
+    if (node.type === 'workspace') {
+      const updated = savedSummaries.map((s) => {
+        if (s.id === node.rawObject.id) {
+          const links = s.crossLinks || [];
+          const cleanTarget = targetId.startsWith('w-') ? targetId.slice(2) : targetId;
+          if (!links.includes(cleanTarget)) {
+            return { ...s, crossLinks: [...links, cleanTarget] };
+          }
+        }
+        return s;
+      });
+      if (onUpdateSavedSummaries) {
+        onUpdateSavedSummaries(updated);
+      }
+    } else {
+      const g = { ...graph };
+      const concept = g.concepts[node.rawObject.id];
+      if (concept) {
+        const links = concept.crossLinks || [];
+        if (!links.includes(targetId)) {
+          concept.crossLinks = [...links, targetId];
+          
+          if (description.trim()) {
+            if (!concept.relationshipNotes) concept.relationshipNotes = {};
+            concept.relationshipNotes[targetId] = description.trim();
+          }
+          
+          saveMemoryGraph(g);
+          setGraph(g);
+        }
+      }
+    }
+
+    setCrossLinkTargetId('');
+    setCrossLinkDescription('');
+    awardXpPoints(40, { ...graph });
   };
 
   const handleClaimDailyChallenge = () => {
@@ -514,8 +848,502 @@ export default function LearningJourneyDashboard({
 
       </div>
 
-      {/* 3. CONTINUE LEARNING CALLOUT & DAILY CHALLENGE */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* 2.5 TABS SELECTION CONTROLLER */}
+      <div className="flex border-b border-neutral-200 dark:border-zinc-800 pb-px">
+        <button
+          type="button"
+          onClick={() => setActiveDashboardTab('graph')}
+          className={`pb-3 px-6 text-sm font-bold border-b-2 transition flex items-center gap-2 cursor-pointer ${
+            activeDashboardTab === 'graph'
+              ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 font-bold'
+              : 'border-transparent text-neutral-500 dark:text-zinc-400 hover:text-neutral-900 dark:hover:text-zinc-100'
+          }`}
+        >
+          <Network className="w-4 h-4" />
+          <span>Connected Learning Graph</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveDashboardTab('vault')}
+          className={`pb-3 px-6 text-sm font-bold border-b-2 transition flex items-center gap-2 cursor-pointer ${
+            activeDashboardTab === 'vault'
+              ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 font-bold'
+              : 'border-transparent text-neutral-500 dark:text-zinc-400 hover:text-neutral-900 dark:hover:text-zinc-100'
+          }`}
+        >
+          <LayoutDashboard className="w-4 h-4" />
+          <span>Cognitive Knowledge Vault</span>
+        </button>
+      </div>
+
+      {/* GRAPH TAB CONTENT */}
+      {activeDashboardTab === 'graph' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Dynamic 2-column Graph Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            {/* Left Column: Interactive Force SVG Network */}
+            <div className="lg:col-span-8 flex flex-col gap-4 text-left">
+              <div className="bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 rounded-3xl p-6 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-base font-bold font-display text-neutral-950 dark:text-zinc-100 flex items-center gap-1.5">
+                      <Network className="w-5 h-5 text-indigo-600" />
+                      <span>Interactive Learning Graph</span>
+                    </h3>
+                    <p className="text-neutral-400 text-[10px] font-light">
+                      Visualizing automated associations between concepts, study nodes, and cross-topic links.
+                    </p>
+                  </div>
+                  {/* Graph search bar filter */}
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-3.5 h-3.5 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      placeholder="Filter nodes (e.g. tag, concept)..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full text-xs pl-8.5 pr-3 py-2 border rounded-xl outline-none dark:bg-zinc-800 dark:border-zinc-700 text-neutral-950 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <KnowledgeGraphVisualizer
+                  nodes={graphNodesState}
+                  links={graphLinksState}
+                  selectedNodeId={selectedGraphNode?.id || null}
+                  onSelectNode={handleSelectNodeFromGraph}
+                  onUpdateNodesPositions={setGraphNodesState}
+                  searchQuery={searchQuery}
+                />
+              </div>
+            </div>
+
+            {/* Right Column: Node Details & Knowledge Dashboard Sidebar */}
+            <div className="lg:col-span-4 text-left">
+              <AnimatePresence mode="wait">
+                {selectedGraphNode ? (
+                  <motion.div
+                    key={`detail-${selectedGraphNode.id}`}
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 rounded-3xl p-5 shadow-sm space-y-5 h-full flex flex-col justify-between"
+                  >
+                    <div className="space-y-4">
+                      {/* Close detail drawer button */}
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[9px] px-2 py-0.5 rounded-md font-bold font-mono uppercase ${
+                          selectedGraphNode.type === 'concept' 
+                            ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' 
+                            : 'bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400'
+                        }`}>
+                          {selectedGraphNode.type === 'concept' ? 'Mental Model' : 'Workspace Target'}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {/* Bookmark button */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleBookmark(selectedGraphNode)}
+                            className={`p-1.5 rounded-lg border transition ${
+                              selectedGraphNode.bookmarks 
+                                ? 'bg-red-50 border-red-200 text-red-500' 
+                                : 'bg-neutral-50 dark:bg-zinc-800 border-neutral-200 dark:border-zinc-700 text-neutral-400 dark:text-zinc-500 hover:text-neutral-600'
+                            }`}
+                            title="Toggle Bookmark"
+                          >
+                            <Bookmark className={`w-3.5 h-3.5 ${selectedGraphNode.bookmarks ? 'fill-red-500' : ''}`} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedGraphNode(null)}
+                            className="p-1 rounded-lg text-neutral-400 hover:bg-neutral-100 dark:hover:bg-zinc-800 transition"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Header title */}
+                      <div className="space-y-1">
+                        <h4 className="text-base font-bold font-display text-neutral-900 dark:text-zinc-100 leading-tight">
+                          {selectedGraphNode.label}
+                        </h4>
+                        {selectedGraphNode.type === 'concept' && selectedGraphNode.mastery !== undefined && (
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between text-[10px] font-mono">
+                              <span className="text-neutral-400 uppercase">Mastery level</span>
+                              <span className={selectedGraphNode.mastery >= 70 ? 'text-emerald-500 font-bold' : 'text-red-500 font-bold'}>
+                                {selectedGraphNode.mastery}% ({selectedGraphNode.mastery >= 70 ? 'Strong' : 'Weak'})
+                              </span>
+                            </div>
+                            <div className="w-full bg-neutral-100 dark:bg-zinc-800 h-1 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-1 rounded-full transition-all duration-500 ${
+                                  selectedGraphNode.mastery >= 70 ? 'bg-emerald-500' : 'bg-red-500'
+                                }`}
+                                style={{ width: `${selectedGraphNode.mastery}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Description / Analogy */}
+                      {selectedGraphNode.type === 'concept' && selectedGraphNode.rawObject && (
+                        <div className="space-y-2 bg-neutral-50 dark:bg-zinc-800/40 p-3 rounded-2xl border border-neutral-100 dark:border-zinc-800">
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-bold text-neutral-400 dark:text-zinc-500 uppercase font-mono tracking-wider block">Concept Definition</span>
+                            <p className="text-xs text-neutral-700 dark:text-zinc-300 leading-relaxed font-light">
+                              {selectedGraphNode.rawObject.definition || 'No automatic definition recorded. Read summaries to populate details.'}
+                            </p>
+                          </div>
+                          {selectedGraphNode.rawObject.analogy && (
+                            <div className="space-y-1 border-t border-neutral-200/40 dark:border-zinc-800/60 pt-2 mt-2">
+                              <span className="text-[9px] font-bold text-indigo-500 uppercase font-mono tracking-wider flex items-center gap-1">
+                                <Lightbulb className="w-3 h-3" />
+                                <span>Core Analogy</span>
+                              </span>
+                              <p className="text-xs text-indigo-950 dark:text-indigo-200 leading-relaxed font-light italic bg-indigo-50/[0.15] p-2 rounded-xl">
+                                "{selectedGraphNode.rawObject.analogy}"
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Custom tags list & editor */}
+                      <div className="space-y-2">
+                        <span className="text-[9px] font-bold text-neutral-400 dark:text-zinc-500 uppercase font-mono tracking-wider block">Custom Tags</span>
+                        <div className="flex flex-wrap gap-1">
+                          {(selectedGraphNode.tags || []).map((t: string) => (
+                            <span 
+                              key={t}
+                              className="text-[9px] bg-neutral-100 dark:bg-zinc-800 text-neutral-600 dark:text-zinc-300 px-2 py-0.5 rounded-md flex items-center gap-1 border dark:border-zinc-700"
+                            >
+                              <span>#{t}</span>
+                              <button 
+                                onClick={() => handleRemoveTag(selectedGraphNode, t)}
+                                className="text-neutral-400 hover:text-red-500 transition"
+                              >
+                                <X className="w-2.5 h-2.5" />
+                              </button>
+                            </span>
+                          ))}
+                          {(selectedGraphNode.tags || []).length === 0 && (
+                            <span className="text-[10px] text-neutral-400 italic font-light">No tags added yet</span>
+                          )}
+                        </div>
+                        {/* Tag Input */}
+                        <div className="flex gap-1">
+                          <input
+                            type="text"
+                            placeholder="Add custom tag..."
+                            value={nodeTagInput}
+                            onChange={(e) => setNodeTagInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleAddTag(selectedGraphNode, nodeTagInput)}
+                            className="flex-1 text-xs border rounded-lg px-2.5 py-1.5 outline-none dark:bg-zinc-800 dark:border-zinc-700 text-neutral-950 dark:text-white"
+                          />
+                          <button
+                            onClick={() => handleAddTag(selectedGraphNode, nodeTagInput)}
+                            className="bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-neutral-700 dark:text-zinc-300 px-3 py-1 text-xs font-semibold rounded-lg"
+                          >
+                            Add
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Personal Notes Box */}
+                      <div className="space-y-2">
+                        <span className="text-[9px] font-bold text-neutral-400 dark:text-zinc-500 uppercase font-mono tracking-wider block">Personal Notes</span>
+                        <textarea
+                          placeholder="Write down personal notes, study findings, research hypotheses or key learning insights here..."
+                          value={nodePersonalNotes}
+                          onChange={(e) => setNodePersonalNotes(e.target.value)}
+                          className="w-full h-24 text-xs p-2.5 border rounded-xl outline-none dark:bg-zinc-800 dark:border-zinc-700 text-neutral-950 dark:text-white resize-none font-sans"
+                        />
+                        <button
+                          onClick={() => handleSavePersonalNotes(selectedGraphNode, nodePersonalNotes)}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] px-3.5 py-1.5 rounded-lg transition active:scale-95 cursor-pointer block ml-auto shadow-xs"
+                        >
+                          Save Notes (+30 XP)
+                        </button>
+                      </div>
+
+                      {/* Topic Relationships & Custom Linking */}
+                      <div className="space-y-2 border-t dark:border-zinc-800 pt-3">
+                        <span className="text-[9px] font-bold text-neutral-400 dark:text-zinc-500 uppercase font-mono tracking-wider block">Create Topic Relation Bridge</span>
+                        <div className="space-y-1.5">
+                          <select
+                            value={crossLinkTargetId}
+                            onChange={(e) => setCrossLinkTargetId(e.target.value)}
+                            className="w-full text-xs p-2 border rounded-lg outline-none dark:bg-zinc-800 dark:border-zinc-700 text-neutral-950 dark:text-white"
+                          >
+                            <option value="">Select target node to link...</option>
+                            {graphNodesState
+                              .filter((n) => n.id !== selectedGraphNode.id)
+                              .map((n) => (
+                                <option key={n.id} value={n.id}>
+                                  {n.type === 'concept' ? '🧠' : '📂'} {n.label}
+                                </option>
+                              ))}
+                          </select>
+                          {selectedGraphNode.type === 'concept' && (
+                            <input
+                              type="text"
+                              placeholder="Relationship description (e.g. underlies, refutes)..."
+                              value={crossLinkDescription}
+                              onChange={(e) => setCrossLinkDescription(e.target.value)}
+                              className="w-full text-xs p-2 border rounded-lg outline-none dark:bg-zinc-800 dark:border-zinc-700 text-neutral-950 dark:text-white"
+                            />
+                          )}
+                          <button
+                            onClick={() => handleAddRelationshipLink(selectedGraphNode, crossLinkTargetId, crossLinkDescription)}
+                            disabled={!crossLinkTargetId}
+                            className="w-full bg-neutral-900 dark:bg-zinc-800 hover:bg-neutral-800 dark:hover:bg-zinc-750 disabled:opacity-50 text-white font-bold text-[10px] py-1.5 rounded-lg transition"
+                          >
+                            Bridge Connection (+40 XP)
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Launch button at bottom */}
+                    {selectedGraphNode.type === 'workspace' && selectedGraphNode.rawObject && (
+                      <div className="pt-2 border-t dark:border-zinc-800">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (selectedGraphNode.rawObject.response) {
+                              onActivateDemo(selectedGraphNode.rawObject.response);
+                            } else {
+                              onLoadVideo(selectedGraphNode.rawObject.id, false);
+                            }
+                          }}
+                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1 shadow-sm active:scale-95"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-white" />
+                          <span>Launch Learning Center</span>
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                ) : (
+                  // General HUD Dashboard view
+                  <motion.div
+                    key="hud-dashboard"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 rounded-3xl p-5 shadow-sm space-y-5"
+                  >
+                    {/* Suggested study plan item */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono font-bold text-neutral-400 dark:text-zinc-500 uppercase tracking-widest">Suggested Next Topic</span>
+                        <Sparkles className="w-4 h-4 text-indigo-500" />
+                      </div>
+
+                      {(() => {
+                        const weakConcepts = (Object.values(graph?.concepts || {}) as MemoryConcept[])
+                          .filter(c => c.masteryLevel < 70)
+                          .sort((a, b) => a.masteryLevel - b.masteryLevel);
+                        
+                        if (weakConcepts.length > 0) {
+                          const suggestion = weakConcepts[0];
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const target = graphNodesState.find(n => n.id === `c-${suggestion.id}`);
+                                if (target) handleSelectNodeFromGraph(target);
+                              }}
+                              className="w-full p-3 bg-red-50/10 dark:bg-red-950/10 border border-red-100/60 dark:border-red-900/30 rounded-2xl text-left hover:border-red-500/40 transition-colors cursor-pointer"
+                            >
+                              <div className="flex justify-between items-start gap-2">
+                                <h5 className="text-xs font-bold text-neutral-900 dark:text-zinc-100 leading-tight truncate">
+                                  Review "{suggestion.concept}"
+                                </h5>
+                                <span className="text-[9px] font-mono bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 font-bold px-1.5 py-0.5 rounded whitespace-nowrap">
+                                  {suggestion.masteryLevel}% Mastery
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-neutral-400 dark:text-zinc-500 font-light mt-1.5">
+                                Cognitive retention pathway suggests prompt review to protect memory consolidation.
+                              </p>
+                            </button>
+                          );
+                        }
+                        return (
+                          <div className="p-3 bg-emerald-50/10 border border-emerald-100 dark:border-emerald-950 rounded-2xl text-xs text-emerald-800 dark:text-emerald-400 font-light italic">
+                            All concepts stabilized! Master status verified.
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Recently viewed queue */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-mono font-bold text-neutral-400 dark:text-zinc-500 uppercase tracking-widest">Recently Viewed</span>
+                      <div className="space-y-1.5">
+                        {recentlyViewed.map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => handleSelectNodeFromGraph(item)}
+                            className="w-full p-2 hover:bg-neutral-50 dark:hover:bg-zinc-800/40 border border-transparent hover:border-neutral-200/50 dark:hover:border-zinc-800 rounded-xl flex items-center justify-between text-xs transition text-left cursor-pointer"
+                          >
+                            <span className="font-medium text-neutral-800 dark:text-zinc-200 truncate pr-3 flex items-center gap-1.5">
+                              {item.type === 'concept' ? <Brain className="w-3.5 h-3.5 text-indigo-500" /> : <Video className="w-3.5 h-3.5 text-purple-500" />}
+                              <span>{item.label}</span>
+                            </span>
+                            <ChevronRight className="w-3 h-3 text-neutral-400" />
+                          </button>
+                        ))}
+                        {recentlyViewed.length === 0 && (
+                          <span className="text-[10px] text-neutral-400 italic font-light block">Select nodes inside the graph above to track session logs.</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bookmarks Quick Jump */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-mono font-bold text-neutral-400 dark:text-zinc-500 uppercase tracking-widest">Bookmarked Nodes</span>
+                      <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
+                        {graphNodesState.filter(n => n.bookmarks).map((item) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => handleSelectNodeFromGraph(item)}
+                            className="w-full p-2 bg-neutral-50/50 dark:bg-zinc-900/40 border border-neutral-150 dark:border-zinc-800 hover:border-indigo-500/30 rounded-xl flex items-center justify-between text-xs transition text-left cursor-pointer"
+                          >
+                            <span className="font-medium text-neutral-800 dark:text-zinc-200 truncate flex items-center gap-1.5">
+                              <Bookmark className="w-3 h-3 text-red-500 fill-red-500" />
+                              <span>{item.label}</span>
+                            </span>
+                            <ChevronRight className="w-3 h-3 text-neutral-400" />
+                          </button>
+                        ))}
+                        {graphNodesState.filter(n => n.bookmarks).length === 0 && (
+                          <span className="text-[10px] text-neutral-400 italic font-light block">Bookmark important concepts or workspaces for speedy revision.</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Active Tag Cloud */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-mono font-bold text-neutral-400 dark:text-zinc-500 uppercase tracking-widest">Active Tag Cloud</span>
+                      <div className="flex flex-wrap gap-1">
+                        {Array.from(new Set(graphNodesState.flatMap(n => n.tags || []))).map((tag) => (
+                          <button
+                            key={tag}
+                            onClick={() => setSearchQuery(tag)}
+                            className="text-[9px] bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-neutral-600 dark:text-zinc-300 font-mono font-bold px-2 py-0.5 rounded-md cursor-pointer transition"
+                          >
+                            #{tag}
+                          </button>
+                        ))}
+                        {Array.from(new Set(graphNodesState.flatMap(n => n.tags || []))).length === 0 && (
+                          <span className="text-[10px] text-neutral-400 italic font-light block">Use node sidebar panels to attach hashtags to materials.</span>
+                        )}
+                      </div>
+                    </div>
+
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+          </div>
+
+          {/* Continue study widget below graph */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
+            <div className="lg:col-span-7">
+              {continueTarget && (
+                <div className="bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 p-6 rounded-3xl shadow-sm text-left relative overflow-hidden">
+                  <span className="absolute top-0 right-0 p-3 text-[9px] font-mono font-bold bg-[#bf5af2]/10 text-[#bf5af2] rounded-bl-2xl uppercase tracking-wider">
+                    Resume Course Module
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-neutral-400 dark:text-zinc-500 uppercase tracking-wider block mb-3">
+                    📂 Continue Learning
+                  </span>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-neutral-50 dark:bg-zinc-800/40 p-4.5 rounded-2xl border border-neutral-100 dark:border-zinc-800">
+                    <div className="flex gap-3 items-center min-w-0">
+                      <div className="relative w-20 h-12 rounded-xl overflow-hidden bg-neutral-100 shrink-0 border border-neutral-200 dark:border-zinc-700 shadow-sm">
+                        <img src={continueTarget.thumbnailUrl} alt="Workspace Video" className="object-cover w-full h-full" loading="lazy" />
+                        <div className="absolute bottom-1 right-1 bg-black/75 rounded text-[8px] font-mono text-white px-1 leading-none">
+                          {continueTarget.duration || '20 min'}
+                        </div>
+                      </div>
+                      <div className="overflow-hidden text-left space-y-1">
+                        <h5 className="text-xs font-bold text-neutral-900 dark:text-zinc-100 truncate leading-tight">
+                          {continueTarget.title}
+                        </h5>
+                        <div className="flex items-center gap-2 text-[10px]">
+                          <span className="text-indigo-600 dark:text-indigo-400 font-semibold">{continueTarget.progressPercent}% Processed</span>
+                          <span className="text-neutral-300 dark:text-zinc-700">•</span>
+                          <span className="text-neutral-400 dark:text-zinc-500">Last active {continueTarget.processedAt}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => onLoadVideo(continueTarget.videoId, false)}
+                      className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-semibold text-xs px-4 py-2.5 rounded-xl cursor-pointer transition flex items-center gap-1 shrink-0 shadow-sm active:scale-95"
+                    >
+                      <Play className="w-3 h-3 fill-white" />
+                      <span>Resume Workspace</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="lg:col-span-5">
+              {/* Mini study performance drill */}
+              <div className="bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 p-6 rounded-3xl shadow-sm text-left flex items-center justify-between gap-4 h-full min-h-[140px]">
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <span className="text-[9px] font-mono font-bold text-neutral-400 uppercase tracking-widest block">Consolidation Drill</span>
+                  <h4 className="text-xs font-bold text-neutral-900 dark:text-zinc-100 leading-tight">Active Recall Drill is Scheduled</h4>
+                  <p className="text-[10px] text-neutral-400 dark:text-zinc-500 font-light">Boost synaptic weights by revising active recall terms in your study card deck.</p>
+                </div>
+                {(() => {
+                  const due = conceptsArray.filter(c => !c.dueDate || new Date(c.dueDate) <= new Date());
+                  return (
+                    <button
+                      onClick={() => {
+                        if (due.length > 0) {
+                          setActiveRevisionConcept(due[0]);
+                          setRevisionTypedAnswer('');
+                          setRevisionFeedback(null);
+                          setRevisionStage('type');
+                        } else if (conceptsArray.length > 0) {
+                          setActiveRevisionConcept(conceptsArray[0]);
+                          setRevisionTypedAnswer('');
+                          setRevisionFeedback(null);
+                          setRevisionStage('type');
+                        }
+                      }}
+                      className="bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-4 py-3 rounded-xl hover:bg-indigo-100 cursor-pointer shadow-xs whitespace-nowrap shrink-0 animate-pulse"
+                    >
+                      Start Deck ({due.length} Due)
+                    </button>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* COGNITIVE VAULT TAB CONTENT */}
+      {activeDashboardTab === 'vault' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* 3. CONTINUE LEARNING CALLOUT & DAILY CHALLENGE */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Left: Continue Learning Module */}
         <div className="lg:col-span-7 space-y-6">
@@ -1362,6 +2190,8 @@ export default function LearningJourneyDashboard({
           ))}
         </div>
       </div>
+      </div>
+      )}
 
     </div>
   );
