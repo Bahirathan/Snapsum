@@ -416,7 +416,7 @@ export default function LearningWorkspace({
             setActiveSection('understand');
             trackGAEvent?.('section_changed', { section: 'understand' });
           }}
-          className={`flex items-center justify-center gap-3 py-4 rounded-2xl text-sm font-semibold transition cursor-pointer ${
+          className={`flex items-center justify-center gap-3 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:scale-[0.98] cursor-pointer ${
             activeSection === 'understand'
               ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-md font-bold border border-black/[0.02]'
               : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
@@ -437,7 +437,7 @@ export default function LearningWorkspace({
             setActiveSection('learn');
             trackGAEvent?.('section_changed', { section: 'learn' });
           }}
-          className={`flex items-center justify-center gap-3 py-4 rounded-2xl text-sm font-semibold transition cursor-pointer ${
+          className={`flex items-center justify-center gap-3 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:scale-[0.98] cursor-pointer ${
             activeSection === 'learn'
               ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-md font-bold border border-black/[0.02]'
               : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
@@ -458,7 +458,7 @@ export default function LearningWorkspace({
             setActiveSection('apply');
             trackGAEvent?.('section_changed', { section: 'apply' });
           }}
-          className={`flex items-center justify-center gap-3 py-4 rounded-2xl text-sm font-semibold transition cursor-pointer ${
+          className={`flex items-center justify-center gap-3 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:scale-[0.98] cursor-pointer ${
             activeSection === 'apply'
               ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-md font-bold border border-black/[0.02]'
               : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
