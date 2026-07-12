@@ -36,6 +36,16 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Comments left on shared workspaces
+    match /comments/{docId} {
+      allow read, write: if true;
+    }
+
+    // Reaction counts on shared workspaces
+    match /reactions_summary/{docId} {
+      allow read, write: if true;
+    }
+
     // Documents indexing metadata
     match /documents/{docId} {
       allow read, write: if true;

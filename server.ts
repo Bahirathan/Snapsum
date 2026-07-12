@@ -2938,6 +2938,111 @@ Format the output clearly with [VISUAL] directions and spoken lines, keeping it 
   }
 });
 
+// =========================================================================
+// COMMENTS AND REACTIONS API ENDPOINTS FOR SHARING & COLLABORATION
+// =========================================================================
+
+const fallbackComments: Record<string, any[]> = {};
+const fallbackReactions: Record<string, Record<string, number>> = {};
+
+// GET comments for a shared summary
+app.get('/api/shared-summary/:id/comments', async (req, res) => {
+  const shareId = req.params.id;
+  try {
+    if (db) {
+      const snapshot = await db.collection('comments')
+        .where('shareId', '==', shareId)
+        .orderBy('createdAt', 'asc')
+        .get();
+      const comments = snapshot.docs.map((doc: any) => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      return res.json({ comments });
+    }
+  } catch (err) {
+    console.error('Firestore comments query failed, using fallback:', err);
+  }
+  return res.json({ comments: fallbackComments[shareId] || [] });
+});
+
+// POST a new comment
+app.post('/api/shared-summary/:id/comment', async (req, res) => {
+  const shareId = req.params.id;
+  const { text, userName, userAvatar, userId } = req.body;
+  if (!text || !text.trim()) {
+    return res.status(400).json({ error: 'Comment text is required.' });
+  }
+  const newComment = {
+    shareId,
+    text: text.trim(),
+    userName: userName || 'Anonymous Scholar',
+    userAvatar: userAvatar || '',
+    userId: userId || 'anonymous',
+    createdAt: new Date().toISOString()
+  };
+  try {
+    if (db) {
+      const docRef = await db.collection('comments').add(newComment);
+      return res.json({ id: docRef.id, ...newComment });
+    }
+  } catch (err) {
+    console.error('Firestore add comment failed, saving to fallback:', err);
+  }
+  if (!fallbackComments[shareId]) {
+    fallbackComments[shareId] = [];
+  }
+  const commentWithId = { id: `comment_${Math.random().toString(36).substring(2, 9)}`, ...newComment };
+  fallbackComments[shareId].push(commentWithId);
+  return res.json(commentWithId);
+});
+
+// GET aggregated reactions
+app.get('/api/shared-summary/:id/reactions', async (req, res) => {
+  const shareId = req.params.id;
+  try {
+    if (db) {
+      const doc = await db.collection('reactions_summary').doc(shareId).get();
+      if (doc.exists) {
+        return res.json({ reactions: doc.data() });
+      }
+    }
+  } catch (err) {
+    console.error('Firestore reactions get failed, returning fallback:', err);
+  }
+  return res.json({ reactions: fallbackReactions[shareId] || { thumbsup: 0, heart: 0, brain: 0, rocket: 0, clap: 0 } });
+});
+
+// POST a reaction toggle/increment
+app.post('/api/shared-summary/:id/react', async (req, res) => {
+  const shareId = req.params.id;
+  const { reactionType } = req.body;
+  const allowedReactions = ['thumbsup', 'heart', 'brain', 'rocket', 'clap'];
+  if (!reactionType || !allowedReactions.includes(reactionType)) {
+    return res.status(400).json({ error: 'Invalid reaction type.' });
+  }
+  try {
+    if (db) {
+      const docRef = db.collection('reactions_summary').doc(shareId);
+      const doc = await docRef.get();
+      let currentReactions = doc.exists ? doc.data() : { thumbsup: 0, heart: 0, brain: 0, rocket: 0, clap: 0 };
+      currentReactions = {
+        ...currentReactions,
+        [reactionType]: (currentReactions[reactionType] || 0) + 1
+      };
+      await docRef.set(currentReactions);
+      return res.json({ success: true, reactions: currentReactions });
+    }
+  } catch (err) {
+    console.error('Firestore react failed, falling back to in-memory:', err);
+  }
+  if (!fallbackReactions[shareId]) {
+    fallbackReactions[shareId] = { thumbsup: 0, heart: 0, brain: 0, rocket: 0, clap: 0 };
+  }
+  fallbackReactions[shareId][reactionType] = (fallbackReactions[shareId][reactionType] || 0) + 1;
+  return res.json({ success: true, reactions: fallbackReactions[shareId] });
+});
+
 // Initialize full-stack routing and server
 async function bootstrap() {
   if (process.env.NODE_ENV !== 'production') {

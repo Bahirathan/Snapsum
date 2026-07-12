@@ -12183,6 +12183,35 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       {copiedStates['referral_modal'] ? 'Copied!' : 'Copy'}
                     </button>
                   </div>
+                  
+                  {/* Social Share Badges */}
+                  <div className="pt-1 flex flex-wrap gap-1.5">
+                    <a
+                      href={`https://twitter.com/intent/tweet?text=${encodeURIComponent('Unlock premium video summarization, interactive flashcards, mind maps, and quizzes for free! Join Zipytiny using my referral link:')}&url=${encodeURIComponent(`${window.location.origin}?ref=${referralCode}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 min-w-[65px] text-center bg-[#1da1f2]/25 hover:bg-[#1da1f2]/40 border border-[#1da1f2]/30 text-white rounded-xl py-1.5 px-2 text-[9px] font-bold transition flex items-center justify-center gap-1"
+                    >
+                      Twitter/X
+                    </a>
+                    <a
+                      href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Unlock premium video summarization, interactive flashcards, mind maps, and quizzes for free! Join Zipytiny using my referral link: ${window.location.origin}?ref=${referralCode}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 min-w-[65px] text-center bg-emerald-600/25 hover:bg-emerald-600/40 border border-emerald-500/30 text-emerald-300 rounded-xl py-1.5 px-2 text-[9px] font-bold transition flex items-center justify-center gap-1"
+                    >
+                      WhatsApp
+                    </a>
+                    <a
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`${window.location.origin}?ref=${referralCode}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 min-w-[65px] text-center bg-blue-600/25 hover:bg-blue-600/40 border border-blue-500/30 text-blue-300 rounded-xl py-1.5 px-2 text-[9px] font-bold transition flex items-center justify-center gap-1"
+                    >
+                      LinkedIn
+                    </a>
+                  </div>
+
                   <p className="text-[10px] text-neutral-400">
                     Sharing gets you unlimited premium access bypass and logs your rank in the global leaderboard.
                   </p>

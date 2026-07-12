@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, FileText, Share2, Clipboard, Check, Sparkles } from 'lucide-react';
+import { Download, FileText, Share2, Clipboard, Check, Sparkles, Twitter, Linkedin, Facebook } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 
 interface SummaryPremiumExporterProps {
@@ -21,6 +21,12 @@ export default function SummaryPremiumExporter({ title, summary, takeaways, shar
       .join('\n');
   };
 
+  const getShareUrl = () => {
+    return shareId 
+      ? `${window.location.origin}/s/${shareId}` 
+      : `${window.location.origin}/app?video=${encodeURIComponent(title)}`;
+  };
+
   const handleExportPDF = () => {
     try {
       const doc = new jsPDF();
@@ -31,7 +37,7 @@ export default function SummaryPremiumExporter({ title, summary, takeaways, shar
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
       doc.setTextColor(120, 120, 120);
-      doc.text(`Generated on ${new Date().toLocaleDateString()}`, 20, 32);
+      doc.text(`Generated on ${new Date().toLocaleDateString()} • https://www.zipytiny.app`, 20, 32);
       
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(14);
@@ -116,10 +122,10 @@ export default function SummaryPremiumExporter({ title, summary, takeaways, shar
 
   const handleCopyToClipboard = (format: 'notion' | 'markdown' | 'share') => {
     let text = '';
+    const shareUrl = getShareUrl();
+    
     if (format === 'share') {
-      text = shareId 
-        ? `${window.location.origin}/s/${shareId}` 
-        : `${window.location.origin}/app?video=${encodeURIComponent(title)}`;
+      text = shareUrl;
     } else if (format === 'markdown') {
       text = `# Summary: ${title}\n\n## Executive Summary\n${summary}\n\n## Key Takeaways\n${getCleanTakeawaysText()}`;
     } else if (format === 'notion') {
@@ -131,6 +137,11 @@ export default function SummaryPremiumExporter({ title, summary, takeaways, shar
     setTimeout(() => setCopiedFormat(null), 2000);
   };
 
+  const shareUrl = getShareUrl();
+  const twitterShareLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out this AI-generated video summary of "${title}" via Zipytiny!`)}&url=${encodeURIComponent(shareUrl)}`;
+  const linkedinShareLink = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+  const facebookShareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+
   return (
     <div className="bg-white dark:bg-zinc-900 border border-black/[0.05] dark:border-zinc-800 rounded-2xl p-5 space-y-4 shadow-sm">
       <div className="flex items-center justify-between">
@@ -138,20 +149,20 @@ export default function SummaryPremiumExporter({ title, summary, takeaways, shar
           <div className="w-7 h-7 bg-indigo-50 dark:bg-indigo-950/40 rounded-lg flex items-center justify-center">
             <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
           </div>
-          <h4 className="text-xs font-bold text-neutral-800 dark:text-zinc-200 font-display">Export & Share</h4>
+          <h4 className="text-xs font-bold text-neutral-800 dark:text-zinc-200 font-display">Export Study Assets</h4>
         </div>
         <span className="text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full uppercase tracking-wide">Premium</span>
       </div>
       <p className="text-[11px] text-[#86868b] dark:text-zinc-400 leading-relaxed">
-        Export this summary to PDF, Word, Markdown, or copy to Notion. Share a public link in one click.
+        Export this lecture summary to major formats, or copy a dynamic markdown structure optimized for direct imports into Notion.
       </p>
 
       <div className="grid grid-cols-2 gap-2">
         {[
           { label: 'PDF Report', icon: <FileText className="w-3.5 h-3.5 text-rose-500 shrink-0" />, action: handleExportPDF },
-          { label: 'Word Document', icon: <FileText className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />, action: handleExportWord },
+          { label: 'Google Docs / Word', icon: <FileText className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />, action: handleExportWord },
           { label: 'Markdown (.md)', icon: <Download className="w-3.5 h-3.5 text-emerald-500 shrink-0" />, action: handleExportMarkdown },
-          { label: copiedFormat === 'notion' ? 'Copied!' : 'Copy to Notion', icon: <Clipboard className="w-3.5 h-3.5 text-amber-500 shrink-0" />, action: () => handleCopyToClipboard('notion'), copied: copiedFormat === 'notion' },
+          { label: copiedFormat === 'notion' ? 'Copied!' : 'Notion Export', icon: <Clipboard className="w-3.5 h-3.5 text-amber-500 shrink-0" />, action: () => handleCopyToClipboard('notion'), copied: copiedFormat === 'notion' },
         ].map((item, i) => (
           <button
             key={i}
@@ -172,6 +183,42 @@ export default function SummaryPremiumExporter({ title, summary, takeaways, shar
           <span>{copiedFormat === 'share' ? 'Link Copied to Clipboard!' : 'Copy Shareable Public Link'}</span>
           {copiedFormat === 'share' && <Check className="w-3.5 h-3.5 ml-1 shrink-0" />}
         </button>
+      </div>
+
+      {/* Social Sharing Section */}
+      <div className="border-t dark:border-zinc-800 pt-3.5 mt-2 space-y-2.5 text-left">
+        <span className="text-[10px] font-mono font-bold uppercase text-slate-400 block">
+          📣 Social Sharing
+        </span>
+        <div className="grid grid-cols-3 gap-2">
+          <a
+            href={twitterShareLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1.5 py-2 px-2 border border-slate-150 dark:border-zinc-700/60 bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800/40 dark:hover:bg-zinc-800 rounded-xl text-[10px] font-semibold text-slate-700 dark:text-zinc-300 transition"
+          >
+            <Twitter className="w-3.5 h-3.5 text-[#1da1f2]" />
+            <span>Twitter/X</span>
+          </a>
+          <a
+            href={linkedinShareLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1.5 py-2 px-2 border border-slate-150 dark:border-zinc-700/60 bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800/40 dark:hover:bg-zinc-800 rounded-xl text-[10px] font-semibold text-slate-700 dark:text-zinc-300 transition"
+          >
+            <Linkedin className="w-3.5 h-3.5 text-[#0a66c2]" />
+            <span>LinkedIn</span>
+          </a>
+          <a
+            href={facebookShareLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1.5 py-2 px-2 border border-slate-150 dark:border-zinc-700/60 bg-slate-50 hover:bg-slate-100 dark:bg-zinc-800/40 dark:hover:bg-zinc-800 rounded-xl text-[10px] font-semibold text-slate-700 dark:text-zinc-300 transition"
+          >
+            <Facebook className="w-3.5 h-3.5 text-[#1877f2]" />
+            <span>Facebook</span>
+          </a>
+        </div>
       </div>
     </div>
   );

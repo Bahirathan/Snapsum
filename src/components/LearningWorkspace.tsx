@@ -52,6 +52,7 @@ import { toPng } from 'html-to-image';
 import { YouTubeSummaryResponse, Flashcard, KeyConcept, MindmapNode, QuizQuestion } from '../types';
 import AIChatWithSummary from './AIChatWithSummary';
 import SummaryPremiumExporter from './SummaryPremiumExporter';
+import WorkspaceComments from './WorkspaceComments';
 
 interface LearningWorkspaceProps {
   activeSummary: YouTubeSummaryResponse;
@@ -114,7 +115,7 @@ export default function LearningWorkspace({
   // Sub-tabs navigation
   const [activeUnderstandTab, setActiveUnderstandTab] = useState<'summary' | 'modules'>('summary');
   const [activeLearnTab, setActiveLearnTab] = useState<'mindmap' | 'flashcards' | 'study-plan'>('mindmap');
-  const [activeApplyTab, setActiveApplyTab] = useState<'quiz' | 'tutor' | 'notes' | 'export'>('quiz');
+  const [activeApplyTab, setActiveApplyTab] = useState<'quiz' | 'tutor' | 'notes' | 'export' | 'comments'>('quiz');
 
   // Interactive Flashcards States
   const [revealedFlashcards, setRevealedFlashcards] = useState<Record<number, boolean>>({});
@@ -293,9 +294,32 @@ export default function LearningWorkspace({
   };
 
   const progressPercent = calculateWorkspaceProgress();
+  const isSharedPath = typeof window !== 'undefined' && window.location.pathname.startsWith('/s/');
 
   return (
     <div className="space-y-6">
+
+      {isSharedPath && (
+        <div className="bg-gradient-to-r from-indigo-700 to-indigo-850 text-white rounded-3xl p-4.5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md border border-white/10 animate-fadeIn">
+          <div className="flex items-center gap-3 text-left">
+            <span className="text-2xl bg-indigo-600/30 w-10 h-10 rounded-xl flex items-center justify-center border border-indigo-500/30 shrink-0">
+              📚
+            </span>
+            <div>
+              <p className="font-bold text-sm tracking-tight text-white">Public Study Workspace</p>
+              <p className="text-xs text-indigo-200/90 leading-relaxed mt-0.5">You are viewing a shared study hub containing interactive summaries, mind maps, and comprehension quizzes.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              window.location.href = '/';
+            }}
+            className="bg-white hover:bg-slate-50 text-indigo-700 font-bold text-xs px-4 py-2.5 rounded-xl transition duration-150 shadow-xs whitespace-nowrap cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+          >
+            Create Your Own Free Workspace
+          </button>
+        </div>
+      )}
       
       {/* 🚀 PREMIUM LMS DASHBOARD HEADER */}
       <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/10">
@@ -1033,6 +1057,16 @@ export default function LearningWorkspace({
                   >
                     💾 Export Reports
                   </button>
+                  <button
+                    onClick={() => setActiveApplyTab('comments')}
+                    className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition whitespace-nowrap cursor-pointer ${
+                      activeApplyTab === 'comments'
+                        ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
+                    }`}
+                  >
+                    💬 Discussion
+                  </button>
                 </div>
 
                 {/* Sub-tab: Quiz */}
@@ -1242,6 +1276,17 @@ export default function LearningWorkspace({
                       summary={activeSummary.summary}
                       takeaways={activeSummary.takeaways}
                       shareId={activeSummary.shareId}
+                    />
+                  </div>
+                )}
+
+                {/* Sub-tab: Discussion & Reactions */}
+                {activeApplyTab === 'comments' && (
+                  <div className="space-y-6 animate-fadeIn">
+                    <WorkspaceComments 
+                      shareId={activeSummary.shareId || ''}
+                      visitorUser={visitorUser}
+                      setShowAuthModal={setShowAuthModal}
                     />
                   </div>
                 )}

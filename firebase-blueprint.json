@@ -75,6 +75,32 @@
         "updatedAt": { "type": "string" }
       },
       "required": ["email", "plan", "status"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "Comments left on public study workspaces",
+      "type": "object",
+      "properties": {
+        "shareId": { "type": "string" },
+        "text": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["shareId", "text", "userName"]
+    },
+    "SummaryReaction": {
+      "title": "SummaryReaction",
+      "description": "Aggregated user reaction logs on shared workspaces",
+      "type": "object",
+      "properties": {
+        "thumbsup": { "type": "integer" },
+        "heart": { "type": "integer" },
+        "brain": { "type": "integer" },
+        "rocket": { "type": "integer" },
+        "clap": { "type": "integer" }
+      }
     }
   },
   "firestore": {
@@ -101,6 +127,14 @@
     "subscriptions/{subscriptionId}": {
       "schema": "Subscription",
       "description": "Billing active subscription status records"
+    },
+    "comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Public comments left on learning workspaces"
+    },
+    "reactions_summary/{reactionId}": {
+      "schema": "SummaryReaction",
+      "description": "Accumulated emojis reaction stats per workspace"
     }
   }
 }
