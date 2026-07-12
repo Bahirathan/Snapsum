@@ -80,11 +80,49 @@ const ActiveLearningDashboardModule = lazy(() => import('./components/LearningDa
 const CinematicExplainer = lazy(() => import('./components/CinematicExplainer').then(m => ({ default: m.CinematicExplainer })));
 const LearningProgressDashboard = (props: any) => <Suspense fallback={<div className="animate-pulse h-64 rounded-3xl bg-neutral-100 dark:bg-zinc-800" />}><LearningDashboardModule {...props} /></Suspense>;
 const ActiveLearningDashboard = (props: any) => <Suspense fallback={<div className="animate-pulse h-64 rounded-3xl bg-neutral-100 dark:bg-zinc-800" />}><ActiveLearningDashboardModule {...props} /></Suspense>;
-import AIChatWithSummary from './components/AIChatWithSummary';
-import SummaryPremiumExporter from './components/SummaryPremiumExporter';
-import LearningWorkspace from './components/LearningWorkspace';
-import LandingPage from './components/LandingPage';
-import FeaturePage from './components/FeaturePage';
+const AIChatWithSummaryRaw = lazy(() => import('./components/AIChatWithSummary'));
+const SummaryPremiumExporterRaw = lazy(() => import('./components/SummaryPremiumExporter'));
+const LearningWorkspaceRaw = lazy(() => import('./components/LearningWorkspace'));
+const LandingPageRaw = lazy(() => import('./components/LandingPage'));
+const FeaturePageRaw = lazy(() => import('./components/FeaturePage'));
+
+const LazyLoadingFallback = () => (
+  <div className="flex flex-col items-center justify-center p-12 min-h-[300px] space-y-4">
+    <div className="w-8 h-8 border-3 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin" />
+    <p className="text-xs font-semibold text-neutral-400 dark:text-zinc-500 animate-pulse font-sans">Assembling knowledge workspace...</p>
+  </div>
+);
+
+const AIChatWithSummary = (props: any) => (
+  <Suspense fallback={<LazyLoadingFallback />}>
+    <AIChatWithSummaryRaw {...props} />
+  </Suspense>
+);
+
+const SummaryPremiumExporter = (props: any) => (
+  <Suspense fallback={<LazyLoadingFallback />}>
+    <SummaryPremiumExporterRaw {...props} />
+  </Suspense>
+);
+
+const LearningWorkspace = (props: any) => (
+  <Suspense fallback={<LazyLoadingFallback />}>
+    <LearningWorkspaceRaw {...props} />
+  </Suspense>
+);
+
+const LandingPage = (props: any) => (
+  <Suspense fallback={<LazyLoadingFallback />}>
+    <LandingPageRaw {...props} />
+  </Suspense>
+);
+
+const FeaturePage = (props: any) => (
+  <Suspense fallback={<LazyLoadingFallback />}>
+    <FeaturePageRaw {...props} />
+  </Suspense>
+);
+
 import MobileBottomNav from './components/MobileBottomNav';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
 
@@ -3354,7 +3392,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           {/* Logo */}
           <div className="flex items-center gap-2.5 cursor-pointer group shrink-0" onClick={() => setCurrentScreen('landing')}>
             <div className="h-8 w-8 bg-[#1d1d1f] dark:bg-zinc-100 flex items-center justify-center rounded-xl overflow-hidden shadow-sm group-hover:scale-105 transition duration-300">
-              <img src="/logo.svg" alt="Zipytiny Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="/logo.svg" alt="Zipytiny Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" decoding="async" />
             </div>
             <div className="hidden sm:block">
               <span className="text-base font-bold font-display tracking-tight text-[#1d1d1f] dark:text-zinc-50 group-hover:opacity-75 transition">
@@ -3560,6 +3598,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           alt={visitorUser.displayName || 'Visitor'} 
                           referrerPolicy="no-referrer"
                           className="w-7 h-7 rounded-full shadow-sm object-cover animate-fade-in"
+                          loading="lazy"
+                          decoding="async"
                         />
                       ) : (
                         <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-xs font-sans">
@@ -3849,6 +3889,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             alt="Lecture Preview" 
                             className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-luminosity filter blur-xs"
                             referrerPolicy="no-referrer"
+                            loading="lazy"
+                            decoding="async"
                           />
                           <div className="bg-black/40 text-[8px] text-white px-1.5 py-0.5 rounded-md font-mono self-start relative z-10">
                             09:12 / 15:00
@@ -4269,6 +4311,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           alt="Video Thumbnail" 
                           className="w-16 h-10 object-cover rounded-md border border-black/[0.06] shrink-0"
                           referrerPolicy="no-referrer"
+                          loading="lazy"
+                          decoding="async"
                         />
                         <div className="text-left">
                           <h3 className="text-sm font-bold text-neutral-900 max-w-md truncate leading-tight">
@@ -5585,6 +5629,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         onError={(e) => {
                           e.currentTarget.src = `https://img.youtube.com/vi/${demo.metadata.videoId}/sddefault.jpg`;
                         }}
+                        loading="lazy"
+                        decoding="async"
                       />
                       <div className="absolute right-1 bottom-1 bg-black/80 px-1 py-0.5 rounded text-[8px] font-mono text-white text-center">
                         {demo.metadata.duration}
@@ -11105,6 +11151,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                           alt={gUser.displayName || 'Google User'} 
                                           referrerPolicy="no-referrer"
                                           className="w-8 h-8 rounded-full border border-neutral-200 object-cover shadow-sm"
+                                          loading="lazy"
+                                          decoding="async"
                                         />
                                       ) : (
                                         <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
@@ -12122,6 +12170,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         alt="Profile Photo" 
                         className="w-12 h-12 rounded-full border-2 border-white/20 object-cover"
                         referrerPolicy="no-referrer"
+                        loading="lazy"
+                        decoding="async"
                       />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-indigo-600/50 flex items-center justify-center text-white font-bold text-lg">
@@ -12304,6 +12354,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                 alt={item.displayName} 
                                 className="w-8 h-8 rounded-full border border-black/[0.04] object-cover"
                                 referrerPolicy="no-referrer"
+                                loading="lazy"
+                                decoding="async"
                               />
                             ) : (
                               <div className="w-8 h-8 rounded-full bg-neutral-200 text-neutral-700 flex items-center justify-center text-xs font-bold">
@@ -12467,7 +12519,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg overflow-hidden flex items-center justify-center bg-slate-900 border border-slate-800">
-              <img src="/logo.svg" alt="Zipytiny Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="/logo.svg" alt="Zipytiny Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
             </div>
             <div>
               <span className="text-sm font-bold font-display tracking-tight text-white">

@@ -521,7 +521,7 @@ export default function LandingPage({
                       inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                   }}
-                  className="bg-neutral-900 hover:bg-neutral-850 dark:bg-white dark:text-neutral-950 px-8 py-3.5 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer shadow-sm hover:shadow-md"
+                  className="bg-neutral-900 hover:bg-neutral-850 dark:bg-white dark:text-neutral-950 text-white px-8 py-3.5 rounded-xl font-bold text-xs sm:text-sm transition-all active:scale-98 cursor-pointer shadow-sm hover:shadow-md"
                 >
                   Start Learning Free
                 </button>
@@ -1511,7 +1511,7 @@ export default function LandingPage({
             <div className="col-span-2 space-y-4 text-left">
               <div className="flex items-center gap-2.5">
                 <div className="h-8 w-8 bg-white flex items-center justify-center rounded-xl overflow-hidden">
-                  <img src="/logo.svg" alt="Zipytiny Logo" className="w-full h-full object-cover animate-pulse" referrerPolicy="no-referrer" />
+                  <img src="/logo.svg" alt="Zipytiny Logo" className="w-full h-full object-cover animate-pulse" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
                 </div>
                 <span className="font-extrabold text-white font-display text-lg tracking-tight">Zipytiny</span>
               </div>

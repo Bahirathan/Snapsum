@@ -574,6 +574,8 @@ export default function FeaturePage({ featureSlug, onNavigateHome, onLaunchApp }
               alt={activeVideo.metadata.title}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
+              loading="lazy"
+              decoding="async"
             />
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
               <span className="w-12 h-12 rounded-full bg-white/90 dark:bg-zinc-950/90 backdrop-blur-xs flex items-center justify-center text-neutral-900 dark:text-zinc-50 shadow-md">

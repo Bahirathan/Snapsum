@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://zipytiny.app/sitemap.xml
+Sitemap: https://www.zipytiny.app/sitemap.xml
