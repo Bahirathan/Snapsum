@@ -1312,7 +1312,7 @@ CRITICAL JSON FORMATTING INSTRUCTION:
 
 // Interactive AI Chat with Summary Content
 app.post('/api/chat', async (req, res) => {
-  const { title, summary, message, history, documentId } = req.body;
+  const { title, summary, message, history, documentId, tutorMode } = req.body;
   if (!message) {
     return res.status(400).json({ error: 'Message is required.' });
   }
@@ -1366,35 +1366,91 @@ app.post('/api/chat', async (req, res) => {
       }
     }
 
+    // Prepare tutoring-specific instruction modifier
+    let tutorModifier = '';
+    if (tutorMode) {
+      switch (tutorMode) {
+        case 'eli10':
+          tutorModifier = `\n\n[TUTOR TASK - EXPLAIN LIKE I'M 10]:
+- Simplify all concepts so a 10-year-old child can easily grasp them.
+- Use cute, playful everyday analogies and childlike metaphors.
+- Avoid advanced technical jargon entirely. Keep the explanation warm and incredibly easy to follow.`;
+          break;
+        case 'examples':
+          tutorModifier = `\n\n[TUTOR TASK - EXPLAIN WITH EXAMPLES]:
+- Provide 2-3 extremely clear, concrete, real-world examples from everyday life or industry.
+- Show exactly how the theory matches the physical world using these scenarios.`;
+          break;
+        case 'followup':
+          tutorModifier = `\n\n[TUTOR TASK - ASK FOLLOW-UP QUESTIONS]:
+- After your brief explanation, you MUST challenge the student by asking 1-2 interactive, thought-provoking follow-up questions about this topic.
+- Prompt them to respond and explain their reasoning.`;
+          break;
+        case 'exam':
+          tutorModifier = `\n\n[TUTOR TASK - GENERATE EXAM QUESTIONS]:
+- Act as a strict but encouraging professor.
+- Formulate 2-3 highly realistic exam/quiz questions (multiple-choice or short-answer) based directly on the facts in the text.
+- Do not show the correct answers immediately, but invite the student to attempt answering.`;
+          break;
+        case 'analogy':
+          tutorModifier = `\n\n[TUTOR TASK - CREATE ANALOGIES]:
+- Devise a vivid, highly descriptive analogy (e.g., software concepts compared to a city transit system, vectors compared to rooms in a warehouse) to make this topic instantly intuitive.`;
+          break;
+        case 'summarize_chapter':
+          tutorModifier = `\n\n[TUTOR TASK - SUMMARIZE SELECTED CHAPTER/TOPIC]:
+- Identify the core chapter, sub-chapter, or segment corresponding to this topic in the source material.
+- Provide a beautiful, highly detailed outline-summary with main points, key terminology, and takeaways.`;
+          break;
+        case 'challenge':
+          tutorModifier = `\n\n[TUTOR TASK - CHALLENGE ME]:
+- Set a small, hands-on, active learning challenge, mini-project, or practical exercise the student can perform right now to apply this theory.`;
+          break;
+        case 'weak_areas':
+          tutorModifier = `\n\n[TUTOR TASK - FIND WEAK AREAS]:
+- Act as a diagnostic study coach.
+- Pinpoint the 2-3 trickiest concepts in this material and present a quick self-check question for each to help the student diagnose where their understanding might be weak.`;
+          break;
+        case 'timeline':
+          tutorModifier = `\n\n[TUTOR TASK - REFERENCE LECTURE TIMELINE]:
+- Structure your response chronologically.
+- Ground the explanation by highlighting where these concepts occur in the lecture timeline, explicitly citing specific timestamps or video coordinates (like [MM:SS] or page/slide coordinates) so the user can easily refer back to the exact moments.`;
+          break;
+        default:
+          break;
+      }
+    }
+
+    const groundingRule = `
+IMPORTANT GROUNDING & GENERAL KNOWLEDGE TRANSPARENCY RULE:
+Your response MUST be primarily grounded in the provided document summaries and grounding passages.
+If you need to introduce any external general knowledge, concepts, or academic facts outside the uploaded content (e.g., to build a better analogy, provide real-world examples, or explain a complex underlying concept), you MUST clearly notify the student.
+Whenever you introduce external general knowledge, you MUST format that specific paragraph or section with the exact visual tag:
+> **🎓 Additional General Knowledge used:** [Insert the external context here]
+Ensure the user always knows exactly what came from their files versus what you retrieved from your broader training data.`;
+
     // 2. Formulate the system instruction depending on whether documents are retrieved
     let systemInstruction = '';
     if (groundingContext || activeDocSummary) {
-      systemInstruction = `You are Zipytiny's RAG AI Assistant, an expert research analyst and professional academic tutor. You are helping a user analyze uploaded documents and workspace contents related to "${title}".
+      systemInstruction = `You are Zipytiny's AI Tutor, a highly patient, encouraging, and elite academic tutor. You are helping a student master concepts in the uploaded workspace contents related to "${title}".
 
-${activeDocSummary ? `Here is the comprehensive Executive Summary, Key Takeaways, and Outline of the active document:\n"""\n${activeDocSummary}\n"""\n` : ''}
+${activeDocSummary ? `Here is the comprehensive Executive Summary of the active document:\n"""\n${activeDocSummary}\n"""\n` : ''}
 
-${groundingContext ? `We have searched the user's workspace documents and found the following relevant grounding passages. Use these passages as your primary, absolute source of truth for specific queries:
+${groundingContext ? `Here are the relevant grounding passages from the student's workspace documents. Use these passages as your primary source of truth:
 Grounding Passages:
 ${groundingContext}` : ''}
 
 Guidelines:
 1. Ground your answers strictly in the provided Grounding Passages and the Executive Summary of the document.
-2. If the user asks for an overview, outline, key takeaways, or summary of the document, synthesize a beautiful, structured response using the provided Executive Summary.
-3. If the answer cannot be found in the Grounding Passages or the document summary, respond exactly with: "I couldn't find this information in your uploaded content."
-4. For every claim you make that is supported by a passage, you MUST cite the source inline at the end of the sentence or paragraph, and append a "Sources" list at the very end of your response.
-   - For PDFs, cite like: (Page [Number])
-   - For DOCX, cite like: (Heading: [Heading])
-   - For PPTX, cite like: (Slide [Number])
-   - For Websites, cite like: [Heading: [Heading]]([URL])
-   - For YouTube, cite like: [MM:SS] (this represents the timestamp, which is a clickable link).
-5. Keep responses highly educational, organized, formatted in Markdown, and readable.`;
+2. If the answer cannot be found in the Grounding Passages or the document summary, respond honestly while offering tutor assistance.
+3. For every claim you make that is supported by a passage, you MUST cite the source inline (e.g., [Page X], [Slide Y], or [MM:SS] for videos).
+4. Keep responses highly educational, beautifully organized, formatted in Markdown, and readable.${tutorModifier}${groundingRule}`;
     } else {
-      systemInstruction = `You are Zipytiny's AI assistant, an expert academic tutor, business strategist, and research analyst. You are helping a user analyze a piece of content: "${title}". 
+      systemInstruction = `You are Zipytiny's AI Tutor, an elite academic advisor and patient coach. You are helping a student master the content: "${title}". 
 Here is the official summary of the content: 
 """
 ${summary}
 """
-Answer the user's questions with absolute accuracy, deep insights, clear examples, and actionable advice. Keep answers clean, scannable, formatted in Markdown, and directly related to the source text. If they ask about something not in the summary, try to assist them based on your broader knowledge of "${title}" while being transparent.`;
+Answer the student's questions with absolute accuracy, deep insights, clear examples, and encouraging guidance. Keep answers clean, scannable, formatted in Markdown, and directly related to the source text.${tutorModifier}${groundingRule}`;
     }
 
     // 3. Map history elements into standard Google GenAI format

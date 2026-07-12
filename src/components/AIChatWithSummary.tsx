@@ -25,7 +25,16 @@ import {
   ArrowLeft, 
   ArrowRight,
   ExternalLink,
-  Search
+  Search,
+  GraduationCap,
+  BookOpen,
+  Lightbulb,
+  Compass,
+  Clock,
+  ClipboardList,
+  Dumbbell,
+  Target,
+  Award
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -54,7 +63,20 @@ interface WorkspaceDocument {
   summary?: string;
 }
 
+const TUTOR_TOOLS = [
+  { id: 'eli10', label: "Explain Like I'm 10", description: "Simplify ideas for a 10-year-old child", prompt: "Explain the main concept of this content like I'm 10 years old with a simple metaphor.", color: "from-pink-500 to-rose-500", icon: GraduationCap },
+  { id: 'examples', label: "Explain with Examples", description: "Vivid real-world scenarios & facts", prompt: "Can you provide clear, real-world examples to explain the main concepts discussed here?", color: "from-purple-500 to-indigo-500", icon: Lightbulb },
+  { id: 'followup', label: "Ask Follow-up Questions", description: "Active recall questions for testing", prompt: "Test my knowledge with interactive follow-up questions to help me reflect.", color: "from-blue-500 to-indigo-600", icon: MessageSquare },
+  { id: 'exam', label: "Generate Exam Questions", description: "2-3 practice exam questions", prompt: "Generate realistic exam practice questions to test my understanding.", color: "from-emerald-500 to-teal-600", icon: ClipboardList },
+  { id: 'analogy', label: "Create Analogies", description: "Devise highly intuitive analogies", prompt: "Build an elegant, memorable analogy for the core concepts.", color: "from-amber-500 to-orange-500", icon: Compass },
+  { id: 'summarize_chapter', label: "Summarize Chapter", description: "Comprehensive outline & takeaways", prompt: "Identify the main chapter or key thematic section and provide a detailed outline-summary.", color: "from-cyan-500 to-blue-600", icon: BookOpen },
+  { id: 'challenge', label: "Challenge Me", description: "Small practical task to apply concepts", prompt: "Challenge me with a hands-on active learning challenge or practical exercise to put this newly acquired knowledge into action.", color: "from-violet-500 to-fuchsia-600", icon: Dumbbell },
+  { id: 'weak_areas', label: "Find Weak Areas", description: "Pinpoint gaps in understanding", prompt: "Diagnose my weak areas by presenting 2-3 concept-check questions to help identify understanding gaps.", color: "from-red-500 to-orange-600", icon: Target },
+  { id: 'timeline', label: "Lecture Timeline", description: "Sequential timeline references", prompt: "Reference the sequential lecture timeline with specific timestamps or sections.", color: "from-teal-500 to-emerald-600", icon: Clock },
+];
+
 export default function AIChatWithSummary({ title, summary, getHeaders }: AIChatWithSummaryProps) {
+  const [activeTutorMode, setActiveTutorMode] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
@@ -367,8 +389,10 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
   };
 
   // 5. SSE Streaming Chat submission
-  const handleSend = async (textToSend: string) => {
+  const handleSend = async (textToSend: string, forcedTutorMode?: string | null) => {
     if (!textToSend.trim() || loading) return;
+
+    const tutorModeToUse = forcedTutorMode !== undefined ? forcedTutorMode : activeTutorMode;
 
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -405,6 +429,7 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
           message: textToSend,
           history: chatHistory,
           documentId: selectedDocId || undefined,
+          tutorMode: tutorModeToUse || undefined,
         }),
       });
 
@@ -853,6 +878,64 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
           <div ref={messagesEndRef} />
         </div>
 
+        {/* Premium AI Tutor Toolkit Dock */}
+        <div className="px-4 py-3 border-t border-neutral-100 dark:border-zinc-900 bg-neutral-50/50 dark:bg-zinc-950/20">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <Brain className="w-4 h-4 text-indigo-500" />
+              <span className="text-[10px] font-mono uppercase tracking-widest text-neutral-500 dark:text-zinc-400 font-bold">🎓 AI Tutor Toolkit</span>
+            </div>
+            {activeTutorMode && (
+              <button 
+                type="button"
+                onClick={() => {
+                  setActiveTutorMode(null);
+                  showToast('🕊️ Switched back to normal AI Chat');
+                }}
+                className="text-[9px] font-bold text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 cursor-pointer flex items-center gap-0.5"
+              >
+                Reset to Standard Chat
+              </button>
+            )}
+          </div>
+          
+          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-2 px-2">
+            {TUTOR_TOOLS.map((tool) => {
+              const IconComp = tool.icon;
+              const isActive = activeTutorMode === tool.id;
+              
+              return (
+                <button
+                  key={tool.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveTutorMode(tool.id);
+                    handleSend(tool.prompt, tool.id);
+                    showToast(`🎓 Activated: ${tool.label}`);
+                  }}
+                  className={`flex-shrink-0 px-3 py-2 rounded-2xl border transition duration-200 text-left max-w-[210px] cursor-pointer flex gap-2.5 items-center ${
+                    isActive
+                      ? 'bg-gradient-to-br from-indigo-50 to-indigo-100/80 border-indigo-300 dark:from-indigo-950/40 dark:to-indigo-900/20 dark:border-indigo-800'
+                      : 'bg-white dark:bg-zinc-900/80 border-neutral-200/60 dark:border-zinc-800/60 hover:border-indigo-200 dark:hover:border-indigo-900/50 shadow-sm'
+                  }`}
+                >
+                  <div className={`h-8 w-8 rounded-xl bg-gradient-to-br ${tool.color} flex items-center justify-center shrink-0 shadow-sm`}>
+                    <IconComp className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-[11px] font-bold truncate leading-tight ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-neutral-800 dark:text-zinc-200'}`}>
+                      {tool.label}
+                    </p>
+                    <p className="text-[9px] text-[#86868b] dark:text-zinc-500 truncate mt-0.5">
+                      {tool.description}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Suggested Quick prompts */}
         {messages.length === 1 && (
           <div className="px-4 py-3 border-t border-neutral-200/40 dark:border-zinc-800/40 bg-neutral-50/50 dark:bg-zinc-900/10">
@@ -872,6 +955,23 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Active Tutor Mode Banner */}
+        {activeTutorMode && (
+          <div className="px-3.5 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 border-t border-indigo-100 dark:border-indigo-900/40 flex items-center justify-between text-[10px] text-indigo-700 dark:text-indigo-300 font-bold font-sans">
+            <span className="flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-500 animate-pulse animate-duration-1000" />
+              <span>Active Tutor Mode: {TUTOR_TOOLS.find(t => t.id === activeTutorMode)?.label}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setActiveTutorMode(null)}
+              className="text-rose-500 hover:text-rose-700 dark:hover:text-rose-400 font-bold px-1.5 py-0.5 rounded hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer transition"
+            >
+              Turn Off Mode
+            </button>
           </div>
         )}
 
