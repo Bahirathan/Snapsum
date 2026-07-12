@@ -494,10 +494,10 @@ export default function LearningWorkspace({
                 className="space-y-6"
               >
                 {/* Secondary navigation for Understand */}
-                <div className="flex bg-neutral-100 dark:bg-zinc-900 p-1 rounded-xl gap-1 border border-neutral-200/50 dark:border-zinc-800/60 max-w-sm">
+                <div className="flex bg-neutral-100 dark:bg-zinc-900 p-1 rounded-xl gap-1 border border-neutral-200/50 dark:border-zinc-800/60 max-w-sm overflow-x-auto scrollbar-none whitespace-nowrap">
                   <button
                     onClick={() => setActiveUnderstandTab('summary')}
-                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition cursor-pointer ${
+                    className={`flex-1 py-2.5 px-3.5 text-xs font-semibold rounded-lg transition cursor-pointer shrink-0 ${
                       activeUnderstandTab === 'summary'
                         ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold'
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
@@ -507,7 +507,7 @@ export default function LearningWorkspace({
                   </button>
                   <button
                     onClick={() => setActiveUnderstandTab('modules')}
-                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition cursor-pointer ${
+                    className={`flex-1 py-2.5 px-3.5 text-xs font-semibold rounded-lg transition cursor-pointer shrink-0 ${
                       activeUnderstandTab === 'modules'
                         ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold'
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
@@ -760,10 +760,10 @@ export default function LearningWorkspace({
                 className="space-y-6"
               >
                 {/* Secondary navigation for Learn */}
-                <div className="flex bg-neutral-100 dark:bg-zinc-900 p-1 rounded-xl gap-1 border border-neutral-200/50 dark:border-zinc-800/60 max-w-md">
+                <div className="flex bg-neutral-100 dark:bg-zinc-900 p-1 rounded-xl gap-1 border border-neutral-200/50 dark:border-zinc-800/60 max-w-md overflow-x-auto scrollbar-none whitespace-nowrap">
                   <button
                     onClick={() => setActiveLearnTab('mindmap')}
-                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition cursor-pointer ${
+                    className={`flex-1 py-2.5 px-3.5 text-xs font-semibold rounded-lg transition cursor-pointer shrink-0 ${
                       activeLearnTab === 'mindmap'
                         ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold'
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
@@ -773,7 +773,7 @@ export default function LearningWorkspace({
                   </button>
                   <button
                     onClick={() => setActiveLearnTab('flashcards')}
-                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition cursor-pointer ${
+                    className={`flex-1 py-2.5 px-3.5 text-xs font-semibold rounded-lg transition cursor-pointer shrink-0 ${
                       activeLearnTab === 'flashcards'
                         ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold'
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
@@ -783,7 +783,7 @@ export default function LearningWorkspace({
                   </button>
                   <button
                     onClick={() => setActiveLearnTab('study-plan')}
-                    className={`flex-1 py-2 text-xs font-semibold rounded-lg transition cursor-pointer ${
+                    className={`flex-1 py-2.5 px-3.5 text-xs font-semibold rounded-lg transition cursor-pointer shrink-0 ${
                       activeLearnTab === 'study-plan'
                         ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold'
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
@@ -891,7 +891,7 @@ export default function LearningWorkspace({
                               setRevealedFlashcards(prev => ({ ...prev, [idx]: !prev[idx] }));
                               trackGAEvent?.('flashcard_flipped_workspace', { index: idx });
                             }}
-                            className="h-44 w-full cursor-pointer perspective"
+                            className="h-44 w-full cursor-pointer perspective active:scale-[0.98] transition-transform duration-150"
                           >
                             <div className={`relative w-full h-full text-center transition-transform duration-500 transform-style ${isRevealed ? 'rotate-y-180' : ''}`}>
                               
@@ -1016,10 +1016,10 @@ export default function LearningWorkspace({
                 className="space-y-6"
               >
                 {/* Secondary navigation for Apply */}
-                <div className="flex bg-neutral-100 dark:bg-zinc-900 p-1 rounded-xl gap-1 border border-neutral-200/50 dark:border-zinc-800/60 overflow-x-auto max-w-lg scrollbar-none">
+                <div className="flex bg-neutral-100 dark:bg-zinc-900 p-1 rounded-xl gap-1 border border-neutral-200/50 dark:border-zinc-800/60 overflow-x-auto max-w-lg scrollbar-none whitespace-nowrap">
                   <button
                     onClick={() => setActiveApplyTab('quiz')}
-                    className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition whitespace-nowrap cursor-pointer ${
+                    className={`flex-1 py-2.5 px-3.5 text-xs font-semibold rounded-lg transition whitespace-nowrap cursor-pointer shrink-0 ${
                       activeApplyTab === 'quiz'
                         ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold'
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
@@ -1029,7 +1029,7 @@ export default function LearningWorkspace({
                   </button>
                   <button
                     onClick={() => setActiveApplyTab('tutor')}
-                    className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition whitespace-nowrap cursor-pointer ${
+                    className={`flex-1 py-2.5 px-3.5 text-xs font-semibold rounded-lg transition whitespace-nowrap cursor-pointer shrink-0 ${
                       activeApplyTab === 'tutor'
                         ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold'
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
@@ -1039,7 +1039,7 @@ export default function LearningWorkspace({
                   </button>
                   <button
                     onClick={() => setActiveApplyTab('notes')}
-                    className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition whitespace-nowrap cursor-pointer ${
+                    className={`flex-1 py-2.5 px-3.5 text-xs font-semibold rounded-lg transition whitespace-nowrap cursor-pointer shrink-0 ${
                       activeApplyTab === 'notes'
                         ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold'
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
@@ -1049,7 +1049,7 @@ export default function LearningWorkspace({
                   </button>
                   <button
                     onClick={() => setActiveApplyTab('export')}
-                    className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition whitespace-nowrap cursor-pointer ${
+                    className={`flex-1 py-2.5 px-3.5 text-xs font-semibold rounded-lg transition whitespace-nowrap cursor-pointer shrink-0 ${
                       activeApplyTab === 'export'
                         ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold'
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
@@ -1059,7 +1059,7 @@ export default function LearningWorkspace({
                   </button>
                   <button
                     onClick={() => setActiveApplyTab('comments')}
-                    className={`flex-1 py-2 px-3 text-xs font-semibold rounded-lg transition whitespace-nowrap cursor-pointer ${
+                    className={`flex-1 py-2.5 px-3.5 text-xs font-semibold rounded-lg transition whitespace-nowrap cursor-pointer shrink-0 ${
                       activeApplyTab === 'comments'
                         ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-white shadow-sm font-bold'
                         : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
@@ -1122,17 +1122,27 @@ export default function LearningWorkspace({
                                   }
                                 }
 
+                                const letter = String.fromCharCode(65 + optIdx);
                                 return (
                                   <button
                                     key={optIdx}
                                     type="button"
                                     disabled={submitted}
                                     onClick={() => setSelectedAnswers(prev => ({ ...prev, [idx]: optIdx }))}
-                                    className={`w-full text-left px-3.5 py-3 rounded-xl border text-xs transition cursor-pointer flex justify-between items-center ${optionStyle}`}
+                                    className={`w-full text-left p-3.5 rounded-xl border text-xs transition cursor-pointer flex justify-between items-center ${optionStyle} active:scale-98`}
                                   >
-                                    <span>{opt}</span>
-                                    {isSelected && !submitted && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
-                                    {submitted && isCorrectOpt && <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />}
+                                    <div className="flex items-center gap-3 pr-2">
+                                      <span className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold font-mono text-[11px] shrink-0 ${
+                                        isSelected
+                                          ? 'bg-indigo-500 text-white'
+                                          : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400'
+                                      }`}>
+                                        {letter}
+                                      </span>
+                                      <span className="leading-tight">{opt}</span>
+                                    </div>
+                                    {isSelected && !submitted && <Check className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" />}
+                                    {submitted && isCorrectOpt && <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />}
                                   </button>
                                 );
                               })}

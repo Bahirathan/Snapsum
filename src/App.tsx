@@ -85,6 +85,7 @@ import SummaryPremiumExporter from './components/SummaryPremiumExporter';
 import LearningWorkspace from './components/LearningWorkspace';
 import LandingPage from './components/LandingPage';
 import FeaturePage from './components/FeaturePage';
+import MobileBottomNav from './components/MobileBottomNav';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
 
 const getEmbedUrl = (url: string) => {
@@ -3627,7 +3628,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       </header>
 
       {/* Main Container */}
-      <main className={`${currentScreen === 'landing' ? 'w-full pt-1' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8'}`}>
+      <main className={`${currentScreen === 'landing' ? 'w-full pt-1 pb-24 md:pb-1' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-24 md:pb-8 space-y-8'}`}>
 
         {/* 🚀 LANDING PAGE SCREEN */}
         {currentScreen === 'landing' && (
@@ -12669,6 +12670,51 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </div>
         </div>
       )}
+
+      {/* Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        currentScreen={currentScreen}
+        activeSummary={activeSummary}
+        learnMode={learnMode}
+        showProfileModal={showProfileModal}
+        onNavigateHome={() => {
+          setCurrentScreen('app');
+          setActiveSummary(null);
+          setLearnMode(false);
+          setShowProfileModal(false);
+        }}
+        onNavigateWorkspace={() => {
+          if (activeSummary) {
+            setCurrentScreen('app');
+            setLearnMode(true);
+            setShowProfileModal(false);
+            // Smooth scroll to summary workspace
+            setTimeout(() => {
+              document.getElementById('summary-dashboard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+          } else {
+            // Load the first preload video automatically to give a magical instant experience!
+            if (PRELOADED_VIDEOS && PRELOADED_VIDEOS.length > 0) {
+              handleLoadStoredItem(PRELOADED_VIDEOS[0]);
+              setCurrentScreen('app');
+              setLearnMode(true);
+              setShowProfileModal(false);
+            }
+          }
+        }}
+        onNavigateDashboard={() => {
+          setCurrentScreen('app');
+          setActiveSummary(null);
+          setLearnMode(true);
+          setShowProfileModal(false);
+        }}
+        onOpenLeaderboard={() => {
+          if (typeof fetchReferralLeaderboard === 'function') {
+            fetchReferralLeaderboard();
+          }
+          setShowProfileModal(true);
+        }}
+      />
 
     </div>
   );

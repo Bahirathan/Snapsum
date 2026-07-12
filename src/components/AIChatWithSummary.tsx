@@ -805,7 +805,7 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
 
                   {/* AI Interactive Actions Panel */}
                   {!isUser && m.id !== 'welcome' && m.text.length > 30 && (
-                    <div className="flex items-center gap-1 px-1.5 py-1 bg-white dark:bg-zinc-900 border border-neutral-200/50 dark:border-zinc-800/40 rounded-xl shadow-sm self-start">
+                    <div className="flex flex-wrap items-center gap-1 md:gap-1.5 px-1 md:px-1.5 py-1 bg-white dark:bg-zinc-900 border border-neutral-200/50 dark:border-zinc-800/40 rounded-xl shadow-sm self-start max-w-full">
                       <button 
                         onClick={() => handleCopyMessage(m.text)}
                         className="p-1.5 hover:bg-neutral-100 dark:hover:bg-zinc-800 text-neutral-400 hover:text-neutral-700 dark:hover:text-zinc-200 rounded-lg transition"
@@ -989,12 +989,12 @@ export default function AIChatWithSummary({ title, summary, getHeaders }: AIChat
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={selectedDocId ? `Ask about active file...` : `Ask workspace knowledge engine...`}
-              className="flex-1 px-4 py-3 text-xs bg-neutral-100 dark:bg-zinc-900 border border-transparent focus:bg-white dark:focus:bg-zinc-950 focus:border-indigo-500/50 outline-none rounded-2xl transition placeholder:text-neutral-400 dark:text-zinc-100 font-semibold"
+              className="flex-1 px-4 py-3.5 text-[15px] md:text-xs bg-neutral-100 dark:bg-zinc-900 border border-transparent focus:bg-white dark:focus:bg-zinc-950 focus:border-indigo-500/50 outline-none rounded-2xl transition placeholder:text-neutral-400 dark:text-zinc-100 font-semibold h-12"
             />
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="p-3 bg-gradient-to-br from-indigo-600 to-violet-600 hover:opacity-90 text-white rounded-2xl transition disabled:opacity-30 disabled:pointer-events-none cursor-pointer flex items-center justify-center shadow-md active:scale-95 shrink-0"
+              className="p-3.5 bg-gradient-to-br from-indigo-600 to-violet-600 hover:opacity-90 text-white rounded-2xl transition disabled:opacity-30 disabled:pointer-events-none cursor-pointer flex items-center justify-center shadow-md active:scale-95 shrink-0 h-12 w-12"
             >
               <Send className="w-4 h-4" />
             </button>
