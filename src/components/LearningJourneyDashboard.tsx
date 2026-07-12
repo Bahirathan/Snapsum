@@ -923,11 +923,11 @@ export default function LearningJourneyDashboard({
       </div>
 
       {/* 2.5 TABS SELECTION CONTROLLER */}
-      <div className="flex border-b border-neutral-200 dark:border-zinc-800 pb-px">
+      <div className="flex border-b border-neutral-200 dark:border-zinc-800 pb-px overflow-x-auto scrollbar-none whitespace-nowrap">
         <button
           type="button"
           onClick={() => setActiveDashboardTab('graph')}
-          className={`pb-3 px-6 text-sm font-bold border-b-2 transition flex items-center gap-2 cursor-pointer ${
+          className={`pb-3 px-6 text-sm font-bold border-b-2 transition flex items-center gap-2 cursor-pointer shrink-0 ${
             activeDashboardTab === 'graph'
               ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 font-bold'
               : 'border-transparent text-neutral-500 dark:text-zinc-400 hover:text-neutral-900 dark:hover:text-zinc-100'
@@ -939,7 +939,7 @@ export default function LearningJourneyDashboard({
         <button
           type="button"
           onClick={() => setActiveDashboardTab('vault')}
-          className={`pb-3 px-6 text-sm font-bold border-b-2 transition flex items-center gap-2 cursor-pointer ${
+          className={`pb-3 px-6 text-sm font-bold border-b-2 transition flex items-center gap-2 cursor-pointer shrink-0 ${
             activeDashboardTab === 'vault'
               ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 font-bold'
               : 'border-transparent text-neutral-500 dark:text-zinc-400 hover:text-neutral-900 dark:hover:text-zinc-100'
@@ -951,7 +951,7 @@ export default function LearningJourneyDashboard({
         <button
           type="button"
           onClick={() => setActiveDashboardTab('stats')}
-          className={`pb-3 px-6 text-sm font-bold border-b-2 transition flex items-center gap-2 cursor-pointer ${
+          className={`pb-3 px-6 text-sm font-bold border-b-2 transition flex items-center gap-2 cursor-pointer shrink-0 ${
             activeDashboardTab === 'stats'
               ? 'border-indigo-600 text-indigo-600 dark:border-indigo-400 dark:text-indigo-400 font-bold'
               : 'border-transparent text-neutral-500 dark:text-zinc-400 hover:text-neutral-900 dark:hover:text-zinc-100'
