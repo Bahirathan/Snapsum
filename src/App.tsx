@@ -426,6 +426,45 @@ export default function App() {
   const [inputWebsiteUrl, setInputWebsiteUrl] = useState('');
   const [pastedContentText, setPastedContentText] = useState('');
 
+  // Cached/recent search URLs
+  const [recentUrls, setRecentUrls] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('zipytiny_recent_urls');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [showCachedUrls, setShowCachedUrls] = useState(false);
+
+  const defaultCachedUrls = [
+    { url: 'https://www.youtube.com/watch?v=UF8uR6Z6KLc', title: 'Steve Jobs Stanford Commencement Address', type: 'video' },
+    { url: 'https://www.youtube.com/watch?v=qp0HIF3SfI4', title: 'Simon Sinek: How Great Leaders Inspire Action', type: 'video' },
+    { url: 'https://www.youtube.com/watch?v=intro-ai', title: 'MIT Introduction to Artificial Intelligence', type: 'video' }
+  ];
+
+  const allCachedUrls = [
+    ...recentUrls.map(url => {
+      let domain = url;
+      try {
+        const parsed = new URL(url);
+        domain = parsed.hostname + (parsed.pathname.length > 1 ? parsed.pathname : '');
+      } catch {}
+      return {
+        url,
+        title: domain,
+        isRecent: true,
+        type: url.includes('youtube.com') || url.includes('youtu.be') ? 'video' : 'website'
+      };
+    }),
+    ...defaultCachedUrls.filter(def => !recentUrls.includes(def.url)).map(def => ({
+      url: def.url,
+      title: def.title,
+      isRecent: false,
+      type: def.type
+    }))
+  ];
+
   // Premium Management, Collections, & Dark Mode
   const [isDark, setIsDark] = useState<boolean>(() => {
     try {
@@ -2498,6 +2537,20 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       if (!pastedContentText) return;
       finalVideoUrl = 'https://www.zipytiny.app/pasted-text';
       finalCustomTranscript = pastedContentText;
+    }
+
+    // Save to recent URLs cache if it is a real external URL
+    if (finalVideoUrl && !finalVideoUrl.startsWith('https://www.zipytiny.app/')) {
+      setRecentUrls(prev => {
+        const filtered = prev.filter(u => u !== finalVideoUrl);
+        const updated = [finalVideoUrl, ...filtered].slice(0, 5);
+        try {
+          localStorage.setItem('zipytiny_recent_urls', JSON.stringify(updated));
+        } catch (err) {
+          console.error(err);
+        }
+        return updated;
+      });
     }
 
     // 🌟 Frictionless Demo Interceptor for Guest Users (No Login Required)
@@ -4872,9 +4925,17 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
             {/* Pitch & Generation Engine - Inputs */}
-            <div className="col-span-1 lg:col-span-8 space-y-6">
-            <div className="bg-white dark:bg-zinc-900/60 rounded-3xl p-6 md:p-8 text-neutral-900 dark:text-zinc-100 border border-black/[0.04] dark:border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.02)] relative overflow-hidden">
-              <div className="relative z-10 space-y-5">
+            <div className="col-span-1 lg:col-span-8 space-y-6 relative">
+              {/* Premium Gradient Design Glow effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-[32px] opacity-10 dark:opacity-20 blur-xl pointer-events-none" />
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#0071e3]/30 via-indigo-500/20 to-purple-500/30 rounded-[30px] opacity-40 dark:opacity-60 blur-xs pointer-events-none" />
+              
+              <div className="relative bg-white dark:bg-zinc-900/95 rounded-3xl p-6 md:p-8 text-neutral-900 dark:text-zinc-100 border border-black/[0.04] dark:border-zinc-800 shadow-[0_12px_40px_rgba(0,0,0,0.03)] overflow-hidden">
+                {/* Accent Background Glows inside the card */}
+                <div className="absolute top-0 right-0 -mt-24 -mr-24 w-96 h-96 bg-gradient-to-br from-[#0071e3]/10 via-indigo-500/5 to-transparent rounded-full filter blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 -mb-24 -ml-24 w-96 h-96 bg-gradient-to-tr from-sky-500/10 via-purple-500/5 to-transparent rounded-full filter blur-3xl pointer-events-none" />
+
+                <div className="relative z-10 space-y-5">
                 <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/5 dark:bg-[#0071e3]/10 px-3 py-1 rounded-full text-[11px] font-mono font-medium text-[#0071e3] border border-[#0071e3]/10">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>{outputLanguage === 'en' ? 'Powered by Gemini 3.5 Flash' : 'مدعوم بواسطة Gemini 3.5 Flash'}</span>
@@ -4976,7 +5037,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   </div>
 
                   <div className="flex flex-col md:flex-row gap-3 items-stretch">
-                    {inputSourceType === 'video' && (
+                     {inputSourceType === 'video' && (
                       <div className="relative flex-1">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#86868b]">
                           <Video className="w-4.5 h-4.5 text-[#86868b]" />
@@ -4987,8 +5048,78 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           placeholder={t('pasteVideoPlaceholder')}
                           value={videoUrl}
                           onChange={(e) => setVideoUrl(e.target.value)}
+                          onFocus={() => setShowCachedUrls(true)}
+                          onBlur={() => setTimeout(() => setShowCachedUrls(false), 200)}
                           className="w-full pl-11 pr-4 py-4 bg-neutral-100/60 dark:bg-zinc-900/60 hover:bg-neutral-100/90 dark:hover:bg-zinc-900 focus:bg-white dark:focus:bg-zinc-900 text-[#1d1d1f] dark:text-zinc-100 rounded-2xl border border-neutral-350 dark:border-zinc-800 hover:border-neutral-400 focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
                         />
+
+                        {/* 🗂️ CACHED & RECENT URLS POPOVER */}
+                        {showCachedUrls && allCachedUrls.length > 0 && (
+                          <div 
+                            id="cached-urls-popover-video"
+                            className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-950 border border-neutral-200 dark:border-zinc-800 rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.4)] z-50 overflow-hidden animate-fadeIn backdrop-blur-md"
+                          >
+                            <div className="p-3 bg-neutral-50/80 dark:bg-zinc-900/50 border-b border-neutral-100 dark:border-zinc-800/80 flex items-center justify-between">
+                              <span className="text-[10px] font-mono font-bold tracking-wider text-neutral-400 dark:text-zinc-500 uppercase flex items-center gap-1">
+                                <History className="w-3 h-3" />
+                                Cached & Suggested URLs
+                              </span>
+                              <button 
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  try {
+                                    localStorage.removeItem('zipytiny_recent_urls');
+                                    setRecentUrls([]);
+                                  } catch {}
+                                }}
+                                className="text-[9px] font-semibold text-[#0071e3] hover:underline cursor-pointer"
+                              >
+                                Clear Recents
+                              </button>
+                            </div>
+                            <div className="max-h-60 overflow-y-auto divide-y divide-neutral-100 dark:divide-zinc-800/50">
+                              {allCachedUrls.map((item, idx) => {
+                                const ItemIcon = item.type === 'video' ? Video : Globe;
+                                return (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      if (item.type === 'video') {
+                                        setInputSourceType('video');
+                                        setVideoUrl(item.url);
+                                      } else {
+                                        setInputSourceType('website');
+                                        setInputWebsiteUrl(item.url);
+                                      }
+                                      setShowCachedUrls(false);
+                                    }}
+                                    className="w-full text-left px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-zinc-900/80 transition-all duration-150 flex items-center gap-3 group cursor-pointer"
+                                  >
+                                    <ItemIcon className="w-4 h-4 text-neutral-400 group-hover:text-[#0071e3] shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-semibold text-neutral-800 dark:text-zinc-200 truncate group-hover:text-[#0071e3]">
+                                        {item.title}
+                                      </p>
+                                      <p className="text-[10px] text-neutral-400 dark:text-zinc-500 truncate font-mono">
+                                        {item.url}
+                                      </p>
+                                    </div>
+                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                                      item.isRecent 
+                                        ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' 
+                                        : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400'
+                                    }`}>
+                                      {item.isRecent ? 'Recent' : 'Demo'}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -5003,8 +5134,78 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           placeholder={t('pasteWebsitePlaceholder')}
                           value={inputWebsiteUrl}
                           onChange={(e) => setInputWebsiteUrl(e.target.value)}
+                          onFocus={() => setShowCachedUrls(true)}
+                          onBlur={() => setTimeout(() => setShowCachedUrls(false), 200)}
                           className="w-full pl-11 pr-4 py-4 bg-neutral-100/60 dark:bg-zinc-900/60 hover:bg-neutral-100/90 dark:hover:bg-zinc-900 focus:bg-white dark:focus:bg-zinc-900 text-[#1d1d1f] dark:text-zinc-100 rounded-2xl border border-neutral-350 dark:border-zinc-800 hover:border-neutral-400 focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
                         />
+
+                        {/* 🗂️ CACHED & RECENT URLS POPOVER */}
+                        {showCachedUrls && allCachedUrls.length > 0 && (
+                          <div 
+                            id="cached-urls-popover-website"
+                            className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-zinc-950 border border-neutral-200 dark:border-zinc-800 rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.12)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.4)] z-50 overflow-hidden animate-fadeIn backdrop-blur-md"
+                          >
+                            <div className="p-3 bg-neutral-50/80 dark:bg-zinc-900/50 border-b border-neutral-100 dark:border-zinc-800/80 flex items-center justify-between">
+                              <span className="text-[10px] font-mono font-bold tracking-wider text-neutral-400 dark:text-zinc-500 uppercase flex items-center gap-1">
+                                <History className="w-3 h-3" />
+                                Cached & Suggested URLs
+                              </span>
+                              <button 
+                                type="button"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  try {
+                                    localStorage.removeItem('zipytiny_recent_urls');
+                                    setRecentUrls([]);
+                                  } catch {}
+                                }}
+                                className="text-[9px] font-semibold text-[#0071e3] hover:underline cursor-pointer"
+                              >
+                                Clear Recents
+                              </button>
+                            </div>
+                            <div className="max-h-60 overflow-y-auto divide-y divide-neutral-100 dark:divide-zinc-800/50">
+                              {allCachedUrls.map((item, idx) => {
+                                const ItemIcon = item.type === 'video' ? Video : Globe;
+                                return (
+                                  <button
+                                    key={idx}
+                                    type="button"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      if (item.type === 'video') {
+                                        setInputSourceType('video');
+                                        setVideoUrl(item.url);
+                                      } else {
+                                        setInputSourceType('website');
+                                        setInputWebsiteUrl(item.url);
+                                      }
+                                      setShowCachedUrls(false);
+                                    }}
+                                    className="w-full text-left px-4 py-2.5 hover:bg-neutral-50 dark:hover:bg-zinc-900/80 transition-all duration-150 flex items-center gap-3 group cursor-pointer"
+                                  >
+                                    <ItemIcon className="w-4 h-4 text-neutral-400 group-hover:text-[#0071e3] shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs font-semibold text-neutral-800 dark:text-zinc-200 truncate group-hover:text-[#0071e3]">
+                                        {item.title}
+                                      </p>
+                                      <p className="text-[10px] text-neutral-400 dark:text-zinc-500 truncate font-mono">
+                                        {item.url}
+                                      </p>
+                                    </div>
+                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                                      item.isRecent 
+                                        ? 'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400' 
+                                        : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400'
+                                    }`}>
+                                      {item.isRecent ? 'Recent' : 'Demo'}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 
