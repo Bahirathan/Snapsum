@@ -76,7 +76,7 @@ import {
   isSignInWithEmailLink,
   signInWithEmailLink
 } from 'firebase/auth';
-import { KeyRound, ShieldAlert, Eye, EyeOff, MessageSquare, Headphones, Users } from 'lucide-react';
+import { KeyRound, ShieldAlert, Eye, EyeOff, MessageSquare, Headphones, Users, Cpu, Layers, Sliders, ThumbsUp, PlayCircle } from 'lucide-react';
 const LearningDashboardModule = lazy(() => import('./components/LearningDashboard').then(m => ({ default: m.LearningProgressDashboard })));
 const ActiveLearningDashboardModule = lazy(() => import('./components/LearningDashboard').then(m => ({ default: m.ActiveLearningDashboard })));
 const CinematicExplainer = lazy(() => import('./components/CinematicExplainer').then(m => ({ default: m.CinematicExplainer })));
@@ -124,6 +124,242 @@ const FeaturePage = (props: any) => (
     <FeaturePageRaw {...props} />
   </Suspense>
 );
+
+const LoadingTimeline = ({ onComplete, loadingStep }: { onComplete?: () => void; loadingStep?: string }) => {
+  const [activeStep, setActiveStep] = useState(0);
+  const steps = [
+    { label: 'Extracting transcript & mapping content assets', weight: 15 },
+    { label: 'Understanding context & deep semantic parsing', weight: 35 },
+    { label: 'Generating summaries & learning nodes', weight: 55 },
+    { label: 'Building flashcards for active recall', weight: 75 },
+    { label: 'Generating mind maps and concept schemas', weight: 90 },
+    { label: 'Preparing AI Chat and study diagnostics', weight: 98 },
+    { label: 'Workspace Ready', weight: 100 }
+  ];
+
+  useEffect(() => {
+    let current = 0;
+    const interval = setInterval(() => {
+      if (current < steps.length - 1) {
+        current += 1;
+        setActiveStep(current);
+      } else {
+        clearInterval(interval);
+        onComplete?.();
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="mt-6 p-6 sm:p-8 bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/30 dark:from-zinc-950/40 dark:via-zinc-900/40 dark:to-zinc-950/20 border border-indigo-150/55 dark:border-zinc-800/80 rounded-3xl space-y-6 shadow-[0_12px_40px_rgba(79,70,229,0.06)] animate-fadeIn text-left font-sans">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400 animate-spin" />
+          <span className="text-[10px] font-mono tracking-widest text-indigo-700 dark:text-indigo-400 font-extrabold uppercase">Compilation Engine Active</span>
+        </div>
+        <span className="text-[10px] font-bold font-mono text-[#bf5af2] animate-pulse">GENERATING COGNITIVE WORKSPACE</span>
+      </div>
+
+      <div className="space-y-4">
+        {steps.map((step, idx) => {
+          const isDone = idx < activeStep;
+          const isCurrent = idx === activeStep;
+          return (
+            <div key={idx} className="flex items-start gap-4 transition-all duration-300">
+              <div className="flex flex-col items-center shrink-0">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 ${
+                  isDone 
+                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/10' 
+                    : isCurrent 
+                      ? 'bg-indigo-600 text-white animate-pulse shadow-md shadow-indigo-600/10' 
+                      : 'bg-neutral-100 dark:bg-zinc-800 text-neutral-400 border border-neutral-200 dark:border-zinc-700'
+                }`}>
+                  {isDone ? '✓' : idx + 1}
+                </div>
+                {idx < steps.length - 1 && (
+                  <div className={`w-0.5 h-6 my-1 transition-all duration-300 ${isDone ? 'bg-emerald-500' : 'bg-neutral-200 dark:bg-zinc-800'}`} />
+                )}
+              </div>
+              <div className="pt-0.5 min-w-0">
+                <p className={`text-xs font-semibold leading-none transition-all duration-300 ${
+                  isDone 
+                    ? 'text-neutral-400 line-through dark:text-zinc-500' 
+                    : isCurrent 
+                      ? 'text-neutral-900 dark:text-zinc-50 font-bold' 
+                      : 'text-neutral-400 dark:text-zinc-500'
+                }`}>
+                  {step.label}
+                </p>
+                {isCurrent && (
+                  <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-mono mt-1 animate-pulse">Processing metadata logs...</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="space-y-2 pt-2">
+        <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 dark:text-zinc-500">
+          <span>Overall Workspace Alignment Progress</span>
+          <span className="font-bold text-indigo-600 dark:text-indigo-400">{steps[activeStep].weight}%</span>
+        </div>
+        <div className="w-full bg-neutral-150 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+          <div 
+            className="bg-indigo-600 h-1.5 rounded-full transition-all duration-500" 
+            style={{ width: `${steps[activeStep].weight}%` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const TransformationPreview = () => {
+  const steps = [
+    { label: 'YouTube Video', icon: Video, color: 'text-rose-500 bg-rose-500/5 border border-rose-500/10' },
+    { label: 'AI Analysis', icon: Cpu, color: 'text-blue-500 bg-blue-500/5 border border-blue-500/10 animate-pulse-slow' },
+    { label: 'Summary', icon: FileText, color: 'text-teal-500 bg-teal-500/5 border border-teal-500/10' },
+    { label: 'Flashcards', icon: Layers, color: 'text-amber-500 bg-amber-500/5 border border-amber-500/10' },
+    { label: 'Mind Map', icon: Network, color: 'text-indigo-500 bg-indigo-500/5 border border-indigo-500/10' },
+    { label: 'AI Chat', icon: MessageSquare, color: 'text-pink-500 bg-pink-500/5 border border-pink-500/10' },
+    { label: 'Quiz', icon: HelpCircle, color: 'text-emerald-500 bg-emerald-500/5 border border-emerald-500/10' }
+  ];
+
+  return (
+    <div className="p-5 bg-neutral-50 dark:bg-zinc-950/40 rounded-2xl border border-black/[0.02] dark:border-zinc-800/60 space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#86868b]">Transformation Flow Preview</span>
+        <span className="bg-[#0071e3]/10 text-[#0071e3] text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase font-mono tracking-wide">AI Pathway</span>
+      </div>
+      <div className="hidden sm:flex items-center justify-between gap-1">
+        {steps.map((step, idx) => {
+          const IconComp = step.icon;
+          return (
+            <React.Fragment key={idx}>
+              <div className="flex flex-col items-center text-center space-y-1.5 flex-1 group">
+                <div className={`p-2.5 rounded-xl ${step.color} transition-transform duration-300 group-hover:scale-110 shadow-sm`}>
+                  <IconComp className="w-4.5 h-4.5 shrink-0" />
+                </div>
+                <span className="text-[10px] font-bold text-neutral-700 dark:text-zinc-300 leading-none">{step.label}</span>
+              </div>
+              {idx < steps.length - 1 && (
+                <div className="text-neutral-300 dark:text-zinc-700 font-mono text-xs select-none animate-pulse-soft shrink-0">
+                  <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+      {/* Mobile Grid */}
+      <div className="sm:hidden grid grid-cols-4 gap-2">
+        {steps.map((step, idx) => {
+          const IconComp = step.icon;
+          return (
+            <div key={idx} className="flex flex-col items-center text-center p-2 rounded-xl bg-white dark:bg-zinc-900 border border-black/[0.02] dark:border-zinc-800/60">
+              <div className={`p-2 rounded-lg ${step.color}`}>
+                <IconComp className="w-4 h-4 shrink-0" />
+              </div>
+              <span className="text-[9px] font-bold text-neutral-600 dark:text-zinc-400 mt-1 truncate max-w-full leading-none">{step.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const WorkspaceOutcomePreview = () => {
+  return (
+    <div className="relative overflow-hidden bg-gradient-to-br from-neutral-900 to-slate-950 text-white rounded-3xl p-6 border border-white/[0.08] shadow-2xl">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full filter blur-2xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-emerald-500/10 rounded-full filter blur-xl pointer-events-none" />
+
+      <div className="relative z-10 space-y-4">
+        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <span className="text-[10px] font-mono tracking-widest text-indigo-400 font-extrabold uppercase">Interactive Outcome Preview</span>
+          <span className="bg-emerald-500/20 text-emerald-400 text-[8px] font-extrabold px-2 py-0.5 rounded-full tracking-wider font-mono">100% AUTOMATED</span>
+        </div>
+
+        <div className="space-y-3.5 text-left font-sans">
+          <div className="flex items-center gap-3 bg-white/5 p-2.5 rounded-xl border border-white/5">
+            <span className="text-xl">📺</span>
+            <div>
+              <p className="text-xs font-bold text-white leading-none">Your Video / Document Link</p>
+              <p className="text-[9px] text-slate-400 font-mono mt-0.5">Source: YouTube, Local Files, websites</p>
+            </div>
+          </div>
+
+          <div className="flex justify-center my-1 text-slate-500 font-mono text-base select-none animate-bounce">
+            ↓
+          </div>
+
+          <div className="space-y-2.5">
+            {[
+              { icon: '📝', title: '12 Key Notes & Milestones', desc: 'Structured speed summaries with embedded video references' },
+              { icon: '🧠', title: '24 Spaced-Repetition Cards', desc: 'AI flashcards to test and verify cognitive recall instantly' },
+              { icon: '🗺', title: 'Dynamic Interactive Mind Map', desc: 'Editable visual conceptual maps built on your nodes' },
+              { icon: '❓', title: '15 Adaptive Diagnostics', desc: 'Verification quizzes with rich detailed option rationales' },
+              { icon: '💬', title: 'AI Chat Study Assistant', desc: 'Conversational companion to answer workspace questions' }
+            ].map((item, idx) => (
+              <div key={idx} className="flex gap-3 items-start group">
+                <div className="w-7 h-7 rounded-lg bg-white/10 border border-white/5 flex items-center justify-center text-sm shrink-0 transition-transform duration-300 group-hover:scale-110">
+                  {item.icon}
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-white group-hover:text-indigo-300 transition">{item.title}</p>
+                  <p className="text-[10px] text-slate-400 font-light leading-snug">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="border-t border-white/10 pt-3 flex items-center justify-between text-[11px] text-slate-400 font-sans">
+          <div className="flex items-center gap-1">
+            <span className="text-emerald-400 animate-pulse">●</span>
+            <span>Est. Generation Speed</span>
+          </div>
+          <span className="font-mono font-bold text-white">⏱ under 60 seconds</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const FeatureHighlightsGrid = () => {
+  const features = [
+    { icon: '📄', title: 'AI Notes', desc: 'Generate structured summaries and deep learning nodes instantly.' },
+    { icon: '🧠', title: 'Flashcards', desc: 'Active recall drills designed to help you remember faster.' },
+    { icon: '🗺', title: 'Mind Maps', desc: 'Visual nodes and dynamic cognitive graphs for understanding.' },
+    { icon: '💬', title: 'AI Chat', desc: 'Ask anything about your content, test your theories instantly.' },
+    { icon: '❓', title: 'Quiz Generator', desc: 'Assess your skills with diagnostic questions and rationales.' },
+    { icon: '📤', title: 'Export Anywhere', desc: 'Save your customized workspace as PDF, Markdown, or Word.' }
+  ];
+
+  return (
+    <div className="space-y-5 pt-8 text-left font-sans">
+      <div className="space-y-1">
+        <h2 className="text-xl md:text-2xl font-bold font-display text-[#1d1d1f] dark:text-zinc-50">High-Fidelity Learning Utilities</h2>
+        <p className="text-xs text-neutral-500 dark:text-zinc-400 font-light">Every workspace compiles the complete suite of analytical assets automatically</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {features.map((feat, idx) => (
+          <div key={idx} className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-black/[0.04] dark:border-zinc-800 hover:border-[#0071e3]/30 dark:hover:border-indigo-500/30 hover:scale-[1.03] transition-all duration-300 shadow-xs hover:shadow-md cursor-pointer group flex gap-3">
+            <span className="text-2xl shrink-0 select-none">{feat.icon}</span>
+            <div className="space-y-1 min-w-0">
+              <h3 className="text-sm font-bold text-neutral-800 dark:text-zinc-200 group-hover:text-[#0071e3] transition">{feat.title}</h3>
+              <p className="text-[11px] text-neutral-500 dark:text-zinc-400 font-light leading-snug">{feat.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 import MobileBottomNav from './components/MobileBottomNav';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
@@ -420,6 +656,20 @@ export default function App() {
   const [demoQuizSubmitted, setDemoQuizSubmitted] = useState(false);
   const [customTranscript, setCustomTranscript] = useState('');
   const [showCustomTranscriptField, setShowCustomTranscriptField] = useState(false);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [showStickyCta, setShowStickyCta] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const formElement = document.getElementById('url-submit-form');
+      if (formElement) {
+        const rect = formElement.getBoundingClientRect();
+        setShowStickyCta(rect.bottom < 0);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Advanced Source Inputs
   const [inputSourceType, setInputSourceType] = useState<'video' | 'website' | 'file' | 'text'>('video');
@@ -4982,22 +5232,34 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 <div className="absolute bottom-0 left-0 -mb-24 -ml-24 w-96 h-96 bg-gradient-to-tr from-sky-500/10 via-purple-500/5 to-transparent rounded-full filter blur-3xl pointer-events-none" />
 
                 <div className="relative z-10 space-y-5">
-                <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/5 dark:bg-[#0071e3]/10 px-3 py-1 rounded-full text-[11px] font-mono font-medium text-[#0071e3] border border-[#0071e3]/10">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>{outputLanguage === 'en' ? 'Powered by Gemini 3.5 Flash' : 'مدعوم بواسطة Gemini 3.5 Flash'}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-3 py-1 rounded-full text-[10px] font-bold font-mono tracking-wider uppercase border border-amber-500/15">
+                    <span>⭐⭐⭐⭐⭐ Loved by 5,000+ Students & Professionals</span>
+                  </div>
+                  <div className="inline-flex items-center gap-1 bg-[#0071e3]/5 dark:bg-[#0071e3]/10 px-3 py-1 rounded-full text-[10px] font-bold font-mono text-[#0071e3] border border-[#0071e3]/10 uppercase tracking-wider">
+                    <Sparkles className="w-3 h-3" />
+                    <span>Powered by Gemini</span>
+                  </div>
                 </div>
-                
-                <h1 className="text-3xl md:text-4xl font-semibold font-display leading-[1.1] tracking-tight text-[#1d1d1f] dark:text-zinc-50">
-                  {outputLanguage === 'en' ? (
-                    <>Stop Watching. <br />Start Repurposing.</>
-                  ) : (
-                    <>توقف عن المشاهدة فحسب. <br />وابدأ الاستفادة الفعالة.</>
-                  )}
+
+                <h1 className="text-3xl md:text-5xl font-extrabold font-display leading-[1.1] tracking-tight text-[#1d1d1f] dark:text-zinc-50">
+                  Turn Any Video or Document into an AI Learning Workspace
                 </h1>
-                
-                <p className="text-[#86868b] dark:text-zinc-400 text-sm md:text-base max-w-2xl leading-relaxed font-light">
-                  {t('description')}
+
+                <p className="text-neutral-500 dark:text-zinc-400 text-sm sm:text-base max-w-3xl leading-relaxed font-light font-sans">
+                  Generate smart summaries, visual mind maps, flashcards, interactive quizzes, study notes, and ready-to-publish blogs or social posts in under 60 seconds.
                 </p>
+
+                <div className="flex flex-wrap items-center gap-4 text-xs font-mono font-semibold text-[#86868b] dark:text-zinc-500 pt-1">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                    <span>No Credit Card Required</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                    <span>Create Your First Workspace Free</span>
+                  </span>
+                </div>
 
                 {/* 📊 INTERACTIVE WORKSPACE STATUS & RETENTION STATS WIDGET */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-neutral-50/80 dark:bg-zinc-950/60 p-4 rounded-2xl border border-black/[0.03] dark:border-zinc-800/80 relative z-10">
@@ -5110,31 +5372,256 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   </div>
 
                   {/* Input Source Type Selector Tabs */}
-                  <div className="flex flex-wrap gap-1 bg-neutral-100/60 dark:bg-zinc-950 p-1 rounded-2xl border border-black/[0.04] dark:border-zinc-800/60">
-                    {[
-                      { id: 'video', label: t('youtubeVideo'), icon: Video },
-                      { id: 'website', label: t('websiteLink'), icon: Globe },
-                      { id: 'file', label: t('documentsAudio'), icon: FolderPlus },
-                      { id: 'text', label: t('rawTextNotes'), icon: FileText }
-                    ].map((src) => {
-                      const SrcIcon = src.icon;
-                      const isSelected = inputSourceType === src.id;
-                      return (
-                        <button
-                          key={src.id}
-                          type="button"
-                          onClick={() => setInputSourceType(src.id as any)}
-                          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl cursor-pointer transition ${
-                            isSelected 
-                              ? 'bg-white dark:bg-zinc-800 text-neutral-900 dark:text-zinc-50 shadow-xs font-bold' 
-                              : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-900 dark:hover:text-zinc-100'
-                          }`}
-                        >
-                          <SrcIcon className="w-3.5 h-3.5 shrink-0" />
-                          <span>{src.label}</span>
-                        </button>
-                      );
-                    })}
+                  <div className="space-y-4 text-left">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex gap-1.5 bg-neutral-100/60 dark:bg-zinc-950 p-1 rounded-2xl border border-black/[0.04] dark:border-zinc-800/60 w-fit">
+                        {[
+                          { id: 'video', label: t('youtubeVideo'), icon: Video },
+                          { id: 'file', label: t('documentsAudio'), icon: FolderPlus }
+                        ].map((src) => {
+                          const SrcIcon = src.icon;
+                          const isSelected = inputSourceType === src.id;
+                          return (
+                            <button
+                              key={src.id}
+                              type="button"
+                              onClick={() => setInputSourceType(src.id as any)}
+                              className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl cursor-pointer transition ${
+                                isSelected 
+                                  ? 'bg-white dark:bg-zinc-800 text-neutral-900 dark:text-zinc-50 shadow-xs font-bold' 
+                                  : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-900 dark:hover:text-zinc-100'
+                              }`}
+                            >
+                              <SrcIcon className="w-3.5 h-3.5 shrink-0" />
+                              <span>{src.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                        className={`text-xs font-bold px-4 py-2 rounded-xl border transition-all cursor-pointer inline-flex items-center gap-1.5 ${
+                          showAdvancedOptions
+                            ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
+                            : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-800'
+                        }`}
+                      >
+                        <Sliders className="w-3.5 h-3.5" />
+                        <span>Advanced Settings {showAdvancedOptions ? '✓' : ''}</span>
+                        {showAdvancedOptions ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+
+                    {showAdvancedOptions && (
+                      <div className="p-5 bg-neutral-50/80 dark:bg-zinc-950/40 border border-neutral-200/60 dark:border-zinc-800/80 rounded-2xl space-y-5 animate-fadeIn text-left">
+                        {/* Alternate Source Formats */}
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
+                            Alternate Source Formats
+                          </label>
+                          <div className="flex flex-wrap gap-1 bg-white dark:bg-zinc-950/80 p-1 rounded-xl border border-black/[0.04] dark:border-zinc-800/40 w-fit">
+                            {[
+                              { id: 'website', label: t('websiteLink'), icon: Globe },
+                              { id: 'text', label: t('rawTextNotes'), icon: FileText }
+                            ].map((src) => {
+                              const SrcIcon = src.icon;
+                              const isSelected = inputSourceType === src.id;
+                              return (
+                                <button
+                                  key={src.id}
+                                  type="button"
+                                  onClick={() => setInputSourceType(src.id as any)}
+                                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition ${
+                                    isSelected 
+                                      ? 'bg-neutral-900 text-white shadow-xs font-bold font-sans' 
+                                      : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-900 dark:hover:text-zinc-100'
+                                  }`}
+                                >
+                                  <SrcIcon className="w-3 h-3 shrink-0" />
+                                  <span>{src.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Synthesis Tone Preset Selection Gated Module */}
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
+                            {t('synthesisTone')}
+                          </label>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedTone('standard')}
+                              className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                                selectedTone === 'standard'
+                                  ? 'bg-neutral-900 border-neutral-900 text-white shadow-sm'
+                                  : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
+                              }`}
+                            >
+                              <span>{t('shortScript')}</span>
+                              <span className={`text-[8px] font-mono leading-none font-bold px-1.5 py-0.5 rounded ${selectedTone === 'standard' ? 'bg-white/20 text-white' : 'bg-black/[0.04] text-[#86868b]'}`}>{t('free')}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isPremium) {
+                                  setSelectedTone('academic');
+                                } else {
+                                  setSelectedPlanCode('pro');
+                                  setShowStripeModal(true);
+                                  setStripePaymentSuccess(false);
+                                }
+                              }}
+                              className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                                selectedTone === 'academic' && isPremium
+                                  ? 'bg-neutral-900 border-neutral-900 text-white shadow-sm'
+                                  : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
+                              }`}
+                            >
+                              <span className="flex items-center gap-1.5 min-w-0">
+                                {!isPremium && <Lock className="w-3 h-3 text-[#86868b] shrink-0" />}
+                                <span className="truncate">{t('academicStudy')}</span>
+                              </span>
+                              <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">{t('pro')}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isPremium) {
+                                  setSelectedTone('viral');
+                                } else {
+                                  setSelectedPlanCode('pro');
+                                  setShowStripeModal(true);
+                                  setStripePaymentSuccess(false);
+                                }
+                              }}
+                              className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                                selectedTone === 'viral' && isPremium
+                                  ? 'bg-neutral-900 border-neutral-900 text-white shadow-sm'
+                                  : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
+                              }`}
+                            >
+                              <span className="flex items-center gap-1.5 min-w-0">
+                                {!isPremium && <Lock className="w-3 h-3 text-[#86868b] shrink-0" />}
+                                <span className="truncate">{t('viralBulletin')}</span>
+                              </span>
+                              <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">{t('pro')}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isPremium) {
+                                  setSelectedTone('reel');
+                                  if (activeSummary) {
+                                    setActiveTab('reel');
+                                  }
+                                } else {
+                                  setSelectedPlanCode('pro');
+                                  setShowStripeModal(true);
+                                  setStripePaymentSuccess(false);
+                                }
+                              }}
+                              className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                                selectedTone === 'reel' && isPremium
+                                  ? 'bg-neutral-900 border-neutral-900 text-white shadow-sm'
+                                  : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
+                              }`}
+                            >
+                              <span className="flex items-center gap-1.5 min-w-0">
+                                {!isPremium && <Lock className="w-3 h-3 text-[#86868b] shrink-0" />}
+                                <span className="truncate">{t('shortenedVideo')}</span>
+                              </span>
+                              <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">{t('pro')}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Target Language Selector */}
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
+                            {t('targetLanguage')}
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setOutputLanguage('en')}
+                              className={`px-3.5 py-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                                outputLanguage === 'en'
+                                  ? 'bg-neutral-900 border-neutral-900 text-white shadow-sm'
+                                  : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
+                              }`}
+                            >
+                              <span className="text-sm">🇺🇸</span>
+                              <span>{t('englishDefault')}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setOutputLanguage('ar')}
+                              className={`px-3.5 py-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                                outputLanguage === 'ar'
+                                  ? 'bg-neutral-900 border-neutral-900 text-white shadow-sm'
+                                  : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
+                              }`}
+                            >
+                              <span className="text-sm">🇸🇦</span>
+                              <span>{t('arabicLanguage')}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Pasting custom manual script option */}
+                        <div className="space-y-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowCustomTranscriptField(!showCustomTranscriptField)}
+                            className="text-xs text-neutral-600 hover:text-neutral-900 transition duration-200 inline-flex items-center gap-1 font-medium bg-black/[0.03] hover:bg-black/[0.05] px-3 py-1.5 rounded-xl border border-black/[0.02] cursor-pointer"
+                          >
+                            <span>{showCustomTranscriptField ? t('hideCustomTranscript') : t('showCustomTranscript')}</span>
+                            {showCustomTranscriptField ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          </button>
+
+                          {showCustomTranscriptField && (
+                            <div className="mt-2 space-y-1.5 animate-fadeIn">
+                              <label className="block text-[10px] font-mono font-bold uppercase text-[#86868b]">
+                                {t('pastedTranscriptLabel')}
+                              </label>
+                              <textarea
+                                placeholder={t('transcriptHelp')}
+                                rows={3}
+                                value={customTranscript}
+                                onChange={(e) => setCustomTranscript(e.target.value)}
+                                className="w-full p-3 bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-xl text-xs placeholder:text-neutral-400 focus:border-[#0071e3]/30 focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition text-[#1d1d1f]"
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Model Configuration Selector */}
+                        <div className="space-y-2">
+                          <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
+                            Active AI Synthesis Model
+                          </label>
+                          <div className="bg-white dark:bg-zinc-900 border border-black/[0.08] dark:border-zinc-800/80 p-3 rounded-xl flex items-center justify-between text-xs text-neutral-700 dark:text-zinc-300">
+                            <span className="flex items-center gap-2 font-medium font-sans">
+                              <Cpu className="w-4 h-4 text-[#0071e3] shrink-0" />
+                              Gemini 2.5 Flash (Production Ultra)
+                            </span>
+                            <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md">
+                              Fastest & Smartest
+                            </span>
+                          </div>
+                        </div>
+
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-col md:flex-row gap-3 items-stretch">
@@ -5410,6 +5897,12 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       </div>
                     )}
 
+                    </div>
+
+                    {/* Transformation Flow Preview Widget */}
+                    {!loading && <TransformationPreview inputType={inputSourceType} learnMode={learnMode} />}
+
+                    {/* Majestic glowing master CTA button */}
                     <button
                       type="submit"
                       disabled={
@@ -5419,322 +5912,62 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         (inputSourceType === 'file' && uploadedFiles.length === 0) ||
                         (inputSourceType === 'text' && !pastedContentText)
                       }
-                      className={`font-semibold text-sm px-8 py-4 px-8 rounded-full active:scale-98 transition-all duration-200 flex items-center justify-center gap-2 h-13.5 disabled:opacity-40 disabled:pointer-events-none cursor-pointer shadow-sm shrink-0 self-end ${
+                      className={`w-full py-4.5 px-8 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center gap-2.5 shadow-lg active:scale-98 disabled:opacity-40 disabled:pointer-events-none cursor-pointer relative overflow-hidden group mt-4 ${
                         learnMode 
-                          ? 'bg-gradient-to-r from-teal-500 to-indigo-600 hover:opacity-90 text-white shadow-teal-500/10'
-                          : 'bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-[#0071e3]/10'
+                          ? 'bg-gradient-to-r from-teal-500 to-indigo-600 hover:brightness-105 text-white shadow-teal-500/10'
+                          : 'bg-gradient-to-r from-[#0071e3] to-[#00a2ff] hover:brightness-105 text-white shadow-[#0071e3]/20'
                       }`}
                     >
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
                       {loading ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>{outputLanguage === 'en' ? 'Processing...' : 'جاري المعالجة...'}</span>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Generating Your Custom AI Workspace...</span>
                         </>
                       ) : (
                         <>
                           {learnMode ? (
                             <>
-                              <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
-                              <span>{t('startLearning')}</span>
+                              <Zap className="w-5 h-5 text-amber-300 fill-amber-300 animate-bounce" />
+                              <span>Create Your AI Learn Workspace — Free</span>
                             </>
                           ) : (
                             <>
-                              <Sparkles className="w-4 h-4" />
-                              <span>{t('analyzeSource')}</span>
+                              <Sparkles className="w-5 h-5 text-white animate-pulse" />
+                              <span>Create Your AI Workspace — Free</span>
                             </>
                           )}
                         </>
                       )}
                     </button>
-                  </div>
 
-                  {/* Dynamic Guest Allocation Control Feedback Module */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] px-1 pt-0.5 font-sans">
-                    {isPremium || usageTracker.vipBypassActive ? (
-                      <span className="text-emerald-600 font-semibold flex items-center gap-1.5">
-                        <CheckCircle className="w-3.5 h-3.5 fill-emerald-50 text-emerald-600 shrink-0" />
-                        {t('unlimitedSummaryEngine')}
-                      </span>
-                    ) : (
-                      <span className="text-[#86868b] font-light flex items-center gap-1.5 font-sans">
-                        <AlertCircle className="w-3.5 h-3.5 text-[#86868b] shrink-0" />
-                        <span>{t('guestAllocationRemaining')}<strong className="font-semibold text-neutral-800">{usageTracker.remaining}</strong>{t('of')}<strong className="font-semibold text-neutral-800">{usageTracker.limit}</strong>{t('dailyAnalyses')}</span>
-                      </span>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => setCurrentScreen('billing')}
-                      className="text-[#0071e3] hover:underline font-semibold text-left sm:text-right cursor-pointer"
-                    >
-                      {isPremium || usageTracker.vipBypassActive ? t('manageConnectionHub') : t('upgradeBypassLimits')}
-                    </button>
-                  </div>
-
-                  {/* Synthesis Tone Preset Selection Gated Module */}
-                  <div className="space-y-2 pt-2">
-                    <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
-                      {t('synthesisTone')}
-                    </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedTone('standard')}
-                        className={`px-3 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
-                          selectedTone === 'standard'
-                            ? 'bg-[#1d1d1f] border-[#1d1d1f] text-white shadow-sm'
-                            : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
-                        }`}
-                      >
-                        <span>{t('shortScript')}</span>
-                        <span className={`text-[8px] font-mono leading-none font-bold px-1.5 py-0.5 rounded ${selectedTone === 'standard' ? 'bg-white/20 text-white' : 'bg-black/[0.04] text-[#86868b]'}`}>{t('free')}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (isPremium) {
-                            setSelectedTone('academic');
-                          } else {
-                            setSelectedPlanCode('pro');
-                            setShowStripeModal(true);
-                            setStripePaymentSuccess(false);
-                          }
-                        }}
-                        className={`px-3 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
-                          selectedTone === 'academic' && isPremium
-                            ? 'bg-[#1d1d1f] border-[#1d1d1f] text-white shadow-sm'
-                            : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
-                        }`}
-                      >
-                        <span className="flex items-center gap-1.5 min-w-0">
-                          {!isPremium && <Lock className="w-3 h-3 text-[#86868b] shrink-0" />}
-                          <span className="truncate">{t('academicStudy')}</span>
+                    {/* Dynamic Guest Allocation Control Feedback Module */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] px-1 pt-1 font-sans mt-3">
+                      {isPremium || usageTracker.vipBypassActive ? (
+                        <span className="text-emerald-600 font-semibold flex items-center gap-1.5 text-left">
+                          <CheckCircle className="w-3.5 h-3.5 fill-emerald-50 text-emerald-600 shrink-0" />
+                          {t('unlimitedSummaryEngine')}
                         </span>
-                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">{t('pro')}</span>
-                      </button>
+                      ) : (
+                        <span className="text-[#86868b] font-light flex items-center gap-1.5 font-sans text-left">
+                          <AlertCircle className="w-3.5 h-3.5 text-[#86868b] shrink-0" />
+                          <span>{t('guestAllocationRemaining')}<strong className="font-semibold text-neutral-800 dark:text-zinc-200">{usageTracker.remaining}</strong>{t('of')}<strong className="font-semibold text-neutral-800 dark:text-zinc-200">{usageTracker.limit}</strong>{t('dailyAnalyses')}</span>
+                        </span>
+                      )}
 
                       <button
                         type="button"
-                        onClick={() => {
-                          if (isPremium) {
-                            setSelectedTone('viral');
-                          } else {
-                            setSelectedPlanCode('pro');
-                            setShowStripeModal(true);
-                            setStripePaymentSuccess(false);
-                          }
-                        }}
-                        className={`px-3 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
-                          selectedTone === 'viral' && isPremium
-                            ? 'bg-[#1d1d1f] border-[#1d1d1f] text-white shadow-sm'
-                            : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
-                        }`}
+                        onClick={() => setCurrentScreen('billing')}
+                        className="text-[#0071e3] hover:underline font-semibold text-left sm:text-right cursor-pointer"
                       >
-                        <span className="flex items-center gap-1.5 min-w-0">
-                          {!isPremium && <Lock className="w-3 h-3 text-[#86868b] shrink-0" />}
-                          <span className="truncate">{t('viralBulletin')}</span>
-                        </span>
-                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">{t('pro')}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (isPremium) {
-                            setSelectedTone('reel');
-                            if (activeSummary) {
-                              setActiveTab('reel');
-                            }
-                          } else {
-                            setSelectedPlanCode('pro');
-                            setShowStripeModal(true);
-                            setStripePaymentSuccess(false);
-                          }
-                        }}
-                        className={`px-3 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
-                          selectedTone === 'reel' && isPremium
-                            ? 'bg-[#1d1d1f] border-[#1d1d1f] text-white shadow-sm'
-                            : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
-                        }`}
-                      >
-                        <span className="flex items-center gap-1.5 min-w-0">
-                          {!isPremium && <Lock className="w-3 h-3 text-[#86868b] shrink-0" />}
-                          <span className="truncate">{t('shortenedVideo')}</span>
-                        </span>
-                        <span className="text-[8px] font-mono leading-none font-bold bg-[#0071e3]/10 text-[#0071e3] px-1.5 py-0.5 rounded shrink-0">{t('pro')}</span>
+                        {isPremium || usageTracker.vipBypassActive ? t('manageConnectionHub') : t('upgradeBypassLimits')}
                       </button>
                     </div>
-                  </div>
-
-                  {/* Pasting custom manual script option */}
-                  <div className="pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowCustomTranscriptField(!showCustomTranscriptField)}
-                      className="text-xs text-[#515154] hover:text-[#1d1d1f] transition duration-200 inline-flex items-center gap-1 font-medium bg-black/[0.03] hover:bg-black/[0.05] px-3 py-1.5 rounded-full border border-black/[0.02] cursor-pointer"
-                    >
-                      <span>{showCustomTranscriptField ? t('hideCustomTranscript') : t('showCustomTranscript')}</span>
-                      {showCustomTranscriptField ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                    </button>
-
-                    {showCustomTranscriptField && (
-                      <div className="mt-3 space-y-1.5 animate-fadeIn">
-                        <label className="block text-[10px] font-mono font-bold uppercase text-[#86868b]">
-                          {t('pastedTranscriptLabel')}
-                        </label>
-                        <textarea
-                          placeholder={t('transcriptHelp')}
-                          rows={4}
-                          value={customTranscript}
-                          onChange={(e) => setCustomTranscript(e.target.value)}
-                          className="w-full p-4 bg-neutral-100/60 border border-transparent rounded-2xl text-xs placeholder:text-neutral-400 focus:bg-white focus:border-[#0071e3]/30 focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition text-[#1d1d1f]"
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Target Language Selector */}
-                  <div className="space-y-2 pt-2">
-                    <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
-                      {t('targetLanguage')}
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setOutputLanguage('en')}
-                        className={`px-3.5 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          outputLanguage === 'en'
-                            ? 'bg-[#1d1d1f] border-[#1d1d1f] text-white shadow-sm'
-                            : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
-                        }`}
-                      >
-                        <span className="text-sm">🇺🇸</span>
-                        <span>{t('englishDefault')}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setOutputLanguage('ar')}
-                        className={`px-3.5 py-3 rounded-2xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                          outputLanguage === 'ar'
-                            ? 'bg-[#1d1d1f] border-[#1d1d1f] text-white shadow-sm'
-                            : 'bg-white border-black/[0.08] text-[#515154] hover:bg-neutral-50 hover:border-black/[0.12]'
-                        }`}
-                      >
-                        <span className="text-sm">🇸🇦</span>
-                        <span>{t('arabicLanguage')}</span>
-                      </button>
-                    </div>
-                  </div>
                 </form>
 
                 {/* Progress Indicators & Steps */}
                 {loading && (
-                  learnMode ? (
-                    <div className="mt-6 p-6 bg-gradient-to-br from-indigo-50/40 to-purple-50/20 border border-indigo-100 rounded-3xl space-y-4 animate-fadeIn">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="w-4.5 h-4.5 text-indigo-600 animate-spin" />
-                          <span className="text-[10px] font-mono tracking-widest text-indigo-700 font-bold uppercase">AI Learning Compilation Core</span>
-                        </div>
-                        <span className="text-[10px] font-bold font-mono text-[#bf5af2] animate-pulse">BUILDING COGNITIVE PATHWAY</span>
-                      </div>
-                      
-                      <div className="space-y-2.5 pt-1 text-xs">
-                        {[
-                          { step: 1, label: "Transcribing audio frequencies and speech tracks...", active: true, done: loadingStep.includes('mapping') || loadingStep.includes('concepts') || loadingStep.includes('quiz') || loadingStep.includes('flashcard') },
-                          { step: 2, label: "Synthesizing full visual syllabus and chapters...", active: loadingStep.includes('chapters') || loadingStep.includes('mapping') || loadingStep.includes('concepts') || loadingStep.includes('quiz'), done: loadingStep.includes('concepts') || loadingStep.includes('quiz') },
-                          { step: 3, label: "Extracting core concepts and Plain-English metaphors...", active: loadingStep.includes('concepts') || loadingStep.includes('concept') || loadingStep.includes('quiz'), done: loadingStep.includes('quiz') },
-                          { step: 4, label: "Generating adaptive recall diagnostic verification quizzes...", active: loadingStep.includes('quiz') || loadingStep.includes('diagnostics'), done: false }
-                        ].map((s) => {
-                          const isDone = s.done;
-                          const isCurrent = s.active && !isDone;
-                          return (
-                            <div key={s.step} className="flex items-center gap-3 text-left">
-                              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold font-mono ${
-                                isDone 
-                                  ? 'bg-[#30d158] text-white' 
-                                  : isCurrent 
-                                    ? 'bg-indigo-600 text-white animate-pulse' 
-                                    : 'bg-neutral-100 text-neutral-400 border border-neutral-205'
-                              }`}>
-                                {isDone ? '✓' : s.step}
-                              </div>
-                              <span className={`font-sans ${
-                                isDone 
-                                  ? 'text-neutral-400 line-through' 
-                                  : isCurrent 
-                                    ? 'text-indigo-950 font-bold' 
-                                    : 'text-neutral-400'
-                              }`}>
-                                {s.label}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="w-full bg-neutral-200/80 rounded-full h-1.5 overflow-hidden">
-                        <div 
-                          className="bg-indigo-600 h-1.5 rounded-full transition-all duration-750" 
-                          style={{ 
-                            width: loadingStep.includes('quiz') 
-                              ? '95%' 
-                              : loadingStep.includes('concepts') 
-                                ? '70%' 
-                                : loadingStep.includes('chapters') 
-                                  ? '45%' 
-                                  : '20%' 
-                          }}
-                        ></div>
-                      </div>
-                      <p className="text-[10px] text-indigo-605 italic font-medium text-left">🤖 Sync telemetry: {loadingStep}</p>
-                    </div>
-                  ) : (
-                    <div className="mt-6 animate-fadeIn space-y-4">
-                      {/* Progress bar & status */}
-                      <div className="p-4 bg-white dark:bg-zinc-900 border border-black/[0.05] dark:border-zinc-800 rounded-2xl space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <Loader2 className="w-4 h-4 text-[#0071e3] animate-spin shrink-0" />
-                            <span className="text-xs font-semibold text-neutral-800 dark:text-zinc-200">{loadingStep || 'Analyzing content...'}</span>
-                          </div>
-                          <span className="text-[10px] font-mono text-[#86868b] animate-pulse-soft">Powered by Gemini AI</span>
-                        </div>
-                        <div className="w-full bg-neutral-100 dark:bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-                          <div 
-                            className="bg-gradient-to-r from-[#0071e3] to-indigo-500 h-1.5 rounded-full transition-all duration-1000" 
-                            style={{ width: loadingStep.includes('reasoning') || loadingStep.includes('Gemini') ? '75%' : loadingStep.includes('Extracting') || loadingStep.includes('transcript') ? '50%' : '25%' }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Interactive context-aware rotating tip */}
-                      <div className="p-4 bg-gradient-to-r from-indigo-50/50 to-indigo-100/20 dark:from-zinc-950/40 dark:to-zinc-900/20 border border-indigo-100/60 dark:border-zinc-800/80 rounded-2xl flex items-start gap-3 animate-fadeIn">
-                        <Sparkles className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
-                        <div className="space-y-1 text-left">
-                          <span className="text-[9px] font-mono font-bold tracking-wider text-indigo-600 dark:text-indigo-400 uppercase font-sans">Active Processing Telemetry</span>
-                          <p className="text-[11px] text-neutral-600 dark:text-zinc-300 font-sans leading-relaxed">
-                            {LOADING_TIPS[currentLoadingTipIdx]}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Skeleton preview cards */}
-                      <div className="space-y-3">
-                        <div className="h-4 skeleton rounded-lg w-3/4" />
-                        <div className="h-3 skeleton rounded-lg w-full" />
-                        <div className="h-3 skeleton rounded-lg w-5/6" />
-                        <div className="h-3 skeleton rounded-lg w-4/5" />
-                        <div className="grid grid-cols-3 gap-3 pt-2">
-                          <div className="h-16 skeleton rounded-xl" />
-                          <div className="h-16 skeleton rounded-xl" />
-                          <div className="h-16 skeleton rounded-xl" />
-                        </div>
-                      </div>
-                    </div>
-                  )
+                  <LoadingTimeline loadingStep={loadingStep} />
                 )}
 
                 {/* Technical Error Box */}
@@ -6098,11 +6331,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h3 className="text-base font-bold font-display text-[#1d1d1f] dark:text-zinc-50 flex items-center gap-1.5">
-                      <History className="w-4 h-4 text-[#86868b] dark:text-zinc-400" />
-                      {t('summariesLibrary')}
+                      <FolderOpen className="w-4 h-4 text-[#0071e3] dark:text-indigo-400 animate-pulse" />
+                      My AI Workspace
                     </h3>
                     <p className="text-[#86868b] dark:text-zinc-400 text-[11px] mt-0.5 font-light">
-                      {isSelectingForStack ? (outputLanguage === 'en' ? 'Select 2+ summaries for Stack' : 'اختر ملخصين أو أكثر لإنشاء حزمة') : t('persistentShelf')}
+                      {isSelectingForStack ? (outputLanguage === 'en' ? 'Select 2+ workspaces for Stack' : 'اختر ملخصين أو أكثر لإنشاء حزمة') : (outputLanguage === 'en' ? 'Your persistent cloud library and study sets' : t('persistentShelf'))}
                     </p>
                   </div>
                   
@@ -6241,39 +6474,47 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 )}
 
                 {savedSummaries.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-neutral-200 dark:border-zinc-800 bg-gradient-to-b from-neutral-50/80 to-white dark:from-zinc-950/20 dark:to-transparent overflow-hidden">
-                    <div className="p-5 text-center space-y-3">
-                      <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center mx-auto">
-                        <Sparkles className="w-5 h-5 text-indigo-500" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-neutral-800 dark:text-zinc-200">Your AI Knowledge Library</p>
-                        <p className="text-[10px] text-neutral-400 dark:text-zinc-500 mt-0.5 font-light">Paste a YouTube, podcast, or video URL above to get started</p>
-                      </div>
-                      <div className="grid grid-cols-3 gap-1.5 pt-1">
-                        {[
-                          { icon: '▶️', label: 'YouTube' },
-                          { icon: '🎙️', label: 'Podcast' },
-                          { icon: '📹', label: 'Any Video' },
-                        ].map(({ icon, label }) => (
-                          <div key={label} className="bg-white dark:bg-zinc-900 border border-neutral-100 dark:border-zinc-800 rounded-xl py-2 px-1 text-center">
-                            <span className="text-base">{icon}</span>
-                            <p className="text-[9px] text-neutral-500 dark:text-zinc-500 font-mono mt-0.5">{label}</p>
-                          </div>
-                        ))}
-                      </div>
+                  <div className="rounded-2xl border border-dashed border-neutral-300 dark:border-zinc-800 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/20 dark:from-zinc-950/40 dark:to-transparent p-6 text-center space-y-4 animate-fadeIn font-sans">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center mx-auto shadow-sm">
+                      <Sparkles className="w-6 h-6 text-indigo-600 dark:text-indigo-400 animate-pulse" />
                     </div>
-                    <div className="border-t border-dashed border-neutral-200 dark:border-zinc-800 px-4 py-3 space-y-2">
-                      {[
-                        { step: '1', text: 'Paste a URL in the input field above' },
-                        { step: '2', text: 'Choose a summary style & click Summarize' },
-                        { step: '3', text: 'Your summary appears here for quick access' },
-                      ].map(({ step, text }) => (
-                        <div key={step} className="flex items-center gap-2.5">
-                          <span className="w-4 h-4 rounded-full bg-indigo-100 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 text-[9px] font-bold flex items-center justify-center shrink-0">{step}</span>
-                          <p className="text-[10px] text-neutral-500 dark:text-zinc-500 font-light">{text}</p>
-                        </div>
-                      ))}
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-neutral-900 dark:text-zinc-50">Create your first AI Workspace</h4>
+                      <p className="text-xs text-neutral-500 dark:text-zinc-400 font-light leading-relaxed max-w-xs mx-auto">
+                        Transform any YouTube video, podcast, PDF, website, or text into study notes, flashcards, mind maps, and interactive quizzes in under 60 seconds.
+                      </p>
+                    </div>
+                    <div className="pt-1 flex flex-col sm:flex-row gap-2 justify-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const formElement = document.getElementById('url-submit-form') || document.getElementById('primary-url-input');
+                          if (formElement) {
+                            formElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            formElement.focus();
+                          }
+                        }}
+                        className="px-4 py-2 bg-[#0071e3] hover:bg-[#0077ed] text-white font-bold text-xs rounded-xl transition cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 shadow-sm"
+                      >
+                        <span>Paste Link</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (PRELOADED_VIDEOS && PRELOADED_VIDEOS.length > 0) {
+                            handleLoadStoredItem(PRELOADED_VIDEOS[0]);
+                            // Smooth scroll to summary workspace
+                            setTimeout(() => {
+                              document.getElementById('summary-dashboard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }, 100);
+                          }
+                        }}
+                        className="px-4 py-2 bg-white hover:bg-neutral-50 dark:bg-zinc-900 dark:hover:bg-zinc-850 text-neutral-700 dark:text-zinc-200 border border-neutral-200 dark:border-zinc-800 font-bold text-xs rounded-xl transition cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 shadow-2xs"
+                      >
+                        <span>Try 30-sec Demo</span>
+                        <Play className="w-3 h-3 fill-current text-indigo-600" />
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -6292,15 +6533,25 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       return (
                         <div className="text-center py-6 px-4 border border-dashed border-neutral-200 dark:border-zinc-800 rounded-2xl bg-neutral-50/50 dark:bg-zinc-950/10">
                           <Bookmark className="w-6 h-6 text-neutral-300 dark:text-zinc-700 mx-auto" />
-                          <p className="text-[#86868b] dark:text-zinc-400 text-xs mt-2 font-light">No matching summaries found.</p>
+                          <p className="text-[#86868b] dark:text-zinc-400 text-xs mt-2 font-light">No matching workspaces found.</p>
                         </div>
                       );
                     }
 
                     return (
-                      <div className="space-y-2 max-h-60 overflow-y-auto pr-1 font-sans text-left">
+                      <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1 font-sans text-left">
                         {filtered.map((stored) => {
                           const isSelected = selectedStackVideoIds.includes(stored.id);
+                          
+                          // Determine source properties
+                          const isYouTube = stored.response.metadata.videoUrl?.includes('youtube.com') || stored.response.metadata.videoUrl?.includes('youtu.be') || stored.id.length === 11;
+                          const isDoc = stored.id.startsWith('doc_') || stored.response.metadata.title.toLowerCase().endsWith('.pdf') || stored.response.metadata.title.toLowerCase().endsWith('.docx') || stored.response.metadata.title.toLowerCase().endsWith('.txt') || stored.response.metadata.title.toLowerCase().endsWith('.ppt') || stored.response.metadata.title.toLowerCase().endsWith('.pptx');
+                          const isWeb = stored.id.startsWith('web_') || (stored.response.metadata.videoUrl?.includes('http') && !isYouTube);
+                          
+                          const isArabic = /[\u0600-\u06FF]/.test(stored.response.summary || '');
+                          const language = isArabic ? 'Arabic' : 'English';
+                          const flag = isArabic ? '🇸🇦' : '🇺🇸';
+
                           return (
                             <div
                               key={stored.id}
@@ -6313,75 +6564,128 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                   }
                                 } else {
                                   handleLoadStoredItem(stored.response);
-                                  setActiveStack(null); // Clear stack view when individual is loaded
+                                  setActiveStack(null);
                                 }
                               }}
-                              className={`group p-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between gap-3 ${
+                              className={`group p-3 rounded-2xl border transition duration-300 cursor-pointer flex flex-col gap-2.5 ${
                                 isSelectingForStack
                                   ? isSelected
-                                    ? 'bg-indigo-50 border-indigo-200 shadow-sm'
-                                    : 'border-neutral-100 hover:bg-neutral-50'
+                                    ? 'bg-indigo-50/80 border-indigo-200 dark:bg-indigo-950/20 dark:border-indigo-900/40 shadow-xs'
+                                    : 'border-neutral-150 hover:bg-neutral-50 dark:border-zinc-800 dark:hover:bg-zinc-900'
                                   : activeSummary?.metadata.videoId === stored.id 
-                                    ? 'bg-neutral-105/80 dark:bg-zinc-800/80 border-transparent shadow-inner' 
-                                    : 'border-transparent bg-neutral-50 dark:bg-zinc-950/40 hover:bg-neutral-100/50 dark:hover:bg-zinc-800/40 hover:shadow-sm'
+                                    ? 'bg-neutral-100/90 dark:bg-zinc-800/80 border-transparent shadow-inner' 
+                                    : 'border-transparent bg-neutral-50 dark:bg-zinc-950/40 hover:bg-neutral-100/50 dark:hover:bg-zinc-850/30 hover:shadow-sm'
                               }`}
                             >
-                              <div className="flex items-center gap-2 overflow-hidden min-w-0 flex-1">
-                                {isSelectingForStack && (
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    readOnly
-                                    className="w-3.5 h-3.5 accent-indigo-600 shrink-0 cursor-pointer"
-                                  />
-                                )}
-                                <div className="overflow-hidden min-w-0 flex-1">
-                                  <p className="text-xs font-semibold text-[#1d1d1f] dark:text-zinc-100 truncate leading-tight group-hover:text-black dark:group-hover:text-white transition text-left">
-                                    {stored.response.metadata.title}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-[9px] font-mono text-[#86868b] dark:text-zinc-500 leading-none shrink-0">
-                                      Processed: {stored.savedAt}
-                                    </span>
-                                    {stored.collection && (
-                                      <span className="bg-[#0071e3]/10 dark:bg-[#0071e3]/20 text-[#0071e3] dark:text-zinc-300 text-[8px] font-bold px-1 rounded uppercase font-sans tracking-wide leading-none shrink-0">
-                                        📁 {stored.collection}
-                                      </span>
-                                    )}
-                                  </div>
+                              {/* Card Header: Source Type, Language, Status, Checkbox */}
+                              <div className="flex items-center justify-between gap-2 border-b border-black/[0.03] dark:border-white/[0.03] pb-1.5">
+                                <div className="flex items-center gap-1.5">
+                                  {isSelectingForStack && (
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      readOnly
+                                      className="w-3.5 h-3.5 accent-indigo-600 shrink-0 cursor-pointer animate-fadeIn"
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  )}
+                                  
+                                  {/* Source Badge with icon */}
+                                  <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded font-sans tracking-wide uppercase ${
+                                    isYouTube ? 'bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400' :
+                                    isDoc ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400' :
+                                    isWeb ? 'bg-teal-50 text-teal-600 dark:bg-teal-950/30 dark:text-teal-400' :
+                                    'bg-purple-50 text-purple-600 dark:bg-purple-950/30 dark:text-purple-400'
+                                  }`}>
+                                    {isYouTube ? '📺 Video' : isDoc ? '📄 Document' : isWeb ? '🌐 Website' : '📝 Text'}
+                                  </span>
+
+                                  {/* Language Badge */}
+                                  <span className="bg-neutral-100 dark:bg-zinc-800 text-[9px] font-medium px-1.5 py-0.5 rounded flex items-center gap-1 text-neutral-600 dark:text-zinc-400">
+                                    <span>{flag}</span>
+                                    <span>{language}</span>
+                                  </span>
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  {/* Status indicators */}
+                                  <span className="inline-flex items-center gap-1 text-[9px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase font-mono tracking-wider bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded leading-none shrink-0">
+                                    Ready ✓
+                                  </span>
                                 </div>
                               </div>
-                              
+
+                              {/* Card Content: Thumbnail, Title, Duration, Date */}
+                              <div className="flex gap-3 items-start">
+                                {/* Thumbnail or icon placeholder */}
+                                <div className="relative w-16 h-11 sm:w-20 sm:h-13 rounded-xl bg-neutral-100 dark:bg-zinc-850 overflow-hidden shrink-0 shadow-sm border border-neutral-200/40 dark:border-zinc-800/60">
+                                  {stored.response.metadata.thumbnailUrl ? (
+                                    <img 
+                                      src={stored.response.metadata.thumbnailUrl} 
+                                      alt="Thumbnail" 
+                                      className="w-full h-full object-cover group-hover:scale-103 transition duration-500"
+                                      onError={(e) => {
+                                        e.currentTarget.src = `https://img.youtube.com/vi/${stored.id}/sddefault.jpg`;
+                                      }}
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-zinc-900 dark:to-zinc-950 text-indigo-500 dark:text-indigo-400">
+                                      {isDoc ? <FileText className="w-5 h-5" /> : isWeb ? <Globe className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
+                                    </div>
+                                  )}
+                                  
+                                  {/* Duration display */}
+                                  <div className="absolute right-1 bottom-1 bg-black/75 px-1 py-0.5 rounded text-[8px] font-mono text-white text-center leading-none">
+                                    {stored.response.metadata.duration || (isDoc ? `${Math.ceil((stored.response.summary || '').split(' ').length * 1.5)} words` : 'Text')}
+                                  </div>
+                                </div>
+
+                                {/* Title, Author, Date, Folder */}
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <h4 className="text-[#1d1d1f] dark:text-zinc-200 text-xs font-semibold line-clamp-2 leading-tight group-hover:text-[#0071e3] transition text-left">
+                                    {stored.response.metadata.title}
+                                  </h4>
+                                  <p className="text-[10px] text-neutral-400 dark:text-zinc-500 font-mono truncate text-left">
+                                    Processed: {stored.savedAt}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Card Footer: Folder Management select & Delete */}
                               {!isSelectingForStack && (
-                                <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                                  {/* Folder Assignment select dropdown */}
-                                  <select
-                                    value={stored.collection || ''}
-                                    onChange={(e) => {
-                                      if (!visitorUser) {
-                                        setAuthModalPurpose('Organize your summaries into custom folders and collections');
-                                        setShowAuthModal(true);
-                                        return;
-                                      }
-                                      const val = e.target.value || undefined;
-                                      const updated = savedSummaries.map(s => s.id === stored.id ? { ...s, collection: val } : s);
-                                      saveToShelf(updated);
-                                    }}
-                                    className="text-[9px] bg-neutral-100/80 dark:bg-zinc-800 text-neutral-600 dark:text-zinc-300 rounded-md border-0 py-1 px-1.5 focus:ring-1 focus:ring-indigo-500 max-w-[80px] truncate outline-none cursor-pointer"
-                                    title="Assign folder"
-                                  >
-                                    <option value="">Move to...</option>
-                                    {collections.map(col => (
-                                      <option key={col} value={col}>{col}</option>
-                                    ))}
-                                  </select>
+                                <div className="flex items-center justify-between gap-2 pt-2 border-t border-black/[0.02] dark:border-white/[0.02]" onClick={(e) => e.stopPropagation()}>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[9px] text-[#86868b] dark:text-zinc-500 font-medium">Folder:</span>
+                                    <select
+                                      value={stored.collection || ''}
+                                      onChange={(e) => {
+                                        if (!visitorUser) {
+                                          setAuthModalPurpose('Organize your summaries into custom folders and collections');
+                                          setShowAuthModal(true);
+                                          return;
+                                        }
+                                        const val = e.target.value || undefined;
+                                        const updated = savedSummaries.map(s => s.id === stored.id ? { ...s, collection: val } : s);
+                                        saveToShelf(updated);
+                                      }}
+                                      className="text-[9px] bg-white dark:bg-zinc-900 text-neutral-600 dark:text-zinc-300 rounded-lg border border-neutral-200 dark:border-zinc-800 py-1 px-2 focus:ring-1 focus:ring-indigo-500 max-w-[120px] truncate outline-none cursor-pointer shadow-2xs"
+                                    >
+                                      <option value="">Unassigned</option>
+                                      {collections.map(col => (
+                                        <option key={col} value={col}>{col}</option>
+                                      ))}
+                                    </select>
+                                  </div>
 
                                   <button
                                     onClick={(e) => handleDeleteShelfItem(stored.id, e)}
-                                    className="p-1.5 text-neutral-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition shrink-0 cursor-pointer"
-                                    title="Delete from Shelf"
+                                    type="button"
+                                    className="p-1 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition shrink-0 cursor-pointer flex items-center gap-1"
+                                    title="Delete from Library"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
+                                    <span className="text-[9px] font-bold">Delete</span>
                                   </button>
                                 </div>
                               )}
@@ -12867,6 +13171,35 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         </div>
       )}
 
+      {/* Dynamic Social Proof Indicators Section */}
+      <section className="bg-neutral-50 dark:bg-zinc-950/40 py-12 border-t border-b border-neutral-200/50 dark:border-zinc-800/80 font-sans text-center">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="space-y-1.5 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-black/[0.03] dark:border-white/[0.02] shadow-xs hover:scale-103 transition duration-300">
+              <div className="inline-flex p-2.5 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400">
+                <PlayCircle className="w-5 h-5 fill-current" />
+              </div>
+              <p className="text-2xl font-black font-display text-neutral-900 dark:text-zinc-50 tracking-tight">10,000+</p>
+              <p className="text-xs text-neutral-500 dark:text-zinc-400 font-medium">Videos & Podcasts Processed</p>
+            </div>
+            <div className="space-y-1.5 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-black/[0.03] dark:border-white/[0.02] shadow-xs hover:scale-103 transition duration-300">
+              <div className="inline-flex p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <p className="text-2xl font-black font-display text-neutral-900 dark:text-zinc-50 tracking-tight">500,000+</p>
+              <p className="text-xs text-neutral-500 dark:text-zinc-400 font-medium">AI Study Notes & Cards Generated</p>
+            </div>
+            <div className="space-y-1.5 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-black/[0.03] dark:border-white/[0.02] shadow-xs hover:scale-103 transition duration-300">
+              <div className="inline-flex p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400">
+                <ThumbsUp className="w-5 h-5" />
+              </div>
+              <p className="text-2xl font-black font-display text-neutral-900 dark:text-zinc-50 tracking-tight">95%</p>
+              <p className="text-xs text-neutral-500 dark:text-zinc-400 font-medium">Student & Professional Satisfaction</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Humble Footer */}
       <footer className="bg-slate-900 text-white mt-16 py-12 border-t border-slate-800 font-sans">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -13120,6 +13453,35 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           setShowProfileModal(true);
         }}
       />
+
+      {/* Floating Sticky Conversion CTA */}
+      {showStickyCta && !activeSummary && !activeStack && (
+        <div className="fixed bottom-20 left-4 right-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-xl z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border border-neutral-200 dark:border-zinc-800 rounded-2xl p-3.5 shadow-xl flex items-center justify-between gap-4 animate-fadeIn font-sans">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-[#0071e3]/10 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5 text-[#0071e3] dark:text-indigo-400 animate-pulse" />
+            </div>
+            <div className="text-left">
+              <p className="text-xs font-bold text-neutral-900 dark:text-zinc-50 leading-tight">Ready to build your workspace?</p>
+              <p className="text-[10px] text-neutral-500 dark:text-zinc-400 font-light leading-none">Paste your video or upload document now (Free)</p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              const urlInput = document.getElementById('url-submit-form') || document.getElementById('primary-url-input');
+              if (urlInput) {
+                urlInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                urlInput.focus();
+              }
+            }}
+            className="px-4 py-2.5 bg-[#0071e3] hover:bg-[#0077ed] text-white font-bold text-xs rounded-xl transition cursor-pointer active:scale-95 shrink-0 flex items-center gap-1 shadow-md shadow-[#0071e3]/10"
+          >
+            <span>Analyze Link</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
     </div>
   );
