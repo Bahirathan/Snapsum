@@ -27,6 +27,8 @@ import {
   ChevronDown,
   ChevronUp,
   Loader2,
+  Flame,
+  Gift,
   Bookmark,
   RefreshCw,
   Video,
@@ -4925,6 +4927,51 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           
             {/* Pitch & Generation Engine - Inputs */}
             <div className="col-span-1 lg:col-span-8 space-y-6 relative">
+              {/* Product Hunt Live Day Special Banner */}
+              <div className="relative overflow-hidden bg-gradient-to-r from-[#da552f] via-[#ea6c4a] to-[#ff8566] text-white p-5 sm:p-6 rounded-3xl shadow-[0_8px_32px_rgba(218,85,47,0.15)] border border-[#da552f]/20 flex flex-col sm:flex-row items-center justify-between gap-4 animate-pulse-soft">
+                {/* Background decorative elements */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full filter blur-2xl pointer-events-none" />
+                <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-black/10 rounded-full filter blur-xl pointer-events-none" />
+                
+                <div className="flex items-center gap-4 relative z-10 text-left">
+                  <div className="p-3 bg-white/20 rounded-2xl shrink-0 backdrop-blur-md border border-white/20">
+                    <span className="text-2xl select-none">🐱</span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="bg-white text-[#da552f] text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full tracking-wider font-mono shadow-xs">
+                        LIVE ON PRODUCT HUNT
+                      </span>
+                      <span className="text-[10px] font-mono font-medium text-white/90">LAUNCH SPECIAL</span>
+                    </div>
+                    <p className="text-sm sm:text-base font-bold mt-1 text-white leading-tight">
+                      Unlock Zipytiny Pro FREE FOR LIFE (Unlimited credits, maps & Learn Mode)
+                    </p>
+                    <p className="text-[11px] text-white/85 font-light mt-0.5">
+                      Simply invite <strong className="font-semibold text-white">just 2 friends</strong> using your custom link on the right!
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    document.getElementById('referral-widget-container')?.scrollIntoView({ behavior: 'smooth' });
+                    setTimeout(() => {
+                      const input = document.getElementById('referral-share-input');
+                      if (input) {
+                        input.focus();
+                        (input as any).select();
+                      }
+                    }, 500);
+                  }}
+                  className="px-4.5 py-3 bg-white text-[#da552f] hover:bg-neutral-50 font-extrabold text-xs rounded-2xl shadow-md hover:shadow-lg transition-all active:scale-95 shrink-0 relative z-10 cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <Gift className="w-4 h-4" />
+                  <span>Claim Free Pro Life</span>
+                </button>
+              </div>
+
               {/* Premium Gradient Design Glow effect */}
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-[32px] opacity-10 dark:opacity-20 blur-xl pointer-events-none" />
               <div className="absolute -inset-0.5 bg-gradient-to-r from-[#0071e3]/30 via-indigo-500/20 to-purple-500/30 rounded-[30px] opacity-40 dark:opacity-60 blur-xs pointer-events-none" />
@@ -4952,6 +4999,61 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   {t('description')}
                 </p>
 
+                {/* 📊 INTERACTIVE WORKSPACE STATUS & RETENTION STATS WIDGET */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-neutral-50/80 dark:bg-zinc-950/60 p-4 rounded-2xl border border-black/[0.03] dark:border-zinc-800/80 relative z-10">
+                  <div className="flex items-center gap-3 text-left">
+                    <div className="p-2 bg-amber-500/10 dark:bg-amber-500/15 rounded-xl text-amber-500 border border-amber-500/10">
+                      <Flame className="w-4 h-4 fill-amber-500 animate-pulse" />
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-mono tracking-wider font-bold text-neutral-400 dark:text-zinc-500 uppercase">
+                        Study Streak
+                      </span>
+                      <span className="text-xs sm:text-sm font-extrabold text-neutral-800 dark:text-zinc-200">
+                        🔥 5-Day Active
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 text-left">
+                    <div className="p-2 bg-indigo-500/10 dark:bg-indigo-500/15 rounded-xl text-indigo-500 border border-indigo-500/10">
+                      <Trophy className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-mono tracking-wider font-bold text-neutral-400 dark:text-zinc-500 uppercase">
+                        Knowledge XP
+                      </span>
+                      <span className="text-xs sm:text-sm font-extrabold text-neutral-800 dark:text-zinc-200">
+                        🏆 1,450 Points
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 text-left">
+                    <div className="p-2 bg-[#0071e3]/10 dark:bg-[#0071e3]/15 rounded-xl text-[#0071e3] border border-[#0071e3]/10">
+                      <Zap className="w-4 h-4 fill-[#0071e3]" />
+                    </div>
+                    <div>
+                      <span className="block text-[9px] font-mono tracking-wider font-bold text-neutral-400 dark:text-zinc-500 uppercase">
+                        Processing Quota
+                      </span>
+                      <span className="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                        {isPremium || usageTracker.vipBypassActive ? 'PRO ACTIVE' : `${usageTracker.remaining} Left`}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col justify-center text-left">
+                    <div className="flex items-center justify-between text-[9px] font-mono font-bold text-neutral-400 dark:text-zinc-500 uppercase mb-1">
+                      <span>Weekly Goal</span>
+                      <span className="text-indigo-600 dark:text-indigo-400">3/5 Done</span>
+                    </div>
+                    <div className="w-full bg-neutral-200/60 dark:bg-zinc-800/60 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-indigo-500 h-1.5 rounded-full" style={{ width: '60%' }}></div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Form Input Engine */}
                 <form id="url-submit-form" onSubmit={handleSummarize} className="space-y-4 pt-2">
                   
@@ -4960,7 +5062,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#86868b] dark:text-zinc-400 block text-left">
                       {t('selectWorkspaceMode')}
                     </span>
-                    <div className="flex bg-[#f2f2f7] dark:bg-zinc-950 p-1 items-center rounded-2xl w-full max-w-sm gap-1 border border-black/[0.04] dark:border-zinc-800/60">
+                    <div className="flex bg-[#f2f2f7] dark:bg-zinc-950 p-1.5 items-center rounded-2xl w-full max-w-sm gap-1 border border-black/[0.04] dark:border-zinc-800/60 shadow-inner">
                       <button
                         type="button"
                         onClick={() => {
@@ -4971,10 +5073,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             handleTrackActivation(false, activeSummary.metadata.videoId);
                           }
                         }}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-xl transition duration-200 cursor-pointer ${
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-xl transition duration-200 cursor-pointer ${
                           !learnMode
-                            ? 'bg-white dark:bg-zinc-800 text-neutral-900 dark:text-zinc-50 shadow-xs'
-                            : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-950'
+                            ? 'bg-white dark:bg-zinc-800 text-neutral-900 dark:text-zinc-50 shadow-md border border-neutral-100/55 dark:border-zinc-700/30'
+                            : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-950 dark:hover:text-zinc-100'
                         }`}
                       >
                         <FileText className="w-3.5 h-3.5 text-neutral-500" />
@@ -4994,15 +5096,15 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             handleTrackActivation(true, activeSummary.metadata.videoId);
                           }
                         }}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-xl transition duration-200 cursor-pointer ${
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-xl transition duration-200 cursor-pointer ${
                           learnMode
                             ? 'bg-gradient-to-r from-teal-500 to-indigo-600 text-white shadow-sm font-bold'
-                            : 'text-[#86868b] hover:text-[#1d1d1f]'
+                            : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-950 dark:hover:text-zinc-100'
                         }`}
                       >
-                        <Zap className="w-3.5 h-3.5 text-[#bf5af2] fill-[#bf5af2]" />
+                        <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300 animate-pulse" />
                         <span>{t('learnMode')}</span>
-                        <span className="bg-[#bf5af2]/20 text-[#bf5af2] text-[8px] font-bold px-1.5 py-0.5 rounded uppercase font-mono tracking-wide">AI</span>
+                        <span className="bg-white/20 text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase font-mono tracking-wide">AI</span>
                       </button>
                     </div>
                   </div>
@@ -5797,126 +5899,153 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
           {/* Quick Demo Preloads Drawer side rail */}
           <div className="col-span-1 lg:col-span-4 space-y-6">
-            <div className="bg-white rounded-3xl p-6 border border-black/[0.04] shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-5">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-black/[0.04] dark:border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-5">
               <div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#86868b]">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#86868b] dark:text-zinc-500">
                   {t('readyToTest')}
                 </span>
-                <h3 className="text-lg font-bold font-display text-[#1d1d1f]">
+                <h3 className="text-lg font-bold font-display text-[#1d1d1f] dark:text-zinc-50">
                   {t('curatedDemos')}
                 </h3>
-                <p className="text-[#86868b] text-xs mt-1 font-light">
+                <p className="text-[#86868b] dark:text-zinc-400 text-xs mt-1 font-light">
                   {t('clickDemoCard')}
                 </p>
               </div>
 
               <div className="space-y-3">
-                {PRELOADED_VIDEOS.map((demo) => (
-                  <button
-                    key={demo.metadata.videoId}
-                    onClick={() => handleLoadStoredItem(demo)}
-                    className={`w-full text-left p-2.5 rounded-2xl border transition duration-300 group relative overflow-hidden flex gap-3 ${
-                      activeSummary?.metadata.videoId === demo.metadata.videoId
-                        ? 'border-transparent bg-black/[0.04] shadow-inner'
-                        : 'border-transparent hover:bg-neutral-50 hover:shadow-sm'
-                    }`}
-                  >
-                    <div className="relative w-20 h-13 rounded-xl bg-neutral-100 overflow-hidden shrink-0 shadow-sm">
-                      <img 
-                        src={demo.metadata.thumbnailUrl} 
-                        alt="Thumbnail" 
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                        onError={(e) => {
-                          e.currentTarget.src = `https://img.youtube.com/vi/${demo.metadata.videoId}/sddefault.jpg`;
-                        }}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      <div className="absolute right-1 bottom-1 bg-black/80 px-1 py-0.5 rounded text-[8px] font-mono text-white text-center">
-                        {demo.metadata.duration}
+                {PRELOADED_VIDEOS.map((demo) => {
+                  const isSinek = demo.metadata.videoId === 'qp0HIF3SfI4';
+                  const isJobs = demo.metadata.videoId === 'UF8uR6Z6KLc';
+                  const tagText = isSinek ? '🔥 POPULAR' : isJobs ? '⭐ CLASSIC' : '🎓 AI STUDY';
+                  const tagColor = isSinek ? 'text-amber-600 dark:text-amber-400 bg-amber-500/10' : isJobs ? 'text-purple-600 dark:text-purple-400 bg-purple-500/10' : 'text-[#0071e3] dark:text-[#0071e3] bg-[#0071e3]/10';
+
+                  return (
+                    <button
+                      key={demo.metadata.videoId}
+                      onClick={() => handleLoadStoredItem(demo)}
+                      className={`w-full text-left p-2.5 rounded-2xl border transition duration-300 group relative overflow-hidden flex gap-3 ${
+                        activeSummary?.metadata.videoId === demo.metadata.videoId
+                          ? 'border-transparent bg-neutral-100 dark:bg-zinc-800 shadow-inner'
+                          : 'border-transparent hover:bg-neutral-50 dark:hover:bg-zinc-900 shadow-xs hover:scale-102 hover:border-black/[0.02]'
+                      }`}
+                    >
+                      <div className="relative w-20 h-13 rounded-xl bg-neutral-100 dark:bg-zinc-800 overflow-hidden shrink-0 shadow-sm">
+                        <img 
+                          src={demo.metadata.thumbnailUrl} 
+                          alt="Thumbnail" 
+                          className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://img.youtube.com/vi/${demo.metadata.videoId}/sddefault.jpg`;
+                          }}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition flex items-center justify-center">
+                          <Play className="w-4 h-4 text-white drop-shadow-md scale-75 group-hover:scale-100 transition duration-300 fill-current" />
+                        </div>
+                        <div className="absolute right-1 bottom-1 bg-black/80 px-1 py-0.5 rounded text-[8px] font-mono text-white text-center">
+                          {demo.metadata.duration}
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="space-y-0.5 overflow-hidden flex flex-col justify-center">
-                      <div className="text-[9px] font-mono text-[#86868b] font-medium">
-                        {outputLanguage === 'ar' && ARABIC_PRELOADED_VIDEOS[demo.metadata.videoId]
-                          ? ARABIC_PRELOADED_VIDEOS[demo.metadata.videoId].metadata.author
-                          : demo.metadata.author}
+                      
+                      <div className="space-y-0.5 overflow-hidden flex flex-col justify-center">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider ${tagColor}`}>
+                            {tagText}
+                          </span>
+                          <span className="text-[9px] font-mono text-[#86868b] dark:text-zinc-500 font-medium truncate">
+                            {outputLanguage === 'ar' && ARABIC_PRELOADED_VIDEOS[demo.metadata.videoId]
+                              ? ARABIC_PRELOADED_VIDEOS[demo.metadata.videoId].metadata.author
+                              : demo.metadata.author}
+                          </span>
+                        </div>
+                        <h4 className="text-[#1d1d1f] dark:text-zinc-200 text-xs font-semibold line-clamp-2 leading-tight group-hover:text-black dark:group-hover:text-white transition">
+                          {outputLanguage === 'ar' && ARABIC_PRELOADED_VIDEOS[demo.metadata.videoId]
+                            ? ARABIC_PRELOADED_VIDEOS[demo.metadata.videoId].metadata.title
+                            : demo.metadata.title}
+                        </h4>
                       </div>
-                      <h4 className="text-[#1d1d1f] text-xs font-semibold line-clamp-2 leading-tight group-hover:text-black transition">
-                        {outputLanguage === 'ar' && ARABIC_PRELOADED_VIDEOS[demo.metadata.videoId]
-                          ? ARABIC_PRELOADED_VIDEOS[demo.metadata.videoId].metadata.title
-                          : demo.metadata.title}
-                      </h4>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Viral Referral Program Card Widget */}
-            <div className="bg-gradient-to-br from-indigo-50/60 to-purple-50/40 rounded-3xl p-6 border border-indigo-100/50 shadow-sm space-y-4">
-              <div className="flex items-start justify-between gap-3">
+            <div id="referral-widget-container" className="relative overflow-hidden bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/50 dark:from-zinc-950/40 dark:via-zinc-900/40 dark:to-zinc-950/20 rounded-3xl p-6 border border-indigo-150/45 dark:border-indigo-900/30 shadow-[0_8px_30px_rgba(79,70,229,0.03)] space-y-5">
+              {/* Decorative accent colors */}
+              <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full filter blur-2xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/10 rounded-full filter blur-2xl pointer-events-none" />
+
+              <div className="relative z-10 flex items-start justify-between gap-3">
                 <div>
-                  <span className="inline-flex items-center gap-1 bg-indigo-100/80 px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold text-indigo-700 uppercase">
+                  <span className="inline-flex items-center gap-1 bg-indigo-100/80 dark:bg-indigo-950/80 px-2.5 py-0.5 rounded-full text-[9px] font-mono font-bold text-indigo-700 dark:text-indigo-400 uppercase">
                     {t('viralReferralInvite')}
                   </span>
-                  <h3 className="text-base font-bold font-display text-neutral-900 mt-1.5">
+                  <h3 className="text-base font-bold font-display text-neutral-900 dark:text-zinc-50 mt-1.5">
                     {t('unlockPremium')}
                   </h3>
                 </div>
                 <button
+                  type="button"
                   onClick={() => {
                     fetchReferralLeaderboard();
                     setShowProfileModal(true);
                   }}
-                  className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer bg-white border border-indigo-150 shadow-sm px-2.5 py-1.5 rounded-xl transition shrink-0 active:scale-95"
+                  className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 flex items-center gap-1 cursor-pointer bg-white dark:bg-zinc-900 border border-indigo-150/50 dark:border-zinc-800 shadow-xs px-2.5 py-1.5 rounded-xl transition shrink-0 active:scale-95"
                 >
                   {t('leaderboard')}
                 </button>
               </div>
-              <p className="text-[#86868b] text-[11px] mt-0.5 font-light leading-relaxed font-sans">
+              <p className="relative z-10 text-[#86868b] dark:text-zinc-400 text-[11px] mt-0.5 font-light leading-relaxed font-sans">
                 {t('referralBonusDesc')}
               </p>
 
-              {/* Progress Milestones */}
-              <div className="bg-white/80 border border-indigo-100 p-3.5 rounded-2xl space-y-2 font-sans">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-neutral-600">{t('referredVisitors')}</span>
-                  <span className="font-bold text-indigo-700 font-mono">{referralCount} / 2</span>
+              {/* Progress Stepper Milestones */}
+              <div className="relative z-10 space-y-2 pt-1 font-sans">
+                <span className="block text-[9px] font-mono font-bold text-neutral-400 dark:text-zinc-500 uppercase tracking-wider">REWARD MILESTONES</span>
+                <div className="space-y-2">
+                  {[
+                    { step: 1, label: "Invite 1 Friend", reward: "+5 Credits", active: referralCount >= 1 },
+                    { step: 2, label: "Invite 2 Friends", reward: "🏆 PRO FOR LIFE", active: referralUnlocked || referralCount >= 2 }
+                  ].map((m) => (
+                    <div key={m.step} className="flex items-center justify-between p-2.5 rounded-2xl border transition-all duration-200 bg-white dark:bg-zinc-950 border-black/[0.03] dark:border-zinc-800/80 shadow-xs">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-extrabold font-mono ${
+                          m.active 
+                            ? 'bg-emerald-500 text-white shadow-xs' 
+                            : 'bg-neutral-100 dark:bg-zinc-850 text-neutral-400 dark:text-zinc-500 border border-neutral-200 dark:border-zinc-800'
+                        }`}>
+                          {m.active ? '✓' : m.step}
+                        </div>
+                        <span className={`text-xs font-bold ${m.active ? 'text-neutral-800 dark:text-zinc-200 font-semibold' : 'text-neutral-400'}`}>
+                          {m.label}
+                        </span>
+                      </div>
+                      <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase font-mono border ${
+                        m.active 
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/15' 
+                          : 'bg-neutral-100 dark:bg-zinc-850 text-neutral-500 border-transparent'
+                      }`}>
+                        {m.reward}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-                
-                {/* Milestone Progress bar */}
-                <div className="w-full bg-neutral-100/80 h-2 rounded-full overflow-hidden">
-                  <div 
-                    className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min((referralCount / 2) * 100, 100)}%` }}
-                  ></div>
-                </div>
-
-                {referralUnlocked || referralCount >= 2 ? (
-                  <p className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
-                    <CheckCircle className="w-3.5 h-3.5 fill-emerald-50 text-emerald-600 shrink-0" />
-                    <span>{t('unlockedPremium')}</span>
-                  </p>
-                ) : (
-                  <p className="text-[10px] text-indigo-600 font-medium">
-                    {t('needMoreReferrals', { count: Math.max(0, 2 - referralCount) })}
-                  </p>
-                )}
               </div>
 
-              {/* Referral Code Share Action */}
-              <div className="space-y-1.5 font-sans text-left">
-                <label className="block text-[10px] font-mono font-bold text-neutral-500 uppercase">
+              {/* Unique Invite Link copy box */}
+              <div className="relative z-10 space-y-1.5 font-sans text-left">
+                <label className="block text-[10px] font-mono font-bold text-neutral-500 dark:text-zinc-400 uppercase">
                   {t('uniqueReferralLink')}
                 </label>
                 <div className="flex gap-2">
                   <input
+                    id="referral-share-input"
                     type="text"
                     readOnly
                     value={`${window.location.origin}?ref=${referralCode}`}
-                    className="flex-1 bg-white/90 border border-neutral-200 rounded-xl px-3 py-2 text-[11px] outline-none font-mono text-[#1d1d1f] shadow-sm select-all"
+                    className="flex-1 bg-white dark:bg-zinc-950 border border-neutral-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-[11px] outline-none font-mono text-[#1d1d1f] dark:text-zinc-200 shadow-xs select-all"
                   />
                   <button
                     type="button"
@@ -5936,11 +6065,28 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         handleCopyText(link, 'referral');
                       }
                     }}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 rounded-xl flex items-center justify-center transition cursor-pointer active:scale-95 shrink-0"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs px-3.5 rounded-xl flex items-center justify-center transition cursor-pointer active:scale-95 shrink-0 shadow-xs"
                   >
                     {copiedStates['referral'] ? 'Copied' : <Share2 className="w-3.5 h-3.5" />}
                   </button>
                 </div>
+              </div>
+
+              {/* High-converting Twitter sharing shortcut */}
+              <div className="relative z-10 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const link = `${window.location.origin}?ref=${referralCode}`;
+                    const text = `Take a look at Zipytiny - Universal AI Video Knowledge Engine! 🚀 It turns any long YouTube video into an interactive workspace, mind map, and dynamic quiz in 30 seconds. Try it with my link to get unlimited credits: ${link}`;
+                    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+                    window.open(twitterUrl, '_blank');
+                  }}
+                  className="w-full py-2.5 bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer shadow-xs"
+                >
+                  <Twitter className="w-3.5 h-3.5 fill-current" />
+                  <span>Share Launch on Twitter / X</span>
+                </button>
               </div>
             </div>
 

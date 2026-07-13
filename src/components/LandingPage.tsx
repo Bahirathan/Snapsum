@@ -4,7 +4,7 @@ import {
   Video, Play, Bookmark, Headphones, Users, ChevronDown, Download, Award,
   Upload, Brain, Share2, Star, TrendingUp, Clock, Shield, Cpu,
   BarChart2, Layers, BookOpen, Mic, PenTool, Hash, ChevronRight,
-  Youtube, Presentation, HelpCircle, Lock, Calculator
+  Youtube, Presentation, HelpCircle, Lock, Calculator, Settings, Gift
 } from 'lucide-react';
 import { CinematicExplainer } from './CinematicExplainer';
 
@@ -132,6 +132,7 @@ export default function LandingPage({
   const [landingPastedText, setLandingPastedText] = useState('');
   const [landingFiles, setLandingFiles] = useState<{name: string; size: number; type: string; textContent?: string}[]>([]);
   const [landingIsDragActive, setLandingIsDragActive] = useState(false);
+  const [showAdvancedLanding, setShowAdvancedLanding] = useState(false);
 
   // Use Case Switcher State
   const [activeUseC, setActiveUseC] = useState<'students' | 'professionals' | 'teachers' | 'researchers'>('students');
@@ -292,46 +293,136 @@ export default function LandingPage({
               </div>
               
               <h1 id="landing-hero-headline" className="text-4xl sm:text-5xl md:text-6xl font-extrabold font-display tracking-tight leading-[1.08] text-[#1d1d1f] dark:text-zinc-50">
-                Turn Any Video & Doc Into <br className="hidden sm:inline" />
-                <span className="bg-gradient-to-r from-[#0071e3] via-blue-600 to-indigo-600 bg-clip-text text-transparent">Structured AI Intelligence</span>
+                Turn Any Video or Document into <br className="hidden sm:inline" />
+                <span className="bg-gradient-to-r from-[#0071e3] via-blue-600 to-indigo-600 bg-clip-text text-transparent">an AI Learning Workspace</span>
               </h1>
               
               <p className="text-[#86868b] dark:text-zinc-400 text-base sm:text-lg max-w-2xl leading-relaxed font-light">
-                Convert exhausting lectures, long-form videos, podcasts, and complex PDFs into interactive syllabus notes, visual mind maps, flashcards, and testing quizzes in under 60 seconds.
+                Generate summaries, flashcards, quizzes, mind maps, AI chat, study notes, and social content in under 60 seconds.
               </p>
+
+              {/* Trust Indicators */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-neutral-500 dark:text-zinc-400 pt-1 font-medium">
+                <span className="flex items-center gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-full border border-amber-500/15">
+                  <span>⭐⭐⭐⭐⭐</span>
+                  <span className="font-bold">Loved by Students & Professionals</span>
+                </span>
+                <span className="flex items-center gap-1.5 bg-blue-500/10 text-[#0071e3] dark:text-sky-400 px-2.5 py-1 rounded-full border border-blue-500/15 font-mono text-[10px]">
+                  ⚡ Powered by Gemini
+                </span>
+                <span className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 px-2.5 py-1 rounded-full border border-emerald-500/15">
+                  ✓ No Credit Card Required
+                </span>
+                <span className="flex items-center gap-1.5 bg-indigo-500/10 text-indigo-600 px-2.5 py-1 rounded-full border border-indigo-500/15 font-bold">
+                  ✨ Create Your First Workspace Free
+                </span>
+              </div>
 
               {/* 🎯 CONVERSION-OPTIMIZED MULTI-SOURCE INPUT BOX */}
               <div className="w-full max-w-3xl pt-2">
                 {/* Source Selection Tabs */}
-                <div className="flex flex-wrap gap-1 mb-3.5 bg-neutral-100/90 dark:bg-zinc-900/80 p-1 rounded-2xl w-fit border border-neutral-250 dark:border-zinc-800/80 shadow-xs">
-                  {[
-                    { id: 'video', label: 'YouTube Video', icon: Video, color: 'text-red-500 bg-red-500/10' },
-                    { id: 'website', label: 'Website Link', icon: Globe, color: 'text-blue-500 bg-blue-500/10' },
-                    { id: 'file', label: 'Document Upload', icon: Upload, color: 'text-amber-500 bg-amber-500/10' },
-                    { id: 'text', label: 'Pasted Notes', icon: FileText, color: 'text-emerald-500 bg-emerald-500/10' },
-                  ].map((tab) => {
-                    const TabIcon = tab.icon;
-                    const isSelected = landingSourceType === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => {
-                          setLandingSourceType(tab.id as any);
-                          setUrlError('');
-                        }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer active:scale-95 duration-150 ${
-                          isSelected
-                            ? 'bg-white dark:bg-zinc-800 text-neutral-900 dark:text-zinc-100 shadow-xs border border-neutral-200 dark:border-zinc-700'
-                            : 'text-neutral-500 dark:text-zinc-450 hover:text-neutral-800 dark:hover:text-zinc-200 hover:bg-neutral-200/50 dark:hover:bg-zinc-800/40'
-                        }`}
-                      >
-                        <TabIcon className={`w-3.5 h-3.5 ${isSelected ? tab.color.split(' ')[0] : 'text-neutral-400'}`} />
-                        <span>{tab.label}</span>
-                      </button>
-                    );
-                  })}
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3.5">
+                  <div className="flex flex-wrap gap-1 bg-neutral-100/90 dark:bg-zinc-900/80 p-1 rounded-2xl w-fit border border-neutral-250 dark:border-zinc-800/80 shadow-xs">
+                    {[
+                      { id: 'video', label: 'YouTube Video', icon: Video, color: 'text-red-500 bg-red-500/10' },
+                      { id: 'file', label: 'Document Upload', icon: Upload, color: 'text-amber-500 bg-amber-500/10' },
+                    ].map((tab) => {
+                      const TabIcon = tab.icon;
+                      const isSelected = landingSourceType === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => {
+                            setLandingSourceType(tab.id as any);
+                            setUrlError('');
+                          }}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer active:scale-95 duration-150 ${
+                            isSelected
+                              ? 'bg-white dark:bg-zinc-800 text-neutral-900 dark:text-zinc-100 shadow-xs border border-neutral-200 dark:border-zinc-700'
+                              : 'text-neutral-500 dark:text-zinc-450 hover:text-neutral-800 dark:hover:text-zinc-200 hover:bg-neutral-200/50 dark:hover:bg-zinc-800/40'
+                          }`}
+                        >
+                          <TabIcon className={`w-3.5 h-3.5 ${isSelected ? tab.color.split(' ')[0] : 'text-neutral-400'}`} />
+                          <span>{tab.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAdvancedLanding(!showAdvancedLanding)}
+                    className="flex items-center gap-1 text-[11px] font-bold text-[#0071e3] dark:text-sky-400 hover:underline cursor-pointer select-none"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                    <span>{showAdvancedLanding ? 'Hide Advanced Options' : 'Show Advanced Options'}</span>
+                  </button>
                 </div>
+
+                {/* Collapsible Advanced Sources & Settings */}
+                {showAdvancedLanding && (
+                  <div className="mb-4 p-4 bg-neutral-100/50 dark:bg-zinc-900/40 border border-neutral-200/60 dark:border-zinc-850 rounded-2xl space-y-4 animate-fadeIn text-left">
+                    <div className="space-y-2">
+                      <label className="block text-[10px] font-bold font-mono text-[#86868b] uppercase tracking-wider">
+                        Other Input Formats:
+                      </label>
+                      <div className="flex flex-wrap gap-1 bg-neutral-200/40 dark:bg-zinc-950/40 p-1 rounded-2xl w-fit">
+                        {[
+                          { id: 'website', label: 'Website Link', icon: Globe, color: 'text-blue-500 bg-blue-500/10' },
+                          { id: 'text', label: 'Pasted Notes', icon: FileText, color: 'text-emerald-500 bg-emerald-500/10' },
+                        ].map((tab) => {
+                          const TabIcon = tab.icon;
+                          const isSelected = landingSourceType === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              type="button"
+                              onClick={() => {
+                                setLandingSourceType(tab.id as any);
+                                setUrlError('');
+                              }}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer active:scale-95 duration-150 ${
+                                isSelected
+                                  ? 'bg-white dark:bg-zinc-800 text-neutral-900 dark:text-zinc-100 shadow-xs border border-neutral-200 dark:border-zinc-700'
+                                  : 'text-neutral-500 dark:text-zinc-450 hover:text-neutral-800 dark:hover:text-zinc-200'
+                              }`}
+                            >
+                              <TabIcon className={`w-3.5 h-3.5 ${isSelected ? tab.color.split(' ')[0] : 'text-neutral-400'}`} />
+                              <span>{tab.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                      <div className="space-y-1">
+                        <label className="block text-[10px] font-bold font-mono text-[#86868b] uppercase tracking-wider">
+                          Output Language Style:
+                        </label>
+                        <select className="w-full bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 text-xs py-2 px-3 rounded-xl focus:ring-1 focus:ring-[#0071e3] outline-none">
+                          <option>English Synthesis (Default)</option>
+                          <option>Arabic Translation (العربية)</option>
+                          <option>Spanish Translation (Español)</option>
+                          <option>French Translation (Français)</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="block text-[10px] font-bold font-mono text-[#86868b] uppercase tracking-wider">
+                          Summary Tone Preset:
+                        </label>
+                        <select className="w-full bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 text-xs py-2 px-3 rounded-xl focus:ring-1 focus:ring-[#0071e3] outline-none">
+                          <option>Standard Lecture / Textbook (Default)</option>
+                          <option>Academic Deep-Dive Study Guide</option>
+                          <option>Viral Repurposing Bulletins</option>
+                          <option>Social Reels / Shorts Audio Script</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <form 
                   onSubmit={(e) => {
@@ -487,10 +578,10 @@ export default function LandingPage({
 
                   <button
                     type="submit"
-                    className="bg-[#0071e3] hover:bg-[#0077ed] text-white px-6 py-3.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0 group cursor-pointer active:scale-98 shadow-md"
+                    className="bg-neutral-900 hover:bg-neutral-850 dark:bg-white dark:text-neutral-950 dark:hover:bg-zinc-100 text-white px-7 py-3.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0 group cursor-pointer active:scale-95 shadow-[0_4px_14px_rgba(0,0,0,0.1)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)]"
                   >
-                    <span>Analyze Content</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    <span>✨ Generate AI Workspace</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-blue-500" />
                   </button>
                 </form>
 
@@ -498,55 +589,19 @@ export default function LandingPage({
                   <p className="text-xs text-rose-500 mt-2 ml-3 font-semibold animate-fadeIn">{urlError}</p>
                 )}
 
-                {/* 🌟 ONE-CLICK INTERACTIVE DEMO PILLS (Growth-optimized) */}
-                <div className="mt-4 pt-4 border-t border-dashed border-neutral-200 dark:border-zinc-850">
-                  <p className="text-[11px] font-semibold text-neutral-600 dark:text-zinc-400 mb-2 flex items-center gap-1.5">
+                {/* Visual Cue pointing to the Demo Section */}
+                <div className="mt-4 pt-4 border-t border-dashed border-neutral-200 dark:border-zinc-850 flex items-center justify-between text-xs">
+                  <p className="font-semibold text-neutral-600 dark:text-zinc-400 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-indigo-500 animate-pulse" />
-                    <span>🔥 One-Click Sandbox: Test drive with standard curation (No URL needed):</span>
+                    <span>Want to test drive instantly? Try our 1-click Sandbox Demos below!</span>
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { 
-                        title: 'Steve Jobs', 
-                        subtitle: 'Stanford Address',
-                        url: 'https://www.youtube.com/watch?v=UF8uR6Z6KLc',
-                        color: 'hover:border-indigo-400 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 bg-indigo-50/10 dark:bg-indigo-950/5 border-indigo-200/50 dark:border-indigo-900/30',
-                        duration: '15m'
-                      },
-                      { 
-                        title: 'Simon Sinek', 
-                        subtitle: 'Golden Circle',
-                        url: 'https://www.youtube.com/watch?v=qp0HIF3SfI4',
-                        color: 'hover:border-amber-400 hover:bg-amber-50/30 dark:hover:bg-amber-950/20 text-amber-600 dark:text-amber-400 bg-amber-50/10 dark:bg-amber-950/5 border-amber-200/50 dark:border-amber-900/30',
-                        duration: '18m'
-                      },
-                      { 
-                        title: 'MIT: Intro to AI', 
-                        subtitle: 'Core Mechanics',
-                        url: 'https://www.youtube.com/watch?v=intro-ai',
-                        color: 'hover:border-emerald-400 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 bg-emerald-50/10 dark:bg-emerald-950/5 border-emerald-200/50 dark:border-emerald-900/30',
-                        duration: '25m'
-                      },
-                    ].map((pill, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          setLandingSourceType('video');
-                          setYtUrl(pill.url);
-                          setUrlError('');
-                          if (onStartFreeSummary) {
-                            onStartFreeSummary(pill.url, 'video');
-                          }
-                        }}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold border transition cursor-pointer active:scale-95 duration-150 ${pill.color}`}
-                      >
-                        <Video className="w-3.5 h-3.5 shrink-0" />
-                        <span>{pill.title} <span className="font-light opacity-80">({pill.subtitle})</span></span>
-                        <span className="font-mono text-[9px] bg-white/40 dark:bg-zinc-800/60 px-1 py-0.2 rounded-md font-extrabold">{pill.duration}</span>
-                      </button>
-                    ))}
-                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => document.getElementById('sandbox-demos-section')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="text-[#0071e3] hover:underline font-bold text-[11px] cursor-pointer"
+                  >
+                    Scroll to Demos ↓
+                  </button>
                 </div>
 
                 <div className="flex items-center justify-between mt-3.5 px-1">
@@ -944,6 +999,185 @@ export default function LandingPage({
               </div>
             </div>
 
+          </div>
+        </div>
+      </section>
+
+      {/* 1B. BEFORE CTA / TRANSFORMATION PREVIEW */}
+      <section className="w-full bg-linear-to-b from-[#f5f5f7] to-white dark:from-zinc-950/40 dark:to-zinc-900 border-b border-black/[0.04] dark:border-zinc-800 py-12 sm:py-16 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="space-y-3 max-w-2xl mx-auto mb-10">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-indigo-500 bg-indigo-500/10 px-3 py-1 rounded-full">
+              Instant AI Transformation
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold font-display tracking-tight text-[#1d1d1f] dark:text-zinc-50 leading-tight">
+              From Content Consumption to Dynamic Learning
+            </h2>
+            <p className="text-[#86868b] dark:text-zinc-400 font-light text-xs sm:text-sm">
+              See how Zipytiny turns passive media and complex documents into high-retention active study spaces instantly.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 lg:gap-6 text-xs font-semibold">
+            {[
+              { label: 'YouTube Video', icon: Video, desc: 'Passive stream', color: 'text-rose-500 bg-rose-500/10 border-rose-500/20' },
+              { label: 'AI Deep Analysis', icon: Cpu, desc: '60s extraction', color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20 animate-pulse' },
+              { label: 'Smart Summary', icon: Sparkles, desc: 'Key takeaways', color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' },
+              { label: 'Study Syllabus', icon: BookOpen, desc: 'Structured outline', color: 'text-amber-500 bg-amber-500/10 border-amber-500/20' },
+              { label: 'Visual Mind Map', icon: Brain, desc: 'Interactive concept map', color: 'text-purple-500 bg-purple-500/10 border-purple-500/20' },
+              { label: 'AI Chatbot Q&A', icon: MessageSquare, desc: 'Socratic discussion', color: 'text-pink-500 bg-pink-500/10 border-pink-500/20' },
+              { label: 'Recall Quizzes', icon: CheckCircle, desc: 'Self-assessment tests', color: 'text-blue-500 bg-blue-500/10 border-blue-500/20' }
+            ].map((step, idx, arr) => (
+              <React.Fragment key={idx}>
+                <div className="flex flex-col items-center p-4 bg-white dark:bg-zinc-900 border border-neutral-100 dark:border-zinc-800 rounded-3xl shadow-xs hover:shadow-md hover:scale-105 transition duration-200 w-32 sm:w-36 text-center">
+                  <div className={`p-2.5 rounded-2xl ${step.color} border mb-2`}>
+                    <step.icon className="w-5 h-5" />
+                  </div>
+                  <span className="text-[11px] font-bold text-neutral-800 dark:text-zinc-150 leading-tight block mb-0.5">{step.label}</span>
+                  <span className="text-[9px] text-[#86868b] font-light leading-none">{step.desc}</span>
+                </div>
+                {idx < arr.length - 1 && (
+                  <div className="hidden md:flex items-center text-neutral-300 dark:text-zinc-700 font-extrabold text-lg select-none">
+                    →
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 1C. SANDBOX / QUICK START DEMOS SECTION */}
+      <section id="sandbox-demos-section" className="w-full bg-white dark:bg-zinc-900 border-b border-black/[0.04] dark:border-zinc-800 py-16 sm:py-24 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="space-y-4 text-center max-w-3xl mx-auto mb-12">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-[#0071e3] bg-[#0071e3]/10 px-3 py-1 rounded-full">
+              ⚡ Sandbox Mode
+            </span>
+            <h2 className="text-3xl font-extrabold font-display tracking-tight text-[#1d1d1f] dark:text-zinc-50 leading-tight">
+              Try Interactive Demo Workspaces in One-Click
+            </h2>
+            <p className="text-[#86868b] dark:text-zinc-400 font-light text-sm max-w-2xl mx-auto">
+              Skip typing URLs or uploading documents. Click any card below to instantly launch a fully populated, production-grade learning workspace.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {[
+              {
+                title: 'How Great Leaders Inspire Action',
+                creator: 'Simon Sinek • TED Talk',
+                url: 'https://www.youtube.com/watch?v=qp0HIF3SfI4',
+                duration: '18 mins',
+                processing: '~10s',
+                image: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?q=80&w=400&auto=format&fit=crop',
+                metric: '🔥 Most Popular Demo',
+                color: 'border-amber-200 dark:border-amber-900/40 bg-amber-500/5'
+              },
+              {
+                title: 'Introduction to Deep Learning & Neural Nets',
+                creator: 'MIT Scholars • Lecture',
+                url: 'https://www.youtube.com/watch?v=intro-ai',
+                duration: '25 mins',
+                processing: '~35s',
+                image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=400&auto=format&fit=crop',
+                metric: '🎓 Highly Academic Deep-Dive',
+                color: 'border-blue-200 dark:border-blue-900/40 bg-blue-500/5'
+              },
+              {
+                title: 'Stanford 2005 Commencement Address',
+                creator: 'Steve Jobs • Commemoration',
+                url: 'https://www.youtube.com/watch?v=UF8uR6Z6KLc',
+                duration: '15 mins',
+                processing: '~15s',
+                image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=400&auto=format&fit=crop',
+                metric: '⭐ Absolute Masterclass',
+                color: 'border-purple-200 dark:border-purple-900/40 bg-purple-500/5'
+              },
+              {
+                title: 'Negotiation Strategy & Business Deals',
+                creator: 'Harvard Business • Case Study',
+                url: 'https://www.youtube.com/watch?v=qp0HIF3SfI4',
+                duration: '20 mins',
+                processing: '~20s',
+                image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=400&auto=format&fit=crop',
+                metric: '💼 Professional Strategy Guide',
+                color: 'border-emerald-200 dark:border-emerald-900/40 bg-emerald-500/5'
+              },
+              {
+                title: 'How to Build a Billion-Dollar Startup',
+                creator: "Lenny's Podcast • Founder Stories",
+                url: 'https://www.youtube.com/watch?v=intro-ai',
+                duration: '45 mins',
+                processing: '~45s',
+                image: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=400&auto=format&fit=crop',
+                metric: '🚀 Growth & Marketing Insights',
+                color: 'border-rose-200 dark:border-rose-900/40 bg-rose-500/5'
+              },
+              {
+                title: 'iPhone 2007 Original Product Launch Keynote',
+                creator: 'Apple Historical Archives',
+                url: 'https://www.youtube.com/watch?v=UF8uR6Z6KLc',
+                duration: '50 mins',
+                processing: '~12s',
+                image: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?q=80&w=400&auto=format&fit=crop',
+                metric: '📱 Product & Presentation Design',
+                color: 'border-pink-200 dark:border-pink-900/40 bg-pink-500/5'
+              }
+            ].map((demo, idx) => (
+              <div 
+                key={idx}
+                className={`group bg-white dark:bg-zinc-900 border rounded-3xl overflow-hidden hover:shadow-xl hover:scale-102 transition-all duration-200 flex flex-col justify-between ${demo.color}`}
+              >
+                <div>
+                  <div className="relative h-44 sm:h-48 overflow-hidden bg-neutral-100">
+                    <img 
+                      src={demo.image} 
+                      alt={demo.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute top-3 left-3 bg-neutral-900/80 backdrop-blur-xs text-white text-[9px] font-mono font-extrabold uppercase px-2.5 py-1 rounded-full">
+                      {demo.duration}
+                    </div>
+                    <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[9px] font-mono font-extrabold uppercase px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                      <Clock className="w-3 h-3" />
+                      <span>{demo.processing}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-5 sm:p-6 space-y-2 text-left">
+                    <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 font-mono tracking-wider uppercase bg-indigo-500/10 px-2 py-0.5 rounded">
+                      {demo.metric}
+                    </span>
+                    <h3 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-zinc-50 leading-snug line-clamp-2 pt-1 min-h-[50px]">
+                      {demo.title}
+                    </h3>
+                    <p className="text-xs text-neutral-500 dark:text-zinc-400 font-medium">
+                      {demo.creator}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5 sm:p-6 pt-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLandingSourceType('video');
+                      setYtUrl(demo.url);
+                      setUrlError('');
+                      if (onStartFreeSummary) {
+                        onStartFreeSummary(demo.url, 'video');
+                      }
+                    }}
+                    className="w-full py-3 px-4 bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg active:scale-97 cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Try Demo Workspace</span>
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -1592,6 +1826,17 @@ export default function LandingPage({
                 <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> Premium exports (PDF / Word / Notion)</li>
                 <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> 10x faster generation speeds</li>
               </ul>
+
+              {/* High-contrast Viral Referral sub-card */}
+              <div className="mt-4 p-4 bg-indigo-50/70 dark:bg-indigo-950/20 border border-dashed border-indigo-250 dark:border-indigo-900/40 rounded-xl space-y-2 text-left">
+                <p className="text-[11px] font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-1.5 uppercase font-mono tracking-wider">
+                  <Gift className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <span>🎁 Unlock Pro Free for Life</span>
+                </p>
+                <p className="text-[11.5px] text-neutral-600 dark:text-zinc-300 font-light leading-relaxed">
+                  Don't want to pay? <strong className="font-semibold text-indigo-700 dark:text-indigo-400">Invite just 2 friends</strong> to bypass all daily restrictions and unlock Pro features instantly.
+                </p>
+              </div>
             </div>
             <button
               type="button"
