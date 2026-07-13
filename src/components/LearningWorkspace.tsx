@@ -45,7 +45,9 @@ import {
   Save,
   CheckCircle,
   TrendingUp,
-  FileCode
+  FileCode,
+  Bookmark,
+  Sliders
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toPng } from 'html-to-image';
@@ -147,6 +149,198 @@ export default function LearningWorkspace({
 
   // Mindmap Export State
   const [isExportingMindmap, setIsExportingMindmap] = useState<boolean>(false);
+
+  // Personalized Study Profile Tracker State
+  const [studyProfile, setStudyProfile] = useState<'casual' | 'standard' | 'deep-dive'>(() => {
+    return (localStorage.getItem(`zipytiny_profile_${activeSummary.metadata.videoId}`) as 'casual' | 'standard' | 'deep-dive') || 'standard';
+  });
+
+  // Synchronized Timeline Bookmarks & Annotations state
+  const [customBookmarks, setCustomBookmarks] = useState<Array<{ id: string; title: string; timestamp: string; secondsCount: number; note?: string }>>(() => {
+    const saved = localStorage.getItem(`zipytiny_bookmarks_${activeSummary.metadata.videoId}`);
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [bookmarkTitle, setBookmarkTitle] = useState<string>('');
+  const [bookmarkTimestamp, setBookmarkTimestamp] = useState<string>('');
+
+  // Save Study Profile
+  useEffect(() => {
+    localStorage.setItem(`zipytiny_profile_${activeSummary.metadata.videoId}`, studyProfile);
+  }, [studyProfile, activeSummary.metadata.videoId]);
+
+  // Save Bookmarks
+  useEffect(() => {
+    localStorage.setItem(`zipytiny_bookmarks_${activeSummary.metadata.videoId}`, JSON.stringify(customBookmarks));
+  }, [customBookmarks, activeSummary.metadata.videoId]);
+
+  const handleAddBookmark = (title: string, seconds: number, timestampStr: string, note?: string) => {
+    const newB = {
+      id: Math.random().toString(36).substr(2, 9),
+      title,
+      timestamp: timestampStr,
+      secondsCount: seconds,
+      note
+    };
+    setCustomBookmarks(prev => [newB, ...prev]);
+  };
+
+  const handleManualAddBookmark = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bookmarkTitle.trim()) return;
+
+    let seconds = 0;
+    let finalTimestamp = "0:00";
+    if (bookmarkTimestamp.trim()) {
+      const parts = bookmarkTimestamp.split(':');
+      if (parts.length === 2) {
+        const mins = parseInt(parts[0], 10) || 0;
+        const secs = parseInt(parts[1], 10) || 0;
+        seconds = mins * 60 + secs;
+        finalTimestamp = bookmarkTimestamp;
+      } else {
+        const parsedSecs = parseInt(bookmarkTimestamp, 10);
+        if (!isNaN(parsedSecs)) {
+          seconds = parsedSecs;
+          const m = Math.floor(seconds / 60);
+          const s = seconds % 60;
+          finalTimestamp = `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+      }
+    } else {
+      const currentSecs = ytStartSeconds !== null ? ytStartSeconds : 0;
+      seconds = currentSecs;
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      finalTimestamp = `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    handleAddBookmark(bookmarkTitle, seconds, finalTimestamp, "Custom user bookmark");
+    setBookmarkTitle('');
+    setBookmarkTimestamp('');
+  };
+
+  const handleDeleteBookmark = (id: string) => {
+    setCustomBookmarks(prev => prev.filter(b => b.id !== id));
+  };
+
+  // Calculations for dynamic study time
+  const getPersonalizedStudyTime = () => {
+    const totalDuration = parseFloat(activeSummary.metadata.duration || '12');
+    if (studyProfile === 'casual') {
+      return Math.round(totalDuration * 1.0 + 3);
+    } else if (studyProfile === 'deep-dive') {
+      return Math.round(totalDuration * 2.5 + 15);
+    }
+    return Math.round((totalDuration * 1.5) + 8);
+  };
+
+  const dynamicEstStudyTime = getPersonalizedStudyTime();
+
+  // Dynamic custom milestones generator
+  const getMilestones = () => {
+    const totalDuration = parseFloat(activeSummary.metadata.duration || '12');
+    if (studyProfile === 'casual') {
+      return [
+        { 
+          day: "Day 1: Rapid Assimilation", 
+          time: `${Math.round(totalDuration * 0.4)} mins`,
+          desc: "Skim the executive summary highlight tags and review the core value takeaways to capture high-level structure.", 
+          status: "Completed",
+          icon: <BookOpen className="w-4 h-4 text-emerald-500" />
+        },
+        { 
+          day: "Day 2: Audio Reinforcement", 
+          time: `${Math.round(totalDuration * 0.4)} mins`,
+          desc: "Listen to the Speecher text-to-speech audio outline at 1.5x speed during passive commute or downtime.", 
+          status: "Due Today",
+          icon: <Brain className="w-4 h-4 text-indigo-500" />
+        },
+        { 
+          day: "Day 4: Fast Recall Drilling", 
+          time: "4 mins",
+          desc: "Perform a quick active recall pass of 3-5 key flashcards. Check definitions of forgotten metrics.", 
+          status: "Pending",
+          icon: <Award className="w-4 h-4 text-slate-400" />
+        }
+      ];
+    } else if (studyProfile === 'deep-dive') {
+      return [
+        { 
+          day: "Day 1: Deep Analytical Reading", 
+          time: `${Math.round(totalDuration * 0.8)} mins`,
+          desc: "Carefully study the entire executive summary and segment notes. Mark important key-terms and write custom margin annotations.", 
+          status: "Completed",
+          icon: <BookOpen className="w-4 h-4 text-emerald-500" />
+        },
+        { 
+          day: "Day 2: Full Audio Mapping", 
+          time: `${Math.round(totalDuration * 0.8)} mins`,
+          desc: "Listen to the full synthetic lecture briefing. Pause to add personal timestamped annotations and bookmark important segments.", 
+          status: "Completed",
+          icon: <Brain className="w-4 h-4 text-emerald-500" />
+        },
+        { 
+          day: "Day 3: Conceptual Synapse Mapping", 
+          time: `${Math.round(totalDuration * 0.5)} mins`,
+          desc: "Trace category structures in the Interactive Mind Map. Rate your conceptual mastery level on each core lecture node.", 
+          status: "Due Today",
+          icon: <Brain className="w-4 h-4 text-indigo-500" />
+        },
+        { 
+          day: "Day 5: AI Custom Question Drill", 
+          time: "10 mins",
+          desc: "Consult the AI Tutor with at least 3 custom prompts regarding the chapters. Ask for practical real-world scenarios.", 
+          status: "Pending",
+          icon: <HelpCircle className="w-4 h-4 text-slate-400" />
+        },
+        { 
+          day: "Day 7: Spaced Repetition Recall", 
+          time: "12 mins",
+          desc: "Drill flashcards until 100% accuracy rate is reached. Complete the full comprehension check quiz to earn bonus XP.", 
+          status: "Pending",
+          icon: <Award className="w-4 h-4 text-slate-400" />
+        },
+        { 
+          day: "Day 15: Mastery Consolidation", 
+          time: "15 mins",
+          desc: "Synthesize notes text, clean up timeline bookmarks, and export your personal curriculum blueprints into markdown or PDF format.", 
+          status: "Pending",
+          icon: <Calendar className="w-4 h-4 text-slate-400" />
+        }
+      ];
+    }
+    return [
+      { 
+        day: "Day 1: Initial Comprehension", 
+        time: `${Math.round(totalDuration * 0.6)} mins`,
+        desc: "Read through the Executive Summary and bulleted Value Takeaways. Listen to the Speecher TTS audio briefing while commuting.", 
+        status: "Completed",
+        icon: <BookOpen className="w-4 h-4 text-emerald-500" />
+      },
+      { 
+        day: "Day 3: Active Metacognition", 
+        time: `${Math.round(totalDuration * 0.4)} mins`,
+        desc: "Map concepts via the Interactive Mind Map. Check recall definitions on the key module analogies.", 
+        status: "Due Today",
+        icon: <Brain className="w-4 h-4 text-indigo-500" />
+      },
+      { 
+        day: "Day 7: Spaced Recall Check", 
+        time: "12 mins",
+        desc: "Cram flashcard drills and attempt the Comprehension check quiz. Maintain your learning streak multiplier.", 
+        status: "Pending",
+        icon: <Award className="w-4 h-4 text-slate-400" />
+      },
+      { 
+        day: "Day 15: Mastery Consolidation", 
+        time: "8 mins",
+        desc: "Review your personal saved notes and export your core curriculum blueprints into your digital workspace.", 
+        status: "Pending",
+        icon: <Calendar className="w-4 h-4 text-slate-400" />
+      }
+    ];
+  };
 
   // Auto-save Notes
   useEffect(() => {
@@ -269,6 +463,19 @@ export default function LearningWorkspace({
     setQuizSubmitted(true);
     awardXp(score * 30 + (score === activeSummary.quiz.length ? 100 : 0)); // Perfect score bonus
 
+    // Auto-customize study profile based on diagnostic score
+    const totalQuestions = activeSummary.quiz.length;
+    const accuracy = score / (totalQuestions || 1);
+    let recommendedProfile: 'casual' | 'standard' | 'deep-dive' = 'standard';
+    if (accuracy < 0.5) {
+      recommendedProfile = 'deep-dive'; // Needs deeper dive to master
+    } else if (accuracy >= 0.8) {
+      recommendedProfile = 'casual'; // Mastered early, quick recap is enough
+    } else {
+      recommendedProfile = 'standard';
+    }
+    setStudyProfile(recommendedProfile);
+
     // Set overall progress graduation
     if (score >= activeSummary.quiz.length / 2) {
       setShowGraduation(true);
@@ -277,8 +484,8 @@ export default function LearningWorkspace({
 
   // Calculations for metadata header
   const totalDuration = parseFloat(activeSummary.metadata.duration || '12');
-  const estStudyTime = Math.round((totalDuration * 1.5) + 8);
-  const difficultyLevel = activeSummary.quiz.length > 4 ? 'Advanced' : 'Intermediate';
+  const estStudyTime = dynamicEstStudyTime;
+  const difficultyLevel = studyProfile === 'casual' ? 'Casual Review' : studyProfile === 'deep-dive' ? 'Advanced Deep-Dive' : 'Standard Core';
 
   // Progress calculations
   const calculateWorkspaceProgress = () => {
@@ -667,23 +874,39 @@ export default function LearningWorkspace({
 
                       <div className="grid grid-cols-1 gap-2.5">
                         {activeSummary.chapters.map((chap, idx) => (
-                          <button
+                          <div
                             key={idx}
-                            onClick={() => onJumpToTimestamp(chap.secondsCount)}
-                            className="w-full text-left p-3.5 rounded-xl border border-neutral-200/80 dark:border-zinc-800 hover:border-indigo-500 hover:bg-neutral-50/50 dark:hover:bg-zinc-950/40 transition duration-150 flex gap-3 group cursor-pointer"
+                            className="w-full flex items-center justify-between p-3 rounded-xl border border-neutral-200/80 dark:border-zinc-800 hover:border-indigo-400 dark:hover:border-indigo-900 bg-white dark:bg-zinc-900/50 transition duration-150 group"
                           >
-                            <div className="font-mono text-[10px] font-bold text-[#0071e3] bg-[#0071e3]/5 dark:bg-[#0071e3]/10 group-hover:bg-[#0071e3]/10 px-2.5 py-1 rounded-md h-fit w-fit whitespace-nowrap">
-                              ⏱ {chap.timestamp}
-                            </div>
-                            <div className="space-y-0.5 overflow-hidden">
-                              <h5 className="text-xs font-bold text-neutral-800 dark:text-zinc-100 font-display group-hover:text-indigo-600 transition leading-tight">
-                                {chap.title}
-                              </h5>
-                              <p className="text-[#86868b] dark:text-zinc-400 text-xs leading-relaxed truncate">
-                                {chap.takeaway}
-                              </p>
-                            </div>
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => onJumpToTimestamp(chap.secondsCount)}
+                              className="flex-1 text-left flex gap-3 cursor-pointer min-w-0"
+                            >
+                              <div className="font-mono text-[10px] font-bold text-[#0071e3] bg-[#0071e3]/5 dark:bg-[#0071e3]/10 group-hover:bg-[#0071e3]/10 px-2.5 py-1 rounded-md h-fit w-fit whitespace-nowrap self-start">
+                                ⏱ {chap.timestamp}
+                              </div>
+                              <div className="space-y-0.5 overflow-hidden">
+                                <h5 className="text-xs font-bold text-neutral-800 dark:text-zinc-100 font-display group-hover:text-indigo-600 transition leading-tight">
+                                  {chap.title}
+                                </h5>
+                                <p className="text-[#86868b] dark:text-zinc-400 text-xs leading-relaxed truncate">
+                                  {chap.takeaway}
+                                </p>
+                              </div>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAddBookmark(chap.title, chap.secondsCount, chap.timestamp, chap.takeaway);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-zinc-800 rounded-lg transition ml-2 shrink-0 cursor-pointer"
+                              title="Pin bookmark to timeline"
+                            >
+                              <Bookmark className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -725,6 +948,14 @@ export default function LearningWorkspace({
                                 }`}>
                                   {mastery}% Mastered
                                 </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddBookmark(`Concept: ${item.concept}`, 0, "0:00", item.definition)}
+                                  className="p-1 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg transition cursor-pointer"
+                                  title="Bookmark this core concept"
+                                >
+                                  <Bookmark className="w-3.5 h-3.5" />
+                                </button>
                               </div>
                             </div>
 
@@ -980,36 +1211,7 @@ export default function LearningWorkspace({
                     <div className="space-y-4">
                       
                       {/* Interactive Calendar Milestones */}
-                      {[
-                        { 
-                          day: "Day 1: Initial Comprehension", 
-                          time: "15 mins",
-                          desc: "Read through the Executive Summary and bulleted Value Takeaways. Listen to the Speecher TTS audio briefing while commuting.", 
-                          status: "Completed",
-                          icon: <BookOpen className="w-4 h-4 text-emerald-500" />
-                        },
-                        { 
-                          day: "Day 3: Active Metacognition", 
-                          time: "10 mins",
-                          desc: "Map concepts via the Interactive Mind Map. Check recall definitions on the key module analogies.", 
-                          status: "Due Today",
-                          icon: <Brain className="w-4 h-4 text-indigo-500" />
-                        },
-                        { 
-                          day: "Day 7: Spaced Recall Check", 
-                          time: "12 mins",
-                          desc: "Cram flashcard drills and attempt the Comprehension check quiz. Maintain your learning streak multiplier.", 
-                          status: "Pending",
-                          icon: <Award className="w-4 h-4 text-slate-400" />
-                        },
-                        { 
-                          day: "Day 15: Mastery Consolidation", 
-                          time: "8 mins",
-                          desc: "Review your personal saved notes and export your core curriculum blueprints into your digital workspace.", 
-                          status: "Pending",
-                          icon: <Calendar className="w-4 h-4 text-slate-400" />
-                        },
-                      ].map((item, index) => (
+                      {getMilestones().map((item, index) => (
                         <div key={index} className="flex gap-4 p-4.5 rounded-2xl border dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/20">
                           <div className="shrink-0 mt-0.5">
                             {item.icon}
@@ -1370,6 +1572,136 @@ export default function LearningWorkspace({
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Adaptive Study Profile Tracker */}
+          <div className="bg-white dark:bg-zinc-900 border border-black/[0.03] dark:border-zinc-850 p-6 rounded-3xl shadow-sm text-left space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Sliders className="w-4 h-4 text-indigo-600" />
+                Adaptive Study Profile
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                studyProfile === 'casual' ? 'bg-amber-100 text-amber-800' : studyProfile === 'deep-dive' ? 'bg-rose-100 text-rose-800' : 'bg-indigo-100 text-indigo-850'
+              }`}>
+                {studyProfile.toUpperCase()}
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-normal">
+              Select or calibrate your study depth. The AI study guidelines and estimated hours will dynamically optimize for your selection.
+            </p>
+
+            <div className="grid grid-cols-3 gap-1.5 p-1 bg-[#f2f2f7] dark:bg-zinc-950 rounded-2xl border dark:border-zinc-800">
+              {(['casual', 'standard', 'deep-dive'] as const).map((profile) => (
+                <button
+                  key={profile}
+                  onClick={() => setStudyProfile(profile)}
+                  className={`py-2 px-1 text-[10px] font-bold rounded-xl transition-all duration-150 capitalize cursor-pointer ${
+                    studyProfile === profile
+                      ? 'bg-white dark:bg-zinc-850 text-slate-900 dark:text-white shadow-xs font-bold font-sans'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
+                  }`}
+                >
+                  {profile}
+                </button>
+              ))}
+            </div>
+
+            {quizSubmitted && (
+              <div className="bg-indigo-50/50 dark:bg-indigo-950/15 p-3 rounded-xl border border-indigo-100/50 dark:border-indigo-900/35 text-[11px] text-indigo-950 dark:text-indigo-200">
+                🎯 <strong>Cognitive calibration completed!</strong> Your diagnostic score auto-tuned this plan. Feel free to tweak manual speeds above.
+              </div>
+            )}
+          </div>
+
+          {/* Synchronized Annotation Overlays & Bookmarks */}
+          <div className="bg-white dark:bg-zinc-900 border border-black/[0.03] dark:border-zinc-850 p-6 rounded-3xl shadow-sm text-left space-y-4">
+            <div className="flex items-center justify-between border-b dark:border-zinc-800 pb-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Bookmark className="w-4 h-4 text-rose-500" />
+                Lecture Timestamps & Annotations
+              </span>
+              <span className="text-[10px] font-mono text-slate-450 dark:text-zinc-500 font-bold">
+                {customBookmarks.length} Saved
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Pin key segments/concepts directly from the course directories to overlay timed bookmarks, or add a custom annotation below. Click any bookmark to seek player directly!
+            </p>
+
+            {/* Custom Annotation Form */}
+            <form onSubmit={handleManualAddBookmark} className="space-y-2">
+              <input
+                type="text"
+                placeholder="Annotation title (e.g. Critical concept summary)"
+                value={bookmarkTitle}
+                onChange={(e) => setBookmarkTitle(e.target.value)}
+                className="w-full text-xs bg-[#f2f2f7] dark:bg-zinc-950 px-3 py-2 rounded-xl border border-black/[0.04] dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-indigo-500"
+              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Timestamp (e.g. 01:23, default current)"
+                  value={bookmarkTimestamp}
+                  onChange={(e) => setBookmarkTimestamp(e.target.value)}
+                  className="flex-1 text-xs bg-[#f2f2f7] dark:bg-zinc-950 px-3 py-2 rounded-xl border border-black/[0.04] dark:border-zinc-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-indigo-500"
+                />
+                <button
+                  type="submit"
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition cursor-pointer"
+                >
+                  Pin
+                </button>
+              </div>
+            </form>
+
+            {/* Bookmarks Timeline List */}
+            <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+              {customBookmarks.length === 0 ? (
+                <div className="border border-dashed dark:border-zinc-800 rounded-2xl p-6 text-center">
+                  <Bookmark className="w-6 h-6 text-slate-350 dark:text-zinc-700 mx-auto mb-2 animate-pulse" />
+                  <p className="text-[11px] text-slate-400">No synchronized annotations yet.</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Click 📌 on lecture segment modules or submit annotations above to fill your timeline!</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {customBookmarks.map((bookmark) => (
+                    <div 
+                      key={bookmark.id}
+                      className="flex items-center justify-between p-2.5 rounded-xl border dark:border-zinc-800 bg-[#f2f2f7]/40 dark:bg-zinc-950/20 hover:border-indigo-400 dark:hover:border-indigo-850 transition"
+                    >
+                      <button
+                        onClick={() => onJumpToTimestamp(bookmark.secondsCount)}
+                        className="flex-1 text-left flex gap-2.5 items-start cursor-pointer min-w-0"
+                      >
+                        <span className="text-[10px] font-mono font-bold text-[#0071e3] bg-[#0071e3]/5 px-2 py-0.5 rounded-md shrink-0">
+                          ⏱ {bookmark.timestamp}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-800 dark:text-zinc-200 truncate font-display">
+                            {bookmark.title}
+                          </p>
+                          {bookmark.note && (
+                            <p className="text-[10px] text-slate-450 dark:text-zinc-500 truncate mt-0.5">
+                              {bookmark.note}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBookmark(bookmark.id)}
+                        className="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/20 transition cursor-pointer shrink-0"
+                        title="Delete bookmark"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Gamified study operating core */}
