@@ -763,6 +763,72 @@ function injectOGTags(html: string, summary: any, suffix: string = '', forkQuiz:
   let normalized = html.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
   normalized = normalized.replace(/<link[^>]*rel="canonical"[^>]*>/gi, '');
   normalized = normalized.replace('</head>', `${metaHtml}</head>`);
+
+  // Inject a rich, crawlable, semantic HTML body for AI search engines & crawlers
+  try {
+    const authorName = metadata.author || 'AI Creator';
+    const blogContent = summary.blogPost || '';
+    
+    const chaptersHtml = Array.isArray(summary.chapters)
+      ? summary.chapters.map((c: any) => `
+          <section style="margin-bottom: 1.5rem; padding-left: 1rem; border-left: 2px solid #e5e7eb;">
+            <h3 style="font-size: 1.15rem; font-weight: 600; color: #111827; margin: 0.5rem 0;">${c.timestamp || ''} - ${c.title || ''}</h3>
+            <p style="color: #4b5563; line-height: 1.6; margin: 0.25rem 0;">${c.summary || ''}</p>
+          </section>
+        `).join('')
+      : '';
+
+    const takeawaysHtml = Array.isArray(summary.takeaways)
+      ? `<ul style="list-style-type: disc; padding-left: 1.5rem; margin: 1rem 0; color: #374151;">${
+          summary.takeaways.map((t: any) => {
+            const val = typeof t === 'string' ? t : (t?.text || '');
+            return val ? `<li style="margin-bottom: 0.5rem; line-height: 1.6;">${val}</li>` : '';
+          }).join('')
+        }</ul>`
+      : '';
+
+    const semanticBodyHtml = `
+      <!-- Semantic crawlable body for search engines, AI bots, and LLM search agents (Hidden from display users to avoid CLS) -->
+      <article style="display: none;" aria-hidden="true">
+        <header style="margin-bottom: 2rem;">
+          <h1 style="font-size: 2rem; font-weight: 800; color: #111827;">${cleanTitle}</h1>
+          <p style="color: #6b7280; font-size: 0.875rem;">Source URL: <a href="${metadata.videoUrl || ''}">${metadata.videoUrl || 'Video Source'}</a></p>
+          <p style="color: #6b7280; font-size: 0.875rem;">Author / Channel: ${authorName}</p>
+        </header>
+        
+        <section style="margin-bottom: 2rem;">
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #1f2937; border-bottom: 1px solid #f3f4f6; padding-bottom: 0.5rem;">Executive AI Summary</h2>
+          <p style="color: #374151; font-size: 1rem; line-height: 1.7; white-space: pre-line;">${rawDesc}</p>
+        </section>
+
+        ${takeawaysHtml ? `
+        <section style="margin-bottom: 2rem;">
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #1f2937; border-bottom: 1px solid #f3f4f6; padding-bottom: 0.5rem;">Core Takeaways & Actionable Insights</h2>
+          ${takeawaysHtml}
+        </section>
+        ` : ''}
+        
+        ${chaptersHtml ? `
+        <section style="margin-bottom: 2rem;">
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #1f2937; border-bottom: 1px solid #f3f4f6; padding-bottom: 0.5rem;">Timeline Chapters</h2>
+          ${chaptersHtml}
+        </section>
+        ` : ''}
+        
+        ${blogContent ? `
+        <section style="margin-bottom: 2rem;">
+          <h2 style="font-size: 1.5rem; font-weight: 700; color: #1f2937; border-bottom: 1px solid #f3f4f6; padding-bottom: 0.5rem;">Comprehensive Deep-Dive Blog Post</h2>
+          <div style="color: #1f2937; line-height: 1.8; font-size: 1rem; white-space: pre-wrap;">${blogContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+        </section>
+        ` : ''}
+      </article>
+    `;
+
+    normalized = normalized.replace('</body>', `${semanticBodyHtml}\n</body>`);
+  } catch (err) {
+    console.error('Error generating semantic HTML body inside injectOGTags:', err);
+  }
+
   return normalized;
 }
 
@@ -808,7 +874,7 @@ app.get('/api/og-image', (req, res) => {
 // Robots & Sitemap
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
-  res.send('User-agent: *\nAllow: /\nSitemap: https://www.zipytiny.app/sitemap.xml');
+  res.send('User-agent: *\nAllow: /\n\n# AI Crawlers & Agents Discovery\nSitemap: https://www.zipytiny.app/sitemap.xml\nLink: https://www.zipytiny.app/llms.txt; rel="llms"');
 });
 
 app.get('/llms.txt', (req, res) => {
