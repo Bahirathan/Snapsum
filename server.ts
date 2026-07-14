@@ -712,7 +712,7 @@ async function fetchYouTubeOEmbed(videoId: string): Promise<{ title: string; aut
 }
 
 // OpenGraph Injector Helper
-function injectOGTags(html: string, summary: any, suffix: string = '', forkQuiz: boolean = false): string {
+function injectOGTags(html: string, summary: any, suffix: string = '', forkQuiz: boolean = false, customPath: string = ''): string {
   const metadata = summary.metadata || {};
   const cleanTitle = (metadata.title || 'AI Video Summary').replace(/"/g, '&quot;');
   const title = (cleanTitle + suffix).replace(/"/g, '&quot;');
@@ -730,8 +730,13 @@ function injectOGTags(html: string, summary: any, suffix: string = '', forkQuiz:
     t2: takeawayTexts[1] || '',
     t3: takeawayTexts[2] || '',
   });
-  const imageUrl = `/api/og-image?${ogParams.toString()}`;
-  const url = `https://www.zipytiny.app/s/${summary.shareId}`;
+  
+  // CRITICAL: og:image and twitter:image MUST be absolute URLs for social crawlers (Slack, X, LinkedIn, FB) to render previews
+  const imageUrl = `https://www.zipytiny.app/api/og-image?${ogParams.toString()}`;
+  
+  // Set accurate paths for canonical link & og:url tags
+  const activePath = customPath || `/s/${summary.shareId}`;
+  const url = `https://www.zipytiny.app${activePath}`;
 
   const forkMeta = forkQuiz
     ? `\n    <meta name="zipytiny:fork-quiz" content="true" />`
@@ -740,6 +745,7 @@ function injectOGTags(html: string, summary: any, suffix: string = '', forkQuiz:
   const metaHtml = `
     <title>${title} - Zipytiny</title>
     <meta name="description" content="${description}" />
+    <link rel="canonical" href="${url}" />
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="${title} - Zipytiny" />
@@ -753,7 +759,9 @@ function injectOGTags(html: string, summary: any, suffix: string = '', forkQuiz:
     <meta name="twitter:image" content="${imageUrl}" />${forkMeta}
   `;
 
+  // Strip existing title & canonical tag from static index.html boilerplate to prevent duplicates
   let normalized = html.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
+  normalized = normalized.replace(/<link[^>]*rel="canonical"[^>]*>/gi, '');
   normalized = normalized.replace('</head>', `${metaHtml}</head>`);
   return normalized;
 }
@@ -917,7 +925,7 @@ app.get('/s/:id/quiz', async (req, res) => {
     }
 
     let html = fs.readFileSync(htmlPath, 'utf-8');
-    html = injectOGTags(html, summary, ' - Interactive Quiz', true);
+    html = injectOGTags(html, summary, ' - Interactive Quiz', true, `/s/${summary.shareId}/quiz`);
     res.setHeader('Content-Type', 'text/html');
     return res.send(html);
   } catch (err) {
@@ -943,7 +951,7 @@ app.get('/s/:id/quiz/:score', async (req, res) => {
     let html = fs.readFileSync(htmlPath, 'utf-8');
     const totalCount = summary.quiz?.length || 5;
     const suffix = ` (Quiz Challenge: I scored ${req.params.score}/${totalCount}! Beat me)`;
-    html = injectOGTags(html, summary, suffix);
+    html = injectOGTags(html, summary, suffix, false, `/s/${summary.shareId}/quiz/${req.params.score}`);
     res.setHeader('Content-Type', 'text/html');
     return res.send(html);
   } catch (err) {
