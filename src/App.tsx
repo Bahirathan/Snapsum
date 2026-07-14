@@ -137,6 +137,29 @@ const LoadingTimeline = ({ onComplete, loadingStep }: { onComplete?: () => void;
     { label: 'Workspace Ready', weight: 100 }
   ];
 
+  const microPhrases = [
+    "Scanning for filler words and unnecessary pauses...",
+    "Extracting key concepts and linguistic milestones...",
+    "Distilling golden educational nuggets...",
+    "Formulating concise notes in real-time...",
+    "Generating deep conceptual relationships...",
+    "Drafting dynamic flashcard recall pairs...",
+    "Organizing active study flashcard decks...",
+    "Clustering arguments for the interactive mind map...",
+    "Formatting output structures for PDF, Notion & Word...",
+    "Calibrating conversational AI tutor response system...",
+    "Polishing the interactive study suite dashboard..."
+  ];
+
+  const [phraseIdx, setPhraseIdx] = useState(0);
+
+  useEffect(() => {
+    const phraseTimer = setInterval(() => {
+      setPhraseIdx((prev) => (prev + 1) % microPhrases.length);
+    }, 1500);
+    return () => clearInterval(phraseTimer);
+  }, []);
+
   useEffect(() => {
     let current = 0;
     const interval = setInterval(() => {
@@ -193,7 +216,9 @@ const LoadingTimeline = ({ onComplete, loadingStep }: { onComplete?: () => void;
                   {step.label}
                 </p>
                 {isCurrent && (
-                  <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-mono mt-1 animate-pulse">Processing metadata logs...</p>
+                  <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-mono mt-1 animate-pulse">
+                    ⚡ {microPhrases[phraseIdx]}
+                  </p>
                 )}
               </div>
             </div>
@@ -761,6 +786,22 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState('');
   const [showWowMoment, setShowWowMoment] = useState(false);
+  const [revealProgress, setRevealProgress] = useState(0);
+
+  useEffect(() => {
+    if (showWowMoment) {
+      setRevealProgress(0);
+      let count = 0;
+      const interval = setInterval(() => {
+        count += 1;
+        setRevealProgress(count);
+        if (count >= 6) {
+          clearInterval(interval);
+        }
+      }, 550);
+      return () => clearInterval(interval);
+    }
+  }, [showWowMoment]);
   
   const LOADING_TIPS = [
     "Zipytiny is transcribing and aligning video audio speech patterns...",
@@ -3689,6 +3730,25 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       dir={isRtl ? 'rtl' : 'ltr'}
     >
       
+      {/* Top Premium Announcement Banner */}
+      {currentScreen === 'landing' && (
+        <div className="bg-[#0071e3] text-white text-[11px] font-bold py-2.5 px-4 text-center flex items-center justify-center gap-2 sm:gap-3 font-sans shadow-sm z-40 relative">
+          <span>Your First AI Workspace is Free! No credit card required.</span>
+          <button
+            onClick={() => {
+              const inputEl = document.getElementById('landing-main-input');
+              if (inputEl) {
+                inputEl.focus();
+                inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }}
+            className="bg-white text-[#0071e3] px-2.5 py-0.5 rounded-full font-extrabold text-[9.5px] hover:bg-neutral-100 transition cursor-pointer select-none whitespace-nowrap"
+          >
+            Learn More
+          </button>
+        </div>
+      )}
+
       {/* Navigation Header */}
       <header className="sticky top-0 z-35 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-2xl border-b border-black/[0.05] dark:border-zinc-800/60 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
@@ -6326,6 +6386,45 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             {/* Shelf Persistence History Box */}
             <div id="history-section" className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-black/[0.04] dark:border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-5">
               
+              {/* Workspace Preview Card */}
+              {savedSummaries.length > 0 && (
+                <div className="bg-gradient-to-r from-neutral-50/70 to-neutral-100/30 dark:from-zinc-950 dark:to-zinc-900/30 p-4.5 rounded-2xl border border-black/[0.03] dark:border-zinc-800/80 shadow-xs space-y-3 font-sans text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold text-[#0071e3] uppercase tracking-wider bg-[#0071e3]/10 px-2.5 py-0.5 rounded-full">
+                      ✨ Recent Workspace Preview
+                    </span>
+                    <span className="text-[10px] text-neutral-400 font-mono font-semibold">
+                      Owner Active
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-xs font-bold text-neutral-800 dark:text-zinc-100 leading-snug line-clamp-1">
+                      {savedSummaries[0].response.metadata.title}
+                    </h4>
+                    <p className="text-[10.5px] text-neutral-500 dark:text-zinc-400 font-light line-clamp-2 leading-relaxed">
+                      {savedSummaries[0].response.summary || 'Study workspace generated successfully.'}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between pt-2.5 border-t border-black/[0.03] dark:border-zinc-800/40 text-[10px]">
+                    <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-bold font-mono">
+                      <BookOpen className="w-3.5 h-3.5" />
+                      <span>{savedSummaries[0].response.flashcards?.length || 0} Recall Flashcards</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleLoadStoredItem(savedSummaries[0].response);
+                        setActiveStack(null);
+                      }}
+                      className="text-[#0071e3] dark:text-sky-400 font-extrabold hover:underline cursor-pointer flex items-center gap-0.5"
+                    >
+                      <span>Open Workspace</span>
+                      <span>→</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* SECTION A: INDIVIDUAL SUMMARIES */}
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -6474,17 +6573,54 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 )}
 
                 {savedSummaries.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-neutral-300 dark:border-zinc-800 bg-gradient-to-br from-indigo-50/30 via-white to-purple-50/20 dark:from-zinc-950/40 dark:to-transparent p-6 text-center space-y-4 animate-fadeIn font-sans">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center mx-auto shadow-sm">
-                      <Sparkles className="w-6 h-6 text-indigo-600 dark:text-indigo-400 animate-pulse" />
+                  <div className="rounded-2xl border border-dashed border-neutral-300 dark:border-zinc-800 bg-gradient-to-b from-slate-50/50 to-white dark:from-zinc-950/40 dark:to-zinc-900/10 p-6 sm:p-8 text-center space-y-5 animate-fadeIn font-sans">
+                    
+                    {/* Beautiful Miniature Workspace Vector Illustration */}
+                    <div className="relative w-44 h-24 mx-auto bg-neutral-100/60 dark:bg-zinc-950/60 rounded-xl border border-neutral-200/50 dark:border-zinc-800 p-3 shadow-xs overflow-hidden flex flex-col justify-between">
+                      <div className="flex items-center gap-1.5 border-b border-neutral-200/40 dark:border-zinc-800/60 pb-1.5">
+                        <div className="w-2 h-2 rounded-full bg-red-400" />
+                        <div className="w-2 h-2 rounded-full bg-yellow-400" />
+                        <div className="w-2 h-2 rounded-full bg-green-400" />
+                        <div className="h-1.5 w-16 bg-neutral-200 dark:bg-zinc-850 rounded-full ml-1" />
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-1.5 items-stretch flex-1 pt-2">
+                        {/* Summary Column */}
+                        <div className="bg-white dark:bg-zinc-900 rounded border border-neutral-150/40 dark:border-zinc-800/40 p-1 flex flex-col gap-1">
+                          <div className="h-1 bg-indigo-500 rounded-full w-[80%]" />
+                          <div className="h-0.5 bg-neutral-200 dark:bg-zinc-850 rounded-full w-full" />
+                          <div className="h-0.5 bg-neutral-200 dark:bg-zinc-850 rounded-full w-[90%]" />
+                          <div className="h-0.5 bg-neutral-200 dark:bg-zinc-850 rounded-full w-[70%]" />
+                        </div>
+                        
+                        {/* Flashcards Column */}
+                        <div className="bg-white dark:bg-zinc-900 rounded border border-neutral-150/40 dark:border-zinc-800/40 p-1 flex flex-col gap-1 items-center justify-center">
+                          <div className="w-4 h-4 rounded-md bg-emerald-500/10 flex items-center justify-center">
+                            <span className="text-[6px] font-bold text-emerald-600">✓</span>
+                          </div>
+                          <div className="h-1 bg-emerald-500 rounded-full w-[60%]" />
+                        </div>
+
+                        {/* AI Chat Column */}
+                        <div className="bg-[#0071e3]/5 dark:bg-sky-500/5 rounded border border-[#0071e3]/20 dark:border-sky-500/20 p-1 flex flex-col gap-1 justify-between">
+                          <div className="h-0.5 bg-[#0071e3] rounded-full w-[50%]" />
+                          <div className="h-2 bg-[#0071e3] rounded w-full flex items-center justify-center">
+                            <span className="text-[5px] text-white font-bold font-mono">AI</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-500/10 rounded-full blur-md" />
                     </div>
+
                     <div className="space-y-1">
-                      <h4 className="text-sm font-bold text-neutral-900 dark:text-zinc-50">Create your first AI Workspace</h4>
-                      <p className="text-xs text-neutral-500 dark:text-zinc-400 font-light leading-relaxed max-w-xs mx-auto">
-                        Transform any YouTube video, podcast, PDF, website, or text into study notes, flashcards, mind maps, and interactive quizzes in under 60 seconds.
+                      <h4 className="text-sm font-extrabold text-neutral-900 dark:text-zinc-50 font-display">Create your first AI Workspace</h4>
+                      <p className="text-[11px] text-neutral-500 dark:text-zinc-400 font-light leading-relaxed max-w-xs mx-auto">
+                        Transform any YouTube video, lecture, podcast, PDF, website, or text paragraph into notes, flashcards, mind maps, and interactive quizzes in under 60 seconds.
                       </p>
                     </div>
-                    <div className="pt-1 flex flex-col sm:flex-row gap-2 justify-center">
+                    
+                    <div className="pt-1.5 flex flex-col sm:flex-row gap-2 justify-center">
                       <button
                         type="button"
                         onClick={() => {
@@ -6494,7 +6630,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             formElement.focus();
                           }
                         }}
-                        className="px-4 py-2 bg-[#0071e3] hover:bg-[#0077ed] text-white font-bold text-xs rounded-xl transition cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 shadow-sm"
+                        className="px-4.5 py-2.5 bg-[#0071e3] hover:bg-[#0077ed] text-white font-bold text-xs rounded-xl transition cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 shadow-sm"
                       >
                         <span>Paste Link</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -6504,13 +6640,12 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         onClick={() => {
                           if (PRELOADED_VIDEOS && PRELOADED_VIDEOS.length > 0) {
                             handleLoadStoredItem(PRELOADED_VIDEOS[0]);
-                            // Smooth scroll to summary workspace
                             setTimeout(() => {
                               document.getElementById('summary-dashboard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }, 100);
                           }
                         }}
-                        className="px-4 py-2 bg-white hover:bg-neutral-50 dark:bg-zinc-900 dark:hover:bg-zinc-850 text-neutral-700 dark:text-zinc-200 border border-neutral-200 dark:border-zinc-800 font-bold text-xs rounded-xl transition cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 shadow-2xs"
+                        className="px-4.5 py-2.5 bg-white hover:bg-neutral-50 dark:bg-zinc-900 dark:hover:bg-zinc-850 text-neutral-700 dark:text-zinc-200 border border-neutral-200 dark:border-zinc-800 font-bold text-xs rounded-xl transition cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 shadow-2xs"
                       >
                         <span>Try 30-sec Demo</span>
                         <Play className="w-3 h-3 fill-current text-indigo-600" />
@@ -12697,48 +12832,89 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
             {/* Checklist of Value */}
             <div className="bg-neutral-50 dark:bg-zinc-900/60 border border-neutral-150 dark:border-zinc-800 rounded-2xl p-5 space-y-3.5 text-left">
-              <div className="flex items-center gap-3">
-                <Check className="w-5 h-5 text-emerald-500 shrink-0" />
-                <span className="text-sm text-neutral-700 dark:text-zinc-300">
-                  <strong className="font-semibold text-neutral-900 dark:text-zinc-100">
-                    {(() => {
-                      const dur = activeSummary.metadata.duration || '15';
-                      return dur.replace(/min(s)?|minute(s)?/gi, '').trim();
-                    })()}-minute
-                  </strong>{' '}
-                  visual summary created
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Check className="w-5 h-5 text-emerald-500 shrink-0" />
-                <span className="text-sm text-neutral-700 dark:text-zinc-300">
-                  <strong className="font-semibold text-neutral-900 dark:text-zinc-100">{activeSummary.keyConcepts?.length || '25'} key concepts</strong> extracted with plain-English analogies
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Check className="w-5 h-5 text-emerald-500 shrink-0" />
-                <span className="text-sm text-neutral-700 dark:text-zinc-300">
-                  <strong className="font-semibold text-neutral-900 dark:text-zinc-100">{activeSummary.flashcards?.length || '10'} active recall flashcards</strong> generated
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Check className="w-5 h-5 text-emerald-500 shrink-0" />
-                <span className="text-sm text-neutral-700 dark:text-zinc-300">
-                  Interactive <strong className="font-semibold text-neutral-900 dark:text-zinc-100 font-medium">diagnostic quiz</strong> prepared
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Check className="w-5 h-5 text-emerald-500 shrink-0" />
-                <span className="text-sm text-neutral-700 dark:text-zinc-300">
-                  Semantic <strong className="font-semibold text-neutral-900 dark:text-zinc-100 font-medium">mind map & memory network</strong> created
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Check className="w-5 h-5 text-emerald-500 shrink-0" />
-                <span className="text-sm text-neutral-700 dark:text-zinc-300">
-                  Custom <strong className="font-semibold text-neutral-900 dark:text-zinc-100 font-medium">spaced repetition plan</strong> generated
-                </span>
-              </div>
+              {[
+                {
+                  id: 1,
+                  label: (
+                    <span>
+                      <strong className="font-semibold text-neutral-900 dark:text-zinc-100">
+                        {(() => {
+                          const dur = activeSummary.metadata.duration || '15';
+                          return dur.replace(/min(s)?|minute(s)?/gi, '').trim();
+                        })()}-minute
+                      </strong>{' '}
+                      visual summary created
+                    </span>
+                  )
+                },
+                {
+                  id: 2,
+                  label: (
+                    <span>
+                      <strong className="font-semibold text-neutral-900 dark:text-zinc-100">{activeSummary.keyConcepts?.length || '25'} key concepts</strong> extracted with plain-English analogies
+                    </span>
+                  )
+                },
+                {
+                  id: 3,
+                  label: (
+                    <span>
+                      <strong className="font-semibold text-neutral-900 dark:text-zinc-100">{activeSummary.flashcards?.length || '10'} active recall flashcards</strong> generated
+                    </span>
+                  )
+                },
+                {
+                  id: 4,
+                  label: (
+                    <span>
+                      Interactive <strong className="font-semibold text-neutral-900 dark:text-zinc-100 font-medium">diagnostic quiz</strong> prepared
+                    </span>
+                  )
+                },
+                {
+                  id: 5,
+                  label: (
+                    <span>
+                      Semantic <strong className="font-semibold text-neutral-900 dark:text-zinc-100 font-medium">mind map & memory network</strong> created
+                    </span>
+                  )
+                },
+                {
+                  id: 6,
+                  label: (
+                    <span>
+                      Custom <strong className="font-semibold text-neutral-900 dark:text-zinc-100 font-medium">spaced repetition plan</strong> generated
+                    </span>
+                  )
+                }
+              ].map((item, idx) => {
+                const isCompleted = revealProgress > idx;
+                const isCompiling = revealProgress === idx;
+                
+                return (
+                  <div 
+                    key={item.id} 
+                    className={`flex items-center gap-3 transition-all duration-350 ${
+                      isCompleted 
+                        ? 'opacity-100 scale-100' 
+                        : isCompiling 
+                          ? 'opacity-90 scale-99 text-indigo-600 dark:text-indigo-400 font-medium' 
+                          : 'opacity-40 scale-98'
+                    }`}
+                  >
+                    {isCompleted ? (
+                      <Check className="w-5 h-5 text-emerald-500 shrink-0 animate-scaleIn" />
+                    ) : isCompiling ? (
+                      <Loader2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-spin shrink-0" />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border border-neutral-300 dark:border-zinc-700 shrink-0" />
+                    )}
+                    <span className="text-sm text-neutral-700 dark:text-zinc-300">
+                      {item.label}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Signup CTA or Dismiss */}
