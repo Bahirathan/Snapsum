@@ -2810,24 +2810,25 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
   };
 
   // Request new AI Summary processing
-  const handleSummarize = async (e?: React.FormEvent, overrideUrl?: string) => {
+  const handleSummarize = async (e?: React.FormEvent, overrideUrl?: string, overrideType?: 'video' | 'website' | 'file' | 'text') => {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
+    const activeType = overrideType || inputSourceType;
     let finalVideoUrl = overrideUrl || videoUrl;
     let finalCustomTranscript = customTranscript;
 
-    if (inputSourceType === 'website') {
-      if (!inputWebsiteUrl) return;
-      finalVideoUrl = inputWebsiteUrl;
-      finalCustomTranscript = `Please summarize and extract core concepts and key learnings from the website: ${inputWebsiteUrl}. Focus on providing high-quality summaries, blog posts, mental models and key chapter milestones as if it was a video lecture or textbook chapter.`;
-    } else if (inputSourceType === 'file') {
+    if (activeType === 'website') {
+      if (!inputWebsiteUrl && !overrideUrl) return;
+      finalVideoUrl = overrideUrl || inputWebsiteUrl;
+      finalCustomTranscript = `Please summarize and extract core concepts and key learnings from the website: ${finalVideoUrl}. Focus on providing high-quality summaries, blog posts, mental models and key chapter milestones as if it was a video lecture or textbook chapter.`;
+    } else if (activeType === 'file') {
       if (uploadedFiles.length === 0) return;
       finalVideoUrl = 'https://www.zipytiny.app/uploaded-files';
       finalCustomTranscript = uploadedFiles.map(f => `SOURCE FILE ATTACHED: ${f.name}\nSIZE: ${f.size} bytes\nTYPE: ${f.type}\nBODY CONTENT:\n${f.textContent || `[Rich document layout parsing for ${f.name}. Dynamic study guides enabled.]`}`).join('\n\n---\n\n');
-    } else if (inputSourceType === 'text') {
-      if (!pastedContentText) return;
+    } else if (activeType === 'text') {
+      if (!pastedContentText && !overrideUrl) return;
       finalVideoUrl = 'https://www.zipytiny.app/pasted-text';
-      finalCustomTranscript = pastedContentText;
+      finalCustomTranscript = overrideUrl || pastedContentText;
     }
 
     // Save to recent URLs cache if it is a real external URL
@@ -2906,7 +2907,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     // 🌟 Smart Interceptor: If pasted URL corresponds to one of the rich preloaded videos,
     // load it directly with zero network delay and zero API costs! Great for free live demos.
     const matchedPreload = PRELOADED_VIDEOS.find(
-      (video) => finalVideoUrl.includes(video.metadata.videoId) || video.metadata.videoUrl === finalVideoUrl
+      (video) => finalVideoUrl && (finalVideoUrl.includes(video.metadata.videoId) || video.metadata.videoUrl === finalVideoUrl)
     );
 
     if (matchedPreload) {
@@ -2940,7 +2941,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           video_id: matchedPreload.metadata.videoId,
           video_title: matchedPreload.metadata.title,
           source: 'preloaded_cache',
-          custom_transcript_used: showCustomTranscriptField || inputSourceType !== 'video'
+          custom_transcript_used: showCustomTranscriptField || activeType !== 'video'
         });
         handleTrackActivation(learnMode, matchedPreload.metadata.videoId);
         if (!visitorUser) {
@@ -2954,9 +2955,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     }
 
     setLoadingStep(
-      inputSourceType === 'file' 
+      activeType === 'file' 
         ? 'Extracting text layouts and preparing document vector mappings...' 
-        : inputSourceType === 'website' 
+        : activeType === 'website' 
           ? 'Scraping website markup and distilling body articles...' 
           : 'Analyzing video metadata & extracting transcripts...'
     );
@@ -4043,21 +4044,21 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 setCurrentScreen('app');
                 window.scrollTo(0, 0);
                 setTimeout(() => {
-                  handleSummarize(undefined, input);
+                  handleSummarize(undefined, input, 'video');
                 }, 150);
               } else if (type === 'website') {
                 setInputWebsiteUrl(input);
                 setCurrentScreen('app');
                 window.scrollTo(0, 0);
                 setTimeout(() => {
-                  handleSummarize(undefined, input);
+                  handleSummarize(undefined, input, 'website');
                 }, 150);
               } else if (type === 'text') {
                 setPastedContentText(input);
                 setCurrentScreen('app');
                 window.scrollTo(0, 0);
                 setTimeout(() => {
-                  handleSummarize(undefined, 'https://www.zipytiny.app/pasted-text');
+                  handleSummarize(undefined, 'https://www.zipytiny.app/pasted-text', 'text');
                 }, 150);
               } else if (type === 'file') {
                 if (filesList && filesList.length > 0) {
@@ -4065,7 +4066,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   setCurrentScreen('app');
                   window.scrollTo(0, 0);
                   setTimeout(() => {
-                    handleSummarize(undefined, 'https://www.zipytiny.app/uploaded-files');
+                    handleSummarize(undefined, 'https://www.zipytiny.app/uploaded-files', 'file');
                   }, 150);
                 } else {
                   setCurrentScreen('app');
