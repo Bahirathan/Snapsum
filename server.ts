@@ -811,6 +811,21 @@ app.get('/robots.txt', (req, res) => {
   res.send('User-agent: *\nAllow: /\nSitemap: https://www.zipytiny.app/sitemap.xml');
 });
 
+app.get('/llms.txt', (req, res) => {
+  const filePath = path.join(process.cwd(), 'public', 'llms.txt');
+  if (fs.existsSync(filePath)) {
+    res.type('text/plain');
+    return res.sendFile(filePath);
+  }
+  // Try dist in production context if public doesn't exist
+  const distPath = path.join(process.cwd(), 'dist', 'llms.txt');
+  if (fs.existsSync(distPath)) {
+    res.type('text/plain');
+    return res.sendFile(distPath);
+  }
+  res.status(404).send('Not Found');
+});
+
 app.get('/sitemap.xml', async (req, res) => {
   const summaries = await listSummaries();
   const urls = summaries.map(s => `

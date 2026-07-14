@@ -41,25 +41,77 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Zipytiny",
-        "operatingSystem": "All",
-        "applicationCategory": "MultimediaApplication",
-        "genre": "AI Video Processing Utility",
-        "description": "Premium AI-powered universal video knowledge engine. Summarize YouTube videos, Vimeo links, local MP4 files, and web transcripts instantly with studio-grade audio synthesis and markdown exports.",
-        "offers": {
-          "@type": "Offer",
-          "price": "0.00",
-          "priceCurrency": "USD",
-          "description": "Free sandbox tier with daily guest processing limits. Paid premium plans are available."
-        },
-        "featureList": [
-          "Instant YouTube & Vimeo video summaries",
-          "Local MP4 file audio transcription & summary",
-          "Premium studio-grade Text-to-Speech (TTS) voiceovers",
-          "High-quality Markdown summary document downloads",
-          "Specialized synthesis presets: Standard Thesis, Academic Study, Viral Bulletin, Shortened Video",
-          "Custom translation and multi-language support (English, Arabic, etc.)"
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "name": "Zipytiny",
+            "url": "https://www.zipytiny.app/",
+            "operatingSystem": "All",
+            "applicationCategory": "MultimediaApplication, EducationalApplication, ProductivityApplication",
+            "genre": "AI Video Processing & Knowledge Engine",
+            "description": "Premium AI-powered universal video knowledge engine. Summarize YouTube videos, Vimeo links, local MP4 files, audio recordings, and documents instantly with studio-grade audio synthesis and markdown exports.",
+            "offers": {
+              "@type": "Offer",
+              "price": "0.00",
+              "priceCurrency": "USD",
+              "description": "Free sandbox tier with daily guest limits. Paid premium plans are available."
+            },
+            "featureList": [
+              "Instant YouTube & Vimeo video summaries",
+              "Local MP4 file audio transcription & summary",
+              "Local document analysis (PDF, Word, Excel, PowerPoint, Text, Screenshot OCR)",
+              "Premium studio-grade Text-to-Speech (TTS) voiceovers",
+              "High-quality Markdown summary document downloads",
+              "Specialized synthesis presets: Standard Thesis, Academic Study, Viral Bulletin, Shortened Video",
+              "Interactive multiple-choice diagnostics & study quizzes with rationales",
+              "Custom translation and multi-language support with full RTL Arabic compatibility"
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is Zipytiny?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Zipytiny is a universal AI-powered video summarizer, audio transcription utility, and cognitive learning workstation designed to help you process video, audio, and documents (PDF, Word) in seconds instead of watching hours of footage."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How do I summarize a YouTube video using Zipytiny?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Simply paste any YouTube or Vimeo video URL into Zipytiny's input bar on the main dashboard. Zipytiny will immediately transcribe the audio, extract timestamps, generate core takeaways, synthesize a blog post, design a dynamic mind map, and create an interactive study quiz."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does Zipytiny support local files like MP4 or PDF?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes! Zipytiny supports uploading local video files (MP4, WebM, MOV), audio recordings (MP3, WAV, M4A), and documents (PDF, Word, Excel, PowerPoint) as well as screenshot OCR text extraction."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can I export summaries from Zipytiny to Notion?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes! You can copy highly-formatted markdown structures with a single click, perfectly styled for easy import into Notion, Obsidian, Evernote, and other personal knowledge management tools."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does Zipytiny support languages other than English?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Absolutely! Zipytiny supports translating and summarizing content in over 15 world languages, including Arabic, Spanish, French, German, Japanese, Portuguese, Hindi, and Chinese, with complete RTL (Right-to-Left) reading compatibility for Arabic text."
+                }
+              }
+            ]
+          }
         ]
       }
     </script>

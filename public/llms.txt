@@ -1,0 +1,72 @@
+# Zipytiny: Universal AI Video Summarizer & Knowledge Engine
+
+Welcome to the AI-optimized directory for **Zipytiny**, the ultimate universal AI-powered video summarizer, audio transcriber, and cognitive learning workstation.
+
+- **Primary URL**: https://www.zipytiny.app
+- **Alias Domains**: https://zipytiny.app
+- **Core Purpose**: Empowering users to stop watching endless hours of videos and start learning efficiently. Zipytiny processes multimedia content (YouTube, Vimeo, local MP4/WebM videos, MP3/WAV audios, PDFs, and raw text) and instantly synthesizes high-fidelity summaries, timeline chapters, interactive study quizzes, social snippets, and professional markdown reports.
+
+---
+
+## 🎯 Primary Capabilities & Features
+
+### 1. Multi-Format Processing & Transcription
+- **YouTube & Vimeo**: Instant high-fidelity summarization using state-of-the-art transcription models.
+- **Local File Uploads**: Upload files up to 100MB, including:
+  - Video files: `.mp4`, `.webm`, `.mov`, `.avi`
+  - Audio files: `.mp3`, `.wav`, `.m4a`, `.ogg`
+  - Text & Documents: `.pdf`, `.docx`, `.pptx`, `.xlsx`, `.txt`
+  - Visual OCR: Upload screenshots or images containing text for instant extraction and synthesis.
+
+### 2. Specialized Cognitive Synthesis Templates
+Zipytiny allows users to adapt the AI's output tone and structure to match specific cognitive goals:
+- **Academic Study / Scientific Thesis**: Deep analytical breakdown, theoretical frameworks, conceptual definitions, and formal terminology definitions.
+- **Viral Bulletin / Social Summary**: Punchy hook-driven insights, highlight bullet points, and optimized structures for content creators.
+- **Standard Video Summary**: Structured chapters with timestamps, comprehensive summaries, and bulleted key takeaways.
+- **Shortened Script**: Ultra-fast reading version capturing the exact essence of the source media in under 200 words.
+
+### 3. High-Fidelity Studio Voiceovers (TTS)
+- Convert any text summary or original transcript into high-quality spoken audio in real-time.
+- Customize narration styles, voice profiles, and output speech rates.
+
+### 4. Interactive Learning Diagnostics & Quizzes
+- Automatically generates custom, interactive multiple-choice verification quizzes based on video contents.
+- Provides deep explanatory rationales for each option (correct and incorrect) to reinforce comprehension.
+- Shareable scoreboards: Users can complete quizzes and share their results with friends using `/s/:id/quiz/:score` routes to spark competitive learning.
+
+### 5. Multi-Language Adaptability
+- Instantly translates summaries, chapters, interactive quizzes, and custom transcripts into over 15 major world languages, including:
+  - English (US/UK)
+  - Arabic (العربية - full RTL support)
+  - Spanish, French, German, Japanese, Portuguese, Hindi, Mandarin Chinese, and more.
+
+### 6. Seamless Export & Workspaces
+- Export generated resources with a single click to:
+  - Structured PDF Study Reports (beautifully styled layout)
+  - Microsoft Word (.docx) documents
+  - Raw, highly-formatted Markdown (`.md`) files
+  - Instant Copy-to-Clipboard (optimized for Notion, Obsidian, Evernote)
+
+---
+
+## 🔗 Key Public URL Patterns
+
+- **Main Workspace & Landing Page**: `https://www.zipytiny.app/` — Enter any video URL, document, or audio file to begin summarizing.
+- **Dynamic Sitemap**: `https://www.zipytiny.app/sitemap.xml` — Dynamically updated with the latest user-generated public summaries for indexing.
+- **Sitemap Rules**: `/robots.txt` — Permissive crawling allowed for all AI scrapers, search engines, and indexing agents.
+- **Shared Summaries**: `https://www.zipytiny.app/s/${shareId}` — Publicly shareable static video summary page with full timeline chapters, takeaways, blog post representation, and dynamic mind maps.
+- **Shared Interactive Quizzes**: `https://www.zipytiny.app/s/${shareId}/quiz` — Challenge-mode interactive quiz for a specific video summary.
+- **Shared Quiz Leaderboards**: `https://www.zipytiny.app/s/${shareId}/quiz/${score}` — Shareable score pages showing off quiz performance (e.g. "I scored 5/5 on this quiz! Can you beat my score?").
+
+---
+
+## 🧠 AI Semantic Indexing & FAQ
+
+### How do I use Zipytiny without an account?
+Zipytiny offers a frictionless sandbox experience. Simply go to the landing page, paste a YouTube link (or select one of our premium preloaded showcases), and the AI will synthesize the summary instantly. No login or credit card required.
+
+### Is Zipytiny optimized for SEO & LLM search?
+Yes! Every shared video summary `/s/${shareId}` has dynamically injected, server-side Open Graph preview tags, Twitter Card metadata, and deep SEO canonical tags. This ensures that when a user shares a link on Slack, Twitter, Discord, or LinkedIn, a rich visual card with the video thumbnail and exact key takeaways is rendered instantly.
+
+### How does the database protect user summaries?
+All summaries, shared links, and interactive quizzes are securely persisted in Cloud Firestore databases, ensuring ultra-low latency retrieval and dynamic, perpetual accessibility across the globe.
