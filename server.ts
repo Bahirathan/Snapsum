@@ -833,6 +833,12 @@ app.get('/sitemap.xml', async (req, res) => {
   res.send(sitemap);
 });
 
+// Google Search Console Domain Verification File
+app.get('/google63b0633f78ae3e55.html', (req, res) => {
+  res.type('text/html');
+  res.send('google-site-verification: google63b0633f78ae3e55.html');
+});
+
 // JSON hydration API
 app.get('/api/shared-summary/:id', async (req, res) => {
   const summary = await getSummary(req.params.id);
