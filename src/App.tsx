@@ -2847,12 +2847,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
     // 🌟 Frictionless Demo Interceptor for Guest Users (No Login Required)
     if (!visitorUser) {
-      let matchedPreload = PRELOADED_VIDEOS.find(
+      const matchedPreload = PRELOADED_VIDEOS.find(
         (video) => finalVideoUrl && (finalVideoUrl.includes(video.metadata.videoId) || video.metadata.videoUrl === finalVideoUrl)
       );
-      if (!matchedPreload) {
-        matchedPreload = PRELOADED_VIDEOS.find(v => v.metadata.videoId === 'intro-ai');
-      }
 
       if (matchedPreload) {
         setLoading(true);

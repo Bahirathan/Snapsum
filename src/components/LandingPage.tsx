@@ -1414,7 +1414,7 @@ export default function LandingPage({
               {
                 title: 'Negotiation Strategy & Business Deals',
                 creator: 'Harvard Business • Case Study',
-                url: 'https://www.youtube.com/watch?v=qp0HIF3SfI4',
+                url: 'https://www.youtube.com/watch?v=negotiation-strategy',
                 duration: '20 mins',
                 processing: '~20s',
                 image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=400&auto=format&fit=crop',
@@ -1424,7 +1424,7 @@ export default function LandingPage({
               {
                 title: 'How to Build a Billion-Dollar Startup',
                 creator: "Lenny's Podcast • Founder Stories",
-                url: 'https://www.youtube.com/watch?v=intro-ai',
+                url: 'https://www.youtube.com/watch?v=billion-dollar-startup',
                 duration: '45 mins',
                 processing: '~45s',
                 image: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=400&auto=format&fit=crop',
@@ -1434,7 +1434,7 @@ export default function LandingPage({
               {
                 title: 'iPhone 2007 Original Product Launch Keynote',
                 creator: 'Apple Historical Archives',
-                url: 'https://www.youtube.com/watch?v=UF8uR6Z6KLc',
+                url: 'https://www.youtube.com/watch?v=iphone-2007',
                 duration: '50 mins',
                 processing: '~12s',
                 image: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?q=80&w=400&auto=format&fit=crop',

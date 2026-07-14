@@ -373,4 +373,319 @@ Your time is limited, so don't waste it living someone else's life. Be brave eno
       },
     ],
   },
+  {
+    metadata: {
+      videoId: 'negotiation-strategy',
+      videoUrl: 'https://www.youtube.com/watch?v=negotiation-strategy',
+      title: 'Negotiation Strategy & Business Deals',
+      author: 'Harvard Business School',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=400&auto=format&fit=crop',
+      duration: '20 mins',
+    },
+    summary: 'This masterclass breaks down fundamental negotiation principles used in high-stakes business deals, focusing on the Harvard Method of Principled Negotiation. It covers how to separate people from the problem, focus on interests rather than positions, invent options for mutual gain, and insist on using objective criteria. Understanding your BATNA (Best Alternative to a Negotiated Agreement) and your counterpart\'s motivation are shown to be the ultimate sources of leverage.',
+    takeaways: [
+      'Focus on interests, not positions: Positions are what people say they want; interests are the underlying needs, fears, and desires driving those demands.',
+      'Always calculate your BATNA: Your Best Alternative to a Negotiated Agreement determines your walk-away power and real leverage in any situation.',
+      'Separate the people from the problem: Human emotions and egos often derail critical commercial deals. Be soft on the people but tough on the issues.',
+      'Create win-win options: Expand the pie before trying to divide it. Brainstorm multiple creative options that serve both sides\' interests.',
+      'Anchor effectively: The first offer sets the conversational anchor. Only anchor first if you have strong market information; otherwise, listen first.'
+    ],
+    chapters: [
+      {
+        timestamp: '00:00',
+        secondsCount: 0,
+        title: 'Principled Negotiation Introduction',
+        takeaway: 'Transitioning from positional bargaining (adversarial or soft) to principled bargaining (win-win cooperative problem solving).'
+      },
+      {
+        timestamp: '04:15',
+        secondsCount: 255,
+        title: 'The Power of Interests vs Positions',
+        takeaway: 'Uncovering the true underlying interests allows negotiators to find creative compromises that positions would block.'
+      },
+      {
+        timestamp: '08:30',
+        secondsCount: 510,
+        title: 'BATNA: The Ultimate Source of Leverage',
+        takeaway: 'Negotiation strength doesn\'t come from size or wealth, but from the viability of your walk-away alternative.'
+      },
+      {
+        timestamp: '13:00',
+        secondsCount: 780,
+        title: 'Value Creation: Expanding the Pie',
+        takeaway: 'Brainstorming non-monetary trade-offs (like delivery speed or warranty terms) to create joint gains for both parties.'
+      },
+      {
+        timestamp: '17:45',
+        secondsCount: 1065,
+        title: 'Objective Criteria and Anchoring',
+        takeaway: 'Basing agreements on fair standards (like market rates or legal precedents) rather than a battle of wills.'
+      }
+    ],
+    blogPost: `# The Harvard Guide to Principled Negotiation: Securing Win-Win Business Deals\n\nNegotiating is a daily human activity, yet most people do it poorly. They fall into positional bargaining, either aggressively demanding concessions (hard positional) or yielding too easily to maintain harmony (soft positional).\n\n## Moving to Principled Negotiation\nDeveloped by the Harvard Negotiation Project, **Principled Negotiation** is designed to decide issues on their merits rather than through a battle of wills. It rests on four basic pillars:\n\n1. **People:** Separate the people from the problem.\n2. **Interests:** Focus on interests, not positions.\n3. **Options:** Generate a variety of possibilities before deciding what to do.\n4. **Criteria:** Insist that the result be based on some objective standard.\n\n## The Concept of BATNA\nYour **BATNA** (Best Alternative to a Negotiated Agreement) is your ultimate shield and sword. It is the course of action you will take if no agreement is reached. The stronger your BATNA, the greater your negotiating power. If your alternative is weak, you have very little room to walk away.`,
+    twitterThread: [
+      '1/ Struggling to close high-stakes business deals or get what you deserve? The Harvard Method of Principled Negotiation completely changes the game. Here is a masterclass breakdown on negotiating like a pro: 👇',
+      '2/ Crucial lesson 1: Focus on interests, not positions. Positions are stubborn, superficial demands ("I want a 15% raise"). Interests are the underlying drivers ("I need to cover my increased mortgage rate"). Solve interests, not positions.',
+      '3/ Crucial lesson 2: Separate the people from the problem. Ego and emotional reactivity ruin more deals than economics. Be deeply respectful to the people, but absolutely firm on the facts and metrics.',
+      '4/ Crucial lesson 3: Know your BATNA (Best Alternative to a Negotiated Agreement). Your power is 100% defined by your walk-away alternative. If you have no backup plan, you aren\'t negotiating—you are pleading.',
+      '5/ Crucial lesson 4: Expand the pie before slicing it. Bring non-monetary items (timing, terms, resources) to the table to trade off low-cost items for you that have high value to them. Negotiate holistically. 🎯'
+    ],
+    socialSnippet: '🤝 Master the art of negotiation! Discover the Harvard method of principled negotiation: separate people from problems, focus on interests, and maximize your BATNA to secure exceptional win-win deals. #Negotiation #BusinessSkills #HarvardBusiness #LeadershipTips',
+    quiz: [
+      {
+        question: 'What does the acronym BATNA stand for in negotiation strategy?',
+        options: [
+          'Best Alternative to a Negotiated Agreement',
+          'Business Association Tactics and National Alliances',
+          'Buyer Agreement Terms and Negotiation Allotment',
+          'Best Allocation of Tactics and Nominal Assets'
+        ],
+        answerIndex: 0,
+        explanation: 'BATNA stands for Best Alternative to a Negotiated Agreement, representing your walk-away power.'
+      },
+      {
+        question: 'What is the main difference between a Position and an Interest?',
+        options: [
+          'Positions are shallow demands; Interests are the underlying needs and desires.',
+          'Positions are financial terms; Interests are social factors.',
+          'Interests are legally binding; Positions are informal suggestions.',
+          'There is no difference; they are synonymous terms.'
+        ],
+        answerIndex: 0,
+        explanation: 'A position is a superficial demand (what you say you want), while an interest is the underlying motivation (why you want it).'
+      }
+    ],
+    mindmap: [
+      {
+        concept: 'Principled Negotiation',
+        category: 'Core Thesis',
+        description: 'Harvard framework focusing on merits, fair criteria, and win-win solutions.'
+      },
+      {
+        concept: 'BATNA',
+        category: 'Principled Negotiation',
+        description: 'Best Alternative to a Negotiated Agreement, representing your ultimate leverage.'
+      },
+      {
+        concept: 'Interests vs Positions',
+        category: 'Principled Negotiation',
+        description: 'Separating what parties demand from what they actually need.'
+      },
+      {
+        concept: 'Objective Criteria',
+        category: 'Principled Negotiation',
+        description: 'Using fair standards like market rates, laws, or professional certifications.'
+      }
+    ]
+  },
+  {
+    metadata: {
+      videoId: 'billion-dollar-startup',
+      videoUrl: 'https://www.youtube.com/watch?v=billion-dollar-startup',
+      title: 'How to Build a Billion-Dollar Startup',
+      author: "Lenny's Podcast",
+      thumbnailUrl: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=400&auto=format&fit=crop',
+      duration: '45 mins',
+    },
+    summary: 'In this masterclass, elite product experts and startup founders share the playbook for scaling a startup from zero to a billion-dollar valuation. The discussion breaks down the exact mechanics of finding Product-Market Fit (PMF), building sustainable growth loops over transactional funnels, optimizing customer retention, and scaling from a single core product into a multi-product platform engine.',
+    takeaways: [
+      'Product-Market Fit is not a binary switch: It is a spectrum. Measure it using the Sean Ellis test (how disappointed would users be if your product disappeared tomorrow) and cohort retention curves.',
+      'Prefer Growth Loops over Funnels: Traditional marketing funnels have a terminal state. Growth loops are self-sustaining engines where an active cohort\'s engagement organically feeds the acquisition of the next.',
+      'Retention is the ultimate metric: If you have a leaky bucket, pouring in more marketing acquisition spend is useless. Prioritize retention cohort stabilization first before scaling paid acquisition.',
+      'Find your North Star Metric: Identify the single metric that best captures the core value your product delivers to its customers, and align all engineering, product, and sales teams around it.',
+      'Multi-product inflection: Don\'t launch product #2 too early. Master your core product line first, and only scale into adjacent markets when your primary engine is self-sustaining.'
+    ],
+    chapters: [
+      {
+        timestamp: '00:00',
+        secondsCount: 0,
+        title: 'The Truth About Product-Market Fit',
+        takeaway: 'How to run quantitative validation on product demand, and the qualitative signals that confirm genuine product-market fit.'
+      },
+      {
+        timestamp: '10:15',
+        secondsCount: 615,
+        title: 'Designing Virality and Growth Loops',
+        takeaway: 'How companies like Slack and Zoom use product-led growth loops to turn active users into automatic distributors.'
+      },
+      {
+        timestamp: '21:30',
+        secondsCount: 1290,
+        title: 'Plugging the Leaky Bucket: Cohort Retention',
+        takeaway: 'Analyzing user retention cohorts and finding the "Aha! moment" (e.g., adding 10 friends in 7 days) to lock in lifelong engagement.'
+      },
+      {
+        timestamp: '32:45',
+        secondsCount: 1965,
+        title: 'Choosing Your North Star Metric',
+        takeaway: 'Aligning corporate strategy around a value-delivery metric (e.g., active listening hours for Spotify) rather than vanity metrics.'
+      },
+      {
+        timestamp: '40:00',
+        secondsCount: 2400,
+        title: 'Scaling Into a Multi-Product Platform',
+        takeaway: 'The strategic timing and playbook for introducing secondary product lines to double the company\'s total addressable market.'
+      }
+    ],
+    blogPost: `# Building a Unicorn: Playbook for a Billion-Dollar Startup\n\nScale is the ultimate goal of modern venture-backed startups, yet over 90% of them fail before reaching self-sustainability. To build a "unicorn," founders must master product mechanics, cohort retention, and non-linear growth dynamics.\n\n## 1. Defining Product-Market Fit (PMF)\nMany founders mistake early PR spikes or marketing signups for Product-Market Fit. In reality, PMF is confirmed by a flat, stable cohort retention curve. If your user retention eventually asymptotes and stabilizes parallel to the x-axis, you have a viable product. If it continues its downward trajectory toward zero, you have a leaky bucket.\n\n## 2. Growth Loops vs. Funnels\nTraditional marketing relies on acquisition funnels (AIDA model). You pay for ads, drive traffic, get signups, and collect revenue. The problem? Funnels are linear and require constant capital. \n\nBillion-dollar companies are built on **Growth Loops**:\n- **User signs up** ➔ **Invites teammates** ➔ **Teammates sign up** ➔ **Invite more teammates**.\nThese loops feed themselves, turning user activity directly into free, compounding acquisition.`,
+    twitterThread: [
+      '1/ Want to build a compounding tech giant? Signups are vanity; retention and loops are sanity. Here are the core insights on how to build a billion-dollar startup: 👇',
+      '2/ Product-Market Fit isn\'t an opinion; it is a math problem. Look at your retention cohorts. If the line flattens out over time (e.g., 30% of users stick around forever), you have PMF. If it slides to zero, stop marketing and fix the product.',
+      '3/ Funnels are expensive; Loops are self-sustaining. Slack grew because one user inside a company naturally invited colleagues to collaborate. Build a product that gets objectively better the more colleagues are on it.',
+      '4/ Find your "Aha! Moment." Facebook found that users who added 10 friends in 14 days were retained forever. Slack found it was 2,000 sent messages. Find this metric for your product and align onboarding to hit it.',
+      '5/ The North Star Metric: Choose one metric that tracks value delivered to customers, NOT money made. For Airbnb, it is nights booked. For Spotify, it is music stream time. Optimize value, and revenue will follow. 🚀'
+    ],
+    socialSnippet: '🚀 Signups are vanity, retention is sanity! Unpack the playbook for building a billion-dollar tech startup: design viral product-led growth loops, flatline your retention curves, and locate your core North Star Metric. #Startups #ProductManagement #VentureCapital #GrowthStrategy',
+    quiz: [
+      {
+        question: 'Which signal is the most accurate quantitative proof of Product-Market Fit?',
+        options: [
+          'A flat, stabilized cohort retention curve parallel to the x-axis',
+          'A massive spike in PR coverage and website pageviews',
+          'Winning a prestigious local startup pitch competition',
+          'Securing a high-valuation seed round from venture capital'
+        ],
+        answerIndex: 0,
+        explanation: 'A flat retention curve indicates a stable group of active users who find ongoing, recurring value in the product.'
+      },
+      {
+        question: 'What makes a Growth Loop superior to a standard marketing Funnel?',
+        options: [
+          'Growth loops are self-sustaining engines where user activity fuels new acquisition.',
+          'Growth loops are cheaper to build initially but require more manual effort.',
+          'Funnels are outdated and never work under any circumstances.',
+          'Growth loops focus exclusively on pricing plans and discount deals.'
+        ],
+        answerIndex: 0,
+        explanation: 'Unlike linear funnels that require continuous paid inputs, growth loops turn active user engagement into new customer acquisitions.'
+      }
+    ],
+    mindmap: [
+      {
+        concept: 'Unicorn Scaling Playbook',
+        category: 'Core Thesis',
+        description: 'Compounding start-up growth through product-led mechanics and stable retention.'
+      },
+      {
+        concept: 'Product-Market Fit',
+        category: 'Unicorn Scaling Playbook',
+        description: 'Unlocking a stabilized, non-zero asymptotic cohort retention curve.'
+      },
+      {
+        concept: 'Growth Loops',
+        category: 'Unicorn Scaling Playbook',
+        description: 'Self-feeding viral mechanisms turning user engagement into free distribution.'
+      },
+      {
+        concept: 'North Star Metric',
+        category: 'Unicorn Scaling Playbook',
+        description: 'A single, central corporate metric tracking true value delivered to customers.'
+      }
+    ]
+  },
+  {
+    metadata: {
+      videoId: 'iphone-2007',
+      videoUrl: 'https://www.youtube.com/watch?v=iphone-2007',
+      title: 'iPhone 2007 Original Product Launch Keynote',
+      author: 'Apple Historical Archives',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?q=80&w=400&auto=format&fit=crop',
+      duration: '50 mins',
+    },
+    summary: 'This masterclass analyzes the historic 2007 Apple keynote address where Steve Jobs unveiled the original iPhone. The analysis focuses on presentation delivery, product positioning, and the design thinking behind combining three distinct devices—a widescreen iPod with touch controls, a revolutionary mobile phone, and a breakthrough internet communications device—into a single handheld unit that changed personal computing forever.',
+    takeaways: [
+      'The Power of the Rule of Three: Steve Jobs structured the entire introduction around three devices, repeating them over and over until the audience realized they were all housed in a single phone.',
+      'Positioning against competitors: Jobs positioned the iPhone against contemporary smartphones (like Moto Q or BlackBerry) by showing they were neither smart nor easy to use.',
+      'The multi-touch breakthrough: Replacing physical keyboards and styluses with multi-touch glass and gestures allowed the software user interface to evolve dynamically based on the application.',
+      'The visual presentation masterclass: Keynotes are theatrical productions. Use large, high-contrast visual slides with minimal text, high suspense, and perfect comedic timing.',
+      'Desktop-class web browsing: Demolishing "baby internet" WAP browsers by running full, desktop-class Safari on a mobile phone, marking the transition to true mobile computing.'
+    ],
+    chapters: [
+      {
+        timestamp: '00:00',
+        secondsCount: 0,
+        title: 'The Great Presentation Build-up',
+        takeaway: 'How Steve Jobs sets the stage, building intense anticipation by teasing three revolutionary products before merging them.'
+      },
+      {
+        timestamp: '12:00',
+        secondsCount: 720,
+        title: 'Redefining the Smartphone Interface',
+        takeaway: 'Critiquing physical keyboards and the stylus, introducing multi-touch technology as a magical, highly intuitive replacement.'
+      },
+      {
+        timestamp: '22:30',
+        secondsCount: 1350,
+        title: 'The Hardware and Software Integration',
+        takeaway: 'Demonstrating OS X running on a phone, enabling real desktop-grade software, multitasking, and scrolling physics.'
+      },
+      {
+        timestamp: '35:15',
+        secondsCount: 2115,
+        title: 'Desktop Internet in Your Pocket',
+        takeaway: 'Unveiling fully responsive Google Maps, Safari browser, and email integration on a mobile screen, killing WAP.'
+      },
+      {
+        timestamp: '45:00',
+        secondsCount: 2700,
+        title: 'Pricing, Partners, and the Future of Mobile',
+        takeaway: 'The commercial rollout details, partnering with AT&T, pricing structure, and the predicted market share disruption.'
+      }
+    ],
+    blogPost: `# Presentation Masterclass: Analyzing Steve Jobs’ 2007 iPhone Keynote\n\nOn January 9, 2007, Steve Jobs stepped onto the stage at San Francisco\'s Moscone Center and delivered what is widely considered the greatest product launch presentation in history. \n\n## 1. The Magical Hook: The Rule of Three\nJobs began with a simple but masterful framing. He told the audience that Apple was introducing three revolutionary products:\n1. A widescreen iPod with touch controls.\n2. A revolutionary mobile phone.\n3. A breakthrough internet communications device.\n\nHe repeated these three items—*iPod, phone, internet communicator*—several times until the crowd caught on: "These are not three separate devices. This is one device, and we are calling it **iPhone**."\n\n## 2. Redefining the Hardware Layer\nSmartphones of 2007 had plastic keyboards occupying 40% of their face. Jobs pointed out the fundamental flaw: whether you are using email, music, or maps, the buttons remain static. By replacing the keyboard with a multi-touch glass display, Apple created a canvas where the software could change dynamically depending on the app.\n\n## 3. Desktop Internet in Your Pocket\nPrior to the iPhone, mobile internet was a frustrating, text-only experience (WAP). Jobs showcased the mobile Safari browser rendering the full, uncompromised web. He also introduced fluid pinch-to-zoom gestures and inertia scrolling, making physical interaction feel tactile and magical.`,
+    twitterThread: [
+      '1/ On Jan 9, 2007, Steve Jobs delivered the most influential product presentation ever made. The storytelling, suspense, and positioning were flawless. Here is a breakdown of his keynote secrets: 👇',
+      '2/ The Setup: He teased 3 separate devices: a widescreen touch iPod, a mobile phone, and an internet communicator. Repeating them over and over created massive suspense before dropping the punchline: "They are one device."',
+      '3/ The Contrast: Jobs showed competitors (Nokia, BlackBerry, Moto) and mapped them on a 2x2 grid: "Smart" vs. "Easy to use." He argued competitors were hard to use and not very smart, positioning iPhone as the only highly smart AND easy phone.',
+      '4/ The Keyboard Flaw: Why buttons on a phone? If you add a new software feature, you can\'t add a physical key. Glass with multi-touch solved this. The UI became 100% software, updating instantly for every application.',
+      '5/ Tactile Magic: Inertia scrolling and pinch-to-zoom made interaction feel biological. The device responded to physical touch intuitively. This keynote redefined communication, presentation design, and technology. 📱'
+    ],
+    socialSnippet: '📱 Step back in time to the most famous product launch in history! Unpack Steve Jobs’ 2007 iPhone keynote: discover the rules of three, competitive grid positioning, and the multi-touch interface that changed computing forever. #SteveJobs #PresentationDesign #ProductStrategy #AppleHistory',
+    quiz: [
+      {
+        question: 'What three separate categories of devices did Steve Jobs claim Apple was launching in 2007?',
+        options: [
+          'An iPod, a mobile phone, and an internet communicator',
+          'A camera, a calculator, and a desktop PC',
+          'A music player, a digital watch, and a GPS system',
+          'A gaming console, a video recorder, and a smartphone'
+        ],
+        answerIndex: 0,
+        explanation: 'Jobs repeated "a widescreen iPod with touch controls, a revolutionary mobile phone, and a breakthrough internet communications device" to set up the reveal.'
+      },
+      {
+        question: 'Why did Steve Jobs argue that physical keyboards were a massive design flaw for smartphones?',
+        options: [
+          'They took up valuable screen space and could not change or adapt to different applications.',
+          'They broke too easily and were expensive to manufacture.',
+          'They were too small for the average user\'s fingers.',
+          'They only supported English layout characters.'
+        ],
+        answerIndex: 0,
+        explanation: 'Physical keyboards are permanent, whereas a software-based touch UI adapts dynamically to the requirements of each active application.'
+      }
+    ],
+    mindmap: [
+      {
+        concept: '2007 iPhone Launch Keynote',
+        category: 'Core Thesis',
+        description: 'Analyzing the marketing, positioning, and engineering breakthroughs of the original iPhone.'
+      },
+      {
+        concept: 'The Rule of Three',
+        category: '2007 iPhone Launch Keynote',
+        description: 'Using three distinct descriptors to hook attention and create narrative suspense.'
+      },
+      {
+        concept: 'Dynamic Software UI',
+        category: '2007 iPhone Launch Keynote',
+        description: 'Replacing permanent physical buttons with software elements on a touch display.'
+      },
+      {
+        concept: 'Desktop Mobile Web',
+        category: '2007 iPhone Launch Keynote',
+        description: 'Transitioning from text-only WAP protocols to full, uncompromised Safari web browsing.'
+      }
+    ]
+  },
 ];
