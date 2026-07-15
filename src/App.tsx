@@ -6773,7 +6773,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       key={demo.metadata.videoId}
                       onClick={() => handleLoadStoredItem(demo)}
                       className={`w-full text-left p-2.5 rounded-2xl border transition duration-300 group relative overflow-hidden flex gap-3 ${
-                        activeSummary?.metadata.videoId === demo.metadata.videoId
+                        activeSummary?.metadata?.videoId === demo.metadata.videoId
                           ? 'border-transparent bg-neutral-100 dark:bg-zinc-800 shadow-inner'
                           : 'border-transparent hover:bg-neutral-50 dark:hover:bg-zinc-900 shadow-xs hover:scale-102 hover:border-black/[0.02]'
                       }`}
@@ -7269,11 +7269,13 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           const isSelected = selectedStackVideoIds.includes(stored.id);
                           
                           // Determine source properties
-                          const isYouTube = stored.response.metadata.videoUrl?.includes('youtube.com') || stored.response.metadata.videoUrl?.includes('youtu.be') || stored.id.length === 11;
-                          const isDoc = stored.id.startsWith('doc_') || stored.response.metadata.title.toLowerCase().endsWith('.pdf') || stored.response.metadata.title.toLowerCase().endsWith('.docx') || stored.response.metadata.title.toLowerCase().endsWith('.txt') || stored.response.metadata.title.toLowerCase().endsWith('.ppt') || stored.response.metadata.title.toLowerCase().endsWith('.pptx');
-                          const isWeb = stored.id.startsWith('web_') || (stored.response.metadata.videoUrl?.includes('http') && !isYouTube);
+                          const videoUrl = stored.response?.metadata?.videoUrl || '';
+                          const title = stored.response?.metadata?.title || 'Untitled summary';
+                          const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be') || stored.id.length === 11;
+                          const isDoc = stored.id.startsWith('doc_') || title.toLowerCase().endsWith('.pdf') || title.toLowerCase().endsWith('.docx') || title.toLowerCase().endsWith('.txt') || title.toLowerCase().endsWith('.ppt') || title.toLowerCase().endsWith('.pptx');
+                          const isWeb = stored.id.startsWith('web_') || (videoUrl.includes('http') && !isYouTube);
                           
-                          const isArabic = /[\u0600-\u06FF]/.test(stored.response.summary || '');
+                          const isArabic = /[\u0600-\u06FF]/.test(stored.response?.summary || '');
                           const language = isArabic ? 'Arabic' : 'English';
                           const flag = isArabic ? '🇸🇦' : '🇺🇸';
 
@@ -7297,7 +7299,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                   ? isSelected
                                     ? 'bg-indigo-50/80 border-indigo-200 dark:bg-indigo-950/20 dark:border-indigo-900/40 shadow-xs'
                                     : 'border-neutral-150 hover:bg-neutral-50 dark:border-zinc-800 dark:hover:bg-zinc-900'
-                                  : activeSummary?.metadata.videoId === stored.id 
+                                  : activeSummary?.metadata?.videoId === stored.id 
                                     ? 'bg-neutral-100/90 dark:bg-zinc-800/80 border-transparent shadow-inner' 
                                     : 'border-transparent bg-neutral-50 dark:bg-zinc-950/40 hover:bg-neutral-100/50 dark:hover:bg-zinc-850/30 hover:shadow-sm'
                               }`}
@@ -7344,7 +7346,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                               <div className="flex gap-3 items-start">
                                 {/* Thumbnail or icon placeholder */}
                                 <div className="relative w-16 h-11 sm:w-20 sm:h-13 rounded-xl bg-neutral-100 dark:bg-zinc-850 overflow-hidden shrink-0 shadow-sm border border-neutral-200/40 dark:border-zinc-800/60">
-                                  {stored.response.metadata.thumbnailUrl ? (
+                                  {stored.response?.metadata?.thumbnailUrl ? (
                                     <img 
                                       src={stored.response.metadata.thumbnailUrl} 
                                       alt="Thumbnail" 
@@ -7362,14 +7364,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                   
                                   {/* Duration display */}
                                   <div className="absolute right-1 bottom-1 bg-black/75 px-1 py-0.5 rounded text-[8px] font-mono text-white text-center leading-none">
-                                    {stored.response.metadata.duration || (isDoc ? `${Math.ceil((stored.response.summary || '').split(' ').length * 1.5)} words` : 'Text')}
+                                    {stored.response?.metadata?.duration || (isDoc ? `${Math.ceil((stored.response?.summary || '').split(' ').length * 1.5)} words` : 'Text')}
                                   </div>
                                 </div>
 
                                 {/* Title, Author, Date, Folder */}
                                 <div className="flex-1 min-w-0 space-y-1">
                                   <h4 className="text-[#1d1d1f] dark:text-zinc-200 text-xs font-semibold line-clamp-2 leading-tight group-hover:text-[#0071e3] transition text-left">
-                                    {stored.response.metadata.title}
+                                    {stored.response?.metadata?.title || 'Untitled summary'}
                                   </h4>
                                   <p className="text-[10px] text-neutral-400 dark:text-zinc-500 font-mono truncate text-left">
                                     Processed: {stored.savedAt}
@@ -9038,7 +9040,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             onClick={() => {
                               const score = calculateQuizScore();
                               const total = activeSummary?.quiz?.length || 5;
-                              const shareId = activeSummary?.shareId || activeSummary?.metadata.videoId || 'vid';
+                              const shareId = activeSummary?.shareId || activeSummary?.metadata?.videoId || 'vid';
                               const link = `${window.location.origin}/s/${shareId}/quiz/${score}`;
                               const text = `I scored ${score}/${total} on this video's interactive learning quiz on Zipytiny! 🎯 Can you beat my score? Take the challenge here:\n\n${link}`;
                               
@@ -9834,7 +9836,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                               <option value="">-- Swap Active Syllabus Content --</option>
                               {savedSummaries.filter(s => s && s.response && s.response.metadata).map((stored) => (
                                 <option key={stored.id} value={stored.id}>
-                                  {stored.response.metadata.title} ({stored.response.metadata.author || 'Anonymous'})
+                                  {stored.response.metadata?.title || 'Untitled summary'} ({stored.response.metadata?.author || 'Anonymous'})
                                 </option>
                               ))}
                             </select>
