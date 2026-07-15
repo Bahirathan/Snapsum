@@ -718,7 +718,7 @@ export default function App() {
   const defaultCachedUrls = [
     { url: 'https://www.youtube.com/watch?v=UF8uR6Z6KLc', title: 'Steve Jobs Stanford Commencement Address', type: 'video' },
     { url: 'https://www.youtube.com/watch?v=qp0HIF3SfI4', title: 'Simon Sinek: How Great Leaders Inspire Action', type: 'video' },
-    { url: 'https://www.youtube.com/watch?v=intro-ai', title: 'MIT Introduction to Artificial Intelligence', type: 'video' }
+    { url: 'https://www.youtube.com/watch?v=T5yxFiY96_0', title: 'MIT Introduction to Artificial Intelligence', type: 'video' }
   ];
 
   const allCachedUrls = [
@@ -2392,7 +2392,7 @@ export default function App() {
     } catch (e) {}
     return [
       { videoId: 'YCo78gA8_V0', title: 'Startups & Core Dedication', score: 3, total: 3, date: '21 Jun' },
-      { videoId: 'u4ZoJKF_VuA', title: 'Sinek: Leverage the Limbic System', score: 2, total: 3, date: '22 Jun' }
+      { videoId: 'qp0HIF3SfI4', title: 'Sinek: Leverage the Limbic System', score: 2, total: 3, date: '22 Jun' }
     ];
   });
   const [weakTopics, setWeakTopics] = useState<string[]>(() => {
@@ -6704,9 +6704,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <button
                           type="button"
                           onClick={() => {
-                            if (PRELOADED_VIDEOS && PRELOADED_VIDEOS[2]) {
-                              handleLoadStoredItem(PRELOADED_VIDEOS[2]);
-                            } else if (PRELOADED_VIDEOS && PRELOADED_VIDEOS[0]) {
+                            if (PRELOADED_VIDEOS && PRELOADED_VIDEOS[0]) {
                               handleLoadStoredItem(PRELOADED_VIDEOS[0]);
                             }
                           }}
@@ -6718,8 +6716,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <button
                           type="button"
                           onClick={() => {
-                            if (PRELOADED_VIDEOS && PRELOADED_VIDEOS[0]) {
-                              handleLoadStoredItem(PRELOADED_VIDEOS[0]);
+                            if (PRELOADED_VIDEOS && PRELOADED_VIDEOS[1]) {
+                              handleLoadStoredItem(PRELOADED_VIDEOS[1]);
                             }
                           }}
                           className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/80 text-amber-700 dark:text-amber-400 font-bold text-[10.5px] rounded-xl border border-amber-100/50 dark:border-amber-900/30 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-sm"
@@ -9420,7 +9418,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           <button
                             type="button"
                             onClick={() => {
-                              const sinek = PRELOADED_VIDEOS.find(p => p.metadata.videoId === 'u4ZoJKF_VuA');
+                              const sinek = PRELOADED_VIDEOS.find(p => p.metadata.videoId === 'qp0HIF3SfI4');
                               if (sinek) setActiveSummary(sinek);
                             }}
                             className="bg-neutral-900 hover:bg-neutral-800 text-white font-bold px-3 py-2 rounded-lg text-[10px] transition cursor-pointer"

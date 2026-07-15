@@ -277,8 +277,8 @@ Your time is limited, so don't waste it living someone else's life. Be brave eno
   },
   {
     metadata: {
-      videoId: 'intro-ai',
-      videoUrl: 'https://www.youtube.com/watch?v=intro-ai',
+      videoId: 'T5yxFiY96_0',
+      videoUrl: 'https://www.youtube.com/watch?v=T5yxFiY96_0',
       title: 'Introduction to Artificial Intelligence (MIT 6.S091)',
       author: 'MIT OpenCourseWare',
       thumbnailUrl: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=600&q=80',
@@ -375,8 +375,8 @@ Your time is limited, so don't waste it living someone else's life. Be brave eno
   },
   {
     metadata: {
-      videoId: 'negotiation-strategy',
-      videoUrl: 'https://www.youtube.com/watch?v=negotiation-strategy',
+      videoId: 'rCgGZ4D0eF0',
+      videoUrl: 'https://www.youtube.com/watch?v=rCgGZ4D0eF0',
       title: 'Negotiation Strategy & Business Deals',
       author: 'Harvard Business School',
       thumbnailUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=400&auto=format&fit=crop',
@@ -480,8 +480,8 @@ Your time is limited, so don't waste it living someone else's life. Be brave eno
   },
   {
     metadata: {
-      videoId: 'billion-dollar-startup',
-      videoUrl: 'https://www.youtube.com/watch?v=billion-dollar-startup',
+      videoId: 'OB50K1VPrM0',
+      videoUrl: 'https://www.youtube.com/watch?v=OB50K1VPrM0',
       title: 'How to Build a Billion-Dollar Startup',
       author: "Lenny's Podcast",
       thumbnailUrl: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=400&auto=format&fit=crop',
@@ -585,8 +585,8 @@ Your time is limited, so don't waste it living someone else's life. Be brave eno
   },
   {
     metadata: {
-      videoId: 'iphone-2007',
-      videoUrl: 'https://www.youtube.com/watch?v=iphone-2007',
+      videoId: 'vN4U5y_937A',
+      videoUrl: 'https://www.youtube.com/watch?v=vN4U5y_937A',
       title: 'iPhone 2007 Original Product Launch Keynote',
       author: 'Apple Historical Archives',
       thumbnailUrl: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?q=80&w=400&auto=format&fit=crop',
