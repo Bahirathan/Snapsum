@@ -64,6 +64,7 @@ import { ARABIC_PRELOADED_VIDEOS } from './utils/arabicPreloadedData';
 import { translations } from './utils/translations';
 import { toPng } from 'html-to-image';
 import { YouTubeSummaryResponse, SavedSummary, SynthesizedStack } from './types';
+import confetti from 'canvas-confetti';
 import { auth, db } from './firebase';
 import firebaseConfig from '../firebase-applet-config.json';
 import { 
@@ -791,12 +792,45 @@ export default function App() {
   useEffect(() => {
     if (showWowMoment) {
       setRevealProgress(0);
+      
+      // Initial subtle side-burst confetti
+      try {
+        confetti({
+          particleCount: 40,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#0071e3', '#4f46e5']
+        });
+        confetti({
+          particleCount: 40,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#bf5af2', '#10b981']
+        });
+      } catch (e) {
+        console.error(e);
+      }
+
       let count = 0;
       const interval = setInterval(() => {
         count += 1;
         setRevealProgress(count);
+        
         if (count >= 6) {
           clearInterval(interval);
+          // Big grand-finale confetti explosion!
+          try {
+            confetti({
+              particleCount: 150,
+              spread: 80,
+              origin: { y: 0.5 },
+              colors: ['#0071e3', '#4f46e5', '#bf5af2', '#10b981']
+            });
+          } catch (e) {
+            console.error(e);
+          }
         }
       }, 550);
       return () => clearInterval(interval);
@@ -6660,6 +6694,41 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <Play className="w-3 h-3 fill-current text-indigo-600" />
                       </button>
                     </div>
+
+                    {/* Instant 1-click Quick Start Demos (Goal 11) */}
+                    <div className="pt-4 border-t border-dashed border-neutral-200 dark:border-zinc-800/60 mt-4 space-y-2">
+                      <span className="block text-[9px] font-mono font-bold text-neutral-400 dark:text-zinc-500 uppercase tracking-wider">
+                        ⚡ INSTANT 1-CLICK QUICK START DEMOS
+                      </span>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (PRELOADED_VIDEOS && PRELOADED_VIDEOS[2]) {
+                              handleLoadStoredItem(PRELOADED_VIDEOS[2]);
+                            } else if (PRELOADED_VIDEOS && PRELOADED_VIDEOS[0]) {
+                              handleLoadStoredItem(PRELOADED_VIDEOS[0]);
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-950/80 text-indigo-700 dark:text-indigo-400 font-bold text-[10.5px] rounded-xl border border-indigo-100/50 dark:border-indigo-900/30 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-sm"
+                        >
+                          <span>🎓 Steve Jobs Commencement</span>
+                          <span className="text-[9px] opacity-75 font-mono">15m • Free</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (PRELOADED_VIDEOS && PRELOADED_VIDEOS[0]) {
+                              handleLoadStoredItem(PRELOADED_VIDEOS[0]);
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/80 text-amber-700 dark:text-amber-400 font-bold text-[10.5px] rounded-xl border border-amber-100/50 dark:border-amber-900/30 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-sm"
+                        >
+                          <span>🔥 Simon Sinek Ted Talk</span>
+                          <span className="text-[9px] opacity-75 font-mono">18m • Free</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   (() => {
@@ -7835,16 +7904,16 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             </div>
                             
                             <h4 className="text-sm sm:text-base font-extrabold text-neutral-900 dark:text-zinc-50 font-sans mt-1">
-                              {onboardingStep === 1 && "Step 1: Deep Dive Study Summary 📝"}
-                              {onboardingStep === 2 && "Step 2: Chaptered Audio/Video Timelines 📺"}
-                              {onboardingStep === 3 && "Step 3: Spatial Neural Mind Map 🧠"}
-                              {onboardingStep === 4 && "Step 4: Ask Your Personal Socratic AI Tutor 💬"}
-                              {onboardingStep === 5 && "Step 5: Lock in Learning with Recall Quizzes 🏆"}
+                              {onboardingStep === 1 && "Step 1: Read Complete Study Summary 📝"}
+                              {onboardingStep === 2 && "Step 2: Active Recall Study Flashcards 🃏"}
+                              {onboardingStep === 3 && "Step 3: Conceptual Spatial Mind Map 🧠"}
+                              {onboardingStep === 4 && "Step 4: Chat with Socratic AI Tutor 💬"}
+                              {onboardingStep === 5 && "Step 5: Lock in Learning with Practice Quizzes 🏆"}
                             </h4>
                             
                             <p className="text-xs text-neutral-600 dark:text-zinc-400 font-light max-w-2xl leading-relaxed mt-1">
                               {onboardingStep === 1 && "Start here. Our core summary processes hours of continuous lectures or hundreds of pages into quick-read structured bullet points, key takeaways, and definitions."}
-                              {onboardingStep === 2 && "Never get lost. We split the resource into clean structured chapters with timestamps. Clicking any chapter automatically jumps the video or document reader to that moment."}
+                              {onboardingStep === 2 && "Test your retention immediately. Turn passive notes into custom-spaced repetition flashcards. Click on a card to reveal its backend definitions in real-time."}
                               {onboardingStep === 3 && "Visualize your knowledge base. Concept maps help you understand structural connections between subtopics. Click nodes to expand formulas and study definitions."}
                               {onboardingStep === 4 && "Need a deeper explanation? Have an expert tutor with you 24/7. Ask questions, request analogies, or chat through complex ideas in natural conversation."}
                               {onboardingStep === 5 && "Test your memory and retention. Take custom multiple-choice quizzes, view dynamic correct/incorrect score evaluations, and instantly spot learning gaps."}
@@ -7864,10 +7933,19 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                 onClick={() => {
                                   const prev = onboardingStep - 1;
                                   setOnboardingStep(prev);
-                                  if (prev === 1) setActiveTab('overview');
-                                  else if (prev === 2) setActiveTab('chapters');
-                                  else if (prev === 3) setActiveTab('mindmap');
-                                  else if (prev === 4) setActiveTab('chat');
+                                  if (prev === 1) {
+                                    setLearnMode(false);
+                                    setActiveTab('overview');
+                                  } else if (prev === 2) {
+                                    setLearnMode(true);
+                                    setLearnActiveTab('flashcards');
+                                  } else if (prev === 3) {
+                                    setLearnMode(false);
+                                    setActiveTab('mindmap');
+                                  } else if (prev === 4) {
+                                    setLearnMode(false);
+                                    setActiveTab('chat');
+                                  }
                                 }}
                                 className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-neutral-700 dark:text-zinc-200 text-xs font-bold rounded-xl transition cursor-pointer active:scale-95"
                               >
@@ -7880,13 +7958,32 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                 if (onboardingStep < 5) {
                                   const next = onboardingStep + 1;
                                   setOnboardingStep(next);
-                                  if (next === 2) setActiveTab('chapters');
-                                  else if (next === 3) setActiveTab('mindmap');
-                                  else if (next === 4) setActiveTab('chat');
-                                  else if (next === 5) setActiveTab('quiz');
+                                  if (next === 2) {
+                                    setLearnMode(true);
+                                    setLearnActiveTab('flashcards');
+                                  } else if (next === 3) {
+                                    setLearnMode(false);
+                                    setActiveTab('mindmap');
+                                  } else if (next === 4) {
+                                    setLearnMode(false);
+                                    setActiveTab('chat');
+                                  } else if (next === 5) {
+                                    setLearnMode(false);
+                                    setActiveTab('quiz');
+                                  }
                                 } else {
                                   setOnboardingStep(null);
-                                  // Triggers celebration (Wow moment)
+                                  // Fire final celebration wow moment confetti explosion
+                                  try {
+                                    confetti({
+                                      particleCount: 150,
+                                      spread: 80,
+                                      origin: { y: 0.5 },
+                                      colors: ['#0071e3', '#4f46e5', '#bf5af2', '#10b981']
+                                    });
+                                  } catch (e) {
+                                    console.error(e);
+                                  }
                                 }
                               }}
                               className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition cursor-pointer active:scale-95 shadow-md shadow-indigo-600/10 flex items-center gap-1"

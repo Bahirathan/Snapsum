@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import confetti from 'canvas-confetti';
 import { 
   Sparkles, Zap, ArrowRight, CheckCircle, FileText, Globe, MessageSquare, 
   Video, Play, Bookmark, Headphones, Users, ChevronDown, Download, Award,
-  Upload, Brain, Share2, Star, TrendingUp, Clock, Shield, Cpu,
+  Upload, Brain, Share2, Star, TrendingUp, Clock, Shield, Cpu, Frown, Smile, XCircle,
   BarChart2, Layers, BookOpen, Mic, PenTool, Hash, ChevronRight,
   Youtube, Presentation, HelpCircle, Lock, Calculator, Settings, Gift
 } from 'lucide-react';
@@ -138,6 +139,8 @@ export default function LandingPage({
   const [liveSummaries, setLiveSummaries] = useState(184392);
   const [liveHours, setLiveHours] = useState(294018);
   const [liveActive, setLiveActive] = useState(23450);
+  const [phUpvotes, setPhUpvotes] = useState(847);
+  const [phUpvoted, setPhUpvoted] = useState(false);
 
   // Rotating Testimonials (Priority 13)
   const testimonialsList = [
@@ -175,6 +178,30 @@ export default function LandingPage({
   const [quizDemoSelected, setQuizDemoSelected] = useState<string | null>(null);
   const [mindMapDemoNode, setMindMapDemoNode] = useState<string>('Neural Networks');
   const [isAnnualBilling, setIsAnnualBilling] = useState<boolean>(true);
+  const [preQuery, setPreQuery] = useState('');
+  const [preAnswer, setPreAnswer] = useState('');
+  const [hoveredPreviewIdx, setHoveredPreviewIdx] = useState<number | null>(null);
+
+  const handlePreAsk = () => {
+    const q = preQuery.trim().toLowerCase();
+    if (!q) return;
+
+    let matchedAnswer = "Great question! Zipytiny is designed to work with all popular video links and study formats. When you generate a workspace, our AI will automatically compile executive structured bullet points, active recall flashcards, interactive concept maps, and load an expert 24/7 AI Tutor to guide you.";
+
+    if (q.includes('pdf') || q.includes('document') || q.includes('file') || q.includes('upload') || q.includes('paper')) {
+      matchedAnswer = "Yes! Zipytiny has full support for PDF documents, Word files, and PowerPoint slides. You can upload files up to 25MB, and we'll instantly create an interactive workspace with flashcards, summaries, and custom study quizzes.";
+    } else if (q.includes('exam') || q.includes('study') || q.includes('test') || q.includes('quiz') || q.includes('grade')) {
+      matchedAnswer = "Absolutely! Zipytiny is built by learning science experts. It designs structured diagnostic quizzes with instant score breakdowns, builds spaced-repetition flashcard decks for vocabulary or facts, and runs an expert Socratic tutor to test your logic.";
+    } else if (q.includes('arabic') || q.includes('language') || q.includes('translate') || q.includes('spanish') || q.includes('french')) {
+      matchedAnswer = "Yes! Zipytiny natively supports cross-language learning. It processes videos or documents in English, Arabic, Spanish, French, and dozens of other languages, allowing you to generate summaries and flashcards directly in your desired output language.";
+    } else if (q.includes('chatgpt') || q.includes('notebooklm') || q.includes('versus') || q.includes('different') || q.includes('better')) {
+      matchedAnswer = "Unlike generic AI chatbots or basic notebook apps, Zipytiny is a unified visual and interactive study workspace. Instead of raw text blocks, you get interactive chapter timelines, spatial concept mind maps you can click, synchronized flashcard decks, and a structured exam prep suite with dedicated score tracking.";
+    } else if (q.includes('free') || q.includes('cost') || q.includes('price')) {
+      matchedAnswer = "Zipytiny is free to start! You get premium workspace credits instantly upon landing. No credit card is required, and our Free plan lets you generate high-value summaries and study aids without friction.";
+    }
+
+    setPreAnswer(matchedAnswer);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -682,25 +709,25 @@ export default function LandingPage({
 
                   <button
                     type="submit"
-                    className="bg-neutral-950 hover:bg-black dark:bg-white dark:text-neutral-950 dark:hover:bg-zinc-50 text-white px-8 py-4 sm:py-5 rounded-2xl font-extrabold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0 group cursor-pointer active:scale-97 shadow-[0_8px_30px_rgba(0,0,0,0.18)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:shadow-[0_0_20px_rgba(0,113,227,0.4)] hover:scale-102 hover:-translate-y-0.5 duration-200"
+                    className="bg-[#0071e3] hover:bg-[#0077ed] text-white px-9 py-5 rounded-2xl font-extrabold text-sm sm:text-base transition-all flex items-center justify-center gap-2 shrink-0 group cursor-pointer active:scale-95 shadow-[0_12px_36px_rgba(0,113,227,0.3)] hover:shadow-[0_0_24px_rgba(0,113,227,0.5)] hover:scale-[1.02] hover:-translate-y-0.5 duration-200"
                   >
-                    <span>✨ Generate My Interactive AI Study Workspace (60s)</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-blue-500" />
+                    <span>🚀 Generate My AI Workspace</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-white" />
                   </button>
                 </form>
 
                 {/* Micro Trust Signals (Priority 8) */}
-                <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-[10.5px] text-[#86868b] dark:text-zinc-400 font-mono select-none">
-                  <span className="flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400">
-                    🔒 No credit card required
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-[#515154] dark:text-zinc-350 select-none font-medium">
+                  <span className="flex items-center gap-1">
+                    ✅ Free Forever Plan
                   </span>
-                  <span className="text-neutral-300 dark:text-zinc-800">•</span>
-                  <span className="flex items-center gap-1 font-bold text-indigo-600 dark:text-indigo-400">
-                    ✨ 3 Free Credits Instantly
+                  <span className="text-neutral-300 dark:text-zinc-800 hidden sm:inline">•</span>
+                  <span className="flex items-center gap-1">
+                    ✅ No Credit Card Required
                   </span>
-                  <span className="text-neutral-300 dark:text-zinc-800">•</span>
-                  <span className="flex items-center gap-1 font-bold text-[#0071e3] dark:text-sky-400">
-                    ⚡ Bypasses all video quota limits
+                  <span className="text-neutral-300 dark:text-zinc-800 hidden sm:inline">•</span>
+                  <span className="flex items-center gap-1">
+                    ✅ Ready in Under 60 Seconds
                   </span>
                 </div>
 
@@ -708,12 +735,89 @@ export default function LandingPage({
                   <p className="text-xs text-rose-500 mt-2 ml-3 font-semibold animate-fadeIn">{urlError}</p>
                 )}
 
+                {/* 💬 "Ask Zipytiny Before You Generate" Conversational Entry Box */}
+                <div className="mt-6 p-5 sm:p-6 bg-gradient-to-br from-indigo-50/50 via-white to-purple-50/30 dark:from-zinc-900/30 dark:via-zinc-900/20 dark:to-zinc-950/40 border border-indigo-500/10 dark:border-zinc-800 rounded-3xl text-left font-sans shadow-xs relative overflow-hidden">
+                  <div className="absolute top-0 right-0 h-24 w-24 bg-indigo-500/5 rounded-full blur-2xl"></div>
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-pulse" />
+                      <span className="text-[10px] font-mono font-extrabold tracking-widest text-indigo-700 dark:text-indigo-400 uppercase">
+                        Not Sure What To Upload?
+                      </span>
+                    </div>
+                    <h4 className="text-sm font-extrabold text-[#1d1d1f] dark:text-zinc-100 flex items-center gap-1.5">
+                      <span>💬 Ask Zipytiny First</span>
+                      <span className="text-[10px] bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-mono uppercase font-bold">Conversational Help</span>
+                    </h4>
+                    <p className="text-xs text-neutral-500 dark:text-zinc-400 font-light mt-0.5">
+                      Ask me if we support specific video lengths, languages, files, or exam-prep formats!
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {[
+                        { q: "Can this summarize research papers? 📄", a: "Absolutely! Simply paste the URL or upload any PDF/Word document, and Zipytiny will convert dense academic prose into clean, structural learning outlines, spaced-repetition flashcards, and concept maps." },
+                        { q: "Does it support Arabic videos? 🌍", a: "Yes! Zipytiny natively supports Arabic, Spanish, French, and English video and text transcripts. It summarizes and formats workspaces in your target output language with full semantic precision." },
+                        { q: "How is this different from ChatGPT? ⚡", a: "Unlike raw text chatbots or static document readers, Zipytiny is an immersive visual learning workspace. You get synchronized chapter timelines, clickable mind maps, real-time recall flashcards, and a structured practice exam system with instant grade diagnostics." }
+                      ].map((item, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setPreQuery(item.q.replace(/ [^\s]+$/, ''));
+                            setPreAnswer(item.a);
+                          }}
+                          className="text-[11px] font-semibold bg-white dark:bg-zinc-800 hover:bg-[#f5f5f7] dark:hover:bg-zinc-750 border border-black/[0.06] dark:border-zinc-700 text-neutral-700 dark:text-zinc-300 py-1.5 px-3 rounded-xl transition cursor-pointer active:scale-95"
+                        >
+                          {item.q}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Question input field */}
+                    <div className="mt-3.5 relative flex items-center bg-white dark:bg-zinc-900 border border-black/[0.08] dark:border-zinc-800 p-1.5 rounded-2xl focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/10 transition-all">
+                      <input
+                        type="text"
+                        placeholder="Type: 'Can it help me study for exams?' or 'Are there upload size limits?'..."
+                        value={preQuery}
+                        onChange={(e) => setPreQuery(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handlePreAsk();
+                          }
+                        }}
+                        className="flex-1 bg-transparent border-0 outline-none focus:ring-0 focus:outline-none text-xs text-neutral-800 dark:text-zinc-100 placeholder-neutral-400 dark:placeholder-zinc-500 px-2"
+                      />
+                      <button
+                        type="button"
+                        onClick={handlePreAsk}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition cursor-pointer active:scale-95"
+                      >
+                        Ask AI
+                      </button>
+                    </div>
+
+                    {preAnswer && (
+                      <div className="mt-3 p-3.5 bg-indigo-50/20 dark:bg-zinc-900/50 border border-indigo-500/10 rounded-2xl animate-fadeIn text-left">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-400">
+                          <span>💬</span>
+                          <span>You asked:</span>
+                          <span className="text-neutral-700 dark:text-zinc-200 font-medium italic">"{preQuery}"</span>
+                        </div>
+                        <p className="text-xs text-neutral-600 dark:text-zinc-350 font-light leading-relaxed mt-1.5">
+                          {preAnswer}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* 📺 Priority 1: REALISTIC AI WORKSPACE PREVIEW CARD */}
                 <div className="mt-5 p-5 bg-neutral-950 text-white rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden text-left font-sans">
                   {/* Decorative faint grid background */}
                   <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:1.5rem_1.5rem] opacity-30"></div>
                   
-                  <div className="relative z-10 space-y-3.5">
+                  <div className="relative z-10 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-rose-500 animate-pulse text-sm">📺</span>
@@ -726,23 +830,167 @@ export default function LandingPage({
 
                     <div className="border-t border-neutral-800 my-1"></div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
-                      {workspacePreviewItems.map((item, idx) => {
-                        const isVisible = idx < previewItemsVisible;
-                        return (
-                          <div
-                            key={idx}
-                            className={`flex items-center gap-2.5 text-xs transition-all duration-350 ${
-                              isVisible 
-                                ? 'opacity-100 translate-x-0 text-emerald-400 font-semibold' 
-                                : 'opacity-20 -translate-x-1 text-neutral-500 font-light'
-                            }`}
-                          >
-                            <span className="h-4 w-4 rounded-full bg-emerald-500/15 flex items-center justify-center text-[10px]">✓</span>
-                            <span>{item.replace('✓ ', '')}</span>
-                          </div>
-                        );
-                      })}
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-stretch">
+                      {/* Left: Interactive listed items */}
+                      <div className="md:col-span-5 space-y-2">
+                        <span className="block text-[9px] font-mono font-bold text-neutral-500 uppercase tracking-wider mb-2">
+                          💡 HOVER TO PREVIEW WORKSPACE ASSET
+                        </span>
+                        <div className="space-y-1.5">
+                          {workspacePreviewItems.map((item, idx) => {
+                            const isVisible = idx < previewItemsVisible;
+                            const activeIdx = hoveredPreviewIdx !== null ? hoveredPreviewIdx : (previewItemsVisible - 1) % 6;
+                            const isCurrentlyHovered = activeIdx === idx;
+                            return (
+                              <div
+                                key={idx}
+                                onMouseEnter={() => setHoveredPreviewIdx(idx)}
+                                onMouseLeave={() => setHoveredPreviewIdx(null)}
+                                className={`flex items-center justify-between p-2 rounded-xl transition-all duration-200 cursor-pointer border ${
+                                  isCurrentlyHovered 
+                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-bold scale-102 translate-x-1 shadow-md shadow-emerald-500/5' 
+                                    : isVisible 
+                                      ? 'opacity-90 border-transparent text-emerald-500/80 font-medium hover:bg-white/5' 
+                                      : 'opacity-20 border-transparent text-neutral-500 font-light'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2.5 text-xs truncate">
+                                  <span className={`h-4 w-4 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
+                                    isCurrentlyHovered ? 'bg-emerald-400 text-neutral-950 font-extrabold' : 'bg-emerald-500/15'
+                                  }`}>✓</span>
+                                  <span className="truncate">{item.replace('✓ ', '')}</span>
+                                </div>
+                                <span className="text-[9px] font-mono text-neutral-500 shrink-0 select-none">
+                                  {isCurrentlyHovered ? 'LIVE ⚡' : 'View'}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Right: Live Interactive Mock Display Panel */}
+                      <div className="md:col-span-7 bg-neutral-900/45 border border-white/5 rounded-2xl p-4.5 flex flex-col justify-between min-h-[140px] relative overflow-hidden shadow-inner">
+                        <div className="absolute top-0 right-0 h-16 w-16 bg-[#0071e3]/10 rounded-full blur-xl pointer-events-none"></div>
+                        {(() => {
+                          const activeIdx = hoveredPreviewIdx !== null ? hoveredPreviewIdx : (previewItemsVisible - 1) % 6;
+                          switch (activeIdx) {
+                            case 0:
+                              return (
+                                <div className="space-y-2 h-full flex flex-col justify-between animate-fadeIn text-left">
+                                  <div>
+                                    <div className="flex justify-between items-center text-[9px] text-indigo-400 font-bold font-mono tracking-wider">
+                                      <span>STRUCTURED SUMMARY PREVIEW</span>
+                                      <span>CHAPTER 1 / 4</span>
+                                    </div>
+                                    <h5 className="text-xs font-bold text-white mt-1 leading-snug">Introduction to Neural Network Backpropagation</h5>
+                                    <p className="text-[10px] text-neutral-400 leading-relaxed font-light mt-1.5 space-y-1">
+                                      <span className="block">• Defines gradient descent optimization as a mathematical framework for weight updates.</span>
+                                      <span className="block">• Explains the Socratic analogy of downhill navigation in heavy alpine fog.</span>
+                                    </p>
+                                  </div>
+                                  <div className="text-[9px] text-neutral-500 font-mono mt-2 border-t border-white/5 pt-1.5 flex justify-between items-center">
+                                    <span>⏱️ Reading time: 2 mins</span>
+                                    <span className="text-indigo-400">Read Summary →</span>
+                                  </div>
+                                </div>
+                              );
+                            case 1:
+                              return (
+                                <div className="space-y-2 h-full flex flex-col justify-between animate-fadeIn text-left">
+                                  <div>
+                                    <div className="flex justify-between items-center text-[9px] text-amber-400 font-bold font-mono tracking-wider">
+                                      <span>SPACED REPETITION FLASHCARDS</span>
+                                      <span>CARD 4 OF 28</span>
+                                    </div>
+                                    <div className="text-center py-2 bg-white/5 rounded-xl border border-white/5 mt-1.5">
+                                      <p className="text-xs font-bold text-zinc-100">What is "Overfitting"?</p>
+                                      <p className="text-[8px] text-amber-400 font-mono mt-1 font-semibold animate-pulse">✨ Click to Flip in App Workspace</p>
+                                    </div>
+                                  </div>
+                                  <div className="bg-emerald-500/10 p-1.5 rounded-lg text-[9.5px] text-emerald-400 border border-emerald-500/20 text-left leading-normal">
+                                    <strong>Answer:</strong> When a model learns training noise rather than the signal.
+                                  </div>
+                                </div>
+                              );
+                            case 2:
+                              return (
+                                <div className="space-y-2 h-full flex flex-col justify-between animate-fadeIn text-left">
+                                  <div>
+                                    <div className="flex justify-between items-center text-[9px] text-blue-400 font-bold font-mono tracking-wider">
+                                      <span>CONCEPTUAL MIND MAP CLUSTER</span>
+                                      <span>INTERACTIVE NODE NETWORK</span>
+                                    </div>
+                                    <div className="relative w-full h-16 flex items-center justify-center mt-2 bg-black/20 rounded-xl border border-white/5">
+                                      <div className="absolute h-0.5 w-24 bg-blue-500/30 left-1/4"></div>
+                                      <div className="absolute h-0.5 w-24 bg-purple-500/30 right-1/4"></div>
+                                      
+                                      <div className="z-10 bg-indigo-600 text-white text-[9px] font-bold px-2 py-1 rounded-lg shadow-md animate-pulse">Artificial Intelligence</div>
+                                      <div className="absolute left-1 z-10 bg-blue-950 border border-blue-500/40 text-blue-300 text-[8px] px-1.5 py-0.5 rounded-md">Neural Nets</div>
+                                      <div className="absolute right-1 z-10 bg-purple-950 border border-purple-500/40 text-purple-300 text-[8px] px-1.5 py-0.5 rounded-md">Heuristics</div>
+                                    </div>
+                                  </div>
+                                  <span className="text-[8.5px] text-neutral-500 text-center block font-mono">⚡ Click any node to explore related chapters instantly</span>
+                                </div>
+                              );
+                            case 3:
+                              return (
+                                <div className="space-y-2 h-full flex flex-col justify-between animate-fadeIn text-left">
+                                  <div>
+                                    <div className="flex justify-between items-center text-[9px] text-teal-400 font-bold font-mono tracking-wider">
+                                      <span>SOCRATIC STUDY TUTOR COMPANION</span>
+                                      <span>ACTIVE SESSION</span>
+                                    </div>
+                                    <div className="space-y-1.5 text-[9.5px] mt-1.5">
+                                      <div className="bg-white/5 p-1.5 rounded-lg text-neutral-300 max-w-[90%]">
+                                        How does a neuron decide to fire?
+                                      </div>
+                                      <div className="bg-[#0071e3]/10 p-1.5 rounded-lg text-blue-300 border border-blue-500/10 max-w-[95%]">
+                                        <strong>Tutor:</strong> Think of it as a water bucket. Once inputs exceed the threshold, it overflows (fires)!
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <span className="text-[8.5px] text-teal-400 font-mono mt-1 block">💬 24/7 personalized study companion</span>
+                                </div>
+                              );
+                            case 4:
+                              return (
+                                <div className="space-y-2 h-full flex flex-col justify-between animate-fadeIn text-left">
+                                  <div>
+                                    <div className="flex justify-between items-center text-[9px] text-rose-400 font-bold font-mono tracking-wider">
+                                      <span>DIAGNOSTIC PRACTICE QUIZ</span>
+                                      <span>QUESTION 1 / 15</span>
+                                    </div>
+                                    <p className="text-[10px] font-semibold text-white mt-1.5">Which function scales outputs to [0, 1]?</p>
+                                    <div className="grid grid-cols-2 gap-1.5 text-[9px] pt-1">
+                                      <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2 py-1 rounded-md text-center font-medium">✓ A) Sigmoid</span>
+                                      <span className="bg-white/5 border border-white/5 text-neutral-400 px-2 py-1 rounded-md text-center">B) ReLU</span>
+                                    </div>
+                                  </div>
+                                  <span className="text-[8.5px] text-neutral-500 font-mono text-center block">🔥 Get real-time grading & custom diagnostic help</span>
+                                </div>
+                              );
+                            case 5:
+                              return (
+                                <div className="space-y-2 h-full flex flex-col justify-between animate-fadeIn text-left">
+                                  <div>
+                                    <div className="flex justify-between items-center text-[9px] text-purple-400 font-bold font-mono tracking-wider">
+                                      <span>PORTABLE KNOWLEDGE EXPORT</span>
+                                      <span>Obsidian, Notion, Anki & Word</span>
+                                    </div>
+                                    <div className="flex gap-1.5 justify-center mt-2.5">
+                                      <span className="bg-indigo-600 text-white text-[9px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm">📥 Anki Cards</span>
+                                      <span className="bg-white/10 border border-white/5 text-neutral-200 text-[9px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1">📥 Notion DB</span>
+                                    </div>
+                                  </div>
+                                  <span className="text-[8.5px] text-neutral-400 text-center block font-mono">Sync studying across all your existing workflows in 1-click</span>
+                                </div>
+                              );
+                            default:
+                              return null;
+                          }
+                        })()}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1687,6 +1935,143 @@ export default function LandingPage({
         </div>
       </section>
 
+      {/* 1BC. BEFORE & AFTER TRANSFORMATION GRID (Goal 13) */}
+      <section className="w-full bg-linear-to-b from-white to-[#f5f5f7]/50 dark:from-zinc-900 dark:to-zinc-950/30 border-b border-black/[0.03] dark:border-zinc-850 py-16 sm:py-20 relative z-10 font-sans">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center space-y-3 max-w-2xl mx-auto mb-12">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">
+              Why Active Learning Wins
+            </span>
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-[#1d1d1f] dark:text-zinc-100 tracking-tight font-display">
+              Break the Forgetting Curve
+            </h3>
+            <p className="text-xs sm:text-sm text-[#86868b] dark:text-zinc-400 font-light">
+              Passive listening leads to forgetting 80% within 24 hours. Here is how Zipytiny transforms your retention paradigm.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+            {/* Before Card */}
+            <div className="p-6 sm:p-8 bg-rose-500/[0.02] dark:bg-rose-950/[0.01] border border-rose-500/10 dark:border-rose-500/5 rounded-3xl relative overflow-hidden flex flex-col justify-between space-y-6">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-3xl"></div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-xl">
+                    <Frown className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono font-extrabold text-rose-500 dark:text-rose-400 uppercase tracking-wider block">THE TRADITIONAL WAY</span>
+                    <h4 className="text-base font-extrabold text-neutral-850 dark:text-zinc-100">Passive Media Consumption</h4>
+                  </div>
+                </div>
+
+                <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
+                  Watching hours of lectures, playing long podcasts, or scanning dense textbooks feels like studying, but without active retrieval, it causes instant brain fatigue and cognitive drift.
+                </p>
+
+                <div className="space-y-3.5 pt-2">
+                  <div className="flex items-start gap-2.5 text-xs text-neutral-700 dark:text-zinc-300">
+                    <XCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-semibold text-neutral-900 dark:text-zinc-150 block text-[11.5px]">Rapid Focus Decay</strong>
+                      <span className="text-[10.5px] text-[#86868b] dark:text-zinc-400 font-light">Concentration drops after 7-10 minutes. The mind begins scanning secondary feeds.</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-2.5 text-xs text-neutral-700 dark:text-zinc-300">
+                    <XCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-semibold text-neutral-900 dark:text-zinc-150 block text-[11.5px]">The Forgetting Curve</strong>
+                      <span className="text-[10.5px] text-[#86868b] dark:text-zinc-400 font-light">With no prompt or quiz triggers, 80% of key concepts are forgotten within 24 hours.</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5 text-xs text-neutral-700 dark:text-zinc-300">
+                    <XCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-semibold text-neutral-900 dark:text-zinc-150 block text-[11.5px]">Zero Recall Verification</strong>
+                      <span className="text-[10.5px] text-[#86868b] dark:text-zinc-400 font-light">No way to diagnostic test yourself, leaving silent knowledge gaps until exam/meeting day.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Retention mini-graphic */}
+              <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-rose-500/10 shadow-2xs space-y-2">
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="font-bold text-neutral-700 dark:text-zinc-300">Forgetting Curve Decay</span>
+                  <span className="font-mono font-bold text-rose-500">20% Retention Rate</span>
+                </div>
+                <div className="h-2 w-full bg-neutral-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-rose-500 to-rose-400 rounded-full w-[20%] animate-pulse"></div>
+                </div>
+                <span className="block text-[9px] font-mono text-rose-500/80 text-right">80% Cognitive Loss in 24 Hours</span>
+              </div>
+            </div>
+
+            {/* After Card */}
+            <div className="p-6 sm:p-8 bg-emerald-500/[0.02] dark:bg-emerald-950/[0.01] border border-emerald-500/10 dark:border-emerald-500/5 rounded-3xl relative overflow-hidden flex flex-col justify-between space-y-6">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl"></div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl">
+                    <Smile className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono font-extrabold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider block">THE ZIPYTINY WAY</span>
+                    <h4 className="text-base font-extrabold text-neutral-850 dark:text-zinc-100">Dynamic Active Learning</h4>
+                  </div>
+                </div>
+
+                <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
+                  Zipytiny replaces passive listening with structured high-retention active study spaces. Hours of content become bite-sized study maps, recall flashcards, and diagnostic tests.
+                </p>
+
+                <div className="space-y-3.5 pt-2">
+                  <div className="flex items-start gap-2.5 text-xs text-neutral-700 dark:text-zinc-300">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-semibold text-neutral-900 dark:text-zinc-150 block text-[11.5px]">Instant 60s Synthesis</strong>
+                      <span className="text-[10.5px] text-[#86868b] dark:text-zinc-400 font-light">Transform long media into clear chapter outlines, summaries, and neural connection maps.</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-2.5 text-xs text-neutral-700 dark:text-zinc-300">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-semibold text-neutral-900 dark:text-zinc-150 block text-[11.5px]">Spaced-Repetition Recall</strong>
+                      <span className="text-[10.5px] text-[#86868b] dark:text-zinc-400 font-light">AI generated flashcards query memory boundaries frequently, cementing lessons.</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5 text-xs text-neutral-700 dark:text-zinc-300">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-semibold text-neutral-900 dark:text-zinc-150 block text-[11.5px]">24/7 Socratic Companion</strong>
+                      <span className="text-[10.5px] text-[#86868b] dark:text-zinc-400 font-light">Get custom analogies, ask for simplified definitions, and chat dynamically.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Retention mini-graphic */}
+              <div className="p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-emerald-500/10 shadow-2xs space-y-2">
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="font-bold text-neutral-700 dark:text-zinc-300">Active Learning Retention Rate</span>
+                  <span className="font-mono font-bold text-emerald-500">92% Retention Rate</span>
+                </div>
+                <div className="h-2 w-full bg-neutral-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full w-[92%] animate-pulse"></div>
+                </div>
+                <span className="block text-[9px] font-mono text-emerald-500/80 text-right">⚡ 4x Higher Memory Retention!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 1C. SANDBOX / QUICK START DEMOS SECTION */}
       <section id="sandbox-demos-section" className="w-full bg-white dark:bg-zinc-900 border-b border-black/[0.04] dark:border-zinc-800 py-16 sm:py-24 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1799,9 +2184,9 @@ export default function LandingPage({
                       <span>🏷️</span>
                       <span>{demo.difficulty}</span>
                     </div>
-                    <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[9px] font-mono font-extrabold uppercase px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
-                      <Clock className="w-3 h-3" />
-                      <span>{demo.processing}</span>
+                    <div className="absolute top-3 right-3 bg-neutral-950/80 text-white text-[9px] font-mono font-extrabold uppercase px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm backdrop-blur-xs">
+                      <Clock className="w-3 h-3 text-[#0071e3]" />
+                      <span>{demo.duration}</span>
                     </div>
                   </div>
 
@@ -1849,9 +2234,9 @@ export default function LandingPage({
                         onStartFreeSummary(demo.url, 'video');
                       }
                     }}
-                    className="w-full py-3 px-4 bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg active:scale-97 cursor-pointer"
+                    className="w-full py-3 px-4 bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-extrabold rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg hover:scale-[1.01] active:scale-95 cursor-pointer"
                   >
-                    <span>▶ Try Demo Workspace</span>
+                    <span>⚡ Launch Live Demo Workspace</span>
                   </button>
                 </div>
               </div>
@@ -1861,8 +2246,61 @@ export default function LandingPage({
       </section>
 
       {/* 2. PREMIUM SOCIAL PROOF SECTION */}
-      <section className="w-full bg-white dark:bg-zinc-900 border-b border-black/[0.04] dark:border-zinc-800 py-12 sm:py-16 relative z-10">
+      <section className="w-full bg-white dark:bg-zinc-900 border-b border-black/[0.04] dark:border-zinc-800 py-16 sm:py-20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          
+          {/* Elegant Static Testimonials Grid (Priority 8) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-12 border-b border-black/[0.04] dark:border-zinc-800/80 pb-12">
+            {[
+              {
+                stars: 5,
+                quote: "Summarized a 3-hour university lecture in less than a minute.",
+                author: "Sarah Jenkins",
+                role: "Stanford Sophomore",
+                avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80"
+              },
+              {
+                stars: 5,
+                quote: "This replaced my note-taking and flashcard apps entirely.",
+                author: "Julian Vance",
+                role: "Medical Prep Student",
+                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80"
+              },
+              {
+                stars: 5,
+                quote: "I now study in half the time with these incredible mind maps.",
+                author: "Marcus Thorne",
+                role: "Systems Engineer",
+                avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80"
+              }
+            ].map((t, idx) => (
+              <div key={idx} className="bg-neutral-50 dark:bg-zinc-950/40 p-6 rounded-2xl border border-black/[0.03] dark:border-zinc-850 text-left flex flex-col justify-between space-y-4 hover:border-indigo-500/10 hover:shadow-xs transition duration-200">
+                <div className="space-y-2">
+                  <div className="flex gap-0.5">
+                    {[...Array(t.stars)].map((_, i) => (
+                      <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                    ))}
+                  </div>
+                  <p className="text-xs sm:text-sm text-neutral-800 dark:text-zinc-200 italic font-medium leading-relaxed">
+                    "{t.quote}"
+                  </p>
+                </div>
+                <div className="flex items-center gap-2.5 pt-1">
+                  <img 
+                    src={t.avatar} 
+                    alt={t.author} 
+                    className="w-8 h-8 rounded-full object-cover border border-black/[0.06] dark:border-zinc-800" 
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="text-left">
+                    <h4 className="text-xs font-extrabold text-neutral-900 dark:text-zinc-50">{t.author}</h4>
+                    <p className="text-[10px] text-neutral-500 dark:text-zinc-400 font-mono uppercase tracking-tight">{t.role}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
           <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
             
             <div className="space-y-2 max-w-md text-center lg:text-left shrink-0">
@@ -2624,14 +3062,17 @@ export default function LandingPage({
       {/* 9. FINAL CTA SECTION */}
       <section className="w-full bg-neutral-900 dark:bg-zinc-950 text-white py-24 text-center relative overflow-hidden border-t border-neutral-800">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:3rem_3rem] opacity-30"></div>
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-6">
-          <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight leading-tight">
-            Ready to Triple Your Learning & Sifting Speed?
-          </h2>
-          <p className="text-zinc-400 max-w-xl mx-auto font-light text-sm sm:text-base leading-relaxed">
-            Join thousands of Postgrad students, professional creators, and investment analysts who use Zipytiny to distill knowledge and remember more.
-          </p>
-          <div className="pt-4">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-8">
+          <div className="space-y-4">
+            <h2 className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight leading-tight">
+              Ready to Triple Your Learning & Sifting Speed?
+            </h2>
+            <p className="text-zinc-400 max-w-xl mx-auto font-light text-sm sm:text-base leading-relaxed">
+              Join thousands of Postgrad students, professional creators, and investment analysts who use Zipytiny to distill knowledge and remember more.
+            </p>
+          </div>
+
+          <div>
             <button
               type="button"
               onClick={() => {
@@ -2648,6 +3089,63 @@ export default function LandingPage({
               <span>Get Started Free Now</span>
               <ArrowRight className="w-4 h-4 text-zinc-950" />
             </button>
+          </div>
+
+          {/* Interactive Product Hunt Launch Card (Goal 15) */}
+          <div className="border border-neutral-800 bg-black/40 backdrop-blur-sm p-6 sm:p-8 rounded-3xl max-w-2xl mx-auto mt-12 text-left space-y-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-[#ff6154]/5 rounded-full blur-2xl"></div>
+            
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#ff6154] bg-[#ff6154]/10 px-2.5 py-0.5 rounded-full">
+                    😺 PRODUCT HUNT LAUNCH
+                  </span>
+                  <span className="text-xs text-amber-500 font-extrabold animate-pulse">🔥 LIVE NOW</span>
+                </div>
+                <h4 className="text-base sm:text-lg font-bold text-white font-display">
+                  Zipytiny v2.5 Interactive active study suite
+                </h4>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (!phUpvoted) {
+                    setPhUpvotes(prev => prev + 1);
+                    setPhUpvoted(true);
+                    try {
+                      confetti({
+                        particleCount: 80,
+                        spread: 60,
+                        origin: { y: 0.8 },
+                        colors: ['#ff6154', '#ffffff', '#ff8b80']
+                      });
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }
+                }}
+                className={`px-5 py-3 rounded-2xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer select-none shrink-0 ${
+                  phUpvoted 
+                    ? 'bg-emerald-600 text-white' 
+                    : 'bg-[#ff6154] hover:bg-[#ff7a6e] text-white shadow-lg shadow-[#ff6154]/20 active:scale-95'
+                }`}
+              >
+                <span>🔺</span>
+                <span>{phUpvoted ? `UPVOTED! ${phUpvotes}` : `UPVOTE ${phUpvotes}`}</span>
+              </button>
+            </div>
+
+            <p className="text-xs text-zinc-400 font-light leading-relaxed">
+              We are launching our v2.5 Interactive Active Learning Suite today! Upvote our project, leave your honest feedback on the thread, or let our builders know what cognitive tools or video formats you would like us to support next.
+            </p>
+
+            <div className="pt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-zinc-500 font-mono">
+              <span className="flex items-center gap-1">🏆 Rank: #1 Product of the Day</span>
+              <span className="flex items-center gap-1">💬 Thread: 42 active discussions</span>
+              <span className="flex items-center gap-1">✨ Supported by YC Advisors</span>
+            </div>
           </div>
         </div>
       </section>
@@ -2714,12 +3212,12 @@ export default function LandingPage({
         </div>
       </footer>
 
-      {/* Floating Sticky CTA Bar */}
+      {/* Floating Sticky CTA Bar (Goal 9) */}
       {showStickyCTA && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md px-6 py-3.5 rounded-full border border-neutral-200/60 dark:border-zinc-800 shadow-xl flex items-center gap-4 animate-slideUp max-w-[90%] sm:max-w-md w-full justify-between">
-          <div className="hidden xs:flex flex-col text-left">
-            <span className="text-[9px] font-mono font-bold text-[#0071e3] uppercase tracking-wider">Start Learning Now</span>
-            <span className="text-xs font-bold text-neutral-800 dark:text-zinc-100 font-sans">First Workspace is Free</span>
+        <div className="fixed bottom-0 sm:bottom-6 left-0 sm:left-1/2 sm:-translate-x-1/2 z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-4 py-3 sm:px-6 sm:py-3.5 sm:rounded-full border-t sm:border border-neutral-200/60 dark:border-zinc-800 shadow-2xl flex flex-col sm:flex-row items-center gap-2 sm:gap-4 animate-slideUp w-full sm:max-w-xl sm:w-auto justify-between">
+          <div className="hidden sm:flex flex-col text-left">
+            <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">ZIPYTINY STUDY SUITE</span>
+            <span className="text-xs font-semibold text-neutral-500 dark:text-zinc-400 font-sans">Free • No Credit Card Required</span>
           </div>
           <button
             type="button"
@@ -2730,10 +3228,10 @@ export default function LandingPage({
                 inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
               }
             }}
-            className="bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-extrabold px-5 py-2.5 rounded-full shadow-md hover:shadow-lg transition cursor-pointer select-none whitespace-nowrap active:scale-95 flex items-center gap-1 w-full xs:w-auto justify-center"
+            className="bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs sm:text-sm font-extrabold px-6 py-3 sm:py-2.5 rounded-xl sm:rounded-full shadow-md hover:shadow-lg transition cursor-pointer select-none whitespace-nowrap active:scale-95 flex items-center gap-1.5 w-full sm:w-auto justify-center"
           >
-            <span>✨ Create Workspace</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span>🚀 Generate My AI Workspace</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       )}
