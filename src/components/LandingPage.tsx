@@ -420,8 +420,8 @@ export default function LandingPage({
                 <span className="bg-gradient-to-r from-[#0071e3] via-blue-600 to-indigo-600 bg-clip-text text-transparent">AI Notes, Flashcards, Mind Maps & AI Chat in Under 60 Seconds</span>
               </h1>
               
-              <p className="text-[#86868b] dark:text-zinc-400 text-base sm:text-lg max-w-2xl leading-relaxed font-light">
-                Generate summaries, flashcards, quizzes, mind maps, AI chat, study notes, and social content in under 60 seconds.
+              <p className="text-neutral-700 dark:text-zinc-200 text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed font-medium tracking-normal">
+                Stop passively consuming content. <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 bg-clip-text text-transparent font-bold">Master it</span> with AI notes, flashcards, quizzes, mind maps and an AI tutor—<span className="underline decoration-indigo-500/40 decoration-2 underline-offset-4">in under 60 seconds</span>.
               </p>
 
               {/* 💬 Auto-Rotating High-converting Testimonials (Priority 13) */}
