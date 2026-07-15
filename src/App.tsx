@@ -2741,9 +2741,21 @@ export default function App() {
   // Helper to ensure Learn Mode structural inputs exist, with optimized fallbacks for caching or preload assets
   const ensureLearnModeStructures = (summary: YouTubeSummaryResponse | null): any => {
     if (!summary) return null;
+
+    const safeSummary = { ...summary };
+    if (!safeSummary.metadata) {
+      safeSummary.metadata = {
+        videoId: 'unknown',
+        videoUrl: '',
+        title: 'Untitled Document',
+        author: 'Anonymous',
+        thumbnailUrl: '',
+        duration: '10'
+      };
+    }
     
     // Customized fine-tuned content for preloaded lecture #1: Steve Jobs
-    if (summary.metadata.videoId === 'UF8uR6Z6KLc') {
+    if (safeSummary.metadata.videoId === 'UF8uR6Z6KLc') {
       if (outputLanguage === 'ar') {
         const arVideo = ARABIC_PRELOADED_VIDEOS['UF8uR6Z6KLc'];
         return {
@@ -2787,7 +2799,7 @@ export default function App() {
       const rem = `- **Trust your intuition**: Follow your heart even when it leads you off the well-worn path.\n- **Embrace setbacks**: See public failures or career disruptions as potential canvases for creative rebirth.\n- **Focus on the essential**: Remember mortality to shed fear of failure and pursue what truly matters.`;
 
       return {
-        ...summary,
+        ...safeSummary,
         keyConcepts: concepts,
         flashcards: cards,
         rememberSummary: rem,
@@ -2796,7 +2808,7 @@ export default function App() {
     }
 
     // Customized fine-tuned content for preloaded lecture #2: Simon Sinek
-    if (summary.metadata.videoId === 'qp0HIF3SfI4') {
+    if (safeSummary.metadata.videoId === 'qp0HIF3SfI4') {
       if (outputLanguage === 'ar') {
         const arVideo = ARABIC_PRELOADED_VIDEOS['qp0HIF3SfI4'];
         return {
@@ -2840,7 +2852,7 @@ export default function App() {
       const rem = `- **Inside-Out Focus**: Anchor every campaign to your core beliefs (Why) before detailing features.\n- **Neurological alignment**: Frame messages to appeal to emotions (limbic brain) first, then justify with logic.\n- **Diffusion Law**: Target people who share your values to anchor a solid, recurring organic audience.`;
 
       return {
-        ...summary,
+        ...safeSummary,
         keyConcepts: concepts,
         flashcards: cards,
         rememberSummary: rem,
@@ -2849,7 +2861,7 @@ export default function App() {
     }
 
     // Dynamic procedural backfills for user-generated summaries
-    const concepts = summary.keyConcepts || (summary.takeaways && summary.takeaways.length > 0 ? summary.takeaways.map((takeaway: any) => {
+    const concepts = safeSummary.keyConcepts || (safeSummary.takeaways && safeSummary.takeaways.length > 0 ? safeSummary.takeaways.map((takeaway: any) => {
       const raw = typeof takeaway === 'string' ? takeaway : (takeaway?.text || '');
       const split = raw.split('—');
       const conceptName = split[0] ? split[0].trim() : 'Core Principle';
@@ -2867,7 +2879,7 @@ export default function App() {
       }
     ]);
 
-    const cards = summary.flashcards || (summary.quiz && summary.quiz.length > 0 ? summary.quiz.map((q) => ({
+    const cards = safeSummary.flashcards || (safeSummary.quiz && safeSummary.quiz.length > 0 ? safeSummary.quiz.map((q) => ({
       question: q.question,
       answer: q.explanation || `The correct answer is indeed option index ${q.answerIndex + 1}: ${q.options[q.answerIndex] || ''}`
     })).slice(0, 4) : [
@@ -2877,10 +2889,10 @@ export default function App() {
       }
     ]);
 
-    const rem = summary.rememberSummary || (summary.summary ? `- **Syllabus Baseline**: ${summary.summary.split('.')[0] || ''}.\n- **Strategic Value**: Focus heavily on interactive retention milestones weekly.\n- **Action Checklist**: Answer all self-quizzes to lock in core definitions.` : `- **Primary lesson**: Master the concept definitions.\n- **Active recall**: Flip flashcards repeatedly to embed memories.\n- **Comprehension check**: Finish the interactive quiz session with perfect marks.`);
+    const rem = safeSummary.rememberSummary || (safeSummary.summary ? `- **Syllabus Baseline**: ${safeSummary.summary.split('.')[0] || ''}.\n- **Strategic Value**: Focus heavily on interactive retention milestones weekly.\n- **Action Checklist**: Answer all self-quizzes to lock in core definitions.` : `- **Primary lesson**: Master the concept definitions.\n- **Active recall**: Flip flashcards repeatedly to embed memories.\n- **Comprehension check**: Finish the interactive quiz session with perfect marks.`);
 
     return {
-      ...summary,
+      ...safeSummary,
       keyConcepts: concepts,
       flashcards: cards,
       rememberSummary: rem,
@@ -2890,7 +2902,7 @@ export default function App() {
 
   // Synchronize preloaded videos based on selected output language
   useEffect(() => {
-    if (activeSummary) {
+    if (activeSummary && activeSummary.metadata) {
       const vidId = activeSummary.metadata.videoId;
       if (vidId === 'UF8uR6Z6KLc' || vidId === 'qp0HIF3SfI4') {
         if (outputLanguage === 'ar') {
@@ -2907,7 +2919,7 @@ export default function App() {
       }
     }
 
-    if (demoActiveVideo) {
+    if (demoActiveVideo && demoActiveVideo.metadata) {
       const vidId = demoActiveVideo.metadata.videoId;
       if (vidId === 'UF8uR6Z6KLc' || vidId === 'qp0HIF3SfI4') {
         if (outputLanguage === 'ar') {
@@ -2923,7 +2935,7 @@ export default function App() {
         }
       }
     }
-  }, [outputLanguage, activeSummary?.metadata.videoId, demoActiveVideo?.metadata.videoId]);
+  }, [outputLanguage, activeSummary?.metadata?.videoId, demoActiveVideo?.metadata?.videoId]);
 
   const downloadSummaryAsPDF = () => {
     if (!activeSummary) return;
@@ -2934,9 +2946,9 @@ export default function App() {
     }
     const contents = `---
 ZIPYTINY PROFESSIONAL SUMMARY REPORT
-TITLE: ${activeSummary.metadata.title}
-AUTHOR: ${activeSummary.metadata.author}
-DURATION: ${activeSummary.metadata.duration}
+TITLE: ${activeSummary.metadata?.title || 'Untitled Document'}
+AUTHOR: ${activeSummary.metadata?.author || 'Anonymous'}
+DURATION: ${activeSummary.metadata?.duration || '10'}
 REPORT GENERATED: ${new Date().toLocaleString()}
 STATUS: PREMIUM SUBSCRIBER WHITE-LABELED EXPORT
 ---
@@ -2958,7 +2970,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `${activeSummary.metadata.title.toLowerCase().replace(/[^a-z0-9]/g, '_')}_summary.md`);
+    link.setAttribute('download', `${(activeSummary.metadata?.title || 'Untitled').toLowerCase().replace(/[^a-z0-9]/g, '_')}_summary.md`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -2973,16 +2985,27 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         const parsed = JSON.parse(stored) as any[];
         const migrated: SavedSummary[] = parsed.map((item: any) => {
           if (!item) return null;
-          // If already in new format
-          if (item.response && item.response.metadata) {
-            return item as SavedSummary;
+          
+          let response = item.response;
+          if (!response && (item.metadata || item.summary)) {
+            response = item;
           }
-          // If legacy format stored directly as response
-          if (item.metadata || item.summary) {
+
+          if (response) {
+            if (!response.metadata) {
+              response.metadata = {
+                videoId: item.id || response.metadata?.videoId || 'unknown',
+                videoUrl: '',
+                title: 'Untitled Document',
+                author: 'Anonymous',
+                thumbnailUrl: '',
+                duration: '10'
+              };
+            }
             return {
-              id: item.id || item.metadata?.videoId || 'unknown',
+              id: item.id || response.metadata?.videoId || 'unknown',
               savedAt: item.savedAt || new Date().toLocaleDateString(),
-              response: item
+              response: response
             } as SavedSummary;
           }
           return null;
