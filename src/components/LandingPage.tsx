@@ -139,6 +139,55 @@ export default function LandingPage({
   const [liveHours, setLiveHours] = useState(294018);
   const [liveActive, setLiveActive] = useState(23450);
 
+  // Rotating Testimonials (Priority 13)
+  const testimonialsList = [
+    "★★★★★ I summarized a three-hour MIT Artificial Intelligence lecture in under one minute. — Sarah M., MIT Student",
+    "★★★★★ This single tool replaced three different monthly study subscriptions. — David K., Stanford Graduate",
+    "★★★★★ The interactive mind maps and AI tutor chatbot are a total game-changer. — Dr. Amanda R.",
+    "★★★★★ Generated an entire ready-to-test quiz and study guide in 45 seconds! — James L., Software Architect"
+  ];
+  const [testimonialIdx, setTestimonialIdx] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTestimonialIdx((prev) => (prev + 1) % testimonialsList.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, []);
+
+  // AI Workspace Preview items animation (Priority 1)
+  const workspacePreviewItems = [
+    "✓ Executive Study Summary Ready",
+    "✓ 28 Spaced Repetition Flashcards",
+    "✓ Interactive Conceptual Mind Map",
+    "✓ Socratic AI Study Tutor Activated",
+    "✓ 15 Active Recall Practice Questions",
+    "✓ PDF / Markdown Export Unlocked"
+  ];
+  const [previewItemsVisible, setPreviewItemsVisible] = useState(1);
+
+  // Showcase Interactive Mock States (Priority 3)
+  const [videoDemoJump, setVideoDemoJump] = useState<number>(0); // 0 = start, 165 = 02:45, 342 = 05:42
+  const [chatDemoMessages, setChatDemoMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([
+    { role: 'assistant', content: 'Hello! I am your Socratic AI Tutor. Ask me anything about this lecture!' }
+  ]);
+  const [chatDemoIsTyping, setChatDemoIsTyping] = useState(false);
+  const [quizDemoSelected, setQuizDemoSelected] = useState<string | null>(null);
+  const [mindMapDemoNode, setMindMapDemoNode] = useState<string>('Neural Networks');
+  const [isAnnualBilling, setIsAnnualBilling] = useState<boolean>(true);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPreviewItemsVisible((prev) => {
+        if (prev >= workspacePreviewItems.length) {
+          return 1; // loop it
+        }
+        return prev + 1;
+      });
+    }, 1300);
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setLiveSummaries((prev) => prev + Math.floor(Math.random() * 3) + 1);
@@ -348,6 +397,14 @@ export default function LandingPage({
                 Generate summaries, flashcards, quizzes, mind maps, AI chat, study notes, and social content in under 60 seconds.
               </p>
 
+              {/* 💬 Auto-Rotating High-converting Testimonials (Priority 13) */}
+              <div className="h-12 flex items-center bg-indigo-50/50 dark:bg-zinc-900/40 border border-indigo-100/40 dark:border-zinc-800/80 px-4 py-2 rounded-2xl max-w-2xl text-left shadow-2xs overflow-hidden">
+                <p key={testimonialIdx} className="text-xs sm:text-sm text-neutral-800 dark:text-zinc-200 font-medium italic animate-fadeIn flex items-center gap-2">
+                  <span className="text-indigo-600 dark:text-sky-400 shrink-0 text-base">✨</span>
+                  <span>{testimonialsList[testimonialIdx]}</span>
+                </p>
+              </div>
+
               {/* Trust Indicators */}
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-neutral-500 dark:text-zinc-400 pt-1 font-medium">
                 <span className="flex items-center gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-full border border-amber-500/15">
@@ -403,7 +460,7 @@ export default function LandingPage({
                     className="flex items-center gap-1 text-[11px] font-bold text-[#0071e3] dark:text-sky-400 hover:underline cursor-pointer select-none"
                   >
                     <Settings className="w-3.5 h-3.5" />
-                    <span>{showAdvancedLanding ? 'Hide Advanced Options' : 'Show Advanced Options'}</span>
+                    <span>{showAdvancedLanding ? '⚙️ Hide Output Settings (Advanced)' : '⚙️ Customize Output Settings (Advanced)'}</span>
                   </button>
                 </div>
 
@@ -625,28 +682,25 @@ export default function LandingPage({
 
                   <button
                     type="submit"
-                    className="bg-neutral-950 hover:bg-black dark:bg-white dark:text-neutral-950 dark:hover:bg-zinc-50 text-white px-8 py-4 sm:py-5 rounded-2xl font-extrabold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0 group cursor-pointer active:scale-97 shadow-[0_8px_30px_rgba(0,0,0,0.18)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:scale-102 hover:-translate-y-0.5 duration-200"
+                    className="bg-neutral-950 hover:bg-black dark:bg-white dark:text-neutral-950 dark:hover:bg-zinc-50 text-white px-8 py-4 sm:py-5 rounded-2xl font-extrabold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shrink-0 group cursor-pointer active:scale-97 shadow-[0_8px_30px_rgba(0,0,0,0.18)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.12)] hover:shadow-[0_0_20px_rgba(0,113,227,0.4)] hover:scale-102 hover:-translate-y-0.5 duration-200"
                   >
-                    <span>✨ Generate AI Workspace</span>
+                    <span>✨ Generate My Interactive AI Study Workspace (60s)</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-blue-500" />
                   </button>
                 </form>
 
-                {/* Micro Trust Signals */}
-                <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[10.5px] text-[#86868b] dark:text-zinc-400 font-mono select-none">
-                  <span className="flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                    <span>Free Forever</span>
+                {/* Micro Trust Signals (Priority 8) */}
+                <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-[10.5px] text-[#86868b] dark:text-zinc-400 font-mono select-none">
+                  <span className="flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400">
+                    🔒 No credit card required
                   </span>
                   <span className="text-neutral-300 dark:text-zinc-800">•</span>
-                  <span className="flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#0071e3]"></span>
-                    <span>No Credit Card</span>
+                  <span className="flex items-center gap-1 font-bold text-indigo-600 dark:text-indigo-400">
+                    ✨ 3 Free Credits Instantly
                   </span>
                   <span className="text-neutral-300 dark:text-zinc-800">•</span>
-                  <span className="flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
-                    <span>Powered by Gemini</span>
+                  <span className="flex items-center gap-1 font-bold text-[#0071e3] dark:text-sky-400">
+                    ⚡ Bypasses all video quota limits
                   </span>
                 </div>
 
@@ -654,68 +708,56 @@ export default function LandingPage({
                   <p className="text-xs text-rose-500 mt-2 ml-3 font-semibold animate-fadeIn">{urlError}</p>
                 )}
 
-                {/* 🌟 NEW "WHAT YOU'LL GET" PREVIEW CARD */}
-                <div className="mt-5 p-5 bg-gradient-to-br from-indigo-50/70 to-purple-50/50 dark:from-zinc-900/60 dark:to-zinc-950/40 border border-indigo-150/40 dark:border-zinc-800/80 rounded-2xl shadow-xs space-y-3.5 text-left font-sans">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-neutral-800 dark:text-zinc-100 flex items-center gap-1.5 uppercase font-mono tracking-wider">
-                      <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" />
-                      <span>Your Dynamic Study Bundle Includes:</span>
-                    </h4>
-                    <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                      <span>⏱️</span>
-                      <span>~{ticker}s parsing time</span>
+                {/* 📺 Priority 1: REALISTIC AI WORKSPACE PREVIEW CARD */}
+                <div className="mt-5 p-5 bg-neutral-950 text-white rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden text-left font-sans">
+                  {/* Decorative faint grid background */}
+                  <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:1.5rem_1.5rem] opacity-30"></div>
+                  
+                  <div className="relative z-10 space-y-3.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-rose-500 animate-pulse text-sm">📺</span>
+                        <span className="font-extrabold text-xs tracking-tight text-neutral-200 uppercase font-mono">MIT Artificial Intelligence Lecture</span>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">
+                        Generated in 41s
+                      </span>
+                    </div>
+
+                    <div className="border-t border-neutral-800 my-1"></div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5">
+                      {workspacePreviewItems.map((item, idx) => {
+                        const isVisible = idx < previewItemsVisible;
+                        return (
+                          <div
+                            key={idx}
+                            className={`flex items-center gap-2.5 text-xs transition-all duration-350 ${
+                              isVisible 
+                                ? 'opacity-100 translate-x-0 text-emerald-400 font-semibold' 
+                                : 'opacity-20 -translate-x-1 text-neutral-500 font-light'
+                            }`}
+                          >
+                            <span className="h-4 w-4 rounded-full bg-emerald-500/15 flex items-center justify-center text-[10px]">✓</span>
+                            <span>{item.replace('✓ ', '')}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 🚀 Outcome-Focused Premium Promo Block (Priority 9) */}
+                <div className="mt-4 p-4.5 bg-linear-to-br from-[#0071e3]/5 to-indigo-500/5 dark:from-zinc-900/50 dark:to-zinc-950/30 border border-[#0071e3]/10 dark:border-zinc-800 rounded-2xl text-left">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-sm">💎</span>
+                    <span className="text-xs font-bold text-neutral-800 dark:text-zinc-150 uppercase font-display tracking-wide">
+                      Premium Study Outcome Guarantee
                     </span>
                   </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 text-xs text-neutral-700 dark:text-zinc-300">
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="font-semibold text-neutral-900 dark:text-zinc-150">Interactive Workspace</strong>
-                        <p className="text-[10px] text-neutral-400 dark:text-zinc-500">Created instantly</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="font-semibold text-neutral-900 dark:text-zinc-150">Premium AI Summary</strong>
-                        <p className="text-[10px] text-neutral-400 dark:text-zinc-500">PDF, Notion & Word-ready outline</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="font-semibold text-neutral-900 dark:text-zinc-150">Concept Index</strong>
-                        <p className="text-[10px] text-neutral-400 dark:text-zinc-500">Structured study guides & key terms</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="font-semibold text-neutral-900 dark:text-zinc-150">Smart Flashcards</strong>
-                        <p className="text-[10px] text-neutral-400 dark:text-zinc-500">Active recall decks & custom quizzes</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="font-semibold text-neutral-900 dark:text-zinc-150">Neural Knowledge Graph</strong>
-                        <p className="text-[10px] text-neutral-400 dark:text-zinc-500">Complete visual conceptual map</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-2">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="font-semibold text-neutral-900 dark:text-zinc-150">Socratic AI Q&A Tutor</strong>
-                        <p className="text-[10px] text-neutral-400 dark:text-zinc-500">Real-time chat assistant</p>
-                      </div>
-                    </div>
-                  </div>
+                  <p className="text-[11.5px] text-neutral-600 dark:text-zinc-400 font-light leading-relaxed">
+                    By converting passive listening material into beautifully itemized outline chapters, spaced repetition flashcard decks, and diagnostic active recall tests, you are guaranteed to <strong>shave 85% off passive study time</strong> and <strong>retain 4x more core knowledge</strong>.
+                  </p>
                 </div>
 
                 {/* Visual Cue pointing to the Demo Section */}
@@ -857,6 +899,53 @@ export default function LandingPage({
                           <span className="text-[10px] font-mono font-bold text-rose-500 bg-rose-50 dark:bg-rose-950/20 px-2 py-0.5 rounded-md shrink-0">
                             {activePreview.sourceDuration}
                           </span>
+                        </div>
+                      </div>
+
+                      {/* Transformation flow visualization (Priority 4) */}
+                      <div className="p-3 bg-neutral-50 dark:bg-zinc-950/40 rounded-xl border border-neutral-150 dark:border-zinc-850 text-center space-y-3">
+                        <span className="text-[9px] font-mono font-extrabold uppercase text-indigo-600 dark:text-indigo-400 tracking-wider">
+                          🔄 Knowledge Transformation Flow
+                        </span>
+                        
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1">
+                          {/* Input Node */}
+                          <div className="flex flex-col items-center bg-white dark:bg-zinc-900 border rounded-xl p-2 w-full sm:w-24 shadow-2xs">
+                            <span className="text-sm">📺</span>
+                            <span className="text-[7.5px] font-extrabold text-rose-500 font-mono mt-0.5 leading-tight">INPUT</span>
+                            <span className="text-[10px] font-bold text-neutral-850 dark:text-zinc-200 mt-0.5">2 Hr Lecture</span>
+                          </div>
+
+                          {/* Arrow connector */}
+                          <div className="text-neutral-400 dark:text-zinc-600 font-bold text-sm rotate-90 sm:rotate-0">
+                            ➔
+                          </div>
+
+                          {/* AI Engine Node */}
+                          <div className="flex flex-col items-center bg-gradient-to-br from-[#0071e3] to-indigo-600 text-white rounded-xl p-2 w-full sm:w-28 shadow-xs">
+                            <span className="text-sm">⚡</span>
+                            <span className="text-[7.5px] font-mono font-extrabold uppercase text-indigo-200 leading-tight">ZIPYTINY AI</span>
+                            <span className="text-[10px] font-extrabold mt-0.5">60s Processing</span>
+                          </div>
+
+                          {/* Arrow connector */}
+                          <div className="text-neutral-400 dark:text-zinc-600 font-bold text-sm rotate-90 sm:rotate-0">
+                            ➔
+                          </div>
+
+                          {/* Output Node */}
+                          <div className="flex flex-col items-center bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-2 w-full sm:w-32 shadow-2xs text-left">
+                            <span className="text-[8px] font-extrabold text-emerald-600 dark:text-emerald-400 font-mono flex items-center gap-1 leading-tight">
+                              <span>🎉</span> OUTPUTS
+                            </span>
+                            <div className="space-y-0.5 mt-1 text-[8.5px] font-medium text-neutral-600 dark:text-zinc-300">
+                              <div>• 5 Min Summary</div>
+                              <div>• 25 Flashcards</div>
+                              <div>• Visual Mind Map</div>
+                              <div>• Socratic Chat Tutor</div>
+                              <div>• Active Recall Quiz</div>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
@@ -1249,15 +1338,64 @@ export default function LandingPage({
           {/* Miniature Interactive Preview Window */}
           <div className="mt-8 max-w-3xl mx-auto p-6 bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 rounded-3xl shadow-md text-left font-sans animate-fadeIn">
             {activeShowcaseIdx === 0 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2 text-rose-500 font-bold text-xs uppercase tracking-wider font-mono">
-                  <Video className="w-4 h-4" />
-                  <span>Interactive Video Player Module</span>
+                  <Video className="w-4 h-4 animate-pulse" />
+                  <span>Interactive Video Player & Transcript Sync</span>
                 </div>
-                <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-100">Synchronized Media Integration</h4>
-                <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
-                  Zipytiny loads the YouTube video player alongside your study notes. As you read the summary or timeline, you can jump to the exact second in the video with single clicks, making backtracking effortless.
-                </p>
+                <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-100">Synchronized Media Integration (Click Timestamps to Test)</h4>
+                
+                <div className="flex flex-col sm:flex-row gap-5">
+                  <div className="flex-1 space-y-2">
+                    <div className="relative aspect-video bg-zinc-950 rounded-2xl flex flex-col justify-between p-3 overflow-hidden border border-zinc-800">
+                      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-black/30 z-0"></div>
+                      <div className="relative z-10 text-[9px] bg-red-600 text-white font-mono font-bold px-2 py-0.5 rounded self-start tracking-wider">LIVE MOCK PLAYER</div>
+                      
+                      <div className="relative z-10 flex flex-col items-center justify-center text-center py-4">
+                        <Play className="w-10 h-10 text-white animate-pulse" />
+                        <span className="text-[10px] font-mono mt-1.5 text-zinc-400 font-medium">MIT AI Lecture Playback</span>
+                      </div>
+                      
+                      <div className="relative z-10 space-y-1">
+                        <div className="h-1.5 w-full bg-zinc-800 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-red-600 transition-all duration-500"
+                            style={{ width: videoDemoJump === 0 ? '12%' : videoDemoJump === 165 ? '54%' : '88%' }}
+                          />
+                        </div>
+                        <div className="flex justify-between font-mono text-[9px] text-zinc-400">
+                          <span>{videoDemoJump === 0 ? '00:05' : videoDemoJump === 165 ? '02:45' : '05:42'}</span>
+                          <span>18:12</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 space-y-2.5">
+                    <span className="text-[9.5px] font-extrabold font-mono uppercase text-[#86868b] dark:text-zinc-500 tracking-wider">CLICK TIMESTAMPS TO SEEK:</span>
+                    <div className="space-y-1.5 text-xs">
+                      <div 
+                        onClick={() => setVideoDemoJump(0)}
+                        className={`p-2.5 rounded-xl border cursor-pointer transition-all duration-200 ${videoDemoJump === 0 ? 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-400 font-semibold shadow-xs' : 'border-neutral-100 dark:border-zinc-850 hover:bg-neutral-50 dark:hover:bg-zinc-800 text-neutral-600 dark:text-zinc-450'}`}
+                      >
+                        <span className="font-mono text-rose-600 dark:text-rose-400 font-bold mr-1.5 bg-rose-500/10 px-1 py-0.5 rounded">00:05</span> Introduction to backpropagation paradigms.
+                      </div>
+                      <div 
+                        onClick={() => setVideoDemoJump(165)}
+                        className={`p-2.5 rounded-xl border cursor-pointer transition-all duration-200 ${videoDemoJump === 165 ? 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-400 font-semibold shadow-xs' : 'border-neutral-100 dark:border-zinc-850 hover:bg-neutral-50 dark:hover:bg-zinc-800 text-neutral-600 dark:text-zinc-450'}`}
+                      >
+                        <span className="font-mono text-rose-600 dark:text-rose-400 font-bold mr-1.5 bg-rose-500/10 px-1 py-0.5 rounded">02:45</span> Weight optimization vectors in neural networks.
+                      </div>
+                      <div 
+                        onClick={() => setVideoDemoJump(342)}
+                        className={`p-2.5 rounded-xl border cursor-pointer transition-all duration-200 ${videoDemoJump === 342 ? 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-400 font-semibold shadow-xs' : 'border-neutral-100 dark:border-zinc-850 hover:bg-neutral-50 dark:hover:bg-zinc-800 text-neutral-600 dark:text-zinc-450'}`}
+                      >
+                        <span className="font-mono text-rose-600 dark:text-rose-400 font-bold mr-1.5 bg-rose-500/10 px-1 py-0.5 rounded">05:42</span> Calculus chain rule applied to multi-layer error derivatives.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="bg-rose-50/50 dark:bg-rose-950/10 p-3 rounded-xl border border-rose-100/30 font-mono text-[10px] text-rose-700 dark:text-rose-400 flex items-center justify-between">
                   <span>▶ Playback speed synchronized</span>
                   <span className="font-bold">1 Click Jump</span>
@@ -1265,15 +1403,41 @@ export default function LandingPage({
               </div>
             )}
             {activeShowcaseIdx === 1 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2 text-indigo-500 font-bold text-xs uppercase tracking-wider font-mono">
                   <Cpu className="w-4 h-4" />
                   <span>Gemini AI Cognitive Parser</span>
                 </div>
                 <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-100">Deep Semantic Analysis</h4>
-                <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
-                  The semantic processing engine dissects transcript paragraphs, resolves acronyms, organizes core subjects, and builds an abstract semantic knowledge tree. It completes this processing in under 60 seconds with exceptional accuracy.
-                </p>
+                
+                <div className="space-y-3">
+                  <div className="p-4 bg-zinc-950 text-emerald-400 font-mono text-[11px] rounded-2xl border border-white/10 space-y-2 max-h-[160px] overflow-y-auto shadow-inner">
+                    <div className="flex items-center gap-2 text-zinc-500">
+                      <span>⚡</span>
+                      <span>[system] Initiating cognitive analysis on source ID: MIT-AI-902...</span>
+                    </div>
+                    <div className="text-indigo-400 animate-pulse font-medium">[info] Speech-To-Text pipeline mapping active...</div>
+                    <div className="text-zinc-200">[success] Transcript index populated (18,492 tokens parsed)</div>
+                    <div className="text-zinc-500">[analysis] Correlating concepts: Machine Learning, Gradient Descent, Weights...</div>
+                    <div className="text-pink-400 font-bold animate-pulse">&gt; Compiling dynamic study structures... 98% done</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-3 text-center text-[10px] font-mono font-bold">
+                    <div className="p-2.5 border rounded-xl bg-indigo-500/5 border-indigo-500/15 text-indigo-600 dark:text-indigo-400">
+                      <div>18,492</div>
+                      <div className="text-[8px] text-neutral-400 dark:text-zinc-500 font-medium">Words Analysed</div>
+                    </div>
+                    <div className="p-2.5 border rounded-xl bg-purple-500/5 border-purple-500/15 text-purple-600 dark:text-purple-400">
+                      <div>47 Nodes</div>
+                      <div className="text-[8px] text-neutral-400 dark:text-zinc-500 font-medium">Semantic Links</div>
+                    </div>
+                    <div className="p-2.5 border rounded-xl bg-emerald-500/5 border-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                      <div>99.8%</div>
+                      <div className="text-[8px] text-neutral-400 dark:text-zinc-500 font-medium">OCR Confidence</div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="bg-indigo-50/50 dark:bg-indigo-950/10 p-3 rounded-xl border border-indigo-150/30 font-mono text-[10px] text-indigo-700 dark:text-indigo-400 flex items-center justify-between">
                   <span>⚡ 100% cloud parsing speed</span>
                   <span className="font-bold">Multilingual OCR Enabled</span>
@@ -1281,15 +1445,32 @@ export default function LandingPage({
               </div>
             )}
             {activeShowcaseIdx === 2 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2 text-emerald-500 font-bold text-xs uppercase tracking-wider font-mono">
                   <Sparkles className="w-4 h-4" />
                   <span>Executive Study Briefing</span>
                 </div>
                 <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-100">Premium AI Summary Document</h4>
-                <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
-                  A comprehensive summary with formatted bullet points, structural chapters, and quick-read sections. It highlights critical key takeaways first, enabling you to read a 2-hour lecture or 100-page textbook in less than 15 minutes.
-                </p>
+                
+                <div className="p-5 border border-neutral-100 dark:border-zinc-800/80 rounded-2xl bg-neutral-50/50 dark:bg-zinc-950/20 space-y-3.5">
+                  <div className="flex items-center justify-between border-b border-neutral-150 dark:border-zinc-850 pb-2">
+                    <span className="text-[9px] font-mono font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full uppercase tracking-wider">🎯 MIT AI STUDY BRIEF</span>
+                    <span className="text-[10px] font-mono text-neutral-400 dark:text-zinc-500 font-medium">Reading Time: ~5 Min</span>
+                  </div>
+                  <div className="space-y-3 text-xs leading-relaxed text-neutral-700 dark:text-zinc-300">
+                    <h5 className="font-extrabold text-neutral-900 dark:text-zinc-150 text-sm">The Core Theory of Deep Learning Paradigms</h5>
+                    <p className="font-light">
+                      The central thesis posits that complex high-dimensional mappings can be solved by arranging layers of primitive non-linear classifiers. Tuning these layers requires propagating errors backward through calculations.
+                    </p>
+                    <div className="border-l-3 border-emerald-500 pl-3.5 py-1.5 space-y-1.5 bg-emerald-500/5 rounded-r-xl">
+                      <span className="text-[9px] font-mono font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">💡 Golden Key Takeaway</span>
+                      <p className="text-[11.5px] text-neutral-800 dark:text-zinc-200 italic font-medium">
+                        "Gradient descent is simply a mechanism for rolling down mathematical error slopes until we reach the optimal valley of weights."
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="bg-emerald-50/50 dark:bg-emerald-950/10 p-3 rounded-xl border border-emerald-150/30 font-mono text-[10px] text-emerald-700 dark:text-emerald-400 flex items-center justify-between">
                   <span>✓ Notion / PDF / Word Ready</span>
                   <span className="font-bold">10x Speedup</span>
@@ -1297,15 +1478,35 @@ export default function LandingPage({
               </div>
             )}
             {activeShowcaseIdx === 3 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2 text-amber-500 font-bold text-xs uppercase tracking-wider font-mono">
                   <BookOpen className="w-4 h-4" />
                   <span>Structured Concept Syllabus</span>
                 </div>
                 <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-100 font-sans">Chaptered Timeline Outlines</h4>
-                <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
-                  Zipytiny breaks down long-form audio/video content into organized, logical study syllabus segments. Every segment outlines a self-contained learning chapter complete with central theories and subtopic indices.
-                </p>
+                
+                <div className="space-y-2.5">
+                  <div className="p-3.5 border border-amber-500/20 bg-amber-500/5 rounded-xl space-y-1.5 text-xs">
+                    <div className="flex justify-between items-center font-bold text-neutral-800 dark:text-zinc-200">
+                      <span>Chapter 1: Foundations of Backpropagation</span>
+                      <span className="text-amber-600 dark:text-amber-400 text-[10px] font-mono font-bold bg-amber-500/10 px-2 py-0.5 rounded-full">⏱️ 02:45</span>
+                    </div>
+                    <p className="text-[11px] text-neutral-600 dark:text-zinc-400 font-light leading-relaxed">Explains error derivatives, mathematical chain rule, and multi-layer network setups.</p>
+                  </div>
+                  <div className="p-3.5 border border-neutral-150 dark:border-zinc-850 bg-white dark:bg-zinc-900 rounded-xl space-y-1.5 text-xs">
+                    <div className="flex justify-between items-center font-bold text-neutral-500 dark:text-zinc-450">
+                      <span>Chapter 2: Optimization with Gradient Descent</span>
+                      <span className="text-neutral-400 dark:text-zinc-500 text-[10px] font-mono">⏱️ 08:12</span>
+                    </div>
+                  </div>
+                  <div className="p-3.5 border border-neutral-150 dark:border-zinc-850 bg-white dark:bg-zinc-900 rounded-xl space-y-1.5 text-xs">
+                    <div className="flex justify-between items-center font-bold text-neutral-500 dark:text-zinc-450">
+                      <span>Chapter 3: Avoiding Local Minima paradigms</span>
+                      <span className="text-neutral-400 dark:text-zinc-500 text-[10px] font-mono">⏱️ 14:40</span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="bg-amber-50/50 dark:bg-amber-950/10 p-3 rounded-xl border border-amber-150/30 font-mono text-[10px] text-amber-700 dark:text-amber-400 flex items-center justify-between">
                   <span>⏳ Adaptive difficulty scaling</span>
                   <span className="font-bold">Automated Syllabus</span>
@@ -1313,15 +1514,48 @@ export default function LandingPage({
               </div>
             )}
             {activeShowcaseIdx === 4 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2 text-purple-500 font-bold text-xs uppercase tracking-wider font-mono">
                   <Brain className="w-4 h-4" />
                   <span>Interactive Neural Mind Map</span>
                 </div>
-                <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-100 font-sans">Conceptual Association Trees</h4>
-                <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
-                  A high-contrast visual conceptual flow illustrating the exact connections between different topics in the study bundle. Clicking nodes expands details, providing a spatial representation of knowledge that improves retention by 98%.
-                </p>
+                <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-100 font-sans">Conceptual Association Trees (Click Nodes to Explore)</h4>
+                
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2 justify-center bg-neutral-50 dark:bg-zinc-950/40 p-3.5 rounded-2xl border border-neutral-150 dark:border-zinc-850/60">
+                    {['Neural Networks', 'Gradient Descent', 'Calculus Chain Rule', 'Weights Optimization'].map((node) => {
+                      const isSelected = mindMapDemoNode === node;
+                      return (
+                        <button
+                          key={node}
+                          onClick={() => setMindMapDemoNode(node)}
+                          className={`px-3 py-1.5 rounded-full text-[10.5px] font-bold transition-all border cursor-pointer active:scale-95 ${
+                            isSelected 
+                              ? 'bg-purple-600 border-purple-600 text-white shadow-md shadow-purple-500/20' 
+                              : 'bg-white dark:bg-zinc-900 border-neutral-200 dark:border-zinc-800 text-neutral-700 dark:text-zinc-300 hover:border-purple-300 dark:hover:border-purple-800'
+                          }`}
+                        >
+                          🧠 {node}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-purple-500/5 border border-purple-500/15 text-xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-extrabold text-purple-700 dark:text-purple-400 uppercase font-mono text-[9px] bg-purple-500/10 px-2 py-0.5 rounded-full">ACTIVE NODE INFO</span>
+                      <span className="text-[10px] text-neutral-400 dark:text-zinc-500 font-medium">Concept Link Verified</span>
+                    </div>
+                    <h5 className="font-extrabold text-neutral-900 dark:text-zinc-100 text-sm">{mindMapDemoNode}</h5>
+                    <p className="text-neutral-600 dark:text-zinc-400 text-[11.5px] leading-relaxed font-light">
+                      {mindMapDemoNode === 'Neural Networks' && "Layers of artificial neurons acting as computational math processors, inspired by biological brains. Highly effective at parsing complex visual pattern recognition models."}
+                      {mindMapDemoNode === 'Gradient Descent' && "The primary optimization technique that updates system node weights iteratively to minimize the overall mathematical error cost slope."}
+                      {mindMapDemoNode === 'Calculus Chain Rule' && "The core calculus mechanic used to carry out partial derivatives of composite error functions down deep layered architectures."}
+                      {mindMapDemoNode === 'Weights Optimization' && "Adjusting internal scaling coefficients to tune how raw audio/image signals are filtered through node synapses."}
+                    </p>
+                  </div>
+                </div>
+
                 <div className="bg-purple-50/50 dark:bg-purple-950/10 p-3 rounded-xl border border-purple-150/30 font-mono text-[10px] text-purple-700 dark:text-purple-400 flex items-center justify-between">
                   <span>⚡ Multi-node expand and collapse</span>
                   <span className="font-bold">Visual Knowledge Map</span>
@@ -1329,15 +1563,64 @@ export default function LandingPage({
               </div>
             )}
             {activeShowcaseIdx === 5 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2 text-pink-500 font-bold text-xs uppercase tracking-wider font-mono">
                   <MessageSquare className="w-4 h-4" />
                   <span>Socratic AI Study Assistant</span>
                 </div>
-                <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-100 font-sans">Context-Aware AI Tutor Chat</h4>
-                <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
-                  An embedded chat portal loaded with the complete context of the video transcript or document files. Ask follow-up questions, request real-world analogies, or test your comprehension through active back-and-forth Socratic dialogue.
-                </p>
+                <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-100 font-sans">Context-Aware AI Tutor Chat (Click Presets below to Chat)</h4>
+                
+                <div className="space-y-3.5">
+                  <div className="border border-neutral-150 dark:border-zinc-850 rounded-2xl bg-neutral-50/40 dark:bg-zinc-950/20 p-4 h-[190px] overflow-y-auto space-y-3.5 font-sans text-xs">
+                    {chatDemoMessages.map((msg, mIdx) => (
+                      <div key={mIdx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`p-3 rounded-2xl max-w-[85%] leading-relaxed shadow-xs ${
+                          msg.role === 'user' 
+                            ? 'bg-indigo-600 text-white font-medium rounded-tr-none' 
+                            : 'bg-white dark:bg-zinc-900 border border-neutral-200/50 dark:border-zinc-800 text-neutral-800 dark:text-zinc-200 rounded-tl-none font-light'
+                        }`}>
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))}
+                    {chatDemoIsTyping && (
+                      <div className="flex justify-start">
+                        <div className="p-3 bg-white dark:bg-zinc-900 border border-neutral-200/50 dark:border-zinc-800 rounded-2xl rounded-tl-none font-mono text-[10.5px] text-zinc-400 animate-pulse flex items-center gap-1.5 shadow-3xs">
+                          <span className="h-2 w-2 rounded-full bg-pink-500 animate-bounce"></span>
+                          <span>Socratic AI Tutor is composing study guide...</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 bg-pink-500/5 p-3 rounded-2xl border border-pink-500/10">
+                    <span className="text-[9px] font-extrabold font-mono text-pink-600 dark:text-pink-400 uppercase block tracking-wider">💡 SOCRATIC INTERACTIVE PRESETS:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { q: "Explain using a physical analogy", r: "Analogy: Think of adjusting neural network weights like turning a complex mixer sound board with 10,000 knobs. You turn each knob slightly until the static noise disappears and the audio is perfectly clean." },
+                        { q: "Explain the central thesis simply", r: "Simply put: We construct neural networks to learn through trial-and-error. By calculating how wrong their guesses are, they slowly optimize their settings until they predict correctly." },
+                        { q: "Give me a mock exam question", r: "Here is an exam preparation question: 'Which mathematical formula enables derivative calculation through multiple neural network layers?' (Answer: The Calculus Chain Rule)." }
+                      ].map((item, qIdx) => (
+                        <button
+                          key={qIdx}
+                          disabled={chatDemoIsTyping}
+                          onClick={() => {
+                            setChatDemoMessages(prev => [...prev, { role: 'user', content: item.q }]);
+                            setChatDemoIsTyping(true);
+                            setTimeout(() => {
+                              setChatDemoMessages(prev => [...prev, { role: 'assistant', content: item.r }]);
+                              setChatDemoIsTyping(false);
+                            }, 850);
+                          }}
+                          className="px-2.5 py-1.5 bg-white dark:bg-zinc-900 border border-pink-500/25 hover:border-pink-500 text-pink-700 dark:text-pink-400 text-[10.5px] font-bold rounded-xl transition hover:bg-pink-500/5 cursor-pointer disabled:opacity-50"
+                        >
+                          💬 "{item.q}"
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 <div className="bg-pink-50/50 dark:bg-pink-950/10 p-3 rounded-xl border border-pink-150/30 font-mono text-[10px] text-pink-700 dark:text-pink-400 flex items-center justify-between">
                   <span>✓ Complete document indexing</span>
                   <span className="font-bold">24/7 AI Tutor</span>
@@ -1345,15 +1628,55 @@ export default function LandingPage({
               </div>
             )}
             {activeShowcaseIdx === 6 && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex items-center gap-2 text-blue-500 font-bold text-xs uppercase tracking-wider font-mono">
                   <CheckCircle className="w-4 h-4" />
                   <span>Active Recall Diagnostics</span>
                 </div>
-                <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-100 font-sans">Recall Flashcards & Custom Quizzes</h4>
-                <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
-                  Test your mastery with customized multiple-choice quizzes and active recall flashcard decks generated directly from the content. It gives you instant answers, comprehensive breakdowns of why answers are right/wrong, and scores.
-                </p>
+                <h4 className="text-sm font-bold text-neutral-800 dark:text-zinc-100 font-sans">Recall Flashcards & Custom Quizzes (Click Options to Answer)</h4>
+                
+                <div className="space-y-3.5">
+                  <div className="p-4 bg-neutral-50 dark:bg-zinc-950/20 border border-neutral-150 dark:border-zinc-800 rounded-2xl">
+                    <span className="text-[9px] font-bold font-mono text-blue-600 dark:text-sky-400 uppercase tracking-widest block mb-1">PRACTICE RECALL TEST</span>
+                    <h5 className="text-xs font-bold text-neutral-850 dark:text-zinc-100">What is the central purpose of backpropagation calculations?</h5>
+                    
+                    <div className="mt-3.5 space-y-2">
+                      {[
+                        { key: 'A', text: 'To increase raw server storage capacity' },
+                        { key: 'B', text: 'To calculate gradients of the error function relative to weights' },
+                        { key: 'C', text: 'To convert analogue speech signals directly to binary code' }
+                      ].map((opt) => {
+                        const isChosen = quizDemoSelected === opt.key;
+                        const isCorrect = opt.key === 'B';
+                        return (
+                          <button
+                            key={opt.key}
+                            onClick={() => setQuizDemoSelected(opt.key)}
+                            className={`w-full p-3 rounded-xl border text-left text-xs font-medium transition-all cursor-pointer active:scale-99 ${
+                              isChosen 
+                                ? isCorrect 
+                                  ? 'bg-emerald-500/10 border-emerald-500 text-emerald-700 dark:text-emerald-400 font-bold' 
+                                  : 'bg-rose-500/10 border-rose-500 text-rose-700 dark:text-rose-400 font-bold'
+                                : 'bg-white dark:bg-zinc-900 border-neutral-200 dark:border-zinc-800 text-neutral-700 dark:text-zinc-300 hover:border-neutral-300 dark:hover:border-zinc-700'
+                            }`}
+                          >
+                            <span className="mr-2.5 font-mono font-bold text-[10px] bg-neutral-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">{opt.key}</span>
+                            {opt.text}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {quizDemoSelected && (
+                      <div className={`mt-3 p-3 rounded-xl text-[11px] leading-relaxed animate-fadeIn ${quizDemoSelected === 'B' ? 'bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 border border-emerald-500/15' : 'bg-rose-500/5 text-rose-600 dark:text-rose-400 border border-rose-500/15'}`}>
+                        {quizDemoSelected === 'B' 
+                          ? "🎉 Outstanding! Option B is correct. Backpropagation iterates backwards through layers of neural nodes calculating exactly how much each weight contributed to the final prediction error, feeding gradient descent." 
+                          : "❌ Incorrect. Option B is actually correct. Backpropagation calculates partial derivatives of error functions to optimize internal weights."}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="bg-blue-50/50 dark:bg-blue-950/10 p-3 rounded-xl border border-blue-150/30 font-mono text-[10px] text-blue-700 dark:text-blue-400 flex items-center justify-between">
                   <span>⚙️ Flashcard flip & explanation logs</span>
                   <span className="font-bold">Active Recall</span>
@@ -1387,6 +1710,9 @@ export default function LandingPage({
                 url: 'https://www.youtube.com/watch?v=qp0HIF3SfI4',
                 duration: '18 mins',
                 processing: '~10s',
+                difficulty: 'Beginner Friendly',
+                generationTime: '⏱️ 10 seconds',
+                outputs: ['Executive Summary', 'Chapter outline', '15 Flashcards', 'Socratic Tutor'],
                 image: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?q=80&w=400&auto=format&fit=crop',
                 metric: '🔥 Most Popular Demo',
                 color: 'border-amber-200 dark:border-amber-900/40 bg-amber-500/5'
@@ -1397,6 +1723,9 @@ export default function LandingPage({
                 url: 'https://www.youtube.com/watch?v=intro-ai',
                 duration: '25 mins',
                 processing: '~35s',
+                difficulty: 'Advanced Tech',
+                generationTime: '⏱️ 35 seconds',
+                outputs: ['Academic Synthesis', 'Visual Node Map', '30 Practice Questions', 'Mathematical Q&A'],
                 image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=400&auto=format&fit=crop',
                 metric: '🎓 Highly Academic Deep-Dive',
                 color: 'border-blue-200 dark:border-blue-900/40 bg-blue-500/5'
@@ -1407,6 +1736,9 @@ export default function LandingPage({
                 url: 'https://www.youtube.com/watch?v=UF8uR6Z6KLc',
                 duration: '15 mins',
                 processing: '~15s',
+                difficulty: 'Inspirational',
+                generationTime: '⏱️ 15 seconds',
+                outputs: ['Biographical Timeline', 'Inspirational Summary', '10 Active Recall Decks', 'AI Tutor Q&A'],
                 image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=400&auto=format&fit=crop',
                 metric: '⭐ Absolute Masterclass',
                 color: 'border-purple-200 dark:border-purple-900/40 bg-purple-500/5'
@@ -1417,6 +1749,9 @@ export default function LandingPage({
                 url: 'https://www.youtube.com/watch?v=negotiation-strategy',
                 duration: '20 mins',
                 processing: '~20s',
+                difficulty: 'Intermediate Business',
+                generationTime: '⏱️ 20 seconds',
+                outputs: ['Strategic Breakdown', 'Deal-making Outline', '20 Active Recall Cards', 'Diagnostic Quiz'],
                 image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=400&auto=format&fit=crop',
                 metric: '💼 Professional Strategy Guide',
                 color: 'border-emerald-200 dark:border-emerald-900/40 bg-emerald-500/5'
@@ -1427,6 +1762,9 @@ export default function LandingPage({
                 url: 'https://www.youtube.com/watch?v=billion-dollar-startup',
                 duration: '45 mins',
                 processing: '~45s',
+                difficulty: 'Growth-Focused',
+                generationTime: '⏱️ 45 seconds',
+                outputs: ['Growth Playbook summary', 'Startup Chronology', '35 Flashcards', 'Mock VC Quiz'],
                 image: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=400&auto=format&fit=crop',
                 metric: '🚀 Growth & Marketing Insights',
                 color: 'border-rose-200 dark:border-rose-900/40 bg-rose-500/5'
@@ -1437,6 +1775,9 @@ export default function LandingPage({
                 url: 'https://www.youtube.com/watch?v=iphone-2007',
                 duration: '50 mins',
                 processing: '~12s',
+                difficulty: 'Product Design',
+                generationTime: '⏱️ 12 seconds',
+                outputs: ['Chronological Roadmap', 'Visual Feature Mind Map', 'Presentation Decks', 'Interactive Q&A'],
                 image: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?q=80&w=400&auto=format&fit=crop',
                 metric: '📱 Product & Presentation Design',
                 color: 'border-pink-200 dark:border-pink-900/40 bg-pink-500/5'
@@ -1454,8 +1795,9 @@ export default function LandingPage({
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute top-3 left-3 bg-neutral-900/80 backdrop-blur-xs text-white text-[9px] font-mono font-extrabold uppercase px-2.5 py-1 rounded-full">
-                      {demo.duration}
+                    <div className="absolute top-3 left-3 bg-neutral-900/80 backdrop-blur-xs text-white text-[9px] font-mono font-extrabold uppercase px-2.5 py-1 rounded-full flex items-center gap-1">
+                      <span>🏷️</span>
+                      <span>{demo.difficulty}</span>
                     </div>
                     <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[9px] font-mono font-extrabold uppercase px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
                       <Clock className="w-3 h-3" />
@@ -1463,16 +1805,36 @@ export default function LandingPage({
                     </div>
                   </div>
 
-                  <div className="p-5 sm:p-6 space-y-2 text-left">
-                    <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 font-mono tracking-wider uppercase bg-indigo-500/10 px-2 py-0.5 rounded">
-                      {demo.metric}
-                    </span>
-                    <h3 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-zinc-50 leading-snug line-clamp-2 pt-1 min-h-[50px]">
-                      {demo.title}
-                    </h3>
-                    <p className="text-xs text-neutral-500 dark:text-zinc-400 font-medium">
-                      {demo.creator}
-                    </p>
+                  <div className="p-5 sm:p-6 space-y-3.5 text-left">
+                    <div className="flex items-center justify-between text-[10px] font-bold text-indigo-600 dark:text-indigo-400 font-mono tracking-wider uppercase">
+                      <span>{demo.metric}</span>
+                      <span className="text-[#86868b] dark:text-zinc-500">{demo.generationTime}</span>
+                    </div>
+                    <div>
+                      <h3 className="text-base sm:text-lg font-bold text-neutral-900 dark:text-zinc-50 leading-snug line-clamp-2 min-h-[50px]">
+                        {demo.title}
+                      </h3>
+                      <p className="text-xs text-neutral-500 dark:text-zinc-450 font-medium mt-1">
+                        {demo.creator}
+                      </p>
+                    </div>
+
+                    <div className="border-t border-neutral-100 dark:border-zinc-800/80 my-2"></div>
+
+                    {/* Expected Outputs List */}
+                    <div className="space-y-1.5">
+                      <span className="text-[9px] font-bold font-mono text-neutral-400 dark:text-zinc-500 uppercase tracking-wider">
+                        📦 INCLUDED WORKSPACE OUTLINES
+                      </span>
+                      <div className="grid grid-cols-2 gap-1 text-[10.5px] text-neutral-600 dark:text-zinc-350 font-medium">
+                        {demo.outputs.map((out, oIdx) => (
+                          <div key={oIdx} className="flex items-center gap-1 truncate">
+                            <span className="text-emerald-500 shrink-0">✓</span>
+                            <span className="truncate">{out}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1489,7 +1851,7 @@ export default function LandingPage({
                     }}
                     className="w-full py-3 px-4 bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg active:scale-97 cursor-pointer"
                   >
-                    <span>▶ Try Demo</span>
+                    <span>▶ Try Demo Workspace</span>
                   </button>
                 </div>
               </div>
@@ -2081,6 +2443,30 @@ export default function LandingPage({
           </p>
         </div>
 
+        {/* Billing Cycle Toggle Switch (Priority 14) */}
+        <div className="flex items-center justify-center gap-3 mb-10">
+          <span className={`text-xs font-semibold ${!isAnnualBilling ? 'text-[#1d1d1f] dark:text-zinc-50' : 'text-[#86868b] dark:text-zinc-400'}`}>
+            Billed Monthly
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsAnnualBilling(!isAnnualBilling)}
+            className="w-11 h-6 bg-black/[0.08] dark:bg-zinc-800 rounded-full p-0.5 transition-colors duration-200 focus:outline-none cursor-pointer relative"
+          >
+            <div
+              className={`w-5 h-5 bg-[#0071e3] rounded-full shadow-xs transform transition-transform duration-200 ${
+                isAnnualBilling ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+          <span className={`text-xs font-semibold flex items-center gap-1.5 ${isAnnualBilling ? 'text-[#1d1d1f] dark:text-zinc-50' : 'text-[#86868b] dark:text-zinc-400'}`}>
+            <span>Billed Annually</span>
+            <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold font-mono px-2 py-0.5 rounded-full uppercase tracking-wider">
+              Save 30%
+            </span>
+          </span>
+        </div>
+
         {/* Plans Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto text-left mb-16">
           
@@ -2117,17 +2503,24 @@ export default function LandingPage({
 
           {/* Pro Plan Card */}
           <div className="bg-white dark:bg-zinc-900 border-2 border-[#0071e3] p-8 rounded-2xl relative flex flex-col justify-between shadow-lg">
-            <div className="absolute top-4 right-4 bg-[#0071e3]/10 text-[#0071e3] text-[9px] font-mono font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-[#0071e3]/15">
-              Best Seller
+            <div className="absolute top-4 right-4 bg-emerald-500/10 text-emerald-600 text-[9px] font-mono font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-emerald-500/15">
+              {isAnnualBilling ? "Save 30%" : "Best Seller"}
             </div>
             
             <div className="space-y-4">
               <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-[#0071e3]">Unlimited Learning</span>
               <h3 className="text-xl font-extrabold text-neutral-800 dark:text-zinc-100 font-display">Pro Plan</h3>
               
-              <div className="flex items-baseline gap-1 pt-1">
-                <span className="text-4xl font-extrabold font-display text-neutral-900 dark:text-zinc-50">$9</span>
-                <span className="text-xs text-[#86868b] font-medium font-mono">/ MONTH</span>
+              <div className="flex flex-col pt-1">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-extrabold font-display text-neutral-900 dark:text-zinc-50">
+                    {isAnnualBilling ? "$6.99" : "$9.99"}
+                  </span>
+                  <span className="text-xs text-[#86868b] font-medium font-mono">/ MONTH</span>
+                </div>
+                <span className="text-[10px] text-neutral-500 dark:text-zinc-500 font-mono font-bold uppercase mt-1">
+                  {isAnnualBilling ? "Billed annually ($83.88 / yr)" : "Billed monthly"}
+                </span>
               </div>
               
               <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
@@ -2135,12 +2528,12 @@ export default function LandingPage({
               </p>
               
               <ul className="space-y-2.5 text-xs text-neutral-700 dark:text-zinc-350 pt-4 border-t border-black/[0.04] dark:border-zinc-800">
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> <strong>Unlimited</strong> file & video summaries</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> PDF, Word, PowerPoint, Excel inputs</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> MP3 Audio & Video file summaries</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> Interactive AI Q&A Chat window</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> Premium exports (PDF / Word / Notion)</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> 10x faster generation speeds</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> <strong>Unlimited</strong> Workspaces & Uploads</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> High-speed processing speeds</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> HD custom mind maps export</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> Unlimited AI Tutor Socratic Chat</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> Priority 24/7 dedicated support</li>
+                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> <strong>No watermarks</strong> or advertising overlays</li>
               </ul>
 
               {/* High-contrast Viral Referral sub-card */}

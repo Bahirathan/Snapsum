@@ -870,6 +870,17 @@ export default function App() {
   
   // Dashboard navigation sub-tabs
   const [activeTab, setActiveTab] = useState<'overview' | 'chapters' | 'mindmap' | 'quiz' | 'monetize' | 'reel' | 'chat' | 'export'>('overview');
+  const [onboardingStep, setOnboardingStep] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (activeSummary) {
+      setOnboardingStep(1);
+      setActiveTab('overview');
+    } else {
+      setOnboardingStep(null);
+    }
+  }, [activeSummary]);
+
   const [simActiveScene, setSimActiveScene] = useState<number>(0);
   const [simIsPlaying, setSimIsPlaying] = useState<boolean>(false);
   const [simProgress, setSimProgress] = useState<number>(0);
@@ -6612,9 +6623,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </div>
 
                     <div className="space-y-1">
-                      <h4 className="text-sm font-extrabold text-neutral-900 dark:text-zinc-50 font-display">Create your first AI Workspace</h4>
+                      <h4 className="text-sm font-extrabold text-neutral-900 dark:text-zinc-50 font-display">Your learning journey starts here</h4>
                       <p className="text-[11px] text-neutral-500 dark:text-zinc-400 font-light leading-relaxed max-w-xs mx-auto">
-                        Transform any YouTube video, lecture, podcast, PDF, website, or text paragraph into notes, flashcards, mind maps, and interactive quizzes in under 60 seconds.
+                        Generate your first AI workspace in less than one minute. Transform any YouTube video, lecture, podcast, PDF, website, or text paragraph into notes, flashcards, mind maps, and interactive quizzes instantly.
                       </p>
                     </div>
                     
@@ -7808,6 +7819,85 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   </div>
                 ) : (
                   <>
+                    {/* Interactive Onboarding Tour (Priority 6) */}
+                    {onboardingStep !== null && (
+                      <div className="mb-6 p-4 sm:p-5 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-pink-500/10 border border-indigo-500/20 rounded-3xl animate-fadeIn relative overflow-hidden">
+                        <div className="absolute top-0 right-0 h-24 w-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
+                        <div className="absolute bottom-0 left-0 h-16 w-16 bg-purple-500/10 rounded-full blur-xl"></div>
+                        
+                        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="space-y-1 text-left">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-mono font-extrabold uppercase bg-indigo-600 text-white px-2.5 py-0.5 rounded-full">
+                                Guided Tour • Step {onboardingStep} of 5
+                              </span>
+                              <span className="text-xs text-indigo-600 dark:text-indigo-400 font-extrabold animate-pulse">🎓 Onboarding</span>
+                            </div>
+                            
+                            <h4 className="text-sm sm:text-base font-extrabold text-neutral-900 dark:text-zinc-50 font-sans mt-1">
+                              {onboardingStep === 1 && "Step 1: Deep Dive Study Summary 📝"}
+                              {onboardingStep === 2 && "Step 2: Chaptered Audio/Video Timelines 📺"}
+                              {onboardingStep === 3 && "Step 3: Spatial Neural Mind Map 🧠"}
+                              {onboardingStep === 4 && "Step 4: Ask Your Personal Socratic AI Tutor 💬"}
+                              {onboardingStep === 5 && "Step 5: Lock in Learning with Recall Quizzes 🏆"}
+                            </h4>
+                            
+                            <p className="text-xs text-neutral-600 dark:text-zinc-400 font-light max-w-2xl leading-relaxed mt-1">
+                              {onboardingStep === 1 && "Start here. Our core summary processes hours of continuous lectures or hundreds of pages into quick-read structured bullet points, key takeaways, and definitions."}
+                              {onboardingStep === 2 && "Never get lost. We split the resource into clean structured chapters with timestamps. Clicking any chapter automatically jumps the video or document reader to that moment."}
+                              {onboardingStep === 3 && "Visualize your knowledge base. Concept maps help you understand structural connections between subtopics. Click nodes to expand formulas and study definitions."}
+                              {onboardingStep === 4 && "Need a deeper explanation? Have an expert tutor with you 24/7. Ask questions, request analogies, or chat through complex ideas in natural conversation."}
+                              {onboardingStep === 5 && "Test your memory and retention. Take custom multiple-choice quizzes, view dynamic correct/incorrect score evaluations, and instantly spot learning gaps."}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+                            <button
+                              onClick={() => setOnboardingStep(null)}
+                              className="px-3 py-1.5 text-xs font-semibold text-neutral-500 hover:text-neutral-800 dark:text-zinc-400 dark:hover:text-zinc-100 transition cursor-pointer"
+                            >
+                              Skip Tour
+                            </button>
+                            
+                            {onboardingStep > 1 && (
+                              <button
+                                onClick={() => {
+                                  const prev = onboardingStep - 1;
+                                  setOnboardingStep(prev);
+                                  if (prev === 1) setActiveTab('overview');
+                                  else if (prev === 2) setActiveTab('chapters');
+                                  else if (prev === 3) setActiveTab('mindmap');
+                                  else if (prev === 4) setActiveTab('chat');
+                                }}
+                                className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-neutral-700 dark:text-zinc-200 text-xs font-bold rounded-xl transition cursor-pointer active:scale-95"
+                              >
+                                ⬅ Back
+                              </button>
+                            )}
+                            
+                            <button
+                              onClick={() => {
+                                if (onboardingStep < 5) {
+                                  const next = onboardingStep + 1;
+                                  setOnboardingStep(next);
+                                  if (next === 2) setActiveTab('chapters');
+                                  else if (next === 3) setActiveTab('mindmap');
+                                  else if (next === 4) setActiveTab('chat');
+                                  else if (next === 5) setActiveTab('quiz');
+                                } else {
+                                  setOnboardingStep(null);
+                                  // Triggers celebration (Wow moment)
+                                }
+                              }}
+                              className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition cursor-pointer active:scale-95 shadow-md shadow-indigo-600/10 flex items-center gap-1"
+                            >
+                              <span>{onboardingStep === 5 ? "Finish & Learn! 🎉" : "Next Step ➔"}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Secondary Horizontal Interactive Tabs Menu styled as slider */}
                     <div className="flex bg-black/[0.04] dark:bg-zinc-900 p-1 items-center rounded-2xl overflow-x-auto gap-1 mb-6 scrollbar-none border border-black/[0.01] dark:border-zinc-800/60">
                   {[
