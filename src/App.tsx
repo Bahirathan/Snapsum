@@ -2970,8 +2970,25 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     try {
       const stored = localStorage.getItem('youtube_summarizer_shelf');
       if (stored) {
-        const parsed = JSON.parse(stored) as SavedSummary[];
-        setSavedSummaries(parsed);
+        const parsed = JSON.parse(stored) as any[];
+        const migrated: SavedSummary[] = parsed.map((item: any) => {
+          if (!item) return null;
+          // If already in new format
+          if (item.response && item.response.metadata) {
+            return item as SavedSummary;
+          }
+          // If legacy format stored directly as response
+          if (item.metadata || item.summary) {
+            return {
+              id: item.id || item.metadata?.videoId || 'unknown',
+              savedAt: item.savedAt || new Date().toLocaleDateString(),
+              response: item
+            } as SavedSummary;
+          }
+          return null;
+        }).filter(Boolean) as SavedSummary[];
+
+        setSavedSummaries(migrated);
       }
     } catch (e) {
       console.warn('Failed parsing local storage histories', e);
@@ -6903,7 +6920,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             <div id="history-section" className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-black/[0.04] dark:border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-5">
               
               {/* Workspace Preview Card */}
-              {savedSummaries.length > 0 && (
+              {savedSummaries.length > 0 && savedSummaries[0]?.response && (
                 <div className="bg-gradient-to-r from-neutral-50/70 to-neutral-100/30 dark:from-zinc-950 dark:to-zinc-900/30 p-4.5 rounded-2xl border border-black/[0.03] dark:border-zinc-800/80 shadow-xs space-y-3 font-sans text-left">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-mono font-bold text-[#0071e3] uppercase tracking-wider bg-[#0071e3]/10 px-2.5 py-0.5 rounded-full">
@@ -6915,7 +6932,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   </div>
                   <div className="space-y-1">
                     <h4 className="text-xs font-bold text-neutral-800 dark:text-zinc-100 leading-snug line-clamp-1">
-                      {savedSummaries[0].response.metadata.title}
+                      {savedSummaries[0].response.metadata?.title}
                     </h4>
                     <p className="text-[10.5px] text-neutral-500 dark:text-zinc-400 font-light line-clamp-2 leading-relaxed">
                       {savedSummaries[0].response.summary || 'Study workspace generated successfully.'}
@@ -7205,8 +7222,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   (() => {
                     const query = searchQuery.toLowerCase();
                     const filtered = savedSummaries.filter(item => {
+                      if (!item || !item.response || !item.response.metadata) return false;
                       const matchesSearch = 
-                        item.response.metadata.title.toLowerCase().includes(query) ||
+                        (item.response.metadata.title || '').toLowerCase().includes(query) ||
                         (item.response.metadata.author && item.response.metadata.author.toLowerCase().includes(query)) ||
                         (item.response.summary && item.response.summary.toLowerCase().includes(query));
                       const matchesCollection = !selectedCollection || item.collection === selectedCollection;
@@ -9791,9 +9809,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                               className="w-full bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-xs text-[#1d1d1f] font-medium py-2.5 px-3 rounded-xl cursor-pointer transition focus:outline-none"
                             >
                               <option value="">-- Swap Active Syllabus Content --</option>
-                              {savedSummaries.map((stored) => (
+                              {savedSummaries.filter(s => s && s.response && s.response.metadata).map((stored) => (
                                 <option key={stored.id} value={stored.id}>
-                                  {stored.response.metadata.title} ({stored.response.metadata.author})
+                                  {stored.response.metadata.title} ({stored.response.metadata.author || 'Anonymous'})
                                 </option>
                               ))}
                             </select>
