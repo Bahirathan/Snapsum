@@ -2599,7 +2599,7 @@ export default function LandingPage({
           </div>
 
           {/* Interactive Cinematic Explainer or active live container */}
-          <div className="max-w-4xl mx-auto transition duration-500 hover:shadow-xl rounded-3xl overflow-hidden bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800">
+          <div id="interactive-tour-theater" className="max-w-4xl mx-auto transition duration-500 hover:shadow-xl rounded-3xl overflow-hidden bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800">
             {/* Cinematic Explainer component preserves existing premium active demo recorder */}
             <CinematicExplainer onStartLearning={() => onLaunchApp('app')} />
           </div>
