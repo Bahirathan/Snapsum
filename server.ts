@@ -1048,7 +1048,7 @@ app.get('/s/:id/quiz/:score', async (req, res) => {
 
 // REST API endpoint: Video summarizer (YouTube and generic videos/pages)
 app.post('/api/summarize', summarizeLimiter, async (req, res) => {
-  const { videoUrl, customTranscript, outputLanguage, learnMode } = req.body;
+  const { videoUrl, customTranscript, outputLanguage, learnMode, learningDepth, advancedSettings } = req.body;
 
   if (!videoUrl) {
     return res.status(400).json({ error: 'Video URL is required.' });
@@ -1148,19 +1148,64 @@ Output JSON only in this exact format:
       ? '\nCRITICAL ARABIC INSTRUCTION:\nYou MUST generate all output text fields (including summary, takeaways, chapter titles, chapter takeaways, blogPost markdown structured text, twitterThread tweets, LinkedIn/Instagram socialSnippet, quiz questions/options/explanations, and all mindmap concepts, category names, and descriptions) natively and fully in ARABIC (العربية) language. Do NOT use English for any descriptive text inside the JSON payload. However, please ensure that the JSON structural keys (like "summary", "takeaways", "chapters", "blogPost", "twitterThread", etc.) remain strictly in English as defined below.'
       : '';
 
-    const learnModeInstruction = learnMode
-      ? `
-CRITICAL AI LEARNING PLATFORM - LEARN MODE ACTIVE INSTRUCTION:
-This request is evaluated under "Learn Mode – AI Structured Learning System". Integrate these properties in the JSON response:
-- "keyConcepts": An array of 3-6 core educational concepts from the video. Provide a "concept" label name, a precise academic/factual "definition", and a "simplifiedExplanation" (analogies, everyday examples, and clear language) that makes the concept easy to digest.
-- "flashcards": An array of 4-8 question/answer pairs (each card has a "question" and "answer") focusing on core mental models, definitions, or procedural steps for active recall.
-- "rememberSummary": A short, powerful summarized section ("What you should remember" / "Final Retention Checklist") for long-term retention.
-Customize the "quiz" to test conceptual understanding, critical thinking and deep comprehension rather than simple rote memory or trivia. Provide extremely educational and verbose explanations for answer choices.`
-      : `
-Since this is Summary Mode (Learn Mode inactive), you should:
+    const depthInfo = learningDepth || (learnMode ? 'study' : 'quick');
+    const adv = advancedSettings || {};
+
+    let learnModeInstruction = '';
+    
+    if (depthInfo === 'quick') {
+      learnModeInstruction = `
+CRITICAL QUICK REVIEW ACTIVE INSTRUCTION:
+This request is evaluated under "Quick Review" mode. Optimize the response for speed, high-level digestion, and conciseness:
+- Generate a highly distilled "summary" (1-2 structured paragraphs max) containing an executive summary and important facts.
 - Set "keyConcepts" to an empty array.
 - Set "flashcards" to an empty array.
-- Set "rememberSummary" to an empty string.`;
+- Set "rememberSummary" to an empty string.
+- Set "quiz" to an empty array.
+- Set "mindmap" to an empty array.
+- In "takeaways", extract exactly 3-5 concise, important factual takeaways.
+`;
+    } else if (depthInfo === 'study') {
+      const fcCount = adv.flashcardCount || 10;
+      const qCount = adv.quizQuestionCount || 5;
+      const mmDetail = adv.mindMapDetail || 'balanced';
+      const expStyle = adv.explanationStyle || 'teaching';
+      const sumLen = adv.summaryLength || 'medium';
+
+      learnModeInstruction = `
+CRITICAL STUDY MODE ACTIVE INSTRUCTION:
+This request is evaluated under "Study Mode – AI Structured Learning System". Optimize the response for optimal concept retention, comprehension, and active recall.
+Integrate these properties in the JSON response:
+- "summary": Generate a detailed summary structured for easy comprehension. Style: ${expStyle === 'bullets' ? 'bullet points' : expStyle === 'academic' ? 'academic review' : expStyle === 'professional' ? 'executive briefing' : expStyle === 'beginner' ? 'beginner friendly explanation with analogies' : 'highly interactive teaching style'}. Length: ${sumLen}.
+- "keyConcepts": An array of 3-6 core educational concepts from the video. Provide a "concept" label name, a precise academic/factual "definition", and a "simplifiedExplanation" (analogies, everyday examples, and clear language) that makes the concept easy to digest.
+- "flashcards": An array of ${fcCount} question/answer pairs (each card has a "question" and "answer") focusing on core mental models, definitions, or procedural steps for active recall.
+- "rememberSummary": A short, powerful summarized section ("What you should remember" / "Final Retention Checklist") for long-term retention.
+- "quiz": Create ${qCount} multiple-choice questions testing conceptual understanding, critical thinking and deep comprehension. Include 4 options, the 0-based index of the correct option, and an explanation.
+- "mindmap": Create a structured concept map of ${mmDetail === 'simple' ? '3-5' : mmDetail === 'detailed' ? '12-15' : '7-10'} ideas representing topics covered. Use "concept" (label of node), "category" (the parent group it belongs to), and "description" (a mini note).
+`;
+    } else if (depthInfo === 'mastery') {
+      const fcCount = adv.flashcardCount || 30;
+      const qCount = adv.quizQuestionCount || 10;
+      const mmDetail = adv.mindMapDetail || 'detailed';
+      const expStyle = adv.explanationStyle || 'teaching';
+
+      learnModeInstruction = `
+CRITICAL SUPREME ACADEMIC MASTERY ACTIVE INSTRUCTION:
+This request is evaluated under "Mastery Mode – Expert Level Comprehensive Syllabus and Knowledge Mastery".
+You MUST generate extremely comprehensive, exhaustive, and detailed educational outputs:
+- "summary": A master-grade Comprehensive Study Guide and Detailed Explanations (at least 6-8 comprehensive paragraphs). Style: ${expStyle === 'bullets' ? 'bullet points' : expStyle === 'academic' ? 'academic' : expStyle === 'professional' ? 'professional' : expStyle === 'beginner' ? 'beginner friendly' : 'detailed teaching style'}. You MUST use extensive markdown subheaders to detail:
+    - 🎯 **LEARNING OBJECTIVES** (What the learner will master)
+    - 🎓 **COMPREHENSIVE CHAPTER-BY-CHAPTER BREAKDOWN** (Exhaustive explanations of each chapter)
+    - 💡 **CONCEPT RELATIONSHIPS** (Deep mapping of how different ideas tie together)
+    - 🧠 **EXPERT MEMORY TIPS & STUDY COMPANION SUMMARY** (Practical mnemonics, revision plans, and retention guides)
+    - 📅 **SUGGESTED 7-DAY REVISION PLAN** (Detailed daily checklist)
+- "keyConcepts": An array of 6-8 deep academic concepts. Provide a highly precise academic "definition", and a verbose "simplifiedExplanation" featuring everyday analogies and expert tutoring details.
+- "flashcards": An array of ${fcCount} advanced question/answer pairs focusing on difficult, critical thinking-based active recall.
+- "rememberSummary": A comprehensive, high-retention summary detailing expert learning tactics and chapter summaries.
+- "quiz": Create ${qCount} extremely challenging practice questions testing core concepts, deep comprehension, and application. Provide verbose educational explanations for why the correct answer is correct and why other options are incorrect.
+- "mindmap": Create an extensive structured concept map of ${mmDetail === 'simple' ? '6-8' : mmDetail === 'detailed' ? '15-20' : '10-12'} ideas representing topics covered. Use "concept" (label of node), "category" (the parent group), and "description".
+`;
+    }
 
     const buildPromptWithTranscript = (videoTitle: string, inputChannel: string, contentSource: string) => `
 You are an expert AI video summaries creator and business consultant representing an elite monetization tool.

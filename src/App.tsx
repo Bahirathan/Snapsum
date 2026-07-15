@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Youtube,
   Sparkles,
@@ -38,6 +39,7 @@ import {
   Download,
   Zap,
   Lock,
+  Crown,
   Server,
   AlertCircle,
   Info,
@@ -2357,6 +2359,207 @@ export default function App() {
     return localStorage.getItem('snapsum_learn_mode') === 'true';
   });
 
+  // State for Learning Depth selector
+  const [learningDepth, setLearningDepth] = useState<'quick' | 'study' | 'mastery'>('study');
+
+  // State for Mastery Promo Modal
+  const [showMasteryModal, setShowMasteryModal] = useState<boolean>(false);
+
+  // Advanced customization states
+  const [advSummaryLength, setAdvSummaryLength] = useState<'short' | 'medium' | 'long' | 'custom'>('medium');
+  const [advCustomWordCount, setAdvCustomWordCount] = useState<number>(500);
+  const [advFlashcardCount, setAdvFlashcardCount] = useState<number>(10);
+  const [advQuizQuestionCount, setAdvQuizQuestionCount] = useState<number>(5);
+  const [advMindMapDetail, setAdvMindMapDetail] = useState<'simple' | 'balanced' | 'detailed'>('balanced');
+  const [advExplanationStyle, setAdvExplanationStyle] = useState<'bullets' | 'teaching' | 'academic' | 'professional' | 'beginner'>('teaching');
+
+  const getAIRecommendation = () => {
+    if (inputSourceType === 'file' && uploadedFiles.length > 0) {
+      const isAcademic = uploadedFiles.some(f => 
+        f.name.toLowerCase().includes('paper') || 
+        f.name.toLowerCase().includes('research') || 
+        f.name.toLowerCase().includes('thesis') || 
+        f.name.toLowerCase().includes('study') ||
+        f.name.toLowerCase().includes('pdf') ||
+        f.name.toLowerCase().includes('doc')
+      );
+      if (isAcademic) {
+        return {
+          depth: 'mastery' as const,
+          title: '🎓 Mastery Mode Recommended',
+          badge: 'Recommended',
+          why: 'This document contains academic, research, or technical specifications that benefit from a Comprehensive Master Guide, concept maps, and advanced tests.',
+          readingTime: '20–40 minutes'
+        };
+      }
+      return {
+        depth: 'study' as const,
+        title: '📘 Study Mode Recommended',
+        badge: 'Recommended',
+        why: 'Your uploaded document is best structured with standard AI study notes, flashcards, and concept maps for optimal retention.',
+        readingTime: '8–15 minutes'
+      };
+    }
+
+    if (inputSourceType === 'text' && pastedContentText) {
+      if (pastedContentText.length > 5000) {
+        return {
+          depth: 'mastery' as const,
+          title: '🎓 Mastery Mode Recommended',
+          badge: 'Recommended',
+          why: 'This is a long-form text. Mastery Mode is recommended to extract concept relationships, construct a revision plan, and generate memory tips.',
+          readingTime: '20–40 minutes'
+        };
+      }
+      return {
+        depth: 'quick' as const,
+        title: '⚡ Quick Review Recommended',
+        badge: 'Recommended',
+        why: 'This text is short and concise. Quick Review will extract important facts and a bite-sized executive summary instantly.',
+        readingTime: '2–5 minutes'
+      };
+    }
+
+    if (inputSourceType === 'website' && inputWebsiteUrl) {
+      if (inputWebsiteUrl.includes('wikipedia') || inputWebsiteUrl.includes('academic') || inputWebsiteUrl.includes('docs')) {
+        return {
+          depth: 'mastery' as const,
+          title: '🎓 Mastery Mode Recommended',
+          badge: 'Recommended',
+          why: 'This reference contains extensive educational material. Mastery Mode will organize it into a structured concept syllabus with advanced quizzes.',
+          readingTime: '20–40 minutes'
+        };
+      }
+      return {
+        depth: 'quick' as const,
+        title: '⚡ Quick Review Recommended',
+        badge: 'Recommended',
+        why: 'Web articles are best summarized as an Executive Summary with Important Facts to save reading time.',
+        readingTime: '2–5 minutes'
+      };
+    }
+
+    // Default / Video
+    if (inputSourceType === 'video') {
+      if (!videoUrl) {
+        return {
+          depth: 'study' as const,
+          title: '📘 Study Mode Recommended',
+          badge: 'Recommended',
+          why: 'Most educational lectures and courses benefit from balanced study guides, mind maps, and active recall flashcards.',
+          readingTime: '8–15 minutes'
+        };
+      }
+
+      const isSinek = videoUrl.includes('qp0HIF3SfI4') || videoUrl.includes('Sinek');
+      if (isSinek) {
+        return {
+          depth: 'quick' as const,
+          title: '⚡ Quick Review Recommended',
+          badge: 'Recommended',
+          why: 'This is an inspirational 18-minute talk. A Quick Review is best to capture the core thesis, key takeaways, and important facts.',
+          readingTime: '2–5 minutes'
+        };
+      }
+
+      const isSteveJobs = videoUrl.includes('UF8uR6Z6KLc') || videoUrl.includes('Jobs');
+      if (isSteveJobs) {
+        return {
+          depth: 'study' as const,
+          title: '📘 Study Mode Recommended',
+          badge: 'Recommended',
+          why: 'This is a famous 15-minute speech containing multiple life stories and actionable mental models that are perfect for study notes.',
+          readingTime: '8–15 minutes'
+        };
+      }
+
+      const lowerUrl = videoUrl.toLowerCase();
+      if (lowerUrl.includes('lecture') || lowerUrl.includes('mit') || lowerUrl.includes('stanford') || lowerUrl.includes('course') || lowerUrl.includes('tutorial') || lowerUrl.includes('class') || lowerUrl.includes('university')) {
+        return {
+          depth: 'study' as const,
+          title: '📘 Study Mode Recommended',
+          badge: 'Recommended',
+          why: 'This appears to be an educational lecture or course. Study Mode will compile comprehensive learning notes, structured mind maps, and interactive tests.',
+          readingTime: '8–15 minutes'
+        };
+      }
+
+      if (lowerUrl.includes('meeting') || lowerUrl.includes('sync') || lowerUrl.includes('update') || lowerUrl.includes('scrum') || lowerUrl.includes('standup')) {
+        return {
+          depth: 'quick' as const,
+          title: '⚡ Quick Review Recommended',
+          badge: 'Recommended',
+          why: 'Business meetings benefit from a rapid Executive Summary and a punchy list of Action Items and Important Facts.',
+          readingTime: '2–5 minutes'
+        };
+      }
+    }
+
+    return {
+      depth: 'study' as const,
+      title: '📘 Study Mode Recommended',
+      badge: 'Recommended',
+      why: 'Optimal standard for conceptual retention, providing study notes, active recall decks, and an interactive concept map.',
+      readingTime: '8–15 minutes'
+    };
+  };
+
+  const adaptSummaryForLearningDepth = (summary: any, depth: 'quick' | 'study' | 'mastery') => {
+    if (!summary) return null;
+    const result = { 
+      ...summary, 
+      keyConcepts: [...(summary.keyConcepts || [])], 
+      flashcards: [...(summary.flashcards || [])], 
+      quiz: [...(summary.quiz || [])],
+      takeaways: [...(summary.takeaways || [])]
+    };
+    
+    if (depth === 'quick') {
+      result.summary = `⚡ **QUICK REVIEW EXECUTIVE SUMMARY**\n\n${summary.summary.slice(0, 300)}...\n\n📋 **IMPORTANT FACTS & RECAP**\n• This is a high-level briefing designed for busy professionals and fast lecture review.\n• Captures the core structural points and final outcomes with absolute focus and clarity.`;
+      result.takeaways = (summary.takeaways || []).slice(0, 3);
+      result.keyConcepts = [];
+      result.flashcards = [];
+      result.quiz = [];
+      result.rememberSummary = '';
+    } else if (depth === 'study') {
+      // Retains full standard learn structures
+    } else if (depth === 'mastery') {
+      result.summary = `🎓 **COMPREHENSIVE STUDY GUIDE & DETAILED EXPLANATIONS**\n\n${summary.summary}\n\n🎯 **LEARNING OBJECTIVES**\n1. Master the core theoretical mechanics and underlying structural frameworks of the subject.\n2. Develop critical application skills using systemic analogies and interactive prompt training.\n3. Establish durable memory structures via connected recall paths.\n\n💡 **CONCEPT RELATIONSHIPS & ADVANCED THEMES**\n• Every core milestone acts as a conceptual prerequisite for downstream application.\n• Small compounding habits and continuous optimization trigger exponential, long-term returns.\n\n🧠 **EXPERT MEMORY TIPS & RETENTION METRICS**\n• **Active Recall**: Don't just read this. Go to the Flashcards tab to test your retention instantly!\n• **The Feynman Technique**: Teach the core thesis of this material in your own words to the AI Tutor in the AI Chat tab.\n\n📅 **SUGGESTED 7-DAY REVISION PLAN**\n• **Day 1**: Digest the Comprehensive Study Guide and inspect the Mind Map tab.\n• **Day 2**: Flashcard self-test session (10-minute focus on key definitions).\n• **Day 3**: Complete the interactive quiz. Repeat incorrect items until scoring 100%.\n• **Day 4**: Practice explaining the concept to the AI Tutor.\n• **Day 5-7**: Spaced review of the final retention checklist in the Summary tab.`;
+      
+      if (result.keyConcepts.length === 0) {
+        result.keyConcepts = [
+          {
+            concept: 'Systemic Competency',
+            definition: 'The compound integration of knowledge, application, and feedback loops to master a domain.',
+            simplifiedExplanation: 'Like learning a language, you do not just memorize vocabulary; you build conversational systems.'
+          },
+          {
+            concept: 'Spaced Retrieval',
+            definition: 'An active learning method where information is reviewed at increasing intervals.',
+            simplifiedExplanation: 'Reviewing a card in 1 day, then 3 days, then 7 days to permanently embed it in long-term memory.'
+          }
+        ];
+      }
+      if (result.flashcards.length === 0) {
+        result.flashcards = [
+          { question: 'What is the most effective way to retain long-term content?', answer: 'Spaced repetition combined with active retrieval practice.' },
+          { question: 'How does Mastery Mode accelerate learning?', answer: 'By structuring ideas into clear mental models, learning plans, and comprehensive chapter breakdowns.' }
+        ];
+      }
+      if (result.quiz.length === 0) {
+        result.quiz = [
+          {
+            question: 'Which method represents the most scientifically backed retention mechanism?',
+            options: ['Passive re-reading of summaries', 'Active flashcard retrieval and spaced tests', 'Highlighting text', 'Listening to lecture recordings passively'],
+            answerIndex: 1,
+            explanation: 'Active recall and spaced repetition are the most heavily validated learning techniques for durable memory consolidation.'
+          }
+        ];
+      }
+    }
+    return result;
+  };
+
   // A/B Testing state
   const [experimentGroup, setExperimentGroup] = useState<'A' | 'B'>(() => {
     const stored = localStorage.getItem('snapsum_ab_group');
@@ -2916,10 +3119,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           setTimeout(() => {
             setLoadingStep('Designing mind map workspace & building practice aids...');
             setTimeout(() => {
-              const hydratedMock = ensureLearnModeStructures(matchedPreload!);
+              const hydratedMock = adaptSummaryForLearningDepth(ensureLearnModeStructures(matchedPreload!), learningDepth);
               setActiveSummary(hydratedMock);
-              setLearnMode(true);
-              localStorage.setItem('snapsum_learn_mode', 'true');
+              const isLMode = learningDepth !== 'quick';
+              setLearnMode(isLMode);
+              localStorage.setItem('snapsum_learn_mode', isLMode ? 'true' : 'false');
               setLoading(false);
               setShowWowMoment(true);
               
@@ -2955,8 +3159,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     if (matchedPreload) {
       setLoadingStep('Bypassing API: Loading pre-rendered high-fidelity summary...');
       setTimeout(() => {
-        const hydratedMock = ensureLearnModeStructures(matchedPreload);
+        const hydratedMock = adaptSummaryForLearningDepth(ensureLearnModeStructures(matchedPreload), learningDepth);
         setActiveSummary(hydratedMock);
+        const isLMode = learningDepth !== 'quick';
+        setLearnMode(isLMode);
+        localStorage.setItem('snapsum_learn_mode', isLMode ? 'true' : 'false');
         if (selectedTone === 'reel') {
           setActiveTab('reel');
         }
@@ -3012,7 +3219,16 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           videoUrl: finalVideoUrl,
           customTranscript: finalCustomTranscript || undefined,
           outputLanguage,
-          learnMode: learnMode,
+          learnMode: learningDepth !== 'quick',
+          learningDepth,
+          advancedSettings: showAdvancedOptions ? {
+            summaryLength: advSummaryLength,
+            customWordCount: advCustomWordCount,
+            flashcardCount: advFlashcardCount,
+            quizQuestionCount: advQuizQuestionCount,
+            mindMapDetail: advMindMapDetail,
+            explanationStyle: advExplanationStyle
+          } : undefined
         }),
       });
 
@@ -3067,6 +3283,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       const hydratedData = ensureLearnModeStructures(summaryData);
       
       setActiveSummary(hydratedData);
+      const isLMode = learningDepth !== 'quick';
+      setLearnMode(isLMode);
+      localStorage.setItem('snapsum_learn_mode', isLMode ? 'true' : 'false');
       if (selectedTone === 'reel') {
         setActiveTab('reel');
       }
@@ -5422,55 +5641,156 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 {/* Form Input Engine */}
                 <form id="url-submit-form" onSubmit={handleSummarize} className="space-y-4 pt-2">
                   
-                  {/* Mode Selector Toggle (Summary Mode vs Learn Mode) */}
-                  <div className="flex flex-col gap-2 pt-1 pb-2">
+                  {/* Learning Depth Custom Selector */}
+                  <div className="flex flex-col gap-3 pt-1 pb-4">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#86868b] dark:text-zinc-400 block text-left">
-                      {t('selectWorkspaceMode')}
+                      How deeply would you like to learn this content?
                     </span>
-                    <div className="flex bg-[#f2f2f7] dark:bg-zinc-950 p-1.5 items-center rounded-2xl w-full max-w-sm gap-1 border border-black/[0.04] dark:border-zinc-800/60 shadow-inner">
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Quick Review Card */}
                       <button
                         type="button"
                         onClick={() => {
-                          setLearnMode(false);
-                          localStorage.setItem('snapsum_learn_mode', 'false');
-                          trackGAEvent?.('mode_switched', { mode: 'summary' });
-                          if (activeSummary) {
-                            handleTrackActivation(false, activeSummary.metadata.videoId);
-                          }
+                          setLearningDepth('quick');
+                          trackGAEvent?.('depth_selected', { depth: 'quick' });
                         }}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-xl transition duration-200 cursor-pointer ${
-                          !learnMode
-                            ? 'bg-white dark:bg-zinc-800 text-neutral-900 dark:text-zinc-50 shadow-md border border-neutral-100/55 dark:border-zinc-700/30'
-                            : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-950 dark:hover:text-zinc-100'
+                        className={`relative group flex flex-col p-4 text-left rounded-2xl border transition-all cursor-pointer ${
+                          learningDepth === 'quick'
+                            ? 'bg-neutral-50/90 dark:bg-zinc-900/40 border-neutral-900 dark:border-zinc-100 shadow-sm ring-1 ring-neutral-900/10'
+                            : 'bg-white dark:bg-zinc-950/60 border-neutral-200/60 dark:border-zinc-800/80 hover:border-neutral-300 dark:hover:border-zinc-700 shadow-xs'
                         }`}
                       >
-                        <FileText className="w-3.5 h-3.5 text-neutral-500" />
-                        <span>{t('summaryMode')}</span>
+                        {learningDepth === 'quick' && (
+                          <motion.div
+                            layoutId="activeDepthGlow"
+                            className="absolute -inset-[2px] rounded-2xl border-2 border-[#0071e3] pointer-events-none"
+                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                          />
+                        )}
+                        <div className="flex items-start justify-between w-full">
+                          <div className="p-2 bg-neutral-100 dark:bg-zinc-900 rounded-xl group-hover:scale-105 transition-transform">
+                            <Zap className="w-5 h-5 text-amber-500 fill-amber-500/20" />
+                          </div>
+                          <span className="text-[10px] font-mono font-bold text-[#86868b] bg-neutral-100 dark:bg-zinc-800 px-2 py-1 rounded-md">
+                            2–5 min study
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-neutral-900 dark:text-zinc-100 mt-3 flex items-center gap-1">
+                          Quick Review
+                        </h4>
+                        <p className="text-xs text-neutral-500 dark:text-zinc-400 mt-1 leading-relaxed flex-1">
+                          Distilled core summary & factual highlights. Best for fast recaps and busy professionals.
+                        </p>
+                        <div className="mt-3 flex items-center gap-1.5 text-[10px] font-mono text-[#86868b] dark:text-zinc-400">
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>Summary + 3-5 Facts</span>
+                        </div>
                       </button>
+
+                      {/* Study Mode Card (Recommended) */}
                       <button
                         type="button"
                         onClick={() => {
-                          if (experimentGroup === 'A') {
-                            alert("🧪 Note: You are currently assigned to A/B Test Group A (Summary-only mode). To unlock and test the pristine Learn Mode experience, please switch your test group to 'Group B' in the Floating Experiment Console at the bottom-right of the page!");
-                            return;
-                          }
-                          setLearnMode(true);
-                          localStorage.setItem('snapsum_learn_mode', 'true');
-                          trackGAEvent?.('mode_switched', { mode: 'learn' });
-                          if (activeSummary) {
-                            handleTrackActivation(true, activeSummary.metadata.videoId);
-                          }
+                          setLearningDepth('study');
+                          trackGAEvent?.('depth_selected', { depth: 'study' });
                         }}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-xl transition duration-200 cursor-pointer ${
-                          learnMode
-                            ? 'bg-gradient-to-r from-teal-500 to-indigo-600 text-white shadow-sm font-bold'
-                            : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-950 dark:hover:text-zinc-100'
+                        className={`relative group flex flex-col p-4 text-left rounded-2xl border transition-all cursor-pointer ${
+                          learningDepth === 'study'
+                            ? 'bg-neutral-50/90 dark:bg-zinc-900/40 border-neutral-900 dark:border-zinc-100 shadow-sm ring-1 ring-neutral-900/10'
+                            : 'bg-white dark:bg-zinc-950/60 border-neutral-200/60 dark:border-zinc-800/80 hover:border-neutral-300 dark:hover:border-zinc-700 shadow-xs'
                         }`}
                       >
-                        <Zap className="w-3.5 h-3.5 text-amber-300 fill-amber-300 animate-pulse" />
-                        <span>{t('learnMode')}</span>
-                        <span className="bg-white/20 text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase font-mono tracking-wide">AI</span>
+                        {learningDepth === 'study' && (
+                          <motion.div
+                            layoutId="activeDepthGlow"
+                            className="absolute -inset-[2px] rounded-2xl border-2 border-[#0071e3] pointer-events-none"
+                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                          />
+                        )}
+                        <div className="flex items-start justify-between w-full">
+                          <div className="p-2 bg-neutral-100 dark:bg-zinc-900 rounded-xl group-hover:scale-105 transition-transform">
+                            <BookOpen className="w-5 h-5 text-[#0071e3]" />
+                          </div>
+                          <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded-md uppercase tracking-wider font-extrabold">
+                            RECOMMENDED
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-neutral-900 dark:text-zinc-100 mt-3 flex items-center gap-1">
+                          Study Mode
+                        </h4>
+                        <p className="text-xs text-neutral-500 dark:text-zinc-400 mt-1 leading-relaxed flex-1">
+                          Full summaries, key concepts with analogies, 10+ recall flashcards, practice tests, and mind maps.
+                        </p>
+                        <div className="mt-3 flex items-center gap-1.5 text-[10px] font-mono text-[#86868b] dark:text-zinc-400">
+                          <Sparkles className="w-3.5 h-3.5 text-[#0071e3]" />
+                          <span>Complete Learning Deck</span>
+                        </div>
                       </button>
+
+                      {/* Mastery Mode Card (Premium) */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isPremium) {
+                            setLearningDepth('mastery');
+                            trackGAEvent?.('depth_selected', { depth: 'mastery' });
+                          } else {
+                            setShowMasteryModal(true);
+                          }
+                        }}
+                        className={`relative group flex flex-col p-4 text-left rounded-2xl border transition-all cursor-pointer ${
+                          learningDepth === 'mastery'
+                            ? 'bg-neutral-50/90 dark:bg-zinc-900/40 border-neutral-900 dark:border-zinc-100 shadow-sm ring-1 ring-neutral-900/10'
+                            : 'bg-white dark:bg-zinc-950/60 border-neutral-200/60 dark:border-zinc-800/80 hover:border-neutral-300 dark:hover:border-zinc-700 shadow-xs'
+                        }`}
+                      >
+                        {learningDepth === 'mastery' && (
+                          <motion.div
+                            layoutId="activeDepthGlow"
+                            className="absolute -inset-[2px] rounded-2xl border-2 border-[#0071e3] pointer-events-none"
+                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                          />
+                        )}
+                        <div className="flex items-start justify-between w-full">
+                          <div className="p-2 bg-neutral-100 dark:bg-zinc-900 rounded-xl group-hover:scale-105 transition-transform">
+                            <Crown className="w-5 h-5 text-amber-500" />
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {!isPremium && <Lock className="w-3 h-3 text-amber-500" />}
+                            <span className="text-[10px] font-mono font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-1 rounded-md uppercase tracking-wider font-extrabold">
+                              PRO MASTER
+                            </span>
+                          </div>
+                        </div>
+                        <h4 className="text-sm font-bold text-neutral-900 dark:text-zinc-100 mt-3 flex items-center gap-1">
+                          Mastery Mode
+                        </h4>
+                        <p className="text-xs text-neutral-500 dark:text-zinc-400 mt-1 leading-relaxed flex-1">
+                          Comprehensive master guides, daily study calendars, 30+ custom flashcards, 7-day schedules, and detailed concept paths.
+                        </p>
+                        <div className="mt-3 flex items-center gap-1.5 text-[10px] font-mono text-amber-600">
+                          <Crown className="w-3.5 h-3.5" />
+                          <span>Exhaustive Syllabus Deck</span>
+                        </div>
+                      </button>
+                    </div>
+
+                    {/* Dynamic AI Recommendation Prompt */}
+                    <div className="mt-2 p-3 bg-neutral-50 dark:bg-zinc-950/60 rounded-xl border border-neutral-200/50 dark:border-zinc-800/60 flex items-start gap-3 text-left">
+                      <div className="p-1.5 bg-[#0071e3]/10 dark:bg-[#0071e3]/20 rounded-lg text-[#0071e3] shrink-0">
+                        <Sparkles className="w-4 h-4 animate-pulse" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-neutral-900 dark:text-zinc-200">
+                            {getAIRecommendation().title}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-neutral-500 dark:text-zinc-400 leading-relaxed">
+                          {getAIRecommendation().why}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -5547,6 +5867,159 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                 </button>
                               );
                             })}
+                          </div>
+                        </div>
+
+                        {/* Learning Depth Customizations */}
+                        <div className="border-t border-neutral-200/50 dark:border-zinc-800/50 pt-4 space-y-4">
+                          <h4 className="text-xs font-bold text-neutral-800 dark:text-zinc-200 flex items-center gap-1.5">
+                            <Sliders className="w-3.5 h-3.5 text-[#0071e3]" />
+                            Advanced Learn Depth Controls
+                          </h4>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {/* Summary Length Selector */}
+                            <div className="space-y-2">
+                              <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
+                                Summary Length
+                              </label>
+                              <div className="flex flex-wrap gap-1 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-black/[0.04] dark:border-zinc-800/40 w-fit">
+                                {[
+                                  { id: 'short', label: 'Short' },
+                                  { id: 'medium', label: 'Medium' },
+                                  { id: 'long', label: 'Long' },
+                                  { id: 'custom', label: 'Custom' }
+                                ].map((len) => (
+                                  <button
+                                    key={len.id}
+                                    type="button"
+                                    onClick={() => setAdvSummaryLength(len.id as any)}
+                                    className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition ${
+                                      advSummaryLength === len.id 
+                                        ? 'bg-neutral-900 text-white font-bold' 
+                                        : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-900'
+                                    }`}
+                                  >
+                                    {len.label}
+                                  </button>
+                                ))}
+                              </div>
+                              {advSummaryLength === 'custom' && (
+                                <div className="flex items-center gap-2 mt-1.5 animate-fadeIn">
+                                  <input
+                                    type="number"
+                                    min={100}
+                                    max={10000}
+                                    value={advCustomWordCount}
+                                    onChange={(e) => setAdvCustomWordCount(Number(e.target.value))}
+                                    className="w-24 p-1.5 text-xs bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-lg outline-none"
+                                  />
+                                  <span className="text-[11px] text-neutral-500">Target Word Count</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Flashcard Count */}
+                            <div className="space-y-2">
+                              <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
+                                Flashcard Count
+                              </label>
+                              <div className="flex flex-wrap gap-1 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-black/[0.04] dark:border-zinc-800/40 w-fit">
+                                {[10, 20, 30, 50, 100].map((num) => (
+                                  <button
+                                    key={num}
+                                    type="button"
+                                    onClick={() => setAdvFlashcardCount(num)}
+                                    className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition ${
+                                      advFlashcardCount === num 
+                                        ? 'bg-neutral-900 text-white font-bold' 
+                                        : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-900'
+                                    }`}
+                                  >
+                                    {num}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Quiz Questions */}
+                            <div className="space-y-2">
+                              <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
+                                Quiz Questions
+                              </label>
+                              <div className="flex flex-wrap gap-1 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-black/[0.04] dark:border-zinc-800/40 w-fit">
+                                {[5, 10, 20, 30].map((num) => (
+                                  <button
+                                    key={num}
+                                    type="button"
+                                    onClick={() => setAdvQuizQuestionCount(num)}
+                                    className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition ${
+                                      advQuizQuestionCount === num 
+                                        ? 'bg-neutral-900 text-white font-bold' 
+                                        : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-900'
+                                    }`}
+                                  >
+                                    {num}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Mind Map Detail */}
+                            <div className="space-y-2">
+                              <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
+                                Mind Map Detail
+                              </label>
+                              <div className="flex flex-wrap gap-1 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-black/[0.04] dark:border-zinc-800/40 w-fit">
+                                {[
+                                  { id: 'simple', label: 'Simple' },
+                                  { id: 'balanced', label: 'Balanced' },
+                                  { id: 'detailed', label: 'Detailed' }
+                                ].map((det) => (
+                                  <button
+                                    key={det.id}
+                                    type="button"
+                                    onClick={() => setAdvMindMapDetail(det.id as any)}
+                                    className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition ${
+                                      advMindMapDetail === det.id 
+                                        ? 'bg-neutral-900 text-white font-bold' 
+                                        : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-900'
+                                    }`}
+                                  >
+                                    {det.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Explanation Style */}
+                            <div className="space-y-2 sm:col-span-2">
+                              <label className="block text-[10px] font-mono tracking-wider font-bold text-[#86868b] uppercase">
+                                Explanation Style
+                              </label>
+                              <div className="flex flex-wrap gap-1 bg-white dark:bg-zinc-900 p-1 rounded-xl border border-black/[0.04] dark:border-zinc-800/40 w-fit">
+                                {[
+                                  { id: 'bullets', label: 'Bullet Points' },
+                                  { id: 'teaching', label: 'Teaching Style' },
+                                  { id: 'academic', label: 'Academic' },
+                                  { id: 'professional', label: 'Professional' },
+                                  { id: 'beginner', label: 'Beginner Friendly' }
+                                ].map((style) => (
+                                  <button
+                                    key={style.id}
+                                    type="button"
+                                    onClick={() => setAdvExplanationStyle(style.id as any)}
+                                    className={`px-2.5 py-1.5 text-xs font-semibold rounded-lg cursor-pointer transition ${
+                                      advExplanationStyle === style.id 
+                                        ? 'bg-neutral-900 text-white font-bold' 
+                                        : 'text-[#86868b] dark:text-zinc-400 hover:text-neutral-900'
+                                    }`}
+                                  >
+                                    {style.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                         </div>
 
@@ -12796,6 +13269,90 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   "🛡️ Protected by Stripe secure checkout. Standard SSL 256-bit encryption covers all data transmissions."
                 )}
               </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* 👑 MASTERY MODE PREMIUM PROMO MODAL */}
+      {showMasteryModal && (
+        <div className="fixed inset-0 z-50 bg-neutral-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white dark:bg-zinc-950 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-neutral-200 dark:border-zinc-800 p-6 md:p-8 space-y-6 relative text-center font-sans">
+            
+            {/* Close Button */}
+            <button 
+              onClick={() => setShowMasteryModal(false)}
+              className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition cursor-pointer p-1.5 rounded-full hover:bg-neutral-50 dark:hover:bg-zinc-900"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Premium Crown Badge */}
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center border border-amber-200 dark:border-amber-900/30 shadow-sm animate-bounce">
+              <Crown className="w-6 h-6 text-amber-500 fill-amber-500/20 animate-pulse" />
+            </div>
+
+            {/* Headline */}
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold font-display text-neutral-900 dark:text-zinc-50">
+                Unlock Elite Mastery Mode
+              </h3>
+              <p className="text-xs text-neutral-500 dark:text-zinc-400 leading-relaxed max-w-sm mx-auto">
+                Go beyond basic summaries. Build structured academic competence, expert-level mnemonics, and bulletproof memory retention.
+              </p>
+            </div>
+
+            {/* Premium Features Breakdown */}
+            <div className="bg-neutral-50 dark:bg-zinc-900/40 border border-neutral-100 dark:border-zinc-800/80 rounded-2xl p-4 text-left space-y-3">
+              <span className="text-[9px] uppercase font-bold tracking-wider text-neutral-400 dark:text-zinc-500 font-mono block">
+                Elite Mastery Mode Features:
+              </span>
+              
+              <ul className="space-y-3">
+                {[
+                  { title: "Master-Grade Syllabus", desc: "Comprehensive chapter-by-chapter detailed breakdowns (at least 6-8 deep paragraphs)." },
+                  { title: "7-Day Revision Schedule", desc: "Suggested spaced repetition plan and memory tactics to permanently embed facts." },
+                  { title: "Double Recall Flashcards", desc: "Custom card decks scaled up to 30+ deep mental models & conceptual queries." },
+                  { title: "High-Density Mind Maps", desc: "Extensive hierarchical concept layouts outlining up to 20 ideas automatically." },
+                  { title: "Extreme Situation Quizzes", desc: "Challenging practice questions that test deep theoretical translation, not simple rote trivia." }
+                ].map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-3 text-xs">
+                    <div className="mt-0.5 p-0.5 bg-amber-500/10 text-amber-500 rounded">
+                      <Crown className="w-3 h-3 shrink-0" />
+                    </div>
+                    <div>
+                      <strong className="text-neutral-850 dark:text-zinc-200 block">{item.title}</strong>
+                      <span className="text-[11px] text-neutral-500 dark:text-zinc-400 leading-relaxed font-light">{item.desc}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Unlock Call to Action */}
+            <div className="space-y-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMasteryModal(false);
+                  setSelectedPlanCode('pro');
+                  setShowStripeModal(true);
+                  setStripePaymentSuccess(false);
+                }}
+                className="w-full py-3.5 bg-neutral-900 hover:bg-neutral-800 dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-neutral-950 text-white rounded-xl text-xs font-bold font-mono transition text-center cursor-pointer shadow-md active:scale-98"
+              >
+                Upgrade to PRO & Unlock Mastery
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowMasteryModal(false)}
+                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 text-[11px] font-semibold transition cursor-pointer block mx-auto mt-2"
+              >
+                Keep studying with free modes
+              </button>
             </div>
 
           </div>
