@@ -3128,9 +3128,15 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
   };
 
   // Request new AI Summary processing
-  const handleSummarize = async (e?: React.FormEvent, overrideUrl?: string, overrideType?: 'video' | 'website' | 'file' | 'text') => {
+  const handleSummarize = async (
+    e?: React.FormEvent,
+    overrideUrl?: string,
+    overrideType?: 'video' | 'website' | 'file' | 'text',
+    overrideDepth?: 'quick' | 'study' | 'mastery'
+  ) => {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
 
+    const activeDepth = overrideDepth || learningDepth;
     const activeType = overrideType || inputSourceType;
     let finalVideoUrl = overrideUrl || videoUrl;
     let finalCustomTranscript = customTranscript;
@@ -3189,10 +3195,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           setTimeout(() => {
             setLoadingStep('Designing mind map workspace & building practice aids...');
             setTimeout(() => {
-              const hydratedMock = adaptSummaryForLearningDepth(ensureLearnModeStructures(matchedPreload!), learningDepth);
+              const hydratedMock = adaptSummaryForLearningDepth(ensureLearnModeStructures(matchedPreload!), activeDepth);
               setActiveSummary(hydratedMock);
               setCurrentScreen('app');
-              const isLMode = learningDepth !== 'quick';
+              const isLMode = activeDepth !== 'quick';
               setLearnMode(isLMode);
               localStorage.setItem('snapsum_learn_mode', isLMode ? 'true' : 'false');
               setLoading(false);
@@ -3230,10 +3236,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     if (matchedPreload) {
       setLoadingStep('Bypassing API: Loading pre-rendered high-fidelity summary...');
       setTimeout(() => {
-        const hydratedMock = adaptSummaryForLearningDepth(ensureLearnModeStructures(matchedPreload), learningDepth);
+        const hydratedMock = adaptSummaryForLearningDepth(ensureLearnModeStructures(matchedPreload), activeDepth);
         setActiveSummary(hydratedMock);
         setCurrentScreen('app');
-        const isLMode = learningDepth !== 'quick';
+        const isLMode = activeDepth !== 'quick';
         setLearnMode(isLMode);
         localStorage.setItem('snapsum_learn_mode', isLMode ? 'true' : 'false');
         if (selectedTone === 'reel') {
@@ -3291,8 +3297,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           videoUrl: finalVideoUrl,
           customTranscript: finalCustomTranscript || undefined,
           outputLanguage,
-          learnMode: learningDepth !== 'quick',
-          learningDepth,
+          learnMode: activeDepth !== 'quick',
+          learningDepth: activeDepth,
           advancedSettings: showAdvancedOptions ? {
             summaryLength: advSummaryLength,
             customWordCount: advCustomWordCount,
@@ -3356,7 +3362,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       
       setActiveSummary(hydratedData);
       setCurrentScreen('app');
-      const isLMode = learningDepth !== 'quick';
+      const isLMode = activeDepth !== 'quick';
       setLearnMode(isLMode);
       localStorage.setItem('snapsum_learn_mode', isLMode ? 'true' : 'false');
       if (selectedTone === 'reel') {
@@ -4385,28 +4391,31 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         {/* 🚀 LANDING PAGE SCREEN */}
         {currentScreen === 'landing' && (
           <LandingPage 
-            onStartFreeSummary={async (input, type = 'video', filesList = []) => {
+            onStartFreeSummary={async (input, type = 'video', filesList = [], depth) => {
               setInputSourceType(type);
+              if (depth && ['quick', 'study', 'mastery'].includes(depth)) {
+                setLearningDepth(depth);
+              }
               if (type === 'video') {
                 setVideoUrl(input);
                 setCurrentScreen('app');
                 window.scrollTo(0, 0);
                 setTimeout(() => {
-                  handleSummarize(undefined, input, 'video');
+                  handleSummarize(undefined, input, 'video', depth);
                 }, 150);
               } else if (type === 'website') {
                 setInputWebsiteUrl(input);
                 setCurrentScreen('app');
                 window.scrollTo(0, 0);
                 setTimeout(() => {
-                  handleSummarize(undefined, input, 'website');
+                  handleSummarize(undefined, input, 'website', depth);
                 }, 150);
               } else if (type === 'text') {
                 setPastedContentText(input);
                 setCurrentScreen('app');
                 window.scrollTo(0, 0);
                 setTimeout(() => {
-                  handleSummarize(undefined, 'https://www.zipytiny.app/pasted-text', 'text');
+                  handleSummarize(undefined, 'https://www.zipytiny.app/pasted-text', 'text', depth);
                 }, 150);
               } else if (type === 'file') {
                 if (filesList && filesList.length > 0) {
@@ -4414,7 +4423,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   setCurrentScreen('app');
                   window.scrollTo(0, 0);
                   setTimeout(() => {
-                    handleSummarize(undefined, 'https://www.zipytiny.app/uploaded-files', 'file');
+                    handleSummarize(undefined, 'https://www.zipytiny.app/uploaded-files', 'file', depth);
                   }, 150);
                 } else {
                   setCurrentScreen('app');
@@ -7945,6 +7954,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               t={t}
               getHeaders={getHeaders}
               trackGAEvent={trackGAEvent}
+              learningDepth={learningDepth}
               initialSection={
                 activeTab === 'overview' || activeTab === 'chapters' ? 'understand' :
                 activeTab === 'mindmap' || activeTab === 'flashcards' ? 'learn' :

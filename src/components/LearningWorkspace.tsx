@@ -82,6 +82,7 @@ interface LearningWorkspaceProps {
   t: (key: string) => string;
   getHeaders: () => Record<string, string>;
   trackGAEvent?: (event: string, params?: any) => void;
+  learningDepth?: 'quick' | 'study' | 'mastery';
 }
 
 export default function LearningWorkspace({
@@ -109,7 +110,8 @@ export default function LearningWorkspace({
   isRtl,
   t,
   getHeaders,
-  trackGAEvent
+  trackGAEvent,
+  learningDepth
 }: LearningWorkspaceProps) {
   // Main Navigation Sections: Understand, Learn, Apply
   const [activeSection, setActiveSection] = useState<'understand' | 'learn' | 'apply'>('understand');
@@ -152,6 +154,9 @@ export default function LearningWorkspace({
 
   // Personalized Study Profile Tracker State
   const [studyProfile, setStudyProfile] = useState<'casual' | 'standard' | 'deep-dive'>(() => {
+    if (learningDepth === 'quick') return 'casual';
+    if (learningDepth === 'mastery') return 'deep-dive';
+    if (learningDepth === 'study') return 'standard';
     return (localStorage.getItem(`zipytiny_profile_${activeSummary.metadata.videoId}`) as 'casual' | 'standard' | 'deep-dive') || 'standard';
   });
 

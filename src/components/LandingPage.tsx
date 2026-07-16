@@ -16,7 +16,7 @@ interface LandingPageProps {
   isPremium: boolean;
   visitorUser: any;
   onGoogleSignIn: () => void;
-  onStartFreeSummary?: (input: string, type?: 'video' | 'website' | 'file' | 'text', filesList?: any[]) => void;
+  onStartFreeSummary?: (input: string, type?: 'video' | 'website' | 'file' | 'text', filesList?: any[], depth?: 'quick' | 'study' | 'mastery') => void;
 }
 
 // Interactive Preloaded Topics for the Live Sandbox Demo
@@ -2100,7 +2100,8 @@ export default function LandingPage({
                 outputs: ['Executive Summary', 'Chapter outline', '15 Flashcards', 'Socratic Tutor'],
                 image: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?q=80&w=400&auto=format&fit=crop',
                 metric: '🔥 Most Popular Demo',
-                color: 'border-amber-200 dark:border-amber-900/40 bg-amber-500/5'
+                color: 'border-amber-200 dark:border-amber-900/40 bg-amber-500/5',
+                depth: 'quick'
               },
               {
                 title: 'Introduction to Deep Learning & Neural Nets',
@@ -2113,7 +2114,8 @@ export default function LandingPage({
                 outputs: ['Academic Synthesis', 'Visual Node Map', '30 Practice Questions', 'Mathematical Q&A'],
                 image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=400&auto=format&fit=crop',
                 metric: '🎓 Highly Academic Deep-Dive',
-                color: 'border-blue-200 dark:border-blue-900/40 bg-blue-500/5'
+                color: 'border-blue-200 dark:border-blue-900/40 bg-blue-500/5',
+                depth: 'mastery'
               },
               {
                 title: 'Stanford 2005 Commencement Address',
@@ -2126,7 +2128,8 @@ export default function LandingPage({
                 outputs: ['Biographical Timeline', 'Inspirational Summary', '10 Active Recall Decks', 'AI Tutor Q&A'],
                 image: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?q=80&w=400&auto=format&fit=crop',
                 metric: '⭐ Absolute Masterclass',
-                color: 'border-purple-200 dark:border-purple-900/40 bg-purple-500/5'
+                color: 'border-purple-200 dark:border-purple-900/40 bg-purple-500/5',
+                depth: 'study'
               },
               {
                 title: 'Negotiation Strategy & Business Deals',
@@ -2139,7 +2142,8 @@ export default function LandingPage({
                 outputs: ['Strategic Breakdown', 'Deal-making Outline', '20 Active Recall Cards', 'Diagnostic Quiz'],
                 image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=400&auto=format&fit=crop',
                 metric: '💼 Professional Strategy Guide',
-                color: 'border-emerald-200 dark:border-emerald-900/40 bg-emerald-500/5'
+                color: 'border-emerald-200 dark:border-emerald-900/40 bg-emerald-500/5',
+                depth: 'study'
               },
               {
                 title: 'How to Build a Billion-Dollar Startup',
@@ -2152,7 +2156,8 @@ export default function LandingPage({
                 outputs: ['Growth Playbook summary', 'Startup Chronology', '35 Flashcards', 'Mock VC Quiz'],
                 image: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=400&auto=format&fit=crop',
                 metric: '🚀 Growth & Marketing Insights',
-                color: 'border-rose-200 dark:border-rose-900/40 bg-rose-500/5'
+                color: 'border-rose-200 dark:border-rose-900/40 bg-rose-500/5',
+                depth: 'mastery'
               },
               {
                 title: 'iPhone 2007 Original Product Launch Keynote',
@@ -2165,7 +2170,8 @@ export default function LandingPage({
                 outputs: ['Chronological Roadmap', 'Visual Feature Mind Map', 'Presentation Decks', 'Interactive Q&A'],
                 image: 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?q=80&w=400&auto=format&fit=crop',
                 metric: '📱 Product & Presentation Design',
-                color: 'border-pink-200 dark:border-pink-900/40 bg-pink-500/5'
+                color: 'border-pink-200 dark:border-pink-900/40 bg-pink-500/5',
+                depth: 'quick'
               }
             ].map((demo, idx) => (
               <div 
@@ -2231,7 +2237,7 @@ export default function LandingPage({
                       setYtUrl(demo.url);
                       setUrlError('');
                       if (onStartFreeSummary) {
-                        onStartFreeSummary(demo.url, 'video');
+                        onStartFreeSummary(demo.url, 'video', [], demo.depth as any);
                       }
                     }}
                     className="w-full py-3 px-4 bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-extrabold rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-md hover:shadow-lg hover:scale-[1.01] active:scale-95 cursor-pointer"
