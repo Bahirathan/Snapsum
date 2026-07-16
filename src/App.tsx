@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Youtube,
@@ -3551,6 +3551,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     setCurrentScreen('app');
     const hydratedSummary = ensureLearnModeStructures(summary);
     setActiveSummary(hydratedSummary);
+    const isLMode = learningDepth !== 'quick';
+    setLearnMode(isLMode);
+    localStorage.setItem('snapsum_learn_mode', isLMode ? 'true' : 'false');
     if (selectedTone === 'reel') {
       setActiveTab('reel');
     }
@@ -7929,7 +7932,16 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         {activeSummary && (
           <div id="summary-dashboard" dir={isRtl ? 'rtl' : 'ltr'} className={`bg-white dark:bg-zinc-900 rounded-3xl border border-neutral-200/80 dark:border-zinc-800 shadow-sm overflow-hidden animate-fadeIn ${isRtl ? 'text-right' : 'text-left'}`}>
             <LearningWorkspace
-              activeSummary={activeSummary}
+              activeSummary={useMemo(() => {
+                const hydrated = ensureLearnModeStructures(activeSummary);
+                return adaptSummaryForLearningDepth(hydrated, learningDepth);
+              }, [activeSummary, learningDepth])}
+              onChangeLearningDepth={(depth) => {
+                setLearningDepth(depth);
+                const isLMode = depth !== 'quick';
+                setLearnMode(isLMode);
+                localStorage.setItem('snapsum_learn_mode', isLMode ? 'true' : 'false');
+              }}
               onBackToCenter={() => setActiveSummary(null)}
               ytStartSeconds={ytStartSeconds}
               onJumpToTimestamp={handleJumpToTimestamp}

@@ -83,6 +83,7 @@ interface LearningWorkspaceProps {
   getHeaders: () => Record<string, string>;
   trackGAEvent?: (event: string, params?: any) => void;
   learningDepth?: 'quick' | 'study' | 'mastery';
+  onChangeLearningDepth?: (depth: 'quick' | 'study' | 'mastery') => void;
 }
 
 export default function LearningWorkspace({
@@ -111,7 +112,8 @@ export default function LearningWorkspace({
   t,
   getHeaders,
   trackGAEvent,
-  learningDepth
+  learningDepth,
+  onChangeLearningDepth
 }: LearningWorkspaceProps) {
   // Main Navigation Sections: Understand, Learn, Apply
   const [activeSection, setActiveSection] = useState<'understand' | 'learn' | 'apply'>('understand');
@@ -173,6 +175,25 @@ export default function LearningWorkspace({
   useEffect(() => {
     localStorage.setItem(`zipytiny_profile_${activeSummary.metadata.videoId}`, studyProfile);
   }, [studyProfile, activeSummary.metadata.videoId]);
+
+  // Sync learningDepth prop down to studyProfile
+  useEffect(() => {
+    if (learningDepth === 'quick') {
+      setStudyProfile('casual');
+    } else if (learningDepth === 'mastery') {
+      setStudyProfile('deep-dive');
+    } else if (learningDepth === 'study') {
+      setStudyProfile('standard');
+    }
+  }, [learningDepth]);
+
+  // Sync studyProfile state back up to learningDepth
+  useEffect(() => {
+    const depth = studyProfile === 'casual' ? 'quick' : studyProfile === 'deep-dive' ? 'mastery' : 'study';
+    if (learningDepth !== depth) {
+      onChangeLearningDepth?.(depth);
+    }
+  }, [studyProfile, learningDepth, onChangeLearningDepth]);
 
   // Save Bookmarks
   useEffect(() => {
