@@ -92,6 +92,9 @@ import {
   signInWithEmailLink
 } from 'firebase/auth';
 import { KeyRound, ShieldAlert, Eye, EyeOff, MessageSquare, Headphones, Users, Cpu, Layers, Sliders, ThumbsUp, PlayCircle } from 'lucide-react';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { AppScreenSkeleton, WorkspaceSkeleton, PageLoadingIndicator } from './components/LoadingSkeletons';
+
 const LearningDashboardModule = lazy(() => import('./components/LearningDashboard').then(m => ({ default: m.LearningProgressDashboard })));
 const ActiveLearningDashboardModule = lazy(() => import('./components/LearningDashboard').then(m => ({ default: m.ActiveLearningDashboard })));
 const CinematicExplainer = lazy(() => import('./components/CinematicExplainer').then(m => ({ default: m.CinematicExplainer })));
@@ -109,6 +112,8 @@ const LazyLoadingFallback = () => (
     <p className="text-xs font-semibold text-neutral-400 dark:text-zinc-500 animate-pulse font-sans">Assembling knowledge workspace...</p>
   </div>
 );
+
+const AppScreenLoadingFallback = () => <AppScreenSkeleton />;
 
 const AIChatWithSummary = (props: any) => (
   <Suspense fallback={<LazyLoadingFallback />}>
@@ -2203,6 +2208,7 @@ export default function App() {
 
   const [referralLeaderboard, setReferralLeaderboard] = useState<any[]>([]);
   const [isLoadingLeaderboard, setIsLoadingLeaderboard] = useState(false);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
 
   const fetchReferralLeaderboard = async () => {
     try {
@@ -3295,6 +3301,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           : 'Analyzing video metadata & extracting transcripts...'
     );
 
+    setIsLoadingSummary(true);
+
     try {
       const response = await fetch('/api/summarize', {
         method: 'POST',
@@ -3425,6 +3433,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       refreshStatus();
     } finally {
       setLoading(false);
+      setIsLoadingSummary(false);
       setLoadingStep('');
     }
   };
@@ -4076,10 +4085,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
   };
 
   return (
-    <div 
-      className={`min-h-screen ${isDark ? 'dark bg-neutral-950 text-neutral-100' : 'bg-[#f5f5f7] text-[#1d1d1f]'} font-sans antialiased selection:bg-[#0071e3]/10 selection:text-[#0071e3] ${isRtl ? 'rtl' : ''}`}
-      dir={isRtl ? 'rtl' : 'ltr'}
-    >
+    <ErrorBoundary>
+      <div 
+        className={`min-h-screen ${isDark ? 'dark bg-neutral-950 text-neutral-100' : 'bg-[#f5f5f7] text-[#1d1d1f]'} font-sans antialiased selection:bg-[#0071e3]/10 selection:text-[#0071e3] ${isRtl ? 'rtl' : ''}`}
+        dir={isRtl ? 'rtl' : 'ltr'}
+      >
       
       {/* Top Premium Announcement Banner */}
       {currentScreen === 'landing' && (
@@ -5608,10 +5618,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         )}
 
         {currentScreen === 'app' && (
-          <div className="space-y-8 animate-fadeIn">
-            {/* Dynamic Split Action Panel */}
-            {!activeSummary && !activeStack && (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <>
+            {isLoadingSummary && !activeSummary && !activeStack ? (
+              <PageLoadingIndicator message="Generating your personalized AI workspace..." />
+            ) : (
+              <div className="space-y-8 animate-fadeIn">
+                {/* Dynamic Split Action Panel */}
+                {!activeSummary && !activeStack && (
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
             {/* Pitch & Generation Engine - Inputs */}
             <div className="col-span-1 lg:col-span-8 space-y-6 relative">
@@ -9657,9 +9671,6 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   </div>
                 )}
 
-                  </>
-                )}
-
               </div>
 
               {/* Media Embedded Player: Right Column */}
@@ -10054,14 +10065,12 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 )}
               </div>
             </div>
-            </>
             )}
           </div>
         )}
       </div>
-    )}
-        </div>
-    )}        {/* Custom Domain Settings Map Page */}
+        </>
+      )}        {/* Custom Domain Settings Map Page */}
         {currentScreen === 'domain' && (
           <div className="space-y-6 animate-fadeIn transition-all duration-300">
             <div className="bg-white rounded-3xl p-6 md:p-8 border border-black/[0.04] shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-6">
@@ -14538,6 +14547,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         </div>
       )}
 
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }
