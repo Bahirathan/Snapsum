@@ -3127,6 +3127,12 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     }, 2000);
   };
 
+  const processedActiveSummary = useMemo(() => {
+    if (!activeSummary) return null;
+    const hydrated = ensureLearnModeStructures(activeSummary);
+    return adaptSummaryForLearningDepth(hydrated, learningDepth);
+  }, [activeSummary, learningDepth]);
+
   // Request new AI Summary processing
   const handleSummarize = async (
     e?: React.FormEvent,
@@ -7932,10 +7938,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         {activeSummary && (
           <div id="summary-dashboard" dir={isRtl ? 'rtl' : 'ltr'} className={`bg-white dark:bg-zinc-900 rounded-3xl border border-neutral-200/80 dark:border-zinc-800 shadow-sm overflow-hidden animate-fadeIn ${isRtl ? 'text-right' : 'text-left'}`}>
             <LearningWorkspace
-              activeSummary={useMemo(() => {
-                const hydrated = ensureLearnModeStructures(activeSummary);
-                return adaptSummaryForLearningDepth(hydrated, learningDepth);
-              }, [activeSummary, learningDepth])}
+              activeSummary={processedActiveSummary}
               onChangeLearningDepth={(depth) => {
                 setLearningDepth(depth);
                 const isLMode = depth !== 'quick';
