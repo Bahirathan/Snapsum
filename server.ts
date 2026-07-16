@@ -12,6 +12,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
+import AdmZip from 'adm-zip';
 import { saveSummary, getSummary, listSummaries } from './server/summaryStore';
 import { getOrCreateReferralCode, recordReferral, getReferralCount, isLockedUnlocked, linkUserToReferral, getReferralLeaderboard } from './server/referralStore';
 import { saveSubscription, getSubscription } from './server/subscriptionStore';
@@ -2732,6 +2733,298 @@ app.get('/api/subscription-status', async (req, res) => {
   }
   const subscription = await getSubscription(email);
   return res.json({ subscription });
+});
+
+app.get('/api/download-extension', (req, res) => {
+  try {
+    const zip = new AdmZip();
+
+    // 1. manifest.json
+    const manifest = {
+      manifest_version: 3,
+      name: "Zipytiny - AI Video Summarizer & Knowledge Engine",
+      version: "1.0.0",
+      description: "Universal AI-powered YouTube/video summarizer, dynamic flashcard builder, and interactive knowledge hub.",
+      permissions: ["activeTab", "scripting", "tabs"],
+      host_permissions: ["*://*.youtube.com/*", "https://*.zipytiny.app/*", "https://zipytiny.app/*", "https://www.zipytiny.app/*"],
+      action: {
+        "default_popup": "popup.html",
+        "default_icon": {
+          "16": "icon16.png",
+          "48": "icon48.png",
+          "128": "icon128.png"
+        }
+      },
+      content_scripts: [
+        {
+          "matches": ["*://*.youtube.com/watch*"],
+          "js": ["content.js"],
+          "run_at": "document_end"
+        }
+      ],
+      icons: {
+        "16": "icon16.png",
+        "48": "icon48.png",
+        "128": "icon128.png"
+      }
+    };
+    zip.addFile("manifest.json", Buffer.from(JSON.stringify(manifest, null, 2)));
+
+    // 2. popup.html
+    const popupHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      width: 340px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background-color: #09090b;
+      color: #fafafa;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #27272a;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.025em;
+    }
+    .logo-badge {
+      font-size: 10px;
+      font-weight: 700;
+      background-color: #3f3f46;
+      color: #f4f4f5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .card {
+      background-color: #18181b;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+      border: 1px solid #27272a;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 0;
+      margin-bottom: 8px;
+      color: #e4e4e7;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .desc {
+      font-size: 12px;
+      color: #a1a1aa;
+      line-height: 1.4;
+      margin-top: 0;
+      margin-bottom: 14px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      color: #0f172a;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+    .btn:active {
+      transform: none;
+    }
+    .btn-disabled {
+      background: #27272a;
+      color: #71717a;
+      cursor: not-allowed;
+    }
+    .btn-disabled:hover {
+      transform: none;
+      box-shadow: none;
+    }
+    .input-group {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .input {
+      flex: 1;
+      background-color: #09090b;
+      border: 1px solid #27272a;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #fafafa;
+      font-size: 12px;
+    }
+    .input:focus {
+      outline: none;
+      border-color: #f59e0b;
+    }
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      color: #71717a;
+      margin-top: 12px;
+      border-top: 1px solid #27272a;
+      padding-top: 10px;
+    }
+    .footer a {
+      color: #f59e0b;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span class="logo">⚡ Zipytiny</span>
+    <span class="logo-badge">Pro extension</span>
+  </div>
+  
+  <div class="card" id="active-video-card">
+    <h3 class="title">🎬 Active YouTube Video</h3>
+    <p class="desc" id="video-title">Checking current tab...</p>
+    <button class="btn" id="summarize-btn">⚡ Summarize with Zipytiny</button>
+  </div>
+
+  <div class="card">
+    <h3 class="title">🔗 Enter YouTube URL manually</h3>
+    <div class="input-group">
+      <input type="text" class="input" id="custom-url" placeholder="https://www.youtube.com/watch?v=...">
+      <button class="btn" style="width: auto; padding: 8px 16px;" id="go-btn">Go</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    Powered by <a href="https://www.zipytiny.app" target="_blank">Zipytiny Knowledge Engine</a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>`;
+    zip.addFile("popup.html", Buffer.from(popupHtml));
+
+    // 3. popup.js
+    const popupJs = `document.addEventListener('DOMContentLoaded', () => {
+  const videoTitleEl = document.getElementById('video-title');
+  const summarizeBtn = document.getElementById('summarize-btn');
+  const customUrlInput = document.getElementById('custom-url');
+  const goBtn = document.getElementById('go-btn');
+
+  let currentTabUrl = '';
+
+  // Get current active tab
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs && tabs[0]) {
+      const tab = tabs[0];
+      currentTabUrl = tab.url || '';
+      
+      if (currentTabUrl.includes('youtube.com/watch') || currentTabUrl.includes('youtu.be/')) {
+        videoTitleEl.textContent = tab.title || 'YouTube Video Detected!';
+        videoTitleEl.style.color = '#fbbf24';
+      } else {
+        videoTitleEl.textContent = 'Please navigate to any YouTube video in Chrome to summarize it instantly!';
+        summarizeBtn.classList.add('btn-disabled');
+        summarizeBtn.disabled = true;
+      }
+    }
+  });
+
+  summarizeBtn.addEventListener('click', () => {
+    if (currentTabUrl) {
+      const targetUrl = 'https://www.zipytiny.app/?url=' + encodeURIComponent(currentTabUrl) + '&utm_source=chrome_extension';
+      chrome.tabs.create({ url: targetUrl });
+    }
+  });
+
+  goBtn.addEventListener('click', () => {
+    const url = customUrlInput.value.trim();
+    if (url) {
+      const targetUrl = 'https://www.zipytiny.app/?url=' + encodeURIComponent(url) + '&utm_source=chrome_extension';
+      chrome.tabs.create({ url: targetUrl });
+    }
+  });
+});`;
+    zip.addFile("popup.js", Buffer.from(popupJs));
+
+    // 4. content.js
+    const contentJs = `function injectZipytinyButton() {
+  if (document.getElementById('zipytiny-btn-injected')) return;
+
+  // We want to target the YouTube player title actions or owner row
+  const targetSelector = '#owner';
+  const container = document.querySelector(targetSelector);
+
+  if (!container) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'zipytiny-btn-injected';
+  btn.type = 'button';
+  btn.style.cssText = 'display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #09090b; border: none; padding: 10px 18px; border-radius: 9999px; font-family: "Roboto", "Arial", sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; margin-left: 12px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); transition: all 0.2s ease;';
+  btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:2px;"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg> Summarize with Zipytiny';
+
+  btn.addEventListener('mouseover', () => {
+    btn.style.transform = 'translateY(-2px) scale(1.03)';
+    btn.style.boxShadow = '0 6px 16px rgba(245, 158, 11, 0.45)';
+  });
+
+  btn.addEventListener('mouseout', () => {
+    btn.style.transform = 'none';
+    btn.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.35)';
+  });
+
+  btn.addEventListener('click', () => {
+    const videoUrl = window.location.href;
+    const cleanUrl = 'https://www.zipytiny.app/?url=' + encodeURIComponent(videoUrl) + '&utm_source=chrome_extension';
+    window.open(cleanUrl, '_blank');
+  });
+
+  container.appendChild(btn);
+}
+
+// Keep attempting to inject dynamically as YouTube pages load asynchronously
+let injectionInterval = setInterval(injectZipytinyButton, 2000);`;
+    zip.addFile("content.js", Buffer.from(contentJs));
+
+    // 5. Dynamic placeholder PNG icons using standard golden/amber transparent-filled-circle base64 strings
+    const base64Png = "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH5gYQCg0yC8oZ0QAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmXRAAAAdElEQVR42u3PMQEAAAgEIDuY0RAsvB0KeM3g6Z0VECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgOfABZ9nUvY8v7tSAAAAAElFTkSuQmCC";
+    const pngBuffer = Buffer.from(base64Png, 'base64');
+    
+    zip.addFile("icon16.png", pngBuffer);
+    zip.addFile("icon48.png", pngBuffer);
+    zip.addFile("icon128.png", pngBuffer);
+
+    const zipBuffer = zip.toBuffer();
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename=zipytiny-chrome-extension.zip');
+    res.send(zipBuffer);
+  } catch (err) {
+    console.error('Error generating Chrome extension zip:', err);
+    res.status(500).json({ error: 'Failed to package Chrome Extension' });
+  }
 });
 
 app.post('/api/stripe-webhook', async (req, res) => {

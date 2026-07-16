@@ -59,7 +59,8 @@ import {
   Heart,
   Search,
   Compass,
-  FolderOpen
+  FolderOpen,
+  Puzzle
 } from 'lucide-react';
 import { PRELOADED_VIDEOS } from './preloadedData';
 import { ARABIC_PRELOADED_VIDEOS } from './utils/arabicPreloadedData';
@@ -401,6 +402,7 @@ const FeatureHighlightsGrid = () => {
 };
 
 import MobileBottomNav from './components/MobileBottomNav';
+import ChromeExtensionPage from './components/ChromeExtensionPage';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
 
 const getEmbedUrl = (url: string) => {
@@ -4102,6 +4104,19 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               <span>{t('recorderTour')}</span>
             </button>
 
+            {/* Chrome Extension */}
+            <button
+              onClick={() => setCurrentScreen('extension')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                currentScreen === 'extension'
+                  ? 'bg-amber-500 text-neutral-950 shadow-sm font-semibold'
+                  : 'text-[#86868b] dark:text-zinc-400 hover:text-[#1d1d1f] dark:hover:text-zinc-100'
+              }`}
+            >
+              <Puzzle className="w-3.5 h-3.5 shrink-0" />
+              <span>Extension</span>
+            </button>
+
             {/* History — visible only when summaries exist */}
             {savedSummaries.length > 0 && currentScreen === 'app' && (
               <button
@@ -4444,6 +4459,17 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               if (!activeSummary && PRELOADED_VIDEOS && PRELOADED_VIDEOS.length > 0) {
                 handleLoadStoredItem(PRELOADED_VIDEOS[0]);
               }
+              window.scrollTo(0, 0);
+            }}
+          />
+        )}
+
+        {/* 🚀 CHROME EXTENSION PAGE */}
+        {currentScreen === 'extension' && (
+          <ChromeExtensionPage 
+            isDark={isDark}
+            onLaunchApp={() => {
+              setCurrentScreen('app');
               window.scrollTo(0, 0);
             }}
           />
@@ -14185,6 +14211,16 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </div>
           
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 text-xs text-slate-400 font-sans">
+            <button 
+              onClick={() => {
+                setCurrentScreen('extension');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }} 
+              className="hover:text-amber-400 text-amber-500 font-semibold transition duration-200 text-left underline decoration-slate-700 hover:decoration-amber-400 cursor-pointer flex items-center gap-1"
+            >
+              <Puzzle className="w-3.5 h-3.5" />
+              <span>Chrome Extension</span>
+            </button>
             <button 
               onClick={() => {
                 setCurrentScreen('terms');
