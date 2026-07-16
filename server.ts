@@ -355,9 +355,10 @@ async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: 
   }
 
   // Get active plan and user identifier (email or IP)
-  const isPremium = req.headers['x-is-premium'] === 'true';
-  const userPlan = (req.headers['x-user-plan'] as string) || (isPremium ? 'pro' : 'free');
   const email = req.headers['x-user-email'] as string;
+  const isRbahirathan = email && email.trim().toLowerCase() === 'rbahirathan@gmail.com';
+  const isPremium = req.headers['x-is-premium'] === 'true' || isRbahirathan;
+  const userPlan = isRbahirathan ? 'enterprise' : ((req.headers['x-user-plan'] as string) || (isPremium ? 'pro' : 'free'));
   const trackingKey = (email && email.trim()) ? `email:${email.trim().toLowerCase()}` : `ip:${ip}`;
 
   const now = Date.now();
@@ -1872,9 +1873,10 @@ app.post('/api/tts', ttsLimiter, async (req, res) => {
   }
 
   // Get active plan and user identifier (email or IP)
-  const isPremium = req.headers['x-is-premium'] === 'true';
-  const userPlan = (req.headers['x-user-plan'] as string) || (isPremium ? 'pro' : 'free');
   const email = req.headers['x-user-email'] as string;
+  const isRbahirathan = email && email.trim().toLowerCase() === 'rbahirathan@gmail.com';
+  const isPremium = req.headers['x-is-premium'] === 'true' || isRbahirathan;
+  const userPlan = isRbahirathan ? 'enterprise' : ((req.headers['x-user-plan'] as string) || (isPremium ? 'pro' : 'free'));
   const rawIp = req.headers['x-forwarded-for'] as string || req.socket.remoteAddress || '127.0.0.1';
   const ip = rawIp.split(',')[0].trim();
   const trackingKey = (email && email.trim()) ? `email:${email.trim().toLowerCase()}` : `ip:${ip}`;

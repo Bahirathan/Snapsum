@@ -68,6 +68,17 @@ import { toPng } from 'html-to-image';
 import { YouTubeSummaryResponse, SavedSummary, SynthesizedStack } from './types';
 import confetti from 'canvas-confetti';
 import { auth, db } from './firebase';
+import {
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  getDocs,
+  deleteDoc
+} from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 import { 
   onAuthStateChanged, 
@@ -594,11 +605,11 @@ export default function App() {
       setVisitorUser(user);
       setAuthInitialized(true);
       if (user) {
-        if (user.email && user.email.toLowerCase() === 'rbahirathan@gmail.com') {
+        if (user.email && user.email.toLowerCase().trim() === 'rbahirathan@gmail.com') {
           try {
             localStorage.setItem('youtube_summarizer_premium', 'true');
             localStorage.setItem('youtube_summarizer_plan', 'enterprise');
-            localStorage.setItem('youtube_summarizer_premium_email', user.email);
+            localStorage.setItem('youtube_summarizer_premium_email', user.email.trim());
             setIsPremium(true);
           } catch (e) {
             console.warn('Could not persist premium status for rbahirathan@gmail.com:', e);
@@ -619,7 +630,6 @@ export default function App() {
 
           // 2. Also log directly to Firestore on the client-side!
           // This uses the user's logged-in identity/auth token and guarantees writing is successful in all environments.
-          const { doc, getDoc, setDoc } = await import('firebase/firestore');
           const userRef = doc(db, 'google_users', user.uid);
           const now = new Date().toISOString();
           const userSnap = await getDoc(userRef).catch(() => null);
@@ -2013,7 +2023,7 @@ export default function App() {
       const storedEmail = localStorage.getItem('youtube_summarizer_premium_email') || '';
       return localStorage.getItem('youtube_summarizer_premium') === 'true' || 
              localStorage.getItem('custom_vip_code') === 'PROPASS' ||
-             storedEmail.toLowerCase() === 'rbahirathan@gmail.com';
+             storedEmail.toLowerCase().trim() === 'rbahirathan@gmail.com';
     } catch {
       return false;
     }
@@ -2108,7 +2118,6 @@ export default function App() {
   useEffect(() => {
     const fetchPricing = async () => {
       try {
-        const { doc, getDoc } = await import('firebase/firestore');
         const docRef = doc(db, 'admin_settings', 'pricing');
         const snap = await getDoc(docRef);
         if (snap.exists()) {
@@ -2130,7 +2139,6 @@ export default function App() {
     setPricingSaveLoading(true);
     setPricingSaveStatus({ type: 'idle', message: '' });
     try {
-      const { doc, setDoc } = await import('firebase/firestore');
       const docRef = doc(db, 'admin_settings', 'pricing');
       
       const payload = {
@@ -2333,7 +2341,7 @@ export default function App() {
 
   useEffect(() => {
     if (visitorUser && visitorUser.email) {
-      const emailLower = visitorUser.email.toLowerCase();
+      const emailLower = visitorUser.email.toLowerCase().trim();
       if (emailLower === 'rbahirathan@gmail.com') {
         savePremiumStatus(true, 'enterprise', visitorUser.email);
       }
@@ -2672,7 +2680,6 @@ export default function App() {
 
     // 2. Dual log to Firestore directly for non-high-frequency actions
     try {
-      const { collection, addDoc } = await import('firebase/firestore');
       await addDoc(collection(db, 'learn_analytics'), {
         videoId,
         experimentGroup: experimentGroup || 'B',
@@ -3830,7 +3837,6 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       // 2. If API returned empty (due to backend IAM restrictions) or failed, query client-side Firestore directly!
       if (loadedUsers.length === 0) {
         try {
-          const { collection, query, orderBy, getDocs } = await import('firebase/firestore');
           const q = query(collection(db, 'google_users'), orderBy('lastLoginAt', 'desc'));
           const snapshot = await getDocs(q);
           const users: any[] = [];
@@ -3875,7 +3881,6 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       let clientSuccess = false;
       let clientError = '';
       try {
-        const { doc, setDoc, getDoc, deleteDoc } = await import('firebase/firestore');
         const testRef = doc(db, 'google_users', 'admin_client_test_doc');
         await setDoc(testRef, { test: true, timestamp: new Date().toISOString() });
         const snap = await getDoc(testRef);
@@ -5772,7 +5777,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <button
                         type="button"
                         onClick={() => {
-                          if (isPremium) {
+                          const userIsPremium = isPremium || 
+                            visitorUser?.email?.toLowerCase().trim() === 'rbahirathan@gmail.com' ||
+                            localStorage.getItem('youtube_summarizer_premium_email')?.toLowerCase().trim() === 'rbahirathan@gmail.com';
+                          if (userIsPremium) {
                             setLearningDepth('mastery');
                             trackGAEvent?.('depth_selected', { depth: 'mastery' });
                           } else {
@@ -5797,7 +5805,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             <Crown className="w-5 h-5 text-amber-500" />
                           </div>
                           <div className="flex items-center gap-1">
-                            {!isPremium && <Lock className="w-3 h-3 text-amber-500" />}
+                            {!(isPremium || visitorUser?.email?.toLowerCase().trim() === 'rbahirathan@gmail.com' || localStorage.getItem('youtube_summarizer_premium_email')?.toLowerCase().trim() === 'rbahirathan@gmail.com') && <Lock className="w-3 h-3 text-amber-500" />}
                             <span className="text-[10px] font-mono font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 px-2 py-1 rounded-md uppercase tracking-wider font-extrabold">
                               PRO MASTER
                             </span>
