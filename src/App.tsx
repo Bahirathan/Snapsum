@@ -729,6 +729,27 @@ export default function App() {
   });
   const [showCachedUrls, setShowCachedUrls] = useState(false);
 
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlParam = params.get('url');
+      if (urlParam) {
+        setVideoUrl(urlParam);
+        setInputSourceType('video');
+        setCurrentScreen('landing');
+        
+        // Clean the URL search parameters so it doesn't trigger on every reload
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+        
+        // Trigger the summarization immediately
+        handleSummarize(undefined, urlParam, 'video');
+      }
+    } catch (e) {
+      console.warn('Failed to parse and trigger URL parameter:', e);
+    }
+  }, []);
+
   const defaultCachedUrls = [
     { url: 'https://www.youtube.com/watch?v=UF8uR6Z6KLc', title: 'Steve Jobs Stanford Commencement Address', type: 'video' },
     { url: 'https://www.youtube.com/watch?v=qp0HIF3SfI4', title: 'Simon Sinek: How Great Leaders Inspire Action', type: 'video' },
@@ -3170,6 +3191,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             setTimeout(() => {
               const hydratedMock = adaptSummaryForLearningDepth(ensureLearnModeStructures(matchedPreload!), learningDepth);
               setActiveSummary(hydratedMock);
+              setCurrentScreen('app');
               const isLMode = learningDepth !== 'quick';
               setLearnMode(isLMode);
               localStorage.setItem('snapsum_learn_mode', isLMode ? 'true' : 'false');
@@ -3210,6 +3232,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       setTimeout(() => {
         const hydratedMock = adaptSummaryForLearningDepth(ensureLearnModeStructures(matchedPreload), learningDepth);
         setActiveSummary(hydratedMock);
+        setCurrentScreen('app');
         const isLMode = learningDepth !== 'quick';
         setLearnMode(isLMode);
         localStorage.setItem('snapsum_learn_mode', isLMode ? 'true' : 'false');
@@ -3332,6 +3355,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       const hydratedData = ensureLearnModeStructures(summaryData);
       
       setActiveSummary(hydratedData);
+      setCurrentScreen('app');
       const isLMode = learningDepth !== 'quick';
       setLearnMode(isLMode);
       localStorage.setItem('snapsum_learn_mode', isLMode ? 'true' : 'false');
@@ -3518,6 +3542,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
   // Load stored item
   const handleLoadStoredItem = (summary: YouTubeSummaryResponse) => {
+    setCurrentScreen('app');
     const hydratedSummary = ensureLearnModeStructures(summary);
     setActiveSummary(hydratedSummary);
     if (selectedTone === 'reel') {
@@ -3533,7 +3558,9 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
     setIsPlaying(false);
     handleTrackRevisit(hydratedSummary.metadata.videoId);
 
-    document.getElementById('summary-dashboard')?.scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => {
+      document.getElementById('summary-dashboard')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   const handleLoadVideoById = (videoId: string, isSummary: boolean) => {
@@ -7918,35 +7945,33 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               t={t}
               getHeaders={getHeaders}
               trackGAEvent={trackGAEvent}
+              initialSection={
+                activeTab === 'overview' || activeTab === 'chapters' ? 'understand' :
+                activeTab === 'mindmap' || activeTab === 'flashcards' ? 'learn' :
+                activeTab === 'quiz' || activeTab === 'chat' || activeTab === 'export' ? 'apply' :
+                'understand'
+              }
+              initialUnderstandTab={
+                activeTab === 'chapters' ? 'modules' : 'summary'
+              }
+              initialLearnTab={
+                activeTab === 'flashcards' ? 'flashcards' : 'mindmap'
+              }
+              initialApplyTab={
+                activeTab === 'chat' ? 'tutor' :
+                activeTab === 'export' ? 'export' :
+                'quiz'
+              }
             />
-            {false && (
-              <>
-              {/* Guest Promo Conversion Header Callout */}
-            {!visitorUser && (
-              <div className="bg-gradient-to-r from-indigo-600 via-[#0071e3] to-indigo-600 text-white px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 border-b border-white/10 animate-fadeIn font-sans">
-                <div className="flex items-center gap-3 text-left">
-                  <div className="p-2.5 bg-white/15 rounded-xl shrink-0 border border-white/10">
-                    <Sparkles className="w-5 h-5 text-amber-300 animate-pulse fill-amber-300/10" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold tracking-tight">Viewing Guest Learning Workspace Demo</h4>
-                    <p className="text-xs text-white/85 font-light mt-0.5">
-                      Create your free account to lock in your workspace, track progress, save custom flashcards, and study anytime.
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthModalPurpose('Save your active learning workspace, custom flashcards, and progress tracking');
-                    setShowAuthModal(true);
-                  }}
-                  className="bg-white hover:bg-neutral-100 text-[#0071e3] px-6 py-2.5 rounded-full text-xs font-bold transition-all shadow-md active:scale-98 whitespace-nowrap cursor-pointer"
-                >
-                  Create Free Account & Save
-                </button>
-              </div>
-            )}
+          </div>
+        )}
+
+        {false && (
+          <div>
+            {true && (
+              <div>
+                {true && (
+                  <>
 
             {/* Header Content Info Banner */}
             <div className="bg-white/80 backdrop-blur-md p-6 md:p-8 text-[#1d1d1f] border-b border-black/[0.04] flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
@@ -10009,6 +10034,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </div>
         )}
       </div>
+    )}
+        </div>
     )}        {/* Custom Domain Settings Map Page */}
         {currentScreen === 'domain' && (
           <div className="space-y-6 animate-fadeIn transition-all duration-300">
