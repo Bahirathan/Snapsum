@@ -336,7 +336,9 @@ export default function KnowledgeGraphVisualizer({
                   {link.type === 'custom' && link.notes && (
                     <g transform={`translate(${(sourceNode.x + targetNode.x) / 2}, ${(sourceNode.y + targetNode.y) / 2})`}>
                       <circle r="4" fill="#ef4444" className="animate-ping" />
-                      <circle r="3" fill="#ef4444" title={`Relationship Note: ${link.notes}`} />
+                      <circle r="3" fill="#ef4444">
+                        <title>{`Relationship Note: ${link.notes}`}</title>
+                      </circle>
                     </g>
                   )}
                 </g>

@@ -3,7 +3,7 @@
  * Gracefully catches rendering errors and displays a fallback UI
  */
 
-import React, { ReactNode } from 'react';
+import React, { Component, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Props {
@@ -18,7 +18,7 @@ interface State {
   errorInfo: React.ErrorInfo | null;
 }
 
-export class ErrorBoundary extends React.Component<Props, State> {
+export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {

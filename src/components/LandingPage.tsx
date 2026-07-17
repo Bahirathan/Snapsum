@@ -2863,7 +2863,7 @@ export default function LandingPage({
               </div>
               <button
                 type="button"
-                onClick={onLaunchApp}
+                onClick={() => onLaunchApp()}
                 className="w-full bg-[#0071e3] hover:bg-[#0077ed] text-white py-2.5 rounded-lg text-xs font-bold transition cursor-pointer text-center"
               >
                 Try It Natively
