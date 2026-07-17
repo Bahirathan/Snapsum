@@ -115,6 +115,20 @@ export default function LearningWorkspace({
   learningDepth,
   onChangeLearningDepth
 }: LearningWorkspaceProps) {
+  // Safe Fallback references to prevent any rendering crashes
+  const videoId = activeSummary?.metadata?.videoId || 'unknown';
+  const videoTitle = activeSummary?.metadata?.title || 'Untitled Material';
+  const author = activeSummary?.metadata?.author || 'Anonymous';
+  const videoUrl = activeSummary?.metadata?.videoUrl || '';
+  const summaryText = activeSummary?.summary || '';
+  
+  const chaptersList = activeSummary?.chapters || [];
+  const mindmapNodes = activeSummary?.mindmap || [];
+  const takeawaysList = activeSummary?.takeaways || [];
+  const quizQuestions = activeSummary?.quiz || [];
+  const keyConceptsList = activeSummary?.keyConcepts || [];
+  const flashcardsList = activeSummary?.flashcards || [];
+
   // Main Navigation Sections: Understand, Learn, Apply
   const [activeSection, setActiveSection] = useState<'understand' | 'learn' | 'apply'>('understand');
   
@@ -128,7 +142,7 @@ export default function LearningWorkspace({
   
   // Smart Notes State
   const [notesText, setNotesText] = useState<string>(() => {
-    return localStorage.getItem(`zipytiny_notes_${activeSummary.metadata.videoId}`) || '';
+    return localStorage.getItem(`zipytiny_notes_${videoId}`) || '';
   });
   const [showNotesSavedToast, setShowNotesSavedToast] = useState<boolean>(false);
 
@@ -159,12 +173,12 @@ export default function LearningWorkspace({
     if (learningDepth === 'quick') return 'casual';
     if (learningDepth === 'mastery') return 'deep-dive';
     if (learningDepth === 'study') return 'standard';
-    return (localStorage.getItem(`zipytiny_profile_${activeSummary.metadata.videoId}`) as 'casual' | 'standard' | 'deep-dive') || 'standard';
+    return (localStorage.getItem(`zipytiny_profile_${videoId}`) as 'casual' | 'standard' | 'deep-dive') || 'standard';
   });
 
   // Synchronized Timeline Bookmarks & Annotations state
   const [customBookmarks, setCustomBookmarks] = useState<Array<{ id: string; title: string; timestamp: string; secondsCount: number; note?: string }>>(() => {
-    const saved = localStorage.getItem(`zipytiny_bookmarks_${activeSummary.metadata.videoId}`);
+    const saved = localStorage.getItem(`zipytiny_bookmarks_${videoId}`);
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -173,8 +187,8 @@ export default function LearningWorkspace({
 
   // Save Study Profile
   useEffect(() => {
-    localStorage.setItem(`zipytiny_profile_${activeSummary.metadata.videoId}`, studyProfile);
-  }, [studyProfile, activeSummary.metadata.videoId]);
+    localStorage.setItem(`zipytiny_profile_${videoId}`, studyProfile);
+  }, [studyProfile, videoId]);
 
   // Sync learningDepth prop down to studyProfile
   useEffect(() => {
@@ -197,8 +211,8 @@ export default function LearningWorkspace({
 
   // Save Bookmarks
   useEffect(() => {
-    localStorage.setItem(`zipytiny_bookmarks_${activeSummary.metadata.videoId}`, JSON.stringify(customBookmarks));
-  }, [customBookmarks, activeSummary.metadata.videoId]);
+    localStorage.setItem(`zipytiny_bookmarks_${videoId}`, JSON.stringify(customBookmarks));
+  }, [customBookmarks, videoId]);
 
   const handleAddBookmark = (title: string, seconds: number, timestampStr: string, note?: string) => {
     const newB = {
@@ -370,24 +384,24 @@ export default function LearningWorkspace({
 
   // Auto-save Notes
   useEffect(() => {
-    localStorage.setItem(`zipytiny_notes_${activeSummary.metadata.videoId}`, notesText);
-  }, [notesText, activeSummary.metadata.videoId]);
+    localStorage.setItem(`zipytiny_notes_${videoId}`, notesText);
+  }, [notesText, videoId]);
 
   // Load Mastery Levels from localStorage
   useEffect(() => {
-    const savedMastery = localStorage.getItem(`zipytiny_mastery_${activeSummary.metadata.videoId}`);
+    const savedMastery = localStorage.getItem(`zipytiny_mastery_${videoId}`);
     if (savedMastery) {
       setMasteryLevels(JSON.parse(savedMastery));
     } else {
       // Bootstrap initial mastery levels for keyConcepts
       const initialMastery: Record<string, number> = {};
-      activeSummary.keyConcepts?.forEach((kc, idx) => {
+      keyConceptsList.forEach((kc) => {
         initialMastery[kc.concept] = 30; // Starts at 30% (unlearned/fresh)
       });
       setMasteryLevels(initialMastery);
-      localStorage.setItem(`zipytiny_mastery_${activeSummary.metadata.videoId}`, JSON.stringify(initialMastery));
+      localStorage.setItem(`zipytiny_mastery_${videoId}`, JSON.stringify(initialMastery));
     }
-  }, [activeSummary]);
+  }, [videoId, keyConceptsList]);
 
   // Function to award XP points
   const awardXp = (amount: number) => {
@@ -408,7 +422,7 @@ export default function LearningWorkspace({
     setMasteryLevels(prev => {
       const updated = { ...prev };
       updated[concept] = Math.max(10, Math.min(100, (updated[concept] || 30) + delta));
-      localStorage.setItem(`zipytiny_mastery_${activeSummary.metadata.videoId}`, JSON.stringify(updated));
+      localStorage.setItem(`zipytiny_mastery_${videoId}`, JSON.stringify(updated));
       return updated;
     });
 
@@ -427,8 +441,8 @@ export default function LearningWorkspace({
 
   // Notes Quick Insertion Actions
   const handleInsertTakeaways = () => {
-    const takeawaysText = activeSummary.takeaways
-      .map((t, idx) => {
+    const takeawaysText = takeawaysList
+      .map((t) => {
         const text = typeof t === 'string' ? t : t?.text || '';
         return `- ${text}`;
       })
@@ -437,8 +451,8 @@ export default function LearningWorkspace({
   };
 
   const handleInsertConcepts = () => {
-    const conceptsText = (activeSummary.keyConcepts || [])
-      .map((c, idx) => `- **${c.concept}**: ${c.definition}\n  *Analogy*: ${c.simplifiedExplanation}`)
+    const conceptsText = keyConceptsList
+      .map((c) => `- **${c.concept}**: ${c.definition}\n  *Analogy*: ${c.simplifiedExplanation}`)
       .join('\n\n');
     setNotesText(prev => prev + (prev ? '\n\n' : '') + `### Key Conceptual Modules\n` + conceptsText);
   };
@@ -467,7 +481,7 @@ export default function LearningWorkspace({
       });
 
       const link = document.createElement('a');
-      link.download = `zipytiny-mindmap-${activeSummary.metadata.videoId}.png`;
+      link.download = `zipytiny-mindmap-${videoId}.png`;
       link.href = dataUrl;
       link.click();
     } catch (error) {
@@ -480,17 +494,17 @@ export default function LearningWorkspace({
   // Quiz submission
   const handleQuizSubmit = () => {
     let score = 0;
-    activeSummary.quiz.forEach((q, idx) => {
+    quizQuestions.forEach((q, idx) => {
       if (selectedAnswers[idx] === q.answerIndex) {
         score++;
       }
     });
     setQuizScore(score);
     setQuizSubmitted(true);
-    awardXp(score * 30 + (score === activeSummary.quiz.length ? 100 : 0)); // Perfect score bonus
+    awardXp(score * 30 + (score === quizQuestions.length ? 100 : 0)); // Perfect score bonus
 
     // Auto-customize study profile based on diagnostic score
-    const totalQuestions = activeSummary.quiz.length;
+    const totalQuestions = quizQuestions.length;
     const accuracy = score / (totalQuestions || 1);
     let recommendedProfile: 'casual' | 'standard' | 'deep-dive' = 'standard';
     if (accuracy < 0.5) {
@@ -503,13 +517,13 @@ export default function LearningWorkspace({
     setStudyProfile(recommendedProfile);
 
     // Set overall progress graduation
-    if (score >= activeSummary.quiz.length / 2) {
+    if (score >= quizQuestions.length / 2) {
       setShowGraduation(true);
     }
   };
 
   // Calculations for metadata header
-  const totalDuration = parseFloat(activeSummary.metadata.duration || '12');
+  const totalDuration = parseFloat(activeSummary?.metadata?.duration || '12');
   const estStudyTime = dynamicEstStudyTime;
   const difficultyLevel = studyProfile === 'casual' ? 'Casual Review' : studyProfile === 'deep-dive' ? 'Advanced Deep-Dive' : 'Standard Core';
 
@@ -548,7 +562,7 @@ export default function LearningWorkspace({
           </button>
           <div className="h-4 w-px bg-neutral-200 dark:bg-zinc-800" />
           <span className="text-xs font-medium text-neutral-400 dark:text-zinc-500 font-sans truncate max-w-[150px] sm:max-w-md">
-            Zipytiny AI Study Engine / {activeSummary.metadata.title}
+            Zipytiny AI Study Engine / {videoTitle}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -596,8 +610,8 @@ export default function LearningWorkspace({
           <div className="lg:col-span-3 flex justify-center lg:justify-start">
             <div className="relative aspect-video w-full max-w-[240px] rounded-2xl overflow-hidden border border-white/20 shadow-lg group">
               <img 
-                src={activeSummary.metadata.thumbnailUrl || `https://img.youtube.com/vi/${activeSummary.metadata.videoId}/maxresdefault.jpg`} 
-                alt={activeSummary.metadata.title} 
+                src={activeSummary?.metadata?.thumbnailUrl || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} 
+                alt={videoTitle} 
                 className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                 referrerPolicy="no-referrer"
               />
@@ -605,7 +619,7 @@ export default function LearningWorkspace({
                 <Play className="w-8 h-8 text-white fill-white animate-pulse" />
               </div>
               <span className="absolute bottom-2 right-2 bg-black/75 rounded text-[10px] font-mono font-bold text-white px-1.5 py-0.5">
-                {activeSummary.metadata.duration ? `${activeSummary.metadata.duration}m` : 'Video'}
+                {activeSummary?.metadata?.duration ? `${activeSummary.metadata.duration}m` : 'Video'}
               </span>
             </div>
           </div>
@@ -625,11 +639,11 @@ export default function LearningWorkspace({
             </div>
 
             <h1 className="text-xl md:text-2xl font-bold font-display tracking-tight leading-snug">
-              {activeSummary.metadata.title}
+              {videoTitle}
             </h1>
 
             <p className="text-slate-300 text-xs font-light">
-              Parsed from lecture by <strong className="text-white font-medium">{activeSummary.metadata.author}</strong> • ID: <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded text-[11px] text-indigo-200">{activeSummary.metadata.videoId}</span>
+              Parsed from lecture by <strong className="text-white font-medium">{author}</strong> • ID: <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded text-[11px] text-indigo-200">{videoId}</span>
             </p>
 
             {/* Premium Progress Bar */}
@@ -655,7 +669,7 @@ export default function LearningWorkspace({
             <div className="grid grid-cols-1 gap-2 text-xs">
               <div className="flex justify-between items-center">
                 <span className="text-slate-400 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Duration:</span>
-                <span className="font-semibold text-slate-100">{activeSummary.metadata.duration ? `${activeSummary.metadata.duration} min` : '15 min'}</span>
+                <span className="font-semibold text-slate-100">{activeSummary?.metadata?.duration ? `${activeSummary.metadata.duration} min` : '15 min'}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-400 flex items-center gap-1.5"><Brain className="w-3.5 h-3.5" /> Est. Study Time:</span>
@@ -800,7 +814,7 @@ export default function LearningWorkspace({
                         
                         {!audioUrl && (
                           <button
-                            onClick={() => handleGenerateTTS(activeSummary.summary + " key takeaways are: " + activeSummary.takeaways.map((t: any) => typeof t === 'string' ? t : t?.text || '').join(". "))}
+                            onClick={() => handleGenerateTTS(summaryText + " key takeaways are: " + takeawaysList.map((t: any) => typeof t === 'string' ? t : t?.text || '').join(". "))}
                             disabled={ttsLoading}
                             className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-md shadow-indigo-600/10"
                           >
@@ -830,7 +844,7 @@ export default function LearningWorkspace({
 
                           <div className="flex-1 space-y-1 min-w-0">
                             <div className="flex items-center justify-between text-[11px] font-mono text-slate-500">
-                              <span className="truncate block max-w-xs">{activeSummary.metadata.title}</span>
+                              <span className="truncate block max-w-xs">{videoTitle}</span>
                               <span>{formatTime(audioProgress)} / {formatTime(audioDuration)}</span>
                             </div>
                             <div className="w-full bg-slate-200 dark:bg-zinc-800 rounded-full h-1 relative overflow-hidden">
@@ -854,7 +868,7 @@ export default function LearningWorkspace({
                         Executive Core Thesis & Narrative
                       </h3>
                       <p className="text-slate-600 dark:text-zinc-300 text-sm leading-relaxed whitespace-pre-line font-sans">
-                        {activeSummary.summary}
+                        {summaryText}
                       </p>
                     </div>
 
@@ -864,7 +878,7 @@ export default function LearningWorkspace({
                         💡 Direct Takeaways & Lessons
                       </h3>
                       <div className="grid grid-cols-1 gap-3">
-                        {activeSummary.takeaways.map((item: any, idx: number) => {
+                        {takeawaysList.map((item: any, idx: number) => {
                           const text = typeof item === 'string' ? item : item?.text || '';
                           const isLowConfidence = typeof item !== 'string' && item?.lowConfidence;
                           return (
@@ -899,7 +913,7 @@ export default function LearningWorkspace({
                       </div>
 
                       <div className="grid grid-cols-1 gap-2.5">
-                        {activeSummary.chapters.map((chap, idx) => (
+                        {chaptersList.map((chap, idx) => (
                           <div
                             key={idx}
                             className="w-full flex items-center justify-between p-3 rounded-xl border border-neutral-200/80 dark:border-zinc-800 hover:border-indigo-400 dark:hover:border-indigo-900 bg-white dark:bg-zinc-900/50 transition duration-150 group"
@@ -954,7 +968,7 @@ export default function LearningWorkspace({
                     </div>
 
                     <div className="space-y-4 pt-2">
-                      {activeSummary.keyConcepts?.map((item: KeyConcept, idx: number) => {
+                      {keyConceptsList.map((item: KeyConcept, idx: number) => {
                         const mastery = masteryLevels[item.concept] || 30;
                         return (
                           <div 
@@ -1118,7 +1132,7 @@ export default function LearningWorkspace({
                           🧠 ZIPYTINY ACTIVE LEARNING MAP
                         </span>
                         <h3 className="text-base font-extrabold text-neutral-900 dark:text-white mt-2">
-                          {activeSummary.metadata.title}
+                          {videoTitle}
                         </h3>
                         <p className="text-neutral-500 text-xs mt-0.5">
                           Extracted dynamically from raw video source
@@ -1127,14 +1141,14 @@ export default function LearningWorkspace({
 
                       {/* Mindmap Nodes */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {Array.from(new Set(activeSummary.mindmap.map((item) => item.category))).map((category) => (
+                        {Array.from(new Set(mindmapNodes.map((item) => item.category))).map((category) => (
                           <div key={category} className="bg-neutral-50 dark:bg-zinc-900/60 border border-neutral-200/80 dark:border-zinc-800 rounded-2xl p-4.5 space-y-3">
                             <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-800 dark:text-zinc-200 bg-neutral-200/80 dark:bg-zinc-800 px-2.5 py-1 rounded inline-block">
                               📂 {category}
                             </span>
                             
                             <div className="space-y-2.5">
-                              {activeSummary.mindmap
+                              {mindmapNodes
                                 .filter((item) => item.category === category)
                                 .map((node, index) => (
                                   <div
@@ -1170,7 +1184,7 @@ export default function LearningWorkspace({
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                      {activeSummary.flashcards?.map((card: Flashcard, idx: number) => {
+                      {flashcardsList.map((card: Flashcard, idx: number) => {
                         const isRevealed = revealedFlashcards[idx] || false;
                         return (
                           <div 
@@ -1342,7 +1356,7 @@ export default function LearningWorkspace({
                     </div>
 
                     <div className="space-y-4">
-                      {activeSummary.quiz.map((q: QuizQuestion, idx: number) => {
+                      {quizQuestions.map((q: QuizQuestion, idx: number) => {
                         const selectedOpt = selectedAnswers[idx];
                         const submitted = quizSubmitted;
                         const isCorrect = selectedOpt === q.answerIndex;
@@ -1426,7 +1440,7 @@ export default function LearningWorkspace({
                         <button
                           type="button"
                           onClick={handleQuizSubmit}
-                          disabled={Object.keys(selectedAnswers).length < activeSummary.quiz.length}
+                          disabled={Object.keys(selectedAnswers).length < quizQuestions.length}
                           className="w-full bg-[#1d1d1f] hover:bg-[#2d2d2f] text-white py-3 rounded-xl text-xs font-semibold cursor-pointer text-center transition disabled:opacity-45"
                         >
                           Lock Study Answers & Score Quiz (+XP)
@@ -1434,7 +1448,7 @@ export default function LearningWorkspace({
                       ) : (
                         <div className="flex justify-between items-center w-full">
                           <span className="text-xs font-bold text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-3 py-2 rounded-xl font-mono">
-                            📊 Graduation Score: {quizScore} / {activeSummary.quiz.length}
+                            📊 Graduation Score: {quizScore} / {quizQuestions.length}
                           </span>
                           <button
                             type="button"
@@ -1456,8 +1470,8 @@ export default function LearningWorkspace({
                 {activeApplyTab === 'tutor' && (
                   <div className="space-y-4">
                     <AIChatWithSummary 
-                      title={activeSummary.metadata.title}
-                      summary={activeSummary.summary}
+                      title={videoTitle}
+                      summary={summaryText}
                       getHeaders={getHeaders}
                     />
                   </div>
@@ -1541,10 +1555,10 @@ export default function LearningWorkspace({
                 {activeApplyTab === 'export' && (
                   <div className="space-y-6">
                     <SummaryPremiumExporter 
-                      title={activeSummary.metadata.title}
-                      summary={activeSummary.summary}
-                      takeaways={activeSummary.takeaways}
-                      shareId={activeSummary.shareId}
+                      title={videoTitle}
+                      summary={summaryText}
+                      takeaways={takeawaysList}
+                      shareId={activeSummary?.shareId}
                     />
                   </div>
                 )}
@@ -1553,7 +1567,7 @@ export default function LearningWorkspace({
                 {activeApplyTab === 'comments' && (
                   <div className="space-y-6 animate-fadeIn">
                     <WorkspaceComments 
-                      shareId={activeSummary.shareId || ''}
+                      shareId={activeSummary?.shareId || ''}
                       visitorUser={visitorUser}
                       setShowAuthModal={setShowAuthModal}
                     />
@@ -1577,14 +1591,22 @@ export default function LearningWorkspace({
             </span>
             
             <div className="aspect-video w-full rounded-2xl bg-black overflow-hidden shadow-md border border-black/[0.08] relative">
-              <iframe
-                className="w-full h-full"
-                src={`https://www.youtube.com/embed/${activeSummary.metadata.videoId}?start=${ytStartSeconds !== null ? ytStartSeconds : 0}&autoplay=${ytStartSeconds !== null ? '1' : '0'}`}
-                title={activeSummary.metadata.title}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              ></iframe>
+              {videoId && videoId !== 'unknown' ? (
+                <iframe
+                  className="w-full h-full"
+                  src={`https://www.youtube.com/embed/${videoId}?start=${ytStartSeconds !== null ? ytStartSeconds : 0}&autoplay=${ytStartSeconds !== null ? '1' : '0'}`}
+                  title={videoTitle}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 p-6 text-center text-slate-400">
+                  <span className="text-xl">⚠️</span>
+                  <p className="text-xs font-semibold mt-2">Synchronized Lecture Media Player is currently unavailable.</p>
+                  <p className="text-[10px] text-slate-500 mt-1">Please try re-generating or reloading this summary content.</p>
+                </div>
+              )}
             </div>
 
             {ytStartSeconds !== null && (
@@ -1788,7 +1810,7 @@ export default function LearningWorkspace({
               <div className="bg-white/5 border border-white/5 p-3 rounded-xl">
                 <span className="text-neutral-400 text-[10px] uppercase font-mono block">Accuracy rate</span>
                 <strong className="text-sm text-white font-mono mt-0.5 block">
-                  {quizSubmitted ? `${Math.round((quizScore / activeSummary.quiz.length) * 100)}%` : 'No test yet'}
+                  {quizSubmitted ? `${Math.round((quizScore / (quizQuestions.length || 1)) * 100)}%` : 'No test yet'}
                 </strong>
               </div>
             </div>
