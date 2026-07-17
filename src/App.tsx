@@ -262,7 +262,7 @@ const LoadingTimeline = ({ onComplete, loadingStep }: { onComplete?: () => void;
   );
 };
 
-const TransformationPreview = () => {
+const TransformationPreview = ({ inputType, learnMode }: { inputType?: string; learnMode?: boolean }) => {
   const steps = [
     { label: 'YouTube Video', icon: Video, color: 'text-rose-500 bg-rose-500/5 border border-rose-500/10' },
     { label: 'AI Analysis', icon: Cpu, color: 'text-blue-500 bg-blue-500/5 border border-blue-500/10 animate-pulse-slow' },
@@ -1404,44 +1404,6 @@ export default function App() {
 
   // Copy indicators
   const [copiedStates, setCopiedStates] = useState<Record<string, boolean>>({});
-
-  // Real-time URL validation indicators (Goal 1: real-time validation indicator icon inside the URL input field)
-  const [isUrlValidating, setIsUrlValidating] = useState<boolean>(false);
-  const [urlValidationResult, setUrlValidationResult] = useState<'valid' | 'invalid' | null>(null);
-
-  useEffect(() => {
-    const activeUrl = inputSourceType === 'video' ? videoUrl : inputSourceType === 'website' ? inputWebsiteUrl : '';
-    if (!activeUrl || !activeUrl.trim()) {
-      setIsUrlValidating(false);
-      setUrlValidationResult(null);
-      return;
-    }
-
-    setIsUrlValidating(true);
-    setUrlValidationResult(null);
-
-    const timer = setTimeout(() => {
-      const isYouTube = (url: string) => {
-        const p = /^(?:https?:\/\/)?(?:m\.|www\.)?(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))((\w|-){11})(?:\S+)?$/;
-        return url.match(p) !== null || url.length === 11;
-      };
-
-      const isWeb = (url: string) => {
-        try {
-          new URL(url);
-          return url.startsWith('http://') || url.startsWith('https://');
-        } catch {
-          return false;
-        }
-      };
-
-      const isValid = inputSourceType === 'video' ? isYouTube(activeUrl) : isWeb(activeUrl);
-      setUrlValidationResult(isValid ? 'valid' : 'invalid');
-      setIsUrlValidating(false);
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [videoUrl, inputWebsiteUrl, inputSourceType]);
 
   // TTS audio playback states
   const [ttsLoading, setTtsLoading] = useState(false);
@@ -4448,8 +4410,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         {/* 🚀 LANDING PAGE SCREEN */}
         {currentScreen === 'landing' && (
           <LandingPage 
-            onStartFreeSummary={async (input, type: 'file' | 'text' | 'video' | 'website' = 'video', filesList = [], depth) => {
-              setInputSourceType(type);
+            onStartFreeSummary={async (input, type = 'video', filesList = [], depth) => {
+              setInputSourceType(type as 'file' | 'text' | 'video' | 'website');
               if (depth && ['quick', 'study', 'mastery'].includes(depth)) {
                 setLearningDepth(depth);
               }
@@ -6385,21 +6347,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           onChange={(e) => setVideoUrl(e.target.value)}
                           onFocus={() => setShowCachedUrls(true)}
                           onBlur={() => setTimeout(() => setShowCachedUrls(false), 200)}
-                          className="w-full pl-11 pr-12 py-4 bg-neutral-100/60 dark:bg-zinc-900/60 hover:bg-neutral-100/90 dark:hover:bg-zinc-900 focus:bg-white dark:focus:bg-zinc-900 text-[#1d1d1f] dark:text-zinc-100 rounded-2xl border border-neutral-350 dark:border-zinc-800 hover:border-neutral-400 focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
+                          className="w-full pl-11 pr-4 py-4 bg-neutral-100/60 dark:bg-zinc-900/60 hover:bg-neutral-100/90 dark:hover:bg-zinc-900 focus:bg-white dark:focus:bg-zinc-900 text-[#1d1d1f] dark:text-zinc-100 rounded-2xl border border-neutral-350 dark:border-zinc-800 hover:border-neutral-400 focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
                         />
-
-                        {/* Real-time validation indicator */}
-                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center gap-2 pointer-events-none">
-                          {isUrlValidating && (
-                            <Loader2 className="w-4.5 h-4.5 text-indigo-500 animate-spin" />
-                          )}
-                          {!isUrlValidating && urlValidationResult === 'valid' && (
-                            <CheckCircle className="w-4.5 h-4.5 text-emerald-500" />
-                          )}
-                          {!isUrlValidating && urlValidationResult === 'invalid' && (
-                            <AlertCircle className="w-4.5 h-4.5 text-rose-500 animate-pulse" />
-                          )}
-                        </div>
 
                         {/* 🗂️ CACHED & RECENT URLS POPOVER */}
                         {showCachedUrls && allCachedUrls.length > 0 && (
@@ -6484,21 +6433,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                           onChange={(e) => setInputWebsiteUrl(e.target.value)}
                           onFocus={() => setShowCachedUrls(true)}
                           onBlur={() => setTimeout(() => setShowCachedUrls(false), 200)}
-                          className="w-full pl-11 pr-12 py-4 bg-neutral-100/60 dark:bg-zinc-900/60 hover:bg-neutral-100/90 dark:hover:bg-zinc-900 focus:bg-white dark:focus:bg-zinc-900 text-[#1d1d1f] dark:text-zinc-100 rounded-2xl border border-neutral-350 dark:border-zinc-800 hover:border-neutral-400 focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
+                          className="w-full pl-11 pr-4 py-4 bg-neutral-100/60 dark:bg-zinc-900/60 hover:bg-neutral-100/90 dark:hover:bg-zinc-900 focus:bg-white dark:focus:bg-zinc-900 text-[#1d1d1f] dark:text-zinc-100 rounded-2xl border border-neutral-350 dark:border-zinc-800 hover:border-neutral-400 focus:border-[#0071e3] focus:ring-4 focus:ring-[#0071e3]/5 outline-none transition placeholder:text-neutral-400 text-sm font-sans"
                         />
-
-                        {/* Real-time validation indicator */}
-                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center gap-2 pointer-events-none">
-                          {isUrlValidating && (
-                            <Loader2 className="w-4.5 h-4.5 text-indigo-500 animate-spin" />
-                          )}
-                          {!isUrlValidating && urlValidationResult === 'valid' && (
-                            <CheckCircle className="w-4.5 h-4.5 text-emerald-500" />
-                          )}
-                          {!isUrlValidating && urlValidationResult === 'invalid' && (
-                            <AlertCircle className="w-4.5 h-4.5 text-rose-500 animate-pulse" />
-                          )}
-                        </div>
 
                         {/* 🗂️ CACHED & RECENT URLS POPOVER */}
                         {showCachedUrls && allCachedUrls.length > 0 && (
@@ -6673,7 +6609,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </div>
 
                     {/* Transformation Flow Preview Widget */}
-                    {!loading && <TransformationPreview />}
+                    {!loading && <TransformationPreview inputType={inputSourceType} learnMode={learnMode} />}
 
                     {/* Majestic glowing master CTA button */}
                     <button
@@ -8068,11 +8004,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             />
           </div>
         )}
+              </div>
+            )}
+          </>
+        )}
 
-        </div>
-    )}
-        </>
-      )}        {/* Custom Domain Settings Map Page */}
         {currentScreen === 'domain' && (
           <div className="space-y-6 animate-fadeIn transition-all duration-300">
             <div className="bg-white rounded-3xl p-6 md:p-8 border border-black/[0.04] shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-6">
