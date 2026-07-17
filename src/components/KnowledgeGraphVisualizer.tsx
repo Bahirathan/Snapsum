@@ -68,6 +68,26 @@ export default function KnowledgeGraphVisualizer({
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [freezeSimulation, setFreezeSimulation] = useState<boolean>(false);
+  const [localNodes, setLocalNodes] = useState<GraphNode[]>(nodes);
+
+  // Sync prop nodes with localNodes on changes
+  useEffect(() => {
+    setLocalNodes((prev) => {
+      return nodes.map((node) => {
+        const match = prev.find((pn) => pn.id === node.id);
+        if (match) {
+          return {
+            ...node,
+            x: match.x,
+            y: match.y,
+            vx: match.vx,
+            vy: match.vy
+          };
+        }
+        return node;
+      });
+    });
+  }, [nodes]);
 
   // Measure container dimensions
   useEffect(() => {
@@ -85,9 +105,9 @@ export default function KnowledgeGraphVisualizer({
     }
   }, []);
 
-  // Force-Directed Layout Simulation Loop
+  // Force-Directed Layout Simulation Loop (Localized)
   useEffect(() => {
-    if (nodes.length === 0 || freezeSimulation) return;
+    if (localNodes.length === 0 || freezeSimulation) return;
 
     let animationFrameId: number;
     const centerX = dimensions.width / 2;
@@ -99,79 +119,82 @@ export default function KnowledgeGraphVisualizer({
     const damping = 0.82; // Velocity friction damping
 
     const runSimulation = () => {
-      onUpdateNodesPositions(nodes.map((n1, i) => {
-        if (n1.id === draggedNodeId) return n1; // Don't move active dragged node
+      setLocalNodes((currentNodes) => {
+        if (currentNodes.length === 0) return currentNodes;
+        return currentNodes.map((n1, i) => {
+          if (n1.id === draggedNodeId) return n1; // Don't move active dragged node
 
-        let vx = n1.vx || 0;
-        let vy = n1.vy || 0;
+          let vx = n1.vx || 0;
+          let vy = n1.vy || 0;
 
-        // 1. Center Gravity attraction
-        vx += (centerX - n1.x) * centerGravity;
-        vy += (centerY - n1.y) * centerGravity;
+          // 1. Center Gravity attraction
+          vx += (centerX - n1.x) * centerGravity;
+          vy += (centerY - n1.y) * centerGravity;
 
-        // 2. Pairwise repulsion
-        for (let j = 0; j < nodes.length; j++) {
-          if (i === j) continue;
-          const n2 = nodes[j];
-          const dx = n1.x - n2.x;
-          const dy = n1.y - n2.y;
-          const distSq = dx * dx + dy * dy + 0.1;
-          const dist = Math.sqrt(distSq);
+          // 2. Pairwise repulsion
+          for (let j = 0; j < currentNodes.length; j++) {
+            if (i === j) continue;
+            const n2 = currentNodes[j];
+            const dx = n1.x - n2.x;
+            const dy = n1.y - n2.y;
+            const distSq = dx * dx + dy * dy + 0.1;
+            const dist = Math.sqrt(distSq);
 
-          if (dist < 280) {
-            const force = repulsion / distSq;
-            vx += (dx / dist) * force;
-            vy += (dy / dist) * force;
-          }
-        }
-
-        // 3. Spring forces along links
-        links.forEach((link) => {
-          let sourceId = typeof link.source === 'string' ? link.source : (link.source as any).id;
-          let targetId = typeof link.target === 'string' ? link.target : (link.target as any).id;
-
-          if (sourceId === n1.id || targetId === n1.id) {
-            const otherId = sourceId === n1.id ? targetId : sourceId;
-            const otherNode = nodes.find(n => n.id === otherId);
-
-            if (otherNode) {
-              const dx = otherNode.x - n1.x;
-              const dy = otherNode.y - n1.y;
-              const dist = Math.sqrt(dx * dx + dy * dy) || 0.1;
-
-              // Hooke's Law: stretch force
-              const force = (dist - springLength) * springStrength;
+            if (dist < 280) {
+              const force = repulsion / distSq;
               vx += (dx / dist) * force;
               vy += (dy / dist) * force;
             }
           }
+
+          // 3. Spring forces along links
+          links.forEach((link) => {
+            let sourceId = typeof link.source === 'string' ? link.source : (link.source as any).id;
+            let targetId = typeof link.target === 'string' ? link.target : (link.target as any).id;
+
+            if (sourceId === n1.id || targetId === n1.id) {
+              const otherId = sourceId === n1.id ? targetId : sourceId;
+              const otherNode = currentNodes.find(n => n.id === otherId);
+
+              if (otherNode) {
+                const dx = otherNode.x - n1.x;
+                const dy = otherNode.y - n1.y;
+                const dist = Math.sqrt(dx * dx + dy * dy) || 0.1;
+
+                // Hooke's Law: stretch force
+                const force = (dist - springLength) * springStrength;
+                vx += (dx / dist) * force;
+                vy += (dy / dist) * force;
+              }
+            }
+          });
+
+          // Apply velocities and limit coordinates to container view
+          let nextX = n1.x + vx;
+          let nextY = n1.y + vy;
+
+          const margin = 24;
+          if (nextX < margin) { nextX = margin; vx = 0; }
+          if (nextX > dimensions.width - margin) { nextX = dimensions.width - margin; vx = 0; }
+          if (nextY < margin) { nextY = margin; vy = 0; }
+          if (nextY > dimensions.height - margin) { nextY = dimensions.height - margin; vy = 0; }
+
+          return {
+            ...n1,
+            x: nextX,
+            y: nextY,
+            vx: vx * damping,
+            vy: vy * damping
+          };
         });
-
-        // Apply velocities and limit coordinates to container view
-        let nextX = n1.x + vx;
-        let nextY = n1.y + vy;
-
-        const margin = 24;
-        if (nextX < margin) { nextX = margin; vx = 0; }
-        if (nextX > dimensions.width - margin) { nextX = dimensions.width - margin; vx = 0; }
-        if (nextY < margin) { nextY = margin; vy = 0; }
-        if (nextY > dimensions.height - margin) { nextY = dimensions.height - margin; vy = 0; }
-
-        return {
-          ...n1,
-          x: nextX,
-          y: nextY,
-          vx: vx * damping,
-          vy: vy * damping
-        };
-      }));
+      });
 
       animationFrameId = requestAnimationFrame(runSimulation);
     };
 
     animationFrameId = requestAnimationFrame(runSimulation);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [nodes, links, draggedNodeId, freezeSimulation, dimensions]);
+  }, [links, draggedNodeId, freezeSimulation, dimensions]);
 
   // Handle Dragging
   const handleMouseDown = (e: React.MouseEvent, node: GraphNode) => {
@@ -189,7 +212,7 @@ export default function KnowledgeGraphVisualizer({
       const mouseX = (e.clientX - rect.left - panOffset.x) / zoomScale;
       const mouseY = (e.clientY - rect.top - panOffset.y) / zoomScale;
 
-      onUpdateNodesPositions(nodes.map(n => {
+      setLocalNodes(prev => prev.map(n => {
         if (n.id === draggedNodeId) {
           return {
             ...n,
@@ -212,6 +235,7 @@ export default function KnowledgeGraphVisualizer({
   const handleMouseUp = () => {
     setDraggedNodeId(null);
     setIsPanning(false);
+    onUpdateNodesPositions(localNodes);
   };
 
   const startPanning = (e: React.MouseEvent) => {
@@ -237,7 +261,7 @@ export default function KnowledgeGraphVisualizer({
       <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-neutral-200/60 dark:border-zinc-800 shadow-xs text-xs font-mono">
         <span className="flex items-center gap-1">
           <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
-          <span className="text-neutral-500 dark:text-zinc-400">Nodes: {nodes.length}</span>
+          <span className="text-neutral-500 dark:text-zinc-400">Nodes: {localNodes.length}</span>
         </span>
         <span className="text-neutral-300 dark:text-zinc-700">|</span>
         <button 
@@ -294,8 +318,8 @@ export default function KnowledgeGraphVisualizer({
           <g transform={`translate(${panOffset.x}, ${panOffset.y}) scale(${zoomScale})`}>
             {/* Draw Relationship Lines / Links */}
             {links.map((link, idx) => {
-              const sourceNode = nodes.find(n => n.id === link.source);
-              const targetNode = nodes.find(n => n.id === link.target);
+              const sourceNode = localNodes.find(n => n.id === link.source);
+              const targetNode = localNodes.find(n => n.id === link.target);
 
               if (!sourceNode || !targetNode) return null;
 
@@ -346,7 +370,7 @@ export default function KnowledgeGraphVisualizer({
             })}
 
             {/* Draw Nodes */}
-            {nodes.map((node) => {
+            {localNodes.map((node) => {
               const selected = selectedNodeId === node.id;
               const hovered = hoveredNodeId === node.id;
               const isDimmed = searchQuery && !isHighlighted(node);
@@ -464,7 +488,7 @@ export default function KnowledgeGraphVisualizer({
         </svg>
 
         {/* Empty placeholder if no nodes */}
-        {nodes.length === 0 && (
+        {localNodes.length === 0 && (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center text-xs text-neutral-400 font-light italic z-0">
             <Brain className="w-10 h-10 text-neutral-300 dark:text-zinc-700 animate-pulse mb-3" />
             <span>Process video summaries or documents to automatically feed and construct your connected neural knowledge graph.</span>

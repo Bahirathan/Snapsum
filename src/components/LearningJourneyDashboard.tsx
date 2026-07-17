@@ -285,8 +285,8 @@ export default function LearningJourneyDashboard({
 
   if (!graph || !currentDaily) return null;
 
-  const conceptsArray = Object.values(graph.concepts) as MemoryConcept[];
-  const sessionsArray = Object.values(graph.sessions) as VideoLearningSession[];
+  const conceptsArray = Object.values(graph.concepts || {}) as MemoryConcept[];
+  const sessionsArray = Object.values(graph.sessions || {}) as VideoLearningSession[];
 
   const topicsMastered = conceptsArray.filter(c => c.masteryLevel >= 70).length;
   const totalConceptsCount = Object.keys(graph.concepts).length;

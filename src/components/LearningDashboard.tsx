@@ -177,15 +177,30 @@ export function loadMemoryGraph(): LearningMemoryGraph {
     if (raw) {
       const graph = JSON.parse(raw);
       if (graph && graph.concepts && Object.keys(graph.concepts).length > 0) {
+        // Guarantee all fields of LearningMemoryGraph exist with default fallbacks
+        const merged: LearningMemoryGraph = {
+          concepts: graph.concepts || RECTIFY_SAMPLE_CONCEPTS,
+          sessions: graph.sessions || RECTIFY_SAMPLE_SESSIONS,
+          quizHistory: graph.quizHistory || [],
+          weakTopics: graph.weakTopics || [],
+          strongTopics: graph.strongTopics || [],
+          xp: typeof graph.xp === 'number' ? graph.xp : 540,
+          level: typeof graph.level === 'number' ? graph.level : 2,
+          streak: typeof graph.streak === 'number' ? graph.streak : 6,
+          lastActiveDate: graph.lastActiveDate || new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString(),
+        };
+
         // Ensure all concepts have spaced repetition properties
-        Object.keys(graph.concepts).forEach(key => {
-          const c = graph.concepts[key];
-          if (c.interval === undefined) c.interval = 1;
-          if (c.easeFactor === undefined) c.easeFactor = 2.5;
-          if (c.repetitions === undefined) c.repetitions = 0;
-          if (c.dueDate === undefined) c.dueDate = new Date().toISOString();
+        Object.keys(merged.concepts).forEach(key => {
+          const c = merged.concepts[key];
+          if (c) {
+            if (c.interval === undefined) c.interval = 1;
+            if (c.easeFactor === undefined) c.easeFactor = 2.5;
+            if (c.repetitions === undefined) c.repetitions = 0;
+            if (c.dueDate === undefined) c.dueDate = new Date().toISOString();
+          }
         });
-        return graph;
+        return merged;
       }
     }
   } catch (e) {
