@@ -84,15 +84,46 @@ export function initGA(measurementId: string): boolean {
 /**
  * Dispatches an event to GA4 and adds a session diagnostic helper log.
  */
+function sanitizeParams(params?: Record<string, any>): Record<string, any> {
+  if (!params) return {};
+  const cleaned: Record<string, any> = {};
+  for (const [k, v] of Object.entries(params)) {
+    if (v === null || v === undefined) {
+      cleaned[k] = v;
+      continue;
+    }
+    try {
+      JSON.stringify(v);
+      cleaned[k] = v;
+    } catch (e) {
+      if (typeof v === 'object') {
+        const hasTagName = 'tagName' in v;
+        const isDom = hasTagName || (typeof Element !== 'undefined' && v instanceof Element) || (typeof Node !== 'undefined' && v instanceof Node);
+        if (isDom) {
+          cleaned[k] = `[DOM Element: ${(v as any).tagName || 'unknown'}]`;
+        } else if ('constructor' in v && v.constructor && v.constructor.name) {
+          cleaned[k] = `[Object: ${v.constructor.name}]`;
+        } else {
+          cleaned[k] = '[Unserializable Object]';
+        }
+      } else {
+        cleaned[k] = `[Unserializable: ${typeof v}]`;
+      }
+    }
+  }
+  return cleaned;
+}
+
 export function trackGAEvent(eventName: string, params?: Record<string, any>): TrackedEvent {
   const timestamp = new Date().toLocaleTimeString();
   const eventId = Math.random().toString(36).substring(2, 9);
   
+  const sanitized = sanitizeParams(params);
   const loggedEvent: TrackedEvent = {
     id: eventId,
     timestamp,
     name: eventName,
-    params: params || {}
+    params: sanitized
   };
 
   // Push to local memory diagnostics
@@ -100,13 +131,13 @@ export function trackGAEvent(eventName: string, params?: Record<string, any>): T
 
   if (typeof window !== 'undefined' && window.gtag) {
     try {
-      window.gtag('event', eventName, params);
-      console.log(`[GA Event Tracked] ${eventName}:`, params);
+      window.gtag('event', eventName, sanitized);
+      console.log(`[GA Event Tracked] ${eventName}:`, sanitized);
     } catch (err) {
       console.warn(`[GA event dispatch failed] ${eventName}:`, err);
     }
   } else {
-    console.log(`[GA Event (Simulated / Key Missing)] ${eventName}:`, params);
+    console.log(`[GA Event (Simulated / Key Missing)] ${eventName}:`, sanitized);
   }
 
   // Dispatch a custom event to notify listeners of new tracked logs (e.g. the admin console)

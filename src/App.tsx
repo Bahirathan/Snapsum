@@ -10610,7 +10610,13 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                                   </div>
                                   <div className="text-[8px] text-neutral-400 font-light mt-0.5 whitespace-pre-wrap break-all">
                                     {evt.params && Object.keys(evt.params).length > 0 ? (
-                                      `params: ${JSON.stringify(evt.params)}`
+                                      (() => {
+                                        try {
+                                          return `params: ${JSON.stringify(evt.params)}`;
+                                        } catch (e) {
+                                          return `params: [Complex/Circular Object]`;
+                                        }
+                                      })()
                                     ) : (
                                       'params: (none)'
                                     )}

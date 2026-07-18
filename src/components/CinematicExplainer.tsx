@@ -639,7 +639,9 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
           setCurrentTime(95);
         }}
         onError={(e) => {
-          console.warn("Custom audio loading failed or was not found. Falling back to TTS speech synthesis:", e);
+          const errorCode = e.currentTarget?.error?.code;
+          const errorMessage = e.currentTarget?.error?.message;
+          console.warn(`Custom audio loading failed or was not found (code: ${errorCode || 'unknown'}, message: ${errorMessage || 'none'}). Falling back to TTS speech synthesis.`);
           setIsUsingCustomAudio(false);
         }}
       />
