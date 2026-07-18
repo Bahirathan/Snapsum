@@ -60,7 +60,10 @@ import {
   Search,
   Compass,
   FolderOpen,
-  Puzzle
+  Puzzle,
+  Facebook,
+  Linkedin,
+  Music
 } from 'lucide-react';
 import { PRELOADED_VIDEOS } from './preloadedData';
 import { ARABIC_PRELOADED_VIDEOS } from './utils/arabicPreloadedData';
@@ -417,7 +420,8 @@ const getEmbedUrl = (url: string) => {
   // YouTube matches
   let ytMatch = cleaned.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/ ]{11})/i);
   if (ytMatch && ytMatch[1]) {
-    return { type: 'youtube', embedUrl: `https://www.youtube.com/embed/${ytMatch[1]}?rel=0` };
+    const videoId = ytMatch[1] === 'UF8uR6Z6KLc' ? 'Hd_pt-xlV50' : ytMatch[1];
+    return { type: 'youtube', embedUrl: `https://www.youtube.com/embed/${videoId}?rel=0` };
   }
   
   // Loom matches
@@ -718,7 +722,7 @@ export default function App() {
 
   // Advanced Source Inputs
   const [inputSourceType, setInputSourceType] = useState<'video' | 'website' | 'file' | 'text'>('video');
-  const [uploadedFiles, setUploadedFiles] = useState<{name: string; size: number; type: string; textContent?: string}[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<{name: string; size: number; type: string; textContent?: string; base64Data?: string}[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
   const [inputWebsiteUrl, setInputWebsiteUrl] = useState('');
   const [pastedContentText, setPastedContentText] = useState('');
@@ -2085,6 +2089,15 @@ export default function App() {
   const [proYearlyPrice, setProYearlyPrice] = useState<number>(7.49);
   const [enterpriseMonthlyPrice, setEnterpriseMonthlyPrice] = useState<number>(12.99);
   const [enterpriseYearlyPrice, setEnterpriseYearlyPrice] = useState<number>(11.49);
+
+  // Social Media Link states (Firestore & localStorage Backed)
+  const [youtubeLink, setYoutubeLink] = useState(() => localStorage.getItem('social_youtube') || 'https://www.youtube.com');
+  const [xLink, setXLink] = useState(() => localStorage.getItem('social_x') || 'https://x.com');
+  const [facebookLink, setFacebookLink] = useState(() => localStorage.getItem('social_facebook') || 'https://facebook.com');
+  const [linkedinLink, setLinkedinLink] = useState(() => localStorage.getItem('social_linkedin') || 'https://linkedin.com');
+  const [tiktokLink, setTiktokLink] = useState(() => localStorage.getItem('social_tiktok') || 'https://tiktok.com');
+  const [socialSaveLoading, setSocialSaveLoading] = useState(false);
+  const [socialSaveStatus, setSocialSaveStatus] = useState<{ type: 'idle' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' });
   const [promotionsList, setPromotionsList] = useState<any[]>(() => {
     return [
       {
@@ -2155,6 +2168,28 @@ export default function App() {
           if (data.enterpriseMonthlyPrice !== undefined) setEnterpriseMonthlyPrice(Number(data.enterpriseMonthlyPrice));
           if (data.enterpriseYearlyPrice !== undefined) setEnterpriseYearlyPrice(Number(data.enterpriseYearlyPrice));
           if (Array.isArray(data.promotions)) setPromotionsList(data.promotions);
+
+          // Synchronize social links
+          if (data.youtubeLink !== undefined) {
+            setYoutubeLink(data.youtubeLink);
+            localStorage.setItem('social_youtube', data.youtubeLink);
+          }
+          if (data.xLink !== undefined) {
+            setXLink(data.xLink);
+            localStorage.setItem('social_x', data.xLink);
+          }
+          if (data.facebookLink !== undefined) {
+            setFacebookLink(data.facebookLink);
+            localStorage.setItem('social_facebook', data.facebookLink);
+          }
+          if (data.linkedinLink !== undefined) {
+            setLinkedinLink(data.linkedinLink);
+            localStorage.setItem('social_linkedin', data.linkedinLink);
+          }
+          if (data.tiktokLink !== undefined) {
+            setTiktokLink(data.tiktokLink);
+            localStorage.setItem('social_tiktok', data.tiktokLink);
+          }
         }
       } catch (err) {
         console.warn('Failed to fetch pricing config from Firestore, using defaults:', err);
@@ -2195,6 +2230,36 @@ export default function App() {
       setPricingSaveStatus({ type: 'error', message: err.message || 'Error saving parameters to Firestore.' });
     } finally {
       setPricingSaveLoading(false);
+    }
+  };
+
+  const handleSaveSocialLinks = async () => {
+    setSocialSaveLoading(true);
+    setSocialSaveStatus({ type: 'idle', message: '' });
+    try {
+      const docRef = doc(db, 'admin_settings', 'pricing');
+      const payload = {
+        youtubeLink: youtubeLink.trim(),
+        xLink: xLink.trim(),
+        facebookLink: facebookLink.trim(),
+        linkedinLink: linkedinLink.trim(),
+        tiktokLink: tiktokLink.trim(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      await setDoc(docRef, payload, { merge: true });
+      
+      localStorage.setItem('social_youtube', youtubeLink.trim());
+      localStorage.setItem('social_x', xLink.trim());
+      localStorage.setItem('social_facebook', facebookLink.trim());
+      localStorage.setItem('social_linkedin', linkedinLink.trim());
+      localStorage.setItem('social_tiktok', tiktokLink.trim());
+
+      setSocialSaveStatus({ type: 'success', message: 'Social media links successfully synchronized globally and saved to Cloud Firestore!' });
+    } catch (err: any) {
+      setSocialSaveStatus({ type: 'error', message: err.message || 'Error saving social links to Firestore.' });
+    } finally {
+      setSocialSaveLoading(false);
     }
   };
 
@@ -3320,7 +3385,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             quizQuestionCount: advQuizQuestionCount,
             mindMapDetail: advMindMapDetail,
             explanationStyle: advExplanationStyle
-          } : undefined
+          } : undefined,
+          files: activeType === 'file' ? uploadedFiles.map(f => ({
+            name: f.name,
+            size: f.size,
+            type: f.type,
+            base64Data: f.base64Data,
+            textContent: f.textContent
+          })) : undefined
         }),
       });
 
@@ -4491,6 +4563,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 }
               }
             }}
+            youtubeLink={youtubeLink}
+            xLink={xLink}
+            facebookLink={facebookLink}
+            linkedinLink={linkedinLink}
+            tiktokLink={tiktokLink}
           />
         )}
 
@@ -6516,16 +6593,42 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             setIsDragActive(false);
                             const files = Array.from(e.dataTransfer.files);
                             files.forEach((f: any) => {
+                              const isText = f.type.startsWith('text/') || 
+                                             f.name.endsWith('.txt') || 
+                                             f.name.endsWith('.md') || 
+                                             f.name.endsWith('.json') || 
+                                             f.name.endsWith('.csv') || 
+                                             f.name.endsWith('.tsv') || 
+                                             f.name.endsWith('.xml') || 
+                                             f.name.endsWith('.html') || 
+                                             f.name.endsWith('.js') || 
+                                             f.name.endsWith('.ts');
                               const reader = new FileReader();
                               reader.onload = (event) => {
-                                setUploadedFiles(prev => [...prev, {
-                                  name: f.name,
-                                  size: f.size,
-                                  type: f.type,
-                                  textContent: typeof event.target?.result === 'string' ? event.target.result : undefined
-                                }]);
+                                const dataUrl = event.target?.result as string;
+                                const base64Data = dataUrl ? dataUrl.split(',')[1] : undefined;
+                                if (isText) {
+                                  const textReader = new FileReader();
+                                  textReader.onload = (tEvent) => {
+                                    setUploadedFiles(prev => [...prev, {
+                                      name: f.name,
+                                      size: f.size,
+                                      type: f.type || 'text/plain',
+                                      textContent: typeof tEvent.target?.result === 'string' ? tEvent.target.result : undefined,
+                                      base64Data
+                                    }]);
+                                  };
+                                  textReader.readAsText(f);
+                                } else {
+                                  setUploadedFiles(prev => [...prev, {
+                                    name: f.name,
+                                    size: f.size,
+                                    type: f.type || 'application/octet-stream',
+                                    base64Data
+                                  }]);
+                                }
                               };
-                              reader.readAsText(f);
+                              reader.readAsDataURL(f);
                             });
                           }}
                           className={`border-2 border-dashed rounded-2xl p-6 text-center transition cursor-pointer ${
@@ -6542,16 +6645,42 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                             onChange={(e) => {
                               const files = Array.from(e.target.files || []);
                               files.forEach((f: any) => {
+                                const isText = f.type.startsWith('text/') || 
+                                               f.name.endsWith('.txt') || 
+                                               f.name.endsWith('.md') || 
+                                               f.name.endsWith('.json') || 
+                                               f.name.endsWith('.csv') || 
+                                               f.name.endsWith('.tsv') || 
+                                               f.name.endsWith('.xml') || 
+                                               f.name.endsWith('.html') || 
+                                               f.name.endsWith('.js') || 
+                                               f.name.endsWith('.ts');
                                 const reader = new FileReader();
                                 reader.onload = (event) => {
-                                  setUploadedFiles(prev => [...prev, {
-                                    name: f.name,
-                                    size: f.size,
-                                    type: f.type,
-                                    textContent: typeof event.target?.result === 'string' ? event.target.result : undefined
-                                  }]);
+                                  const dataUrl = event.target?.result as string;
+                                  const base64Data = dataUrl ? dataUrl.split(',')[1] : undefined;
+                                  if (isText) {
+                                    const textReader = new FileReader();
+                                    textReader.onload = (tEvent) => {
+                                      setUploadedFiles(prev => [...prev, {
+                                        name: f.name,
+                                        size: f.size,
+                                        type: f.type || 'text/plain',
+                                        textContent: typeof tEvent.target?.result === 'string' ? tEvent.target.result : undefined,
+                                        base64Data
+                                      }]);
+                                    };
+                                    textReader.readAsText(f);
+                                  } else {
+                                    setUploadedFiles(prev => [...prev, {
+                                      name: f.name,
+                                      size: f.size,
+                                      type: f.type || 'application/octet-stream',
+                                      base64Data
+                                    }]);
+                                  }
                                 };
-                                reader.readAsText(f);
+                                reader.readAsDataURL(f);
                               });
                             }}
                           />
@@ -10708,6 +10837,142 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </div>
                   </div>
 
+                  {/* CARD 9: SOCIAL MEDIA LINKS & FOLLOW US CONFIGURATION */}
+                  <div className="bg-white p-6 rounded-3xl border border-black/[0.04] space-y-4 shadow-sm text-left font-sans flex flex-col justify-between lg:col-span-2 animate-fadeIn">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-2 border-b border-neutral-100 pb-3">
+                        <div className="flex items-center gap-2 text-zinc-950">
+                          <Share2 className="w-5 h-5 text-indigo-600 animate-pulse" />
+                          <h3 className="font-extrabold text-sm tracking-tight text-[#1d1d1f]">
+                            Social Media & "Follow Us" Channel Configuration
+                          </h3>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-[#515154] font-sans font-light leading-relaxed">
+                        Configure the global redirection URLs for the social media channels displayed in the application footer. Changes made here persist securely to Cloud Firestore and update the links globally for all visitors immediately.
+                      </p>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
+                        {/* YouTube */}
+                        <div className="space-y-1 font-sans">
+                          <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                            YouTube Channel URL
+                          </label>
+                          <input
+                            type="url"
+                            placeholder="https://www.youtube.com/channel/..."
+                            value={youtubeLink}
+                            onChange={(e) => setYoutubeLink(e.target.value)}
+                            className="w-full px-4 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono"
+                          />
+                        </div>
+
+                        {/* X / Twitter */}
+                        <div className="space-y-1 font-sans">
+                          <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-900"></span>
+                            X (Twitter) Profile URL
+                          </label>
+                          <input
+                            type="url"
+                            placeholder="https://x.com/..."
+                            value={xLink}
+                            onChange={(e) => setXLink(e.target.value)}
+                            className="w-full px-4 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono"
+                          />
+                        </div>
+
+                        {/* Facebook */}
+                        <div className="space-y-1 font-sans">
+                          <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                            Facebook Page URL
+                          </label>
+                          <input
+                            type="url"
+                            placeholder="https://facebook.com/..."
+                            value={facebookLink}
+                            onChange={(e) => setFacebookLink(e.target.value)}
+                            className="w-full px-4 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono"
+                          />
+                        </div>
+
+                        {/* LinkedIn */}
+                        <div className="space-y-1 font-sans">
+                          <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sky-600"></span>
+                            LinkedIn Profile URL
+                          </label>
+                          <input
+                            type="url"
+                            placeholder="https://linkedin.com/in/..."
+                            value={linkedinLink}
+                            onChange={(e) => setLinkedinLink(e.target.value)}
+                            className="w-full px-4 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono"
+                          />
+                        </div>
+
+                        {/* TikTok */}
+                        <div className="space-y-1 font-sans md:col-span-2">
+                          <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 block font-bold flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                            TikTok Profile URL
+                          </label>
+                          <input
+                            type="url"
+                            placeholder="https://tiktok.com/@..."
+                            value={tiktokLink}
+                            onChange={(e) => setTiktokLink(e.target.value)}
+                            className="w-full px-4 py-2 text-xs bg-[#f5f5f7] border border-black/[0.04] rounded-xl outline-none focus:bg-white font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Save Status & Button */}
+                      <div className="pt-4 flex items-center justify-between gap-3 border-t border-neutral-100 flex-wrap">
+                        <div className="h-6 flex items-center">
+                          {socialSaveStatus.type === 'success' && (
+                            <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5 animate-fadeIn">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                              {socialSaveStatus.message}
+                            </span>
+                          )}
+                          {socialSaveStatus.type === 'error' && (
+                            <span className="text-xs font-semibold text-rose-600 flex items-center gap-1.5 animate-fadeIn">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                              {socialSaveStatus.message}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleSaveSocialLinks}
+                          disabled={socialSaveLoading}
+                          className="px-5 py-2.5 bg-neutral-900 hover:bg-neutral-800 disabled:bg-neutral-400 text-white text-xs font-bold rounded-xl transition cursor-pointer shadow-sm active:scale-[0.98] flex items-center gap-2"
+                        >
+                          {socialSaveLoading ? (
+                            <>
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              <span>Saving Channel Links...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>Save Social Links</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                    </div>
+
+                    <div className="pt-3 border-t border-neutral-100 text-[10px] text-[#86868b] leading-normal font-light flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                      <span>🔒 Social media configurations are saved to the persistent admin cluster securely.</span>
+                      <span className="font-mono text-[9px] uppercase tracking-wider font-bold text-zinc-500">ZIPYTINY CLOUD SYSTEMS</span>
+                    </div>
+                  </div>
+
                 </div>
 
               </div>
@@ -12199,13 +12464,72 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             <div className="h-8 w-8 rounded-lg overflow-hidden flex items-center justify-center bg-slate-900 border border-slate-800">
               <img src="/logo.svg" alt="Zipytiny Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" decoding="async" />
             </div>
-            <div>
+            <div className="text-left">
               <span className="text-sm font-bold font-display tracking-tight text-white">
                 Zipytiny
               </span>
               <p className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold font-mono">
                 Speed learning & content repurposing
               </p>
+            </div>
+          </div>
+
+          {/* Follow Us Feature */}
+          <div className="flex items-center gap-4 py-2 bg-slate-800/20 px-5 rounded-full border border-slate-800/40">
+            <span className="text-xs font-bold text-slate-300 tracking-wide font-sans">
+              Follow us
+            </span>
+            <div className="flex items-center gap-3.5">
+              <a 
+                href={youtubeLink} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-slate-400 hover:text-red-500 transition-colors duration-200"
+                aria-label="Follow us on YouTube"
+                id="footer-youtube-link"
+              >
+                <Youtube className="w-4 h-4" />
+              </a>
+              <a 
+                href={xLink} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-slate-400 hover:text-white transition-colors duration-200"
+                aria-label="Follow us on X"
+                id="footer-x-link"
+              >
+                <Twitter className="w-4 h-4" />
+              </a>
+              <a 
+                href={facebookLink} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-slate-400 hover:text-blue-500 transition-colors duration-200"
+                aria-label="Follow us on Facebook"
+                id="footer-facebook-link"
+              >
+                <Facebook className="w-4 h-4" />
+              </a>
+              <a 
+                href={linkedinLink} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-slate-400 hover:text-sky-500 transition-colors duration-200"
+                aria-label="Follow us on LinkedIn"
+                id="footer-linkedin-link"
+              >
+                <Linkedin className="w-4 h-4" />
+              </a>
+              <a 
+                href={tiktokLink} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="text-slate-400 hover:text-teal-400 transition-colors duration-200"
+                aria-label="Follow us on TikTok"
+                id="footer-tiktok-link"
+              >
+                <Music className="w-4 h-4" />
+              </a>
             </div>
           </div>
           

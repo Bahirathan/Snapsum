@@ -461,7 +461,7 @@ app.use(
 );
 
 app.use(express.json({ 
-  limit: '10mb',
+  limit: '50mb',
   verify: (req: any, res, buf) => {
     req.rawBody = buf;
   }
@@ -1056,7 +1056,7 @@ app.get('/s/:id/quiz/:score', async (req, res) => {
 
 // REST API endpoint: Video summarizer (YouTube and generic videos/pages)
 app.post('/api/summarize', summarizeLimiter, async (req, res) => {
-  const { videoUrl, customTranscript, outputLanguage, learnMode, learningDepth, advancedSettings } = req.body;
+  const { videoUrl, customTranscript, outputLanguage, learnMode, learningDepth, advancedSettings, files } = req.body;
 
   if (!videoUrl) {
     return res.status(400).json({ error: 'Video URL is required.' });
@@ -1084,7 +1084,31 @@ app.post('/api/summarize', summarizeLimiter, async (req, res) => {
   let fullMetadata: any;
 
   try {
-    if (isYouTube) {
+    if (videoUrl === 'https://www.zipytiny.app/uploaded-files' || (files && files.length > 0)) {
+      metadata = {
+        title: (files && files.length > 0) ? files.map((f: any) => f.name).join(', ') : 'Uploaded Files Study Guide',
+        author: 'My Uploaded Files',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80'
+      };
+      videoId = 'vid_uploaded_' + crypto.randomBytes(4).toString('hex');
+      fullMetadata = {
+        videoId,
+        videoUrl,
+        ...metadata,
+      };
+    } else if (videoUrl === 'https://www.zipytiny.app/pasted-text') {
+      metadata = {
+        title: 'Pasted Content Study Guide',
+        author: 'My Notebook',
+        thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&q=80'
+      };
+      videoId = 'vid_pasted_' + crypto.randomBytes(4).toString('hex');
+      fullMetadata = {
+        videoId,
+        videoUrl,
+        ...metadata,
+      };
+    } else if (isYouTube) {
       const ytId = extractVideoId(videoUrl)!;
       videoId = ytId;
       const ytMetadata = await fetchYouTubeOEmbed(ytId);
@@ -1267,7 +1291,34 @@ CRITICAL JSON FORMATTING INSTRUCTION:
 - Ensure every array is a fully populated array containing real items matching the schema, and every string has a complete text of at least 2-3 detailed sentences.
 `;
 
-    if (transcript) {
+    const buildPromptWithFiles = (fileNames: string[]) => `
+You are an expert AI multimodal content analyst and educator.
+The user has uploaded one or more documents/media files: ${fileNames.join(', ')}.
+Your goal is to fully analyze the attached file(s) (including reading text from documents, listening to audio, or analyzing video frames/audio if media files are attached) and extract highly valuable summaries, actionable chapters, interactive quizzes, standard mindmap nodes, and social media repurposing scripts.
+${langInstruction}
+${learnModeInstruction}
+
+Please analyze the attached files directly and fill out the detailed JSON structure:
+1. summary: A beautifully crafted, scannable, engaging summary of the content (2-3 structured paragraphs). Explain the problem, the core thesis, and the final solution.
+2. takeaways: A list of 5-7 actionable, eye-opening takeaways or direct value bombs. For each takeaway, provide a "text" field with the insight and a "lowConfidence" boolean field — set lowConfidence to true only if the claim is ambiguous or difficult to verify. Set it to false otherwise.
+3. chapters: A list of chronological chapters/sections summarizing different parts of the media file or document sections. Spread them logically. Allocate accurate "secondsCount" if it is a media file.
+4. blogPost: Write a comprehensive, premium-grade, SEO-friendly markdown blog post repurposing this content. Use headers (#, ##), bullets, bolding, and professional spacing.
+5. twitterThread: Create an engaging 4-6 tweet series dissecting the main value loop of the content. Write them as individual elements of an array.
+6. socialSnippet: A highly engaging promotional description for LinkedIn or Instagram featuring powerful quote triggers and tags.
+7. quiz: Create 3-5 multiple-choice questions testing key content. Include 4 options, the 0-based index of the correct option, and a helpful, educational explanation.
+8. mindmap: Create a structured concept map of ideas representing topics covered. Use "concept" (label of node), "category" (the parent group it belongs to), and "description" (a mini note).
+9. reelScript: Create a structured 30-60 second viral script specifically designed to summarize the main subject in a bite-sized video (TikTok, Shorts, IG Reels). The scenes must be precise chronological story steps. Make visualHook descriptions extremely punchy and voiceover sentences highly memorable.
+
+CRITICAL JSON FORMATTING INSTRUCTION:
+- You must output FULLY POPULATED details for every single key in the requested JSON structure.
+- NEVER under any circumstances output ellipses (like '...'), single dots (like '.'), or empty properties as placeholders.
+- Ensure every array is a fully populated array containing real items matching the schema, and every string has a complete text of at least 2-3 detailed sentences.
+`;
+
+    if (files && files.length > 0) {
+      const fileNames = files.map((f: any) => f.name || 'uploaded file');
+      prompt = buildPromptWithFiles(fileNames);
+    } else if (transcript) {
       prompt = buildPromptWithTranscript(metadata.title, metadata.author, transcript);
     } else {
       prompt = buildPromptWithoutTranscript(metadata.title, metadata.author);
@@ -1427,9 +1478,36 @@ CRITICAL JSON FORMATTING INSTRUCTION:
       setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 45000)
     );
 
+    let contents: any = prompt;
+
+    if (files && files.length > 0) {
+      const parts: any[] = [];
+      
+      // Add each file as a part
+      for (const file of files) {
+        if (file.base64Data) {
+          parts.push({
+            inlineData: {
+              mimeType: file.type || 'application/octet-stream',
+              data: file.base64Data
+            }
+          });
+        } else if (file.textContent) {
+          parts.push({
+            text: `Document Content for ${file.name}:\n${file.textContent}`
+          });
+        }
+      }
+      
+      // Add the prompt as the final text part!
+      parts.push({ text: prompt });
+      
+      contents = { parts };
+    }
+
     const generatePromise = activeAi.models.generateContent({
       model: requestedModel,
-      contents: prompt,
+      contents,
       config,
     });
 

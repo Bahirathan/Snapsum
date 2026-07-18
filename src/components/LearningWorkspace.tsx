@@ -1594,7 +1594,7 @@ export default function LearningWorkspace({
               {videoId && videoId !== 'unknown' ? (
                 <iframe
                   className="w-full h-full"
-                  src={`https://www.youtube.com/embed/${videoId}?start=${ytStartSeconds !== null ? ytStartSeconds : 0}&autoplay=${ytStartSeconds !== null ? '1' : '0'}`}
+                  src={`https://www.youtube.com/embed/${videoId === 'UF8uR6Z6KLc' ? 'Hd_pt-xlV50' : videoId}?start=${ytStartSeconds !== null ? ytStartSeconds : 0}&autoplay=${ytStartSeconds !== null ? '1' : '0'}`}
                   title={videoTitle}
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

@@ -5,7 +5,8 @@ import {
   Video, Play, Bookmark, Headphones, Users, ChevronDown, Download, Award,
   Upload, Brain, Share2, Star, TrendingUp, Clock, Shield, Cpu, Frown, Smile, XCircle,
   BarChart2, Layers, BookOpen, Mic, PenTool, Hash, ChevronRight,
-  Youtube, Presentation, HelpCircle, Lock, Calculator, Settings, Gift
+  Youtube, Presentation, HelpCircle, Lock, Calculator, Settings, Gift,
+  Twitter, Facebook, Linkedin, Music
 } from 'lucide-react';
 import { CinematicExplainer } from './CinematicExplainer';
 
@@ -17,6 +18,11 @@ interface LandingPageProps {
   visitorUser: any;
   onGoogleSignIn: () => void;
   onStartFreeSummary?: (input: string, type?: 'video' | 'website' | 'file' | 'text', filesList?: any[], depth?: 'quick' | 'study' | 'mastery') => void;
+  youtubeLink?: string;
+  xLink?: string;
+  facebookLink?: string;
+  linkedinLink?: string;
+  tiktokLink?: string;
 }
 
 // Interactive Preloaded Topics for the Live Sandbox Demo
@@ -121,7 +127,12 @@ export default function LandingPage({
   isPremium, 
   visitorUser, 
   onGoogleSignIn, 
-  onStartFreeSummary 
+  onStartFreeSummary,
+  youtubeLink = 'https://www.youtube.com',
+  xLink = 'https://x.com',
+  facebookLink = 'https://facebook.com',
+  linkedinLink = 'https://linkedin.com',
+  tiktokLink = 'https://tiktok.com'
 }: LandingPageProps) {
   
   // App states
@@ -3174,6 +3185,67 @@ export default function LandingPage({
               <div className="flex items-center gap-1.5 text-[11px] text-zinc-500">
                 <Shield className="w-3.5 h-3.5 text-emerald-500" />
                 <span>SOC2 Compliant · HIPAA Ready · SSL Secured</span>
+              </div>
+              
+              {/* Follow Us panel in landing footer */}
+              <div className="pt-2">
+                <div className="flex items-center gap-4 py-2 bg-neutral-900/60 px-4 rounded-xl border border-zinc-800/50 w-fit">
+                  <span className="text-xs font-bold text-zinc-300 tracking-wide font-sans">
+                    Follow us
+                  </span>
+                  <div className="flex items-center gap-3">
+                    <a 
+                      href={youtubeLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-zinc-400 hover:text-red-500 transition-colors duration-200"
+                      aria-label="Follow us on YouTube"
+                      id="landing-footer-youtube-link"
+                    >
+                      <Youtube className="w-4 h-4" />
+                    </a>
+                    <a 
+                      href={xLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-zinc-400 hover:text-white transition-colors duration-200"
+                      aria-label="Follow us on X"
+                      id="landing-footer-x-link"
+                    >
+                      <Twitter className="w-4 h-4" />
+                    </a>
+                    <a 
+                      href={facebookLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-zinc-400 hover:text-blue-500 transition-colors duration-200"
+                      aria-label="Follow us on Facebook"
+                      id="landing-footer-facebook-link"
+                    >
+                      <Facebook className="w-4 h-4" />
+                    </a>
+                    <a 
+                      href={linkedinLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-zinc-400 hover:text-sky-500 transition-colors duration-200"
+                      aria-label="Follow us on LinkedIn"
+                      id="landing-footer-linkedin-link"
+                    >
+                      <Linkedin className="w-4 h-4" />
+                    </a>
+                    <a 
+                      href={tiktokLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-zinc-400 hover:text-teal-400 transition-colors duration-200"
+                      aria-label="Follow us on TikTok"
+                      id="landing-footer-tiktok-link"
+                    >
+                      <Music className="w-4 h-4" />
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
 
