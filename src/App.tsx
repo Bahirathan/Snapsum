@@ -707,13 +707,24 @@ export default function App() {
   const [showCustomTranscriptField, setShowCustomTranscriptField] = useState(false);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [showStickyCta, setShowStickyCta] = useState(false);
+  const [isCtaDismissed, setIsCtaDismissed] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       const formElement = document.getElementById('url-submit-form');
       if (formElement) {
         const rect = formElement.getBoundingClientRect();
-        setShowStickyCta(rect.bottom < 0);
+        
+        // Hide CTA if near the bottom of the page to prevent blocking/hiding footer links
+        const threshold = 450; // px threshold from bottom of page
+        const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - threshold;
+        
+        setShowStickyCta(rect.bottom < 0 && !isNearBottom);
+      } else {
+        // If form is not present, check scroll height to hide it near bottom
+        const threshold = 450;
+        const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - threshold;
+        setShowStickyCta(!isNearBottom);
       }
     };
     window.addEventListener('scroll', handleScroll);
@@ -12781,8 +12792,16 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       />
 
       {/* Floating Sticky Conversion CTA */}
-      {showStickyCta && !activeSummary && !activeStack && (
-        <div className="fixed bottom-20 left-4 right-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-xl z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border border-neutral-200 dark:border-zinc-800 rounded-2xl p-3.5 shadow-xl flex items-center justify-between gap-4 animate-fadeIn font-sans">
+      {showStickyCta && !isCtaDismissed && !activeSummary && !activeStack && (
+        <div className="fixed bottom-20 left-4 right-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-xl z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border border-neutral-200 dark:border-zinc-800 rounded-2xl p-3.5 pr-8 shadow-xl flex items-center justify-between gap-4 animate-fadeIn font-sans relative">
+          <button
+            type="button"
+            onClick={() => setIsCtaDismissed(true)}
+            className="absolute top-2 right-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-zinc-200 transition duration-150 p-1 rounded-full hover:bg-neutral-100 dark:hover:bg-zinc-800 cursor-pointer"
+            title="Dismiss notification"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 rounded-xl bg-[#0071e3]/10 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
               <Sparkles className="w-5 h-5 text-[#0071e3] dark:text-indigo-400 animate-pulse" />
