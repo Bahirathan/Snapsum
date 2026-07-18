@@ -6686,7 +6686,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                       <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                       <span>Server Request Interrupted</span>
                     </div>
-                    {error.includes("dunning decision") || error.includes("Lightning dunning") || error.toLowerCase().includes("deny for project") ? (
+                    {error.includes("dunning decision") || error.includes("Lightning dunning") || error.toLowerCase().includes("deny for project") || error.includes("UNAUTHENTICATED") || error.includes("unauthenticated") || error.includes("ACCESS_TOKEN_TYPE_UNSUPPORTED") || error.includes("API_KEY_SERVICE_BLOCKED") || error.includes("invalid authentication credentials") || error.includes("API keys are not supported") || error.includes("No valid Gemini API Key is configured") ? (
                       <div className="space-y-2.5">
                         <p className="text-sm font-semibold text-rose-950 flex items-center gap-1.5">
                           <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />

@@ -284,7 +284,13 @@ function handleGeminiError(err: any, res: express.Response) {
     errorMessage.includes('API key not found') ||
     errorMessage.includes('API_KEY_INVALID') ||
     errorMessage.includes('invalid key') ||
-    errorMessage.includes('unauthorized');
+    errorMessage.includes('unauthorized') ||
+    errorMessage.includes('UNAUTHENTICATED') ||
+    errorMessage.includes('unauthenticated') ||
+    errorMessage.includes('ACCESS_TOKEN_TYPE_UNSUPPORTED') ||
+    errorMessage.includes('API_KEY_SERVICE_BLOCKED') ||
+    errorMessage.includes('invalid authentication credentials') ||
+    errorMessage.includes('API keys are not supported by this API');
 
   if (isScopeError || isNoKeyError) {
     errorMessage = 'No valid Gemini API Key is configured on the server host. To resolve this: \n\n' +
