@@ -277,8 +277,8 @@ Your time is limited, so don't waste it living someone else's life. Be brave eno
   },
   {
     metadata: {
-      videoId: 'T5yxFiY96_0',
-      videoUrl: 'https://www.youtube.com/watch?v=T5yxFiY96_0',
+      videoId: 'TjZBTDzGeGg',
+      videoUrl: 'https://www.youtube.com/watch?v=TjZBTDzGeGg',
       title: 'Introduction to Artificial Intelligence (MIT 6.S091)',
       author: 'MIT OpenCourseWare',
       thumbnailUrl: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=600&q=80',
@@ -375,8 +375,8 @@ Your time is limited, so don't waste it living someone else's life. Be brave eno
   },
   {
     metadata: {
-      videoId: 'rCgGZ4D0eF0',
-      videoUrl: 'https://www.youtube.com/watch?v=rCgGZ4D0eF0',
+      videoId: 'guZgP-SgW98',
+      videoUrl: 'https://www.youtube.com/watch?v=guZgP-SgW98',
       title: 'Negotiation Strategy & Business Deals',
       author: 'Harvard Business School',
       thumbnailUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=400&auto=format&fit=crop',
@@ -480,8 +480,8 @@ Your time is limited, so don't waste it living someone else's life. Be brave eno
   },
   {
     metadata: {
-      videoId: 'OB50K1VPrM0',
-      videoUrl: 'https://www.youtube.com/watch?v=OB50K1VPrM0',
+      videoId: 'CBYhVcOn7To',
+      videoUrl: 'https://www.youtube.com/watch?v=CBYhVcOn7To',
       title: 'How to Build a Billion-Dollar Startup',
       author: "Lenny's Podcast",
       thumbnailUrl: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=400&auto=format&fit=crop',

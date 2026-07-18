@@ -2106,7 +2106,7 @@ export default function LandingPage({
               {
                 title: 'Introduction to Deep Learning & Neural Nets',
                 creator: 'MIT Scholars • Lecture',
-                url: 'https://www.youtube.com/watch?v=T5yxFiY96_0',
+                url: 'https://www.youtube.com/watch?v=TjZBTDzGeGg',
                 duration: '25 mins',
                 processing: '~35s',
                 difficulty: 'Advanced Tech',
@@ -2134,7 +2134,7 @@ export default function LandingPage({
               {
                 title: 'Negotiation Strategy & Business Deals',
                 creator: 'Harvard Business • Case Study',
-                url: 'https://www.youtube.com/watch?v=rCgGZ4D0eF0',
+                url: 'https://www.youtube.com/watch?v=guZgP-SgW98',
                 duration: '20 mins',
                 processing: '~20s',
                 difficulty: 'Intermediate Business',
@@ -2148,7 +2148,7 @@ export default function LandingPage({
               {
                 title: 'How to Build a Billion-Dollar Startup',
                 creator: "Lenny's Podcast • Founder Stories",
-                url: 'https://www.youtube.com/watch?v=OB50K1VPrM0',
+                url: 'https://www.youtube.com/watch?v=CBYhVcOn7To',
                 duration: '45 mins',
                 processing: '~45s',
                 difficulty: 'Growth-Focused',

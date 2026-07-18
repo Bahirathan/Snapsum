@@ -758,7 +758,7 @@ export default function App() {
   const defaultCachedUrls = [
     { url: 'https://www.youtube.com/watch?v=UF8uR6Z6KLc', title: 'Steve Jobs Stanford Commencement Address', type: 'video' },
     { url: 'https://www.youtube.com/watch?v=qp0HIF3SfI4', title: 'Simon Sinek: How Great Leaders Inspire Action', type: 'video' },
-    { url: 'https://www.youtube.com/watch?v=T5yxFiY96_0', title: 'MIT Introduction to Artificial Intelligence', type: 'video' }
+    { url: 'https://www.youtube.com/watch?v=TjZBTDzGeGg', title: 'MIT Introduction to Artificial Intelligence', type: 'video' }
   ];
 
   const allCachedUrls = [
