@@ -283,13 +283,11 @@ export default function LearningJourneyDashboard({
     setDailyCompleted(doneToday);
   }, []);
 
-  if (!graph || !currentDaily) return null;
-
-  const conceptsArray = Object.values(graph.concepts || {}) as MemoryConcept[];
-  const sessionsArray = Object.values(graph.sessions || {}) as VideoLearningSession[];
+  const conceptsArray = Object.values(graph?.concepts || {}) as MemoryConcept[];
+  const sessionsArray = Object.values(graph?.sessions || {}) as VideoLearningSession[];
 
   const topicsMastered = conceptsArray.filter(c => c.masteryLevel >= 70).length;
-  const totalConceptsCount = Object.keys(graph.concepts).length;
+  const totalConceptsCount = Object.keys(graph?.concepts || {}).length;
   const overallComprehensionProgress = totalConceptsCount > 0 
     ? Math.round((conceptsArray.reduce((acc, c) => acc + c.masteryLevel, 0) / (totalConceptsCount * 100)) * 100) 
     : 0;
@@ -311,7 +309,7 @@ export default function LearningJourneyDashboard({
   useEffect(() => {
     if (!graph) return;
     
-    const conceptsArray = Object.values(graph.concepts) as MemoryConcept[];
+    const conceptsArray = Object.values(graph.concepts || {}) as MemoryConcept[];
     
     // Create base nodes list
     const workspaceNodes = savedSummaries.map((item) => {
@@ -747,8 +745,8 @@ export default function LearningJourneyDashboard({
 
   const flashcardsReviewedCount = conceptsArray.reduce((acc, c) => acc + (c.repetitions || 0), 0);
 
-  const quizzesTakenCount = graph.quizHistory?.length || 0;
-  const averageQuizPercent = quizzesTakenCount > 0 
+  const quizzesTakenCount = graph?.quizHistory?.length || 0;
+  const averageQuizPercent = quizzesTakenCount > 0 && graph?.quizHistory
     ? Math.round((graph.quizHistory.reduce((acc, q) => acc + (q.score / q.total), 0) / quizzesTakenCount) * 100)
     : 85;
 
@@ -789,6 +787,18 @@ export default function LearningJourneyDashboard({
     setNewFolderName('');
     setShowAddFolderInput(false);
   };
+
+  if (!graph || !currentDaily) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-pulse flex space-x-2 items-center">
+          <div className="h-2 w-2 bg-indigo-500 rounded-full animate-bounce"></div>
+          <div className="h-2 w-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.2s]"></div>
+          <div className="h-2 w-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.4s]"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 text-neutral-900 dark:text-zinc-100 font-sans">
