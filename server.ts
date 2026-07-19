@@ -3562,6 +3562,223 @@ app.post('/api/shared-summary/:id/react', async (req, res) => {
   return res.json({ success: true, reactions: fallbackReactions[shareId] });
 });
 
+// =========================================================================
+// AI PRESENTATION GENERATOR ENDPOINTS
+// =========================================================================
+
+import { generatePresentation, editPresentation } from './server/presentationProcessor';
+
+const fallbackPresentations: Record<string, any> = {};
+
+// GET presentation for a workspace
+app.get('/api/presentation/:videoId', async (req, res) => {
+  const { videoId } = req.params;
+  try {
+    if (db) {
+      const doc = await db.collection('presentations').doc(videoId).get();
+      if (doc.exists) {
+        return res.json({ success: true, presentation: doc.data() });
+      }
+    }
+  } catch (err) {
+    console.error('Firestore get presentation failed, returning fallback if any:', err);
+  }
+  const fallback = fallbackPresentations[videoId];
+  if (fallback) {
+    return res.json({ success: true, presentation: fallback });
+  }
+  return res.json({ success: true, presentation: null });
+});
+
+// POST save a presentation manual edits (reorder, inline, delete, etc)
+app.post('/api/presentation/save', async (req, res) => {
+  const { videoId, presentation } = req.body;
+  if (!videoId || !presentation) {
+    return res.status(400).json({ error: 'videoId and presentation are required.' });
+  }
+
+  const presentationData = {
+    ...presentation,
+    updatedAt: new Date().toISOString()
+  };
+
+  try {
+    if (db) {
+      await db.collection('presentations').doc(videoId).set(presentationData);
+      return res.json({ success: true, presentation: presentationData });
+    }
+  } catch (err: any) {
+    console.error('Firestore save presentation failed:', err);
+  }
+
+  fallbackPresentations[videoId] = presentationData;
+  return res.json({ success: true, presentation: presentationData });
+});
+
+// POST edit presentation with an AI command
+app.post('/api/presentation/edit', async (req, res) => {
+  const { videoId, command, targetSlideId } = req.body;
+  if (!videoId || !command) {
+    return res.status(400).json({ error: 'videoId and command are required.' });
+  }
+
+  try {
+    let currentPresentation: any = null;
+    if (db) {
+      const doc = await db.collection('presentations').doc(videoId).get();
+      if (doc.exists) {
+        currentPresentation = doc.data();
+      }
+    }
+    if (!currentPresentation) {
+      currentPresentation = fallbackPresentations[videoId];
+    }
+
+    if (!currentPresentation || !currentPresentation.slides || currentPresentation.slides.length === 0) {
+      return res.status(400).json({ error: 'No existing presentation found to edit. Please generate one first.' });
+    }
+
+    const activeAi = getGeminiClient(req);
+    const updatedSlides = await editPresentation(activeAi, currentPresentation, command, targetSlideId);
+
+    const updatedPresentation = {
+      ...currentPresentation,
+      slides: updatedSlides,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (db) {
+      await db.collection('presentations').doc(videoId).set(updatedPresentation);
+    }
+    fallbackPresentations[videoId] = updatedPresentation;
+
+    return res.json({ success: true, presentation: updatedPresentation });
+  } catch (err: any) {
+    console.error('AI Presentation Edit failed:', err);
+    return res.status(500).json({ error: err.message || 'AI presentation editing failed' });
+  }
+});
+
+// POST trigger asynchronous generation
+app.post('/api/presentation/generate', async (req, res) => {
+  const { videoId, style, theme } = req.body;
+  if (!videoId) {
+    return res.status(400).json({ error: 'videoId is required.' });
+  }
+
+  // Define initial state for background processing
+  const initialPresentation = {
+    videoId,
+    style: style || 'Business',
+    theme: theme || 'Corporate Blue',
+    slides: [],
+    status: 'generating',
+    currentStage: 'Analyzing video content and structure...',
+    progressPercent: 15,
+    updatedAt: new Date().toISOString()
+  };
+
+  try {
+    if (db) {
+      await db.collection('presentations').doc(videoId).set(initialPresentation);
+    }
+  } catch (err) {
+    console.error('Firestore save initial presentation failed:', err);
+  }
+  fallbackPresentations[videoId] = initialPresentation;
+
+  // Send early response so frontend isn't blocked (allows continuing workspace usage)
+  res.json({ success: true, videoId, status: 'generating' });
+
+  // Run generation in the background asynchronously
+  (async () => {
+    try {
+      // 1. Fetch the video summary/chapters/takeaways to provide rich context to the slide builder
+      let summaryData: any = null;
+      if (db) {
+        const doc = await db.collection('summaries').doc(videoId).get();
+        if (doc.exists) {
+          summaryData = doc.data();
+        }
+      }
+      if (!summaryData) {
+        summaryData = await getSummary(videoId);
+      }
+
+      if (!summaryData) {
+        throw new Error('Workspace/Video summary not found. Please summarize the video first.');
+      }
+
+      // Update progress stage: Crafting content
+      const step2Presentation = {
+        ...initialPresentation,
+        currentStage: 'Structuring slide deck and crafting content...',
+        progressPercent: 45,
+        updatedAt: new Date().toISOString()
+      };
+      if (db) {
+        await db.collection('presentations').doc(videoId).set(step2Presentation);
+      }
+      fallbackPresentations[videoId] = step2Presentation;
+
+      // 2. Instantiate active Gemini client based on this request's credentials/headers
+      const activeAi = getGeminiClient(req);
+
+      // 3. Generate slides
+      const slides = await generatePresentation(
+        activeAi,
+        {
+          title: summaryData.metadata?.title || 'Untitled Workspace',
+          summary: summaryData.summary || '',
+          takeaways: summaryData.takeaways || [],
+          chapters: summaryData.chapters || [],
+          keyConcepts: summaryData.keyConcepts || [],
+          videoUrl: summaryData.metadata?.videoUrl || ''
+        },
+        style || 'Business',
+        theme || 'Corporate Blue'
+      );
+
+      // 4. Update the presentation with completed slides
+      const finalPresentation = {
+        videoId,
+        style: style || 'Business',
+        theme: theme || 'Corporate Blue',
+        slides,
+        status: 'completed',
+        currentStage: 'Finished generating presentation!',
+        progressPercent: 100,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (db) {
+        await db.collection('presentations').doc(videoId).set(finalPresentation);
+      }
+      fallbackPresentations[videoId] = finalPresentation;
+      console.log(`Presentation generated asynchronously and successfully for videoId: ${videoId}`);
+
+    } catch (bgErr: any) {
+      console.error('Background presentation generation failed:', bgErr);
+      const failedPresentation = {
+        ...initialPresentation,
+        status: 'failed',
+        currentStage: 'Generation failed.',
+        progressPercent: 100,
+        error: bgErr.message || 'Unknown error occurred during presentation generation.',
+        updatedAt: new Date().toISOString()
+      };
+      try {
+        if (db) {
+          await db.collection('presentations').doc(videoId).set(failedPresentation);
+        }
+      } catch (fDbErr) {
+        console.error('Failed to save failed status to Firestore:', fDbErr);
+      }
+      fallbackPresentations[videoId] = failedPresentation;
+    }
+  })();
+});
+
 // Initialize full-stack routing and server
 async function bootstrap() {
   if (process.env.NODE_ENV !== 'production') {

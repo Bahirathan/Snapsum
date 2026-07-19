@@ -47,7 +47,8 @@ import {
   TrendingUp,
   FileCode,
   Bookmark,
-  Sliders
+  Sliders,
+  Presentation
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toPng } from 'html-to-image';
@@ -55,6 +56,7 @@ import { YouTubeSummaryResponse, Flashcard, KeyConcept, MindmapNode, QuizQuestio
 import AIChatWithSummary from './AIChatWithSummary';
 import SummaryPremiumExporter from './SummaryPremiumExporter';
 import WorkspaceComments from './WorkspaceComments';
+import AIPresentationGenerator from './AIPresentationGenerator';
 
 interface LearningWorkspaceProps {
   activeSummary: YouTubeSummaryResponse;
@@ -129,8 +131,8 @@ export default function LearningWorkspace({
   const keyConceptsList = activeSummary?.keyConcepts || [];
   const flashcardsList = activeSummary?.flashcards || [];
 
-  // Main Navigation Sections: Understand, Learn, Apply
-  const [activeSection, setActiveSection] = useState<'understand' | 'learn' | 'apply'>('understand');
+  // Main Navigation Sections: Understand, Learn, Apply, Presentation
+  const [activeSection, setActiveSection] = useState<'understand' | 'learn' | 'apply' | 'presentation'>('understand');
   
   // Sub-tabs navigation
   const [activeUnderstandTab, setActiveUnderstandTab] = useState<'summary' | 'modules'>('summary');
@@ -686,7 +688,7 @@ export default function LearningWorkspace({
       </div>
 
       {/* 🧭 PREMIUM TRI-DIRECTORY NAVIGATION TABS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 bg-[#f2f2f7] dark:bg-zinc-950 p-2 rounded-3xl gap-2 border border-black/[0.04] dark:border-zinc-800">
+      <div className="grid grid-cols-1 md:grid-cols-4 bg-[#f2f2f7] dark:bg-zinc-950 p-2 rounded-3xl gap-2 border border-black/[0.04] dark:border-zinc-800">
         
         {/* Directory 1: UNDERSTAND */}
         <button
@@ -751,10 +753,50 @@ export default function LearningWorkspace({
           </div>
         </button>
 
+        {/* Directory 4: PRESENTATION */}
+        <button
+          onClick={() => {
+            setActiveSection('presentation');
+            trackGAEvent?.('section_changed', { section: 'presentation' });
+          }}
+          className={`flex items-center justify-center gap-3 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:scale-[0.98] cursor-pointer ${
+            activeSection === 'presentation'
+              ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-md font-bold border border-black/[0.02]'
+              : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
+          }`}
+        >
+          <div className={`p-2 rounded-xl transition ${activeSection === 'presentation' ? 'bg-indigo-600/10 text-indigo-600' : 'bg-slate-200 dark:bg-zinc-800 text-slate-500'}`}>
+            <Presentation className="w-5 h-5" />
+          </div>
+          <div className="text-left">
+            <span className="block text-xs font-mono font-bold tracking-wider uppercase text-slate-450 dark:text-zinc-500">SECTION 04</span>
+            <span className="text-sm">AI Presentation</span>
+          </div>
+        </button>
+
       </div>
 
       {/* 💻 MAIN GRID WORKSPACE MODULES */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+      {activeSection === 'presentation' ? (
+        <div className="w-full mt-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key="presentation"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AIPresentationGenerator
+                videoId={videoId || ''}
+                getHeaders={getHeaders}
+                videoTitle={videoTitle}
+              />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         
         {/* Left Column (Dynamic Content Panel based on directories) */}
         <div className="xl:col-span-7 space-y-6">
@@ -1854,6 +1896,7 @@ export default function LearningWorkspace({
         </div>
 
       </div>
+      )}
 
       {/* Back button to search dashboard */}
       <div className="flex justify-start pt-4 border-t dark:border-zinc-800">
