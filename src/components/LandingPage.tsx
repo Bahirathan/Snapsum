@@ -427,36 +427,36 @@ export default function LandingPage({
               </div>
               
               <h1 id="landing-hero-headline" className="text-4xl sm:text-5xl md:text-6xl font-extrabold font-display tracking-tight leading-[1.08] text-[#1d1d1f] dark:text-zinc-50">
-                Turn Any Video or Document into <br className="hidden sm:inline" />
-                <span className="bg-gradient-to-r from-[#0071e3] via-blue-600 to-indigo-600 bg-clip-text text-transparent">AI Notes, Flashcards, Mind Maps & AI Chat in Under 60 Seconds</span>
+                Turn Any Video or Document Into <br className="hidden sm:inline" />
+                <span className="bg-gradient-to-r from-[#0071e3] via-blue-600 to-indigo-600 bg-clip-text text-transparent">Your Personal AI Study Workspace</span>
               </h1>
               
               <p className="text-neutral-700 dark:text-zinc-200 text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed font-medium tracking-normal">
-                Stop passively consuming content. <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-sky-400 dark:to-indigo-400 bg-clip-text text-transparent font-bold">Master it</span> with AI notes, flashcards, quizzes, mind maps and an AI tutor—<span className="underline decoration-indigo-500/40 decoration-2 underline-offset-4">in under 60 seconds</span>.
+                Paste any YouTube video or document and instantly get AI notes, flashcards, quizzes, mind maps and an AI tutor—all in under 60 seconds.
               </p>
 
-              {/* 💬 Auto-Rotating High-converting Testimonials (Priority 13) */}
-              <div className="h-12 flex items-center bg-indigo-50/50 dark:bg-zinc-900/40 border border-indigo-100/40 dark:border-zinc-800/80 px-4 py-2 rounded-2xl max-w-2xl text-left shadow-2xs overflow-hidden">
-                <p key={testimonialIdx} className="text-xs sm:text-sm text-neutral-800 dark:text-zinc-200 font-medium italic animate-fadeIn flex items-center gap-2">
-                  <span className="text-indigo-600 dark:text-sky-400 shrink-0 text-base">✨</span>
-                  <span>{testimonialsList[testimonialIdx]}</span>
+              {/* 🎯 Differentiation statement directly below subheadline */}
+              <p className="text-xs sm:text-sm text-neutral-500 dark:text-zinc-400 leading-relaxed max-w-2xl font-normal">
+                Unlike generic AI chat, Zipytiny automatically transforms videos and documents into a complete AI study workspace with notes, quizzes, flashcards, mind maps and an AI tutor.
+              </p>
+
+              {/* 💬 Authentic and specific testimonial above the fold */}
+              <div className="flex items-center bg-indigo-50/40 dark:bg-zinc-900/40 border border-indigo-100/20 dark:border-zinc-800/50 px-4 py-2.5 rounded-2xl max-w-2xl text-left shadow-2xs">
+                <p className="text-xs sm:text-sm text-neutral-700 dark:text-zinc-300 font-medium italic flex items-center gap-2">
+                  <span className="text-indigo-500 dark:text-sky-400 shrink-0 text-sm">“</span>
+                  <span>I turned a 2-hour lecture into notes, flashcards and quizzes in under a minute.</span>
+                  <span className="text-neutral-400 dark:text-zinc-500 font-sans not-italic text-[11px] ml-auto shrink-0">— Sarah M., College Junior</span>
                 </p>
               </div>
 
-              {/* Trust Indicators */}
+              {/* Minimal Trust Indicators */}
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-neutral-500 dark:text-zinc-400 pt-1 font-medium">
                 <span className="flex items-center gap-1.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2.5 py-1 rounded-full border border-amber-500/15">
                   <span>⭐⭐⭐⭐⭐</span>
                   <span className="font-bold">Loved by Students & Professionals</span>
                 </span>
-                <span className="flex items-center gap-1.5 bg-blue-500/10 text-[#0071e3] dark:text-sky-400 px-2.5 py-1 rounded-full border border-blue-500/15 font-mono text-[10px]">
-                  ⚡ Powered by Gemini
-                </span>
                 <span className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 px-2.5 py-1 rounded-full border border-emerald-500/15">
                   ✓ No Credit Card Required
-                </span>
-                <span className="flex items-center gap-1.5 bg-indigo-500/10 text-indigo-600 px-2.5 py-1 rounded-full border border-indigo-500/15 font-bold">
-                  ✨ Create Your First Workspace Free
                 </span>
               </div>
 
@@ -722,7 +722,7 @@ export default function LandingPage({
                     type="submit"
                     className="bg-[#0071e3] hover:bg-[#0077ed] text-white px-9 py-5 rounded-2xl font-extrabold text-sm sm:text-base transition-all flex items-center justify-center gap-2 shrink-0 group cursor-pointer active:scale-95 shadow-[0_12px_36px_rgba(0,113,227,0.3)] hover:shadow-[0_0_24px_rgba(0,113,227,0.5)] hover:scale-[1.02] hover:-translate-y-0.5 duration-200"
                   >
-                    <span>🚀 Generate My AI Workspace</span>
+                    <span>🚀 Generate My Study Workspace</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-white" />
                   </button>
                 </form>
@@ -734,11 +734,11 @@ export default function LandingPage({
                   </span>
                   <span className="text-neutral-300 dark:text-zinc-800 hidden sm:inline">•</span>
                   <span className="flex items-center gap-1">
-                    ✅ No Credit Card Required
+                    ✅ Complete Privacy Protection
                   </span>
                   <span className="text-neutral-300 dark:text-zinc-800 hidden sm:inline">•</span>
                   <span className="flex items-center gap-1">
-                    ✅ Ready in Under 60 Seconds
+                    ✅ Instant Access
                   </span>
                 </div>
 

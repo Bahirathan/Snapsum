@@ -602,6 +602,8 @@ async function fetchGenericVideoMetadata(url: string): Promise<{ title: string; 
   return { title, author, thumbnailUrl };
 }
 
+const videoDurations: Record<string, string> = {};
+
 // Fetch public YouTube subtitles / transcripts
 async function fetchTranscript(videoId: string): Promise<string> {
   try {
@@ -620,6 +622,13 @@ async function fetchTranscript(videoId: string): Promise<string> {
     }
 
     const html = await response.text();
+
+    // Extract video duration in seconds if present and convert to minutes
+    const lengthMatch = html.match(/"lengthSeconds"\s*:\s*"(\d+)"/);
+    if (lengthMatch) {
+      const minutes = Math.ceil(parseInt(lengthMatch[1]) / 60);
+      videoDurations[videoId] = String(minutes);
+    }
 
     // Look for transcripts inside player response JSON content
     const playerResponseMatch = html.match(/ytInitialPlayerResponse\s*=\s*({.*?});/);
@@ -1080,7 +1089,7 @@ app.post('/api/summarize', summarizeLimiter, async (req, res) => {
 
   const isYouTube = !!extractVideoId(videoUrl);
   let videoId = '';
-  let metadata: { title: string; author: string; thumbnailUrl: string };
+  let metadata: { title: string; author: string; thumbnailUrl: string; duration?: string };
   let fullMetadata: any;
 
   try {
@@ -1174,6 +1183,21 @@ Output JSON only in this exact format:
       }
     }
 
+    // Determine and set duration in metadata
+    let durationMins = 15;
+    if (isYouTube && videoId && videoDurations[videoId]) {
+      durationMins = parseInt(videoDurations[videoId]) || 15;
+    } else if (transcript) {
+      // Estimate based on transcript/custom text word count (150 words per minute average speech rate)
+      const approxWordCount = transcript.split(/\s+/).length;
+      if (approxWordCount > 0) {
+        durationMins = Math.max(5, Math.ceil(approxWordCount / 150));
+      }
+    }
+
+    metadata.duration = String(durationMins);
+    fullMetadata.duration = String(durationMins);
+
     // 3. Draft prompt for Gemini based on availability of transcript and output language selection
     let prompt = '';
     const langInstruction = outputLanguage === 'ar'
@@ -1198,40 +1222,61 @@ This request is evaluated under "Quick Review" mode. Optimize the response for s
 - In "takeaways", extract exactly 3-5 concise, important factual takeaways.
 `;
     } else if (depthInfo === 'study') {
-      const fcCount = adv.flashcardCount || 10;
-      const qCount = adv.quizQuestionCount || 5;
-      const mmDetail = adv.mindMapDetail || 'balanced';
+      // Scale dynamic counts based on the video duration (minutes)
+      let fcCount = adv.flashcardCount || 10;
+      let qCount = adv.quizQuestionCount || 5;
+      let mmDetail = adv.mindMapDetail || 'balanced';
       const expStyle = adv.explanationStyle || 'teaching';
       const sumLen = adv.summaryLength || 'medium';
 
+      if (durationMins > 35) {
+        fcCount = adv.flashcardCount || 20;
+        qCount = adv.quizQuestionCount || 10;
+        mmDetail = adv.mindMapDetail || 'detailed';
+      } else if (durationMins > 20) {
+        fcCount = adv.flashcardCount || 15;
+        qCount = adv.quizQuestionCount || 8;
+        mmDetail = adv.mindMapDetail || 'detailed';
+      }
+
       learnModeInstruction = `
 CRITICAL STUDY MODE ACTIVE INSTRUCTION:
-This request is evaluated under "Study Mode – AI Structured Learning System". Optimize the response for optimal concept retention, comprehension, and active recall.
+This request is evaluated under "Study Mode – AI Structured Learning System" for a video/resource of estimated duration: ${durationMins} minutes.
+Because this is a resource of ${durationMins} minutes, you MUST calibrate your coverage and level of detail accordingly. For longer materials, expand all educational explanations, chapter notes, and chapter summaries to be significantly longer, richer, and more detailed.
 Integrate these properties in the JSON response:
-- "summary": Generate a detailed summary structured for easy comprehension. Style: ${expStyle === 'bullets' ? 'bullet points' : expStyle === 'academic' ? 'academic review' : expStyle === 'professional' ? 'executive briefing' : expStyle === 'beginner' ? 'beginner friendly explanation with analogies' : 'highly interactive teaching style'}. Length: ${sumLen}.
-- "keyConcepts": An array of 3-6 core educational concepts from the video. Provide a "concept" label name, a precise academic/factual "definition", and a "simplifiedExplanation" (analogies, everyday examples, and clear language) that makes the concept easy to digest.
+- "summary": Generate a detailed summary structured for easy comprehension. Style: ${expStyle === 'bullets' ? 'bullet points' : expStyle === 'academic' ? 'academic review' : expStyle === 'professional' ? 'executive briefing' : expStyle === 'beginner' ? 'beginner friendly explanation with analogies' : 'highly interactive teaching style'}. Length: ${sumLen}. Ensure you provide robust details corresponding to the ${durationMins} minutes duration of the content.
+- "keyConcepts": An array of ${durationMins > 20 ? '6-8' : '3-6'} core educational concepts from the video. Provide a "concept" label name, a precise academic/factual "definition", and a "simplifiedExplanation" (analogies, everyday examples, and clear language) that makes the concept easy to digest.
 - "flashcards": An array of ${fcCount} question/answer pairs (each card has a "question" and "answer") focusing on core mental models, definitions, or procedural steps for active recall.
 - "rememberSummary": A short, powerful summarized section ("What you should remember" / "Final Retention Checklist") for long-term retention.
 - "quiz": Create ${qCount} multiple-choice questions testing conceptual understanding, critical thinking and deep comprehension. Include 4 options, the 0-based index of the correct option, and an explanation.
 - "mindmap": Create a structured concept map of ${mmDetail === 'simple' ? '3-5' : mmDetail === 'detailed' ? '12-15' : '7-10'} ideas representing topics covered. Use "concept" (label of node), "category" (the parent group it belongs to), and "description" (a mini note).
 `;
     } else if (depthInfo === 'mastery') {
-      const fcCount = adv.flashcardCount || 30;
-      const qCount = adv.quizQuestionCount || 10;
-      const mmDetail = adv.mindMapDetail || 'detailed';
+      let fcCount = adv.flashcardCount || 30;
+      let qCount = adv.quizQuestionCount || 10;
+      let mmDetail = adv.mindMapDetail || 'detailed';
       const expStyle = adv.explanationStyle || 'teaching';
+
+      if (durationMins > 35) {
+        fcCount = adv.flashcardCount || 45;
+        qCount = adv.quizQuestionCount || 15;
+      } else if (durationMins > 20) {
+        fcCount = adv.flashcardCount || 35;
+        qCount = adv.quizQuestionCount || 12;
+      }
 
       learnModeInstruction = `
 CRITICAL SUPREME ACADEMIC MASTERY ACTIVE INSTRUCTION:
-This request is evaluated under "Mastery Mode – Expert Level Comprehensive Syllabus and Knowledge Mastery".
+This request is evaluated under "Mastery Mode – Expert Level Comprehensive Syllabus and Knowledge Mastery" for a video/resource of estimated duration: ${durationMins} minutes.
+Because this is a resource of ${durationMins} minutes, you MUST provide an extremely comprehensive, exhaustive, and detailed study guide. Match your depth and output length to the duration of the video.
 You MUST generate extremely comprehensive, exhaustive, and detailed educational outputs:
-- "summary": A master-grade Comprehensive Study Guide and Detailed Explanations (at least 6-8 comprehensive paragraphs). Style: ${expStyle === 'bullets' ? 'bullet points' : expStyle === 'academic' ? 'academic' : expStyle === 'professional' ? 'professional' : expStyle === 'beginner' ? 'beginner friendly' : 'detailed teaching style'}. You MUST use extensive markdown subheaders to detail:
+- "summary": A master-grade Comprehensive Study Guide and Detailed Explanations (at least 6-8 comprehensive paragraphs, scaling longer for longer videos). Style: ${expStyle === 'bullets' ? 'bullet points' : expStyle === 'academic' ? 'academic' : expStyle === 'professional' ? 'professional' : expStyle === 'beginner' ? 'beginner friendly' : 'detailed teaching style'}. You MUST use extensive markdown subheaders to detail:
     - 🎯 **LEARNING OBJECTIVES** (What the learner will master)
     - 🎓 **COMPREHENSIVE CHAPTER-BY-CHAPTER BREAKDOWN** (Exhaustive explanations of each chapter)
     - 💡 **CONCEPT RELATIONSHIPS** (Deep mapping of how different ideas tie together)
     - 🧠 **EXPERT MEMORY TIPS & STUDY COMPANION SUMMARY** (Practical mnemonics, revision plans, and retention guides)
     - 📅 **SUGGESTED 7-DAY REVISION PLAN** (Detailed daily checklist)
-- "keyConcepts": An array of 6-8 deep academic concepts. Provide a highly precise academic "definition", and a verbose "simplifiedExplanation" featuring everyday analogies and expert tutoring details.
+- "keyConcepts": An array of ${durationMins > 20 ? '8-10' : '6-8'} deep academic concepts. Provide a highly precise academic "definition", and a verbose "simplifiedExplanation" featuring everyday analogies and expert tutoring details.
 - "flashcards": An array of ${fcCount} advanced question/answer pairs focusing on difficult, critical thinking-based active recall.
 - "rememberSummary": A comprehensive, high-retention summary detailing expert learning tactics and chapter summaries.
 - "quiz": Create ${qCount} extremely challenging practice questions testing core concepts, deep comprehension, and application. Provide verbose educational explanations for why the correct answer is correct and why other options are incorrect.
@@ -3687,6 +3732,10 @@ app.post('/api/presentation/generate', async (req, res) => {
   }
   fallbackPresentations[videoId] = initialPresentation;
 
+  // Capture headersCopy synchronously before res.json to preserve headers for background async execution
+  const headersCopy = { ...req.headers };
+  const simulatedReq = { headers: headersCopy } as any;
+
   // Send early response so frontend isn't blocked (allows continuing workspace usage)
   res.json({ success: true, videoId, status: 'generating' });
 
@@ -3722,7 +3771,7 @@ app.post('/api/presentation/generate', async (req, res) => {
       fallbackPresentations[videoId] = step2Presentation;
 
       // 2. Instantiate active Gemini client based on this request's credentials/headers
-      const activeAi = getGeminiClient(req);
+      const activeAi = getGeminiClient(simulatedReq);
 
       // 3. Generate slides
       const slides = await generatePresentation(

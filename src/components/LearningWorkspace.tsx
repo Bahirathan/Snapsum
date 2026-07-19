@@ -777,26 +777,7 @@ export default function LearningWorkspace({
       </div>
 
       {/* 💻 MAIN GRID WORKSPACE MODULES */}
-      {activeSection === 'presentation' ? (
-        <div className="w-full mt-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key="presentation"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.3 }}
-            >
-              <AIPresentationGenerator
-                videoId={videoId || ''}
-                getHeaders={getHeaders}
-                videoTitle={videoTitle}
-              />
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start mt-6">
         
         {/* Left Column (Dynamic Content Panel based on directories) */}
         <div className="xl:col-span-7 space-y-6">
@@ -1619,6 +1600,26 @@ export default function LearningWorkspace({
               </motion.div>
             )}
 
+            {/* =========================================
+                DIRECTORY 4: PRESENTATION MODULE
+                ========================================= */}
+            {activeSection === 'presentation' && (
+              <motion.div
+                key="presentation-section"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <AIPresentationGenerator
+                  videoId={videoId || ''}
+                  getHeaders={getHeaders}
+                  videoTitle={videoTitle}
+                />
+              </motion.div>
+            )}
+
           </AnimatePresence>
         </div>
 
@@ -1896,7 +1897,6 @@ export default function LearningWorkspace({
         </div>
 
       </div>
-      )}
 
       {/* Back button to search dashboard */}
       <div className="flex justify-start pt-4 border-t dark:border-zinc-800">
