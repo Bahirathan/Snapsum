@@ -411,6 +411,7 @@ const FeatureHighlightsGrid = () => {
 
 import MobileBottomNav from './components/MobileBottomNav';
 import ChromeExtensionPage from './components/ChromeExtensionPage';
+import BlogPage from './components/BlogPage';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
 
 const getEmbedUrl = (url: string) => {
@@ -1429,7 +1430,7 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // MVP Screen navigation state
-  const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin' | 'terms' | 'privacy' | 'feature' | 'explainer' | 'extension'>(() => {
+  const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin' | 'terms' | 'privacy' | 'feature' | 'explainer' | 'extension' | 'blog'>(() => {
     try {
       if (typeof window !== 'undefined') {
         const pathLower = window.location.pathname.toLowerCase();
@@ -1442,16 +1443,24 @@ export default function App() {
           return 'feature';
         }
 
+        if (pathParts[0] === 'blog') {
+          return 'blog';
+        }
+
+        if (pathParts[0] === 'pricing') {
+          return 'billing';
+        }
+
         // 1. Prioritize clean pathname (e.g. /admin, /billing)
         const pathScreen = pathParts[0];
-        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'explainer'].includes(pathScreen)) {
+        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'explainer', 'blog', 'extension'].includes(pathScreen)) {
           return pathScreen as any;
         }
 
         // 2. Fallback to query params (?screen=admin)
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer'].includes(qScreen.toLowerCase())) {
+        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog'].includes(qScreen.toLowerCase())) {
           return qScreen.toLowerCase() as any;
         }
         
@@ -1462,7 +1471,7 @@ export default function App() {
 
         // 3. Fallback to hash (#admin)
         const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
-        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer'].includes(hash)) {
+        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog'].includes(hash)) {
           return hash as any;
         }
       }
@@ -1470,6 +1479,19 @@ export default function App() {
       console.warn('Initial route resolution failed:', e);
     }
     return 'landing';
+  });
+
+  const [currentBlogSlug, setCurrentBlogSlug] = useState<string>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const pathLower = window.location.pathname.toLowerCase();
+        const pathParts = pathLower.split('/').filter(Boolean);
+        if (pathParts[0] === 'blog' && pathParts[1]) {
+          return pathParts[1];
+        }
+      }
+    } catch {}
+    return '';
   });
 
   const [currentFeatureSlug, setCurrentFeatureSlug] = useState<string>(() => {
@@ -1502,8 +1524,19 @@ export default function App() {
           return;
         }
 
+        if (pathParts[0] === 'blog') {
+          setCurrentScreen('blog');
+          setCurrentBlogSlug(pathParts[1] || '');
+          return;
+        }
+
+        if (pathParts[0] === 'pricing') {
+          setCurrentScreen('billing');
+          return;
+        }
+
         const pathScreen = pathParts[0];
-        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy'].includes(pathScreen)) {
+        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'blog', 'extension', 'explainer'].includes(pathScreen)) {
           setCurrentScreen(pathScreen as any);
           return;
         }
@@ -1511,7 +1544,7 @@ export default function App() {
         // Check query
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature'].includes(qScreen.toLowerCase())) {
+        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'extension'].includes(qScreen.toLowerCase())) {
           setCurrentScreen(qScreen.toLowerCase() as any);
           return;
         }
@@ -1522,7 +1555,7 @@ export default function App() {
 
         // Check hash
         const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
-        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature'].includes(hash)) {
+        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'extension'].includes(hash)) {
           setCurrentScreen(hash as any);
         }
       } catch (err) {
@@ -1551,6 +1584,20 @@ export default function App() {
         }
         return;
       }
+      if (currentScreen === 'blog') {
+        const targetPath = currentBlogSlug ? `/blog/${currentBlogSlug}` : '/blog';
+        if (window.location.pathname.toLowerCase() !== targetPath.toLowerCase()) {
+          window.history.pushState({ blogSlug: currentBlogSlug }, document.title, targetPath + window.location.search);
+        }
+        return;
+      }
+      if (currentScreen === 'billing') {
+        const targetPath = '/pricing';
+        if (window.location.pathname.toLowerCase() !== targetPath.toLowerCase()) {
+          window.history.pushState(null, document.title, targetPath + window.location.search);
+        }
+        return;
+      }
       const targetPath = currentScreen === 'landing' ? '/' : `/${currentScreen}`;
       if (window.location.pathname.toLowerCase() !== targetPath.toLowerCase()) {
         window.history.pushState(null, document.title, targetPath + window.location.search);
@@ -1558,7 +1605,7 @@ export default function App() {
     } catch (e) {
       console.warn('Failed to push history status:', e);
     }
-  }, [currentScreen, currentFeatureSlug]);
+  }, [currentScreen, currentFeatureSlug, currentBlogSlug]);
 
   // Startup handle for referral code registration & tracking
   useEffect(() => {
@@ -4552,6 +4599,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               setCurrentScreen('feature');
               window.scrollTo(0, 0);
             }}
+            onNavigateToBlog={(slug) => {
+              setCurrentBlogSlug(slug);
+              setCurrentScreen('blog');
+              window.scrollTo(0, 0);
+            }}
             onUpgrade={() => {
               setSelectedPlanCode('pro');
               setShowStripeModal(true);
@@ -4611,6 +4663,26 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         {currentScreen === 'extension' && (
           <ChromeExtensionPage 
             isDark={isDark}
+            onLaunchApp={() => {
+              setCurrentScreen('app');
+              window.scrollTo(0, 0);
+            }}
+          />
+        )}
+
+        {/* 🚀 BLOG SCREEN */}
+        {currentScreen === 'blog' && (
+          <BlogPage 
+            currentBlogSlug={currentBlogSlug}
+            onNavigateHome={() => {
+              setCurrentScreen('landing');
+              window.scrollTo(0, 0);
+            }}
+            onNavigateToBlog={(slug) => {
+              setCurrentBlogSlug(slug);
+              setCurrentScreen('blog');
+              window.scrollTo(0, 0);
+            }}
             onLaunchApp={() => {
               setCurrentScreen('app');
               window.scrollTo(0, 0);

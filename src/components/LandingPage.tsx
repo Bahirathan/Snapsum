@@ -13,6 +13,7 @@ import { CinematicExplainer } from './CinematicExplainer';
 interface LandingPageProps {
   onLaunchApp: (targetTab?: string, targetSubTab?: string) => void;
   onNavigateToFeature?: (featureSlug: string) => void;
+  onNavigateToBlog?: (blogSlug: string) => void;
   onUpgrade: () => void;
   isPremium: boolean;
   visitorUser: any;
@@ -123,6 +124,7 @@ const TOPIC_PREVIEWS = {
 export default function LandingPage({ 
   onLaunchApp, 
   onNavigateToFeature, 
+  onNavigateToBlog, 
   onUpgrade, 
   isPremium, 
   visitorUser, 
@@ -3255,7 +3257,7 @@ export default function LandingPage({
               <ul className="space-y-2.5 text-xs text-zinc-450 font-medium">
                 <li><a href="#landing-hero-headline" className="hover:text-white transition-colors duration-150">Features</a></li>
                 <li><a href="#" onClick={(e) => { e.preventDefault(); onUpgrade(); }} className="hover:text-white transition-colors duration-150">Pricing Plan</a></li>
-                <li><a href="#" className="hover:text-white transition-colors duration-150">Changelog</a></li>
+                <li><button type="button" onClick={() => onNavigateToBlog?.('')} className="hover:text-white transition-colors duration-150 text-left">Learning Blog</button></li>
                 <li><a href="#" className="hover:text-white transition-colors duration-150">Enterprise API</a></li>
               </ul>
             </div>

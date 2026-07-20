@@ -1223,19 +1223,19 @@ This request is evaluated under "Quick Review" mode. Optimize the response for s
 `;
     } else if (depthInfo === 'study') {
       // Scale dynamic counts based on the video duration (minutes)
-      let fcCount = adv.flashcardCount || 10;
-      let qCount = adv.quizQuestionCount || 5;
+      let fcCount = adv.flashcardCount || 8;
+      let qCount = adv.quizQuestionCount || 4;
       let mmDetail = adv.mindMapDetail || 'balanced';
       const expStyle = adv.explanationStyle || 'teaching';
       const sumLen = adv.summaryLength || 'medium';
 
       if (durationMins > 35) {
-        fcCount = adv.flashcardCount || 20;
-        qCount = adv.quizQuestionCount || 10;
+        fcCount = adv.flashcardCount || 15;
+        qCount = adv.quizQuestionCount || 6;
         mmDetail = adv.mindMapDetail || 'detailed';
       } else if (durationMins > 20) {
-        fcCount = adv.flashcardCount || 15;
-        qCount = adv.quizQuestionCount || 8;
+        fcCount = adv.flashcardCount || 12;
+        qCount = adv.quizQuestionCount || 5;
         mmDetail = adv.mindMapDetail || 'detailed';
       }
 
@@ -1245,24 +1245,27 @@ This request is evaluated under "Study Mode – AI Structured Learning System" f
 Because this is a resource of ${durationMins} minutes, you MUST calibrate your coverage and level of detail accordingly. For longer materials, expand all educational explanations, chapter notes, and chapter summaries to be significantly longer, richer, and more detailed.
 Integrate these properties in the JSON response:
 - "summary": Generate a detailed summary structured for easy comprehension. Style: ${expStyle === 'bullets' ? 'bullet points' : expStyle === 'academic' ? 'academic review' : expStyle === 'professional' ? 'executive briefing' : expStyle === 'beginner' ? 'beginner friendly explanation with analogies' : 'highly interactive teaching style'}. Length: ${sumLen}. Ensure you provide robust details corresponding to the ${durationMins} minutes duration of the content.
-- "keyConcepts": An array of ${durationMins > 20 ? '6-8' : '3-6'} core educational concepts from the video. Provide a "concept" label name, a precise academic/factual "definition", and a "simplifiedExplanation" (analogies, everyday examples, and clear language) that makes the concept easy to digest.
+- "keyConcepts": An array of ${durationMins > 20 ? '5-6' : '3-4'} core educational concepts from the video. Provide a "concept" label name, a precise academic/factual "definition", and a "simplifiedExplanation" (analogies, everyday examples, and clear language) that makes the concept easy to digest.
 - "flashcards": An array of ${fcCount} question/answer pairs (each card has a "question" and "answer") focusing on core mental models, definitions, or procedural steps for active recall.
 - "rememberSummary": A short, powerful summarized section ("What you should remember" / "Final Retention Checklist") for long-term retention.
 - "quiz": Create ${qCount} multiple-choice questions testing conceptual understanding, critical thinking and deep comprehension. Include 4 options, the 0-based index of the correct option, and an explanation.
-- "mindmap": Create a structured concept map of ${mmDetail === 'simple' ? '3-5' : mmDetail === 'detailed' ? '12-15' : '7-10'} ideas representing topics covered. Use "concept" (label of node), "category" (the parent group it belongs to), and "description" (a mini note).
+- "mindmap": Create a structured concept map of ${mmDetail === 'simple' ? '3-5' : mmDetail === 'detailed' ? '10-12' : '6-8'} ideas representing topics covered. Use "concept" (label of node), "category" (the parent group it belongs to), and "description" (a mini note).
+
+PROMOTIONAL ASSETS CONSTRAINT FOR PERFORMANCE:
+Since this is Study/Learning mode, keep the promotional/marketing properties ("blogPost", "twitterThread", "socialSnippet", "reelScript") extremely concise, brief, and lightweight (e.g. blogPost of 2-3 brief paragraphs, twitterThread of 3 short tweets, socialSnippet of 2 sentences, reelScript of 3 short scenes) to prioritize generating rich educational resources and keep response times fast.
 `;
     } else if (depthInfo === 'mastery') {
-      let fcCount = adv.flashcardCount || 30;
-      let qCount = adv.quizQuestionCount || 10;
+      let fcCount = adv.flashcardCount || 12;
+      let qCount = adv.quizQuestionCount || 5;
       let mmDetail = adv.mindMapDetail || 'detailed';
       const expStyle = adv.explanationStyle || 'teaching';
 
       if (durationMins > 35) {
-        fcCount = adv.flashcardCount || 45;
-        qCount = adv.quizQuestionCount || 15;
+        fcCount = adv.flashcardCount || 20;
+        qCount = adv.quizQuestionCount || 8;
       } else if (durationMins > 20) {
-        fcCount = adv.flashcardCount || 35;
-        qCount = adv.quizQuestionCount || 12;
+        fcCount = adv.flashcardCount || 16;
+        qCount = adv.quizQuestionCount || 6;
       }
 
       learnModeInstruction = `
@@ -1276,11 +1279,14 @@ You MUST generate extremely comprehensive, exhaustive, and detailed educational 
     - 💡 **CONCEPT RELATIONSHIPS** (Deep mapping of how different ideas tie together)
     - 🧠 **EXPERT MEMORY TIPS & STUDY COMPANION SUMMARY** (Practical mnemonics, revision plans, and retention guides)
     - 📅 **SUGGESTED 7-DAY REVISION PLAN** (Detailed daily checklist)
-- "keyConcepts": An array of ${durationMins > 20 ? '8-10' : '6-8'} deep academic concepts. Provide a highly precise academic "definition", and a verbose "simplifiedExplanation" featuring everyday analogies and expert tutoring details.
+- "keyConcepts": An array of ${durationMins > 20 ? '6-8' : '5-6'} deep academic concepts. Provide a highly precise academic "definition", and a verbose "simplifiedExplanation" featuring everyday analogies and expert tutoring details.
 - "flashcards": An array of ${fcCount} advanced question/answer pairs focusing on difficult, critical thinking-based active recall.
 - "rememberSummary": A comprehensive, high-retention summary detailing expert learning tactics and chapter summaries.
 - "quiz": Create ${qCount} extremely challenging practice questions testing core concepts, deep comprehension, and application. Provide verbose educational explanations for why the correct answer is correct and why other options are incorrect.
-- "mindmap": Create an extensive structured concept map of ${mmDetail === 'simple' ? '6-8' : mmDetail === 'detailed' ? '15-20' : '10-12'} ideas representing topics covered. Use "concept" (label of node), "category" (the parent group), and "description".
+- "mindmap": Create an extensive structured concept map of ${mmDetail === 'simple' ? '5-6' : mmDetail === 'detailed' ? '12-15' : '8-10'} ideas representing topics covered. Use "concept" (label of node), "category" (the parent group), and "description".
+
+PROMOTIONAL ASSETS CONSTRAINT FOR PERFORMANCE:
+Since this is Mastery learning mode, keep the promotional/marketing properties ("blogPost", "twitterThread", "socialSnippet", "reelScript") extremely concise, brief, and lightweight (e.g. blogPost of 2-3 brief paragraphs, twitterThread of 3 short tweets, socialSnippet of 2 sentences, reelScript of 3 short scenes) to prioritize generating rich educational resources and keep response times fast.
 `;
     }
 
@@ -1518,9 +1524,9 @@ CRITICAL JSON FORMATTING INSTRUCTION:
     const requestedModel = 'gemini-3.5-flash';
     const activeAi = getGeminiClient(req);
 
-    // Set up a 45-second timeout promise to avoid server gateway timeout errors (e.g., 502/504 Bad Gateway)
+    // Set up a 110-second timeout promise to avoid server gateway timeout errors (e.g., 502/504 Bad Gateway)
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 45000)
+      setTimeout(() => reject(new Error('TIMEOUT_EXCEEDED')), 110000)
     );
 
     let contents: any = prompt;
