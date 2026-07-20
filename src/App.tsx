@@ -4362,6 +4362,24 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               <span>Extension</span>
             </button>
 
+            {/* Learning Blog */}
+            <button
+              onClick={() => {
+                setCurrentBlogSlug('');
+                setCurrentScreen('blog');
+                window.scrollTo(0, 0);
+              }}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                currentScreen === 'blog'
+                  ? 'bg-[#0071e3] text-white shadow-sm font-semibold'
+                  : 'text-[#86868b] dark:text-zinc-400 hover:text-[#1d1d1f] dark:hover:text-zinc-100'
+              }`}
+              title="Learning Blog"
+            >
+              <BookOpen className="w-3.5 h-3.5 shrink-0" />
+              <span>Blog</span>
+            </button>
+
             {/* History — visible only when summaries exist */}
             {savedSummaries.length > 0 && currentScreen === 'app' && (
               <button

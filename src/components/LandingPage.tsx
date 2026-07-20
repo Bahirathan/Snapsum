@@ -3042,6 +3042,124 @@ export default function LandingPage({
         </div>
       </section>
 
+      {/* 7.5 LATEST FROM OUR LEARNING BLOG SECTION */}
+      <section id="landing-blog-section" className="py-20 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10 border-t border-black/[0.03] dark:border-zinc-900">
+        <div className="space-y-4 text-center max-w-3xl mx-auto mb-14">
+          <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/10 dark:bg-[#0071e3]/25 px-3 py-1 rounded-full text-[11px] font-mono font-semibold text-[#0071e3] dark:text-sky-400 w-fit">
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Learning Science & Insights</span>
+          </div>
+          <h2 className="text-3xl font-bold font-display tracking-tight text-neutral-900 dark:text-zinc-50 leading-tight">
+            Latest from our Learning Blog
+          </h2>
+          <p className="text-neutral-500 dark:text-zinc-400 font-light text-base leading-relaxed">
+            Discover the latest study hacks, active recall techniques, and AI-powered learning methods to master complex subjects 10x faster.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[
+            {
+              slug: 'turn-video-lecture-to-study-notes',
+              title: 'How to Turn Video Lectures into Study Notes in Under 60 Seconds',
+              description: 'Stop spending hours pausing and rewinding. Learn how to turn video lectures into study notes instantly using AI to save hours every week.',
+              date: 'July 18, 2026',
+              readTime: '4 min read',
+              category: 'Study Hacks',
+              icon: BookOpen,
+              iconColor: 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40',
+            },
+            {
+              slug: 'ai-tool-make-flashcards-slides',
+              title: 'The Best AI Tool to Make Flashcards from Slides for Active Recall',
+              description: 'Struggling to make flashcards from PDF slides? Discover how to automatically build revision decks in seconds using AI for optimized study prep.',
+              date: 'July 17, 2026',
+              readTime: '3 min read',
+              category: 'Revision Tools',
+              icon: Layers,
+              iconColor: 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-950/40',
+            },
+            {
+              slug: 'convert-zoom-recording-quiz',
+              title: 'How to Convert a Zoom Recording or Lecture into an Interactive Quiz',
+              description: 'Turn passive video replays into active practice tests. Here is how to easily convert online Zoom video recordings into quizzes for exam revision.',
+              date: 'July 16, 2026',
+              readTime: '4 min read',
+              category: 'Exam Prep',
+              icon: Award,
+              iconColor: 'text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/40',
+            },
+            {
+              slug: 'generate-study-guide-syllabus-pdf',
+              title: 'Generate a Study Guide from a Course Syllabus or PDF Document',
+              description: 'Stop struggling with disorganized textbooks. Learn how to generate a custom structured study guide from any complex PDF document using AI.',
+              date: 'July 15, 2026',
+              readTime: '3 min read',
+              category: 'Study Guides',
+              icon: FileText,
+              iconColor: 'text-teal-600 bg-teal-50 dark:text-teal-400 dark:bg-teal-950/40',
+            },
+            {
+              slug: 'visual-learners-video-mind-map-generator',
+              title: 'Why Visual Learners Need a Video to Mind Map Generator for Complex Topics',
+              description: 'Struggling to grasp highly technical concepts? Discover how a video to mind map generator can turn dry video lectures into nested visual diagrams.',
+              date: 'July 14, 2026',
+              readTime: '3 min read',
+              category: 'Visual Learning',
+              icon: Brain,
+              iconColor: 'text-[#0071e3] bg-blue-50 dark:text-sky-400 dark:bg-blue-950/40',
+            },
+          ].map((post, i) => {
+            const IconComponent = post.icon;
+            return (
+              <div 
+                key={i} 
+                className="group border border-black/[0.04] dark:border-zinc-800 bg-white dark:bg-zinc-950 p-6 rounded-3xl flex flex-col justify-between hover:shadow-xl hover:shadow-black/[0.01] transition-all duration-300 relative overflow-hidden text-left"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold font-mono tracking-wider uppercase text-neutral-400 dark:text-zinc-500 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {post.readTime}
+                    </span>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-[#0071e3] bg-[#0071e3]/10 px-2 py-0.5 rounded-md">
+                      {post.category}
+                    </span>
+                  </div>
+
+                  <div className="flex gap-4 items-start">
+                    <div className={`p-3 rounded-2xl ${post.iconColor} shrink-0`}>
+                      <IconComponent className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-base sm:text-lg font-bold font-display text-neutral-900 dark:text-zinc-100 group-hover:text-[#0071e3] dark:group-hover:text-sky-400 transition-colors duration-200 leading-snug">
+                        {post.title}
+                      </h3>
+                      <span className="text-[10px] font-mono text-neutral-400 block pt-0.5">{post.date}</span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs sm:text-sm text-neutral-500 dark:text-zinc-450 leading-relaxed font-normal">
+                    {post.description}
+                  </p>
+                </div>
+
+                <div className="pt-6 mt-6 border-t border-black/[0.02] dark:border-zinc-900 flex items-center justify-between">
+                  <button 
+                    type="button"
+                    onClick={() => onNavigateToBlog?.(post.slug)}
+                    className="text-xs font-bold text-[#0071e3] dark:text-sky-400 group-hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Read Article</span>
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
       {/* 8. FAQ SECTION */}
       <section className="py-20 sm:py-24 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full relative z-10">
         <div className="space-y-4 text-center max-w-2xl mx-auto mb-14">
