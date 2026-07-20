@@ -81,7 +81,8 @@ import {
   query,
   orderBy,
   getDocs,
-  deleteDoc
+  deleteDoc,
+  updateDoc
 } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 import { 
@@ -96,6 +97,7 @@ import {
 } from 'firebase/auth';
 import { KeyRound, ShieldAlert, Eye, EyeOff, MessageSquare, Headphones, Users, Cpu, Layers, Sliders, ThumbsUp, PlayCircle } from 'lucide-react';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { initGlobalErrorLogging, logClientError } from './utils/errorLogger';
 import { AppScreenSkeleton, WorkspaceSkeleton, PageLoadingIndicator } from './components/LoadingSkeletons';
 
 const LearningDashboardModule = lazy(() => import('./components/LearningDashboard').then(m => ({ default: m.LearningProgressDashboard })));
@@ -607,6 +609,14 @@ const downloadMarkdownScript = (script: any) => {
 };
 
 export default function App() {
+  // Initialize global client error logging on mount
+  useEffect(() => {
+    initGlobalErrorLogging(() => {
+      const u = auth.currentUser;
+      return { uid: u?.uid, email: u?.email || undefined };
+    });
+  }, []);
+
   // Firebase Auth Visitor state
   const [visitorUser, setVisitorUser] = useState<User | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
@@ -1803,10 +1813,19 @@ export default function App() {
   const [adminGoogleUsersLoading, setAdminGoogleUsersLoading] = useState(false);
   const [adminDbDiagnosticLoading, setAdminDbDiagnosticLoading] = useState(false);
   const [adminDbDiagnosticResult, setAdminDbDiagnosticResult] = useState<any | null>(null);
+  
+  // Admin Client Error Reporting States
+  const [adminClientErrors, setAdminClientErrors] = useState<any[]>([]);
+  const [adminClientErrorsLoading, setAdminClientErrorsLoading] = useState(false);
+  const [errorStatusFilter, setErrorStatusFilter] = useState<'all' | 'new' | 'investigating' | 'resolved'>('all');
+  const [errorTypeFilter, setErrorTypeFilter] = useState<'all' | 'exception' | 'promise_rejection' | 'user_report' | 'api_error'>('all');
 
   // AI Support Bot States
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isSupportMinimized, setIsSupportMinimized] = useState(false);
+  const [supportMode, setSupportMode] = useState<'chat' | 'bug_report'>('chat');
+  const [bugDescription, setBugDescription] = useState('');
+  const [bugSubmittedStatus, setBugSubmittedStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [supportMessages, setSupportMessages] = useState<Array<{ role: 'user' | 'assistant'; text: string; timestamp: string }>>([
     {
       role: 'assistant',
@@ -2078,6 +2097,7 @@ export default function App() {
               fetchAdminIpTracker(adminSessionToken);
               fetchAdminAuditLogs(adminSessionToken);
               fetchAdminGoogleUsers(adminSessionToken);
+              fetchAdminClientErrors();
             } else {
               handleAdminLogout();
             }
@@ -2089,6 +2109,7 @@ export default function App() {
           fetchAdminIpTracker(adminSessionToken);
           fetchAdminAuditLogs(adminSessionToken);
           fetchAdminGoogleUsers(adminSessionToken);
+          fetchAdminClientErrors();
         }
       }
     };
@@ -3774,6 +3795,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         fetchAdminIpTracker(data.token);
         fetchAdminAuditLogs(data.token);
         fetchAdminGoogleUsers(data.token);
+        fetchAdminClientErrors();
       }
     } catch (err: any) {
       setAdminError(err.message || 'Invalid credentials. Access denied.');
@@ -4037,6 +4059,47 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       console.warn('Could not read secure administrative google users logs:', err);
     } finally {
       setAdminGoogleUsersLoading(false);
+    }
+  };
+
+  const fetchAdminClientErrors = async () => {
+    if (!adminSessionToken) return;
+    setAdminClientErrorsLoading(true);
+    try {
+      const q = query(collection(db, 'client_errors'), orderBy('timestamp', 'desc'));
+      const snapshot = await getDocs(q);
+      const errorsList: any[] = [];
+      snapshot.forEach((docSnap) => {
+        errorsList.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      setAdminClientErrors(errorsList);
+    } catch (err) {
+      console.warn('Failed client-side Firestore client errors fetch:', err);
+    } finally {
+      setAdminClientErrorsLoading(false);
+    }
+  };
+
+  const updateAdminClientErrorStatus = async (errorId: string, newStatus: 'new' | 'investigating' | 'resolved') => {
+    try {
+      const docRef = doc(db, 'client_errors', errorId);
+      await updateDoc(docRef, { status: newStatus });
+      setAdminClientErrors((prev) =>
+        prev.map((err) => (err.id === errorId ? { ...err, status: newStatus } : err))
+      );
+    } catch (err) {
+      console.warn('Failed to update error status:', err);
+    }
+  };
+
+  const deleteAdminClientError = async (errorId: string) => {
+    if (!window.confirm('Are you sure you want to permanently delete this error log?')) return;
+    try {
+      const docRef = doc(db, 'client_errors', errorId);
+      await deleteDoc(docRef);
+      setAdminClientErrors((prev) => prev.filter((err) => err.id !== errorId));
+    } catch (err) {
+      console.warn('Failed to delete error log:', err);
     }
   };
 
@@ -10926,7 +10989,185 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     </div>
                   </div>
 
-                  {/* CARD 9: SOCIAL MEDIA LINKS & FOLLOW US CONFIGURATION */}
+                  {/* CARD 9: CLIENT-SIDE ERROR LOGS & USER REPORTS */}
+                  <div className="bg-white p-6 rounded-3xl border border-black/[0.04] space-y-4 shadow-sm text-left font-sans flex flex-col justify-between lg:col-span-2 animate-fadeIn">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-2 border-b border-neutral-100 pb-3">
+                        <div className="flex items-center gap-2 text-zinc-950">
+                          <AlertCircle className="w-5 h-5 text-rose-500 animate-pulse" />
+                          <h3 className="font-extrabold text-sm tracking-tight text-[#1d1d1f]">
+                            Client Error Reporting & Bug Log
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={fetchAdminClientErrors}
+                            disabled={adminClientErrorsLoading}
+                            className="bg-zinc-50 hover:bg-zinc-100 text-[#1d1d1f] hover:text-[#0071e3] transition text-[10px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-xl border border-black/[0.03] cursor-pointer flex items-center gap-1.5 animate-none"
+                          >
+                            <RefreshCw className={`w-3 h-3 ${adminClientErrorsLoading ? 'animate-spin' : ''}`} />
+                            Sync Bug Logs
+                          </button>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-[#515154] font-sans font-light leading-relaxed">
+                        This console monitors real-time Javascript exceptions, uncaught promise rejections, and direct feedback bug reports reported by users. Review technical stack traces and device diagnostics to resolve issues instantly.
+                      </p>
+
+                      {/* Filters */}
+                      <div className="flex flex-wrap items-center gap-4 py-2 border-b border-neutral-100">
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-[9px] uppercase font-bold text-neutral-400 font-mono tracking-wider">Filter Status</span>
+                          <div className="flex items-center gap-1.5">
+                            {(['all', 'new', 'investigating', 'resolved'] as const).map((status) => (
+                              <button
+                                key={status}
+                                onClick={() => setErrorStatusFilter(status)}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold font-sans uppercase tracking-wider border cursor-pointer transition ${
+                                  errorStatusFilter === status
+                                    ? 'bg-zinc-900 text-white border-zinc-900'
+                                    : 'bg-zinc-50 text-zinc-600 border-zinc-200/60 hover:bg-zinc-100'
+                                }`}
+                              >
+                                {status}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-[9px] uppercase font-bold text-neutral-400 font-mono tracking-wider">Filter Type</span>
+                          <div className="flex items-center gap-1.5">
+                            {(['all', 'exception', 'promise_rejection', 'user_report', 'api_error'] as const).map((type) => (
+                              <button
+                                key={type}
+                                onClick={() => setErrorTypeFilter(type)}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold font-sans uppercase tracking-wider border cursor-pointer transition ${
+                                  errorTypeFilter === type
+                                    ? 'bg-indigo-600 text-white border-indigo-600'
+                                    : 'bg-zinc-50 text-zinc-600 border-zinc-200/60 hover:bg-zinc-100'
+                                }`}
+                              >
+                                {type.replace('_', ' ')}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Error Logs Table */}
+                      <div className="border border-neutral-100 rounded-2xl overflow-hidden mt-3 font-sans">
+                        <div className="max-h-96 overflow-y-auto">
+                          <table className="w-full text-[11px] font-sans">
+                            <thead className="bg-[#f5f5f7] border-b border-neutral-150 text-left sticky top-0 z-10">
+                              <tr>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold w-40">Type & Time</th>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold">Error Message</th>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold">Reporter</th>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold text-center">Status Control</th>
+                                <th className="px-3 py-2.5 font-mono text-[9px] text-slate-500 uppercase font-bold text-center w-16">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-neutral-100">
+                              {adminClientErrors.filter(err => {
+                                const matchesStatus = errorStatusFilter === 'all' || err.status === errorStatusFilter;
+                                const matchesType = errorTypeFilter === 'all' || err.type === errorTypeFilter;
+                                return matchesStatus && matchesType;
+                              }).length === 0 ? (
+                                <tr>
+                                  <td colSpan={5} className="p-8 text-center text-[#86868b] italic font-light bg-[#f5f5f7]/30">
+                                    No client errors or user feedback issues matching the current filters.
+                                  </td>
+                                </tr>
+                              ) : (
+                                adminClientErrors
+                                  .filter(err => {
+                                    const matchesStatus = errorStatusFilter === 'all' || err.status === errorStatusFilter;
+                                    const matchesType = errorTypeFilter === 'all' || err.type === errorTypeFilter;
+                                    return matchesStatus && matchesType;
+                                  })
+                                  .map((err) => (
+                                    <tr key={err.id} className="hover:bg-neutral-50/50 transition">
+                                      <td className="px-3 py-3 w-40 whitespace-nowrap">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className={`inline-flex px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase tracking-wide ${
+                                            err.type === 'user_report' ? 'bg-amber-100 text-amber-800' :
+                                            err.type === 'promise_rejection' ? 'bg-orange-100 text-orange-800' :
+                                            err.type === 'api_error' ? 'bg-purple-100 text-purple-800' :
+                                            'bg-rose-100 text-rose-800'
+                                          }`}>
+                                            {err.type === 'user_report' ? 'Report' :
+                                             err.type === 'promise_rejection' ? 'Rejection' :
+                                             err.type === 'api_error' ? 'API Err' : 'Crash'}
+                                          </span>
+                                        </div>
+                                        <div className="text-[10px] text-neutral-400 mt-1">{new Date(err.timestamp).toLocaleString()}</div>
+                                      </td>
+                                      <td className="px-3 py-3 max-w-sm">
+                                        <div className="font-bold text-[#1d1d1f] font-sans break-words">{err.message}</div>
+                                        {err.userNotes && (
+                                          <div className="bg-amber-50/60 text-amber-900 border border-amber-100 text-[10px] p-2 rounded-lg mt-1 leading-relaxed">
+                                            <span className="font-bold">User Feedback:</span> "{err.userNotes}"
+                                          </div>
+                                        )}
+                                        {err.stack && (
+                                          <details className="mt-1 text-[10px] font-mono text-neutral-500 cursor-pointer">
+                                            <summary className="hover:underline hover:text-zinc-800 focus:outline-none">View trace & details</summary>
+                                            <pre className="bg-neutral-50 border border-neutral-150 p-2 rounded-xl mt-1.5 overflow-x-auto whitespace-pre-wrap text-[9px] leading-tight select-text">
+                                              {err.stack}
+                                            </pre>
+                                            <div className="mt-1.5 space-y-1 text-[9px] text-neutral-400">
+                                              <p><span className="font-semibold text-neutral-500">Page URL:</span> {err.url}</p>
+                                              <p><span className="font-semibold text-neutral-500">Browser/Agent:</span> {err.userAgent}</p>
+                                            </div>
+                                          </details>
+                                        )}
+                                      </td>
+                                      <td className="px-3 py-3 whitespace-nowrap">
+                                        <div className="font-medium text-[#1d1d1f]">{err.userEmail || 'Anonymous'}</div>
+                                        <div className="font-mono text-[9px] text-neutral-400">{err.userId}</div>
+                                      </td>
+                                      <td className="px-3 py-3 text-center">
+                                        <select
+                                          value={err.status}
+                                          onChange={(e) => updateAdminClientErrorStatus(err.id, e.target.value as any)}
+                                          className={`text-[10px] font-bold uppercase tracking-wider rounded-xl border border-neutral-200 p-1.5 outline-none cursor-pointer ${
+                                            err.status === 'new' ? 'bg-rose-50 text-rose-700 border-rose-150' :
+                                            err.status === 'investigating' ? 'bg-amber-50 text-amber-700 border-amber-150' :
+                                            'bg-emerald-50 text-emerald-700 border-emerald-150'
+                                          }`}
+                                        >
+                                          <option value="new">🔴 NEW</option>
+                                          <option value="investigating">🟡 INVESTIGATING</option>
+                                          <option value="resolved">🟢 RESOLVED</option>
+                                        </select>
+                                      </td>
+                                      <td className="px-3 py-3 text-center">
+                                        <button
+                                          onClick={() => deleteAdminClientError(err.id)}
+                                          className="p-1.5 text-neutral-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                                          title="Delete error log"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-neutral-100 text-[10px] text-[#86868b] leading-normal font-light flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-2">
+                      <span>🔒 Client-side crashes are captured instantly to protect active user workspaces.</span>
+                      <span className="font-mono text-[9px] uppercase tracking-wider font-bold text-zinc-500">FIRESTORE ENGINE</span>
+                    </div>
+                  </div>
+
+                  {/* CARD 10: SOCIAL MEDIA LINKS & FOLLOW US CONFIGURATION */}
                   <div className="bg-white p-6 rounded-3xl border border-black/[0.04] space-y-4 shadow-sm text-left font-sans flex flex-col justify-between lg:col-span-2 animate-fadeIn">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between gap-2 border-b border-neutral-100 pb-3">
@@ -12691,10 +12932,10 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 </div>
                 <div>
                   <h4 className="text-xs font-extrabold tracking-wider uppercase font-mono">
-                    {t('supportHeaderTitle')}
+                    {supportMode === 'chat' ? t('supportHeaderTitle') : 'Report a Bug / Issue'}
                   </h4>
                   <span className="text-[10px] text-blue-100 block -mt-0.5">
-                    {isSupportMinimized ? (outputLanguage === 'en' ? '💬 Click to expand chat' : '💬 انقر لتوسيع الدردشة') : (outputLanguage === 'en' ? 'Elite Knowledge Agent' : 'خبير الدعم الفني بالذكاء الاصطناعي')}
+                    {supportMode === 'chat' ? (isSupportMinimized ? (outputLanguage === 'en' ? '💬 Click to expand chat' : '💬 انقر لتوسيع الدردشة') : (outputLanguage === 'en' ? 'Elite Knowledge Agent' : 'خبير الدعم الفني بالذكاء الاصطناعي')) : 'Submit diagnostic logs instantly'}
                   </span>
                 </div>
               </div>
@@ -12719,87 +12960,195 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
               </div>
             </div>
 
-            {/* Support Messages List */}
-            <div className="p-4 flex-1 overflow-y-auto space-y-3.5 bg-neutral-50/50">
-              {supportMessages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-1`}
-                >
-                  <div
-                    className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs shadow-sm leading-relaxed ${
-                      msg.role === 'user'
-                        ? 'bg-[#0071e3] text-white rounded-tr-none'
-                        : 'bg-white text-zinc-800 border border-neutral-200/60 rounded-tl-none'
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
-                  <span className="text-[8px] text-neutral-400 font-mono px-1">
-                    {msg.timestamp}
-                  </span>
-                </div>
-              ))}
-              {isSupportTyping && (
-                <div className="flex items-center space-x-1.5 bg-white border border-neutral-200/60 rounded-2xl px-3.5 py-2.5 text-xs text-neutral-500 w-24">
-                  <span className="h-1.5 w-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="h-1.5 w-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="h-1.5 w-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-              )}
-              <div ref={supportEndRef} />
-            </div>
+            {supportMode === 'bug_report' ? (
+              <div className="p-4 flex-1 overflow-y-auto space-y-4 bg-neutral-50/50 flex flex-col justify-between">
+                <div className="space-y-3">
+                  <p className="text-xs text-neutral-600 font-sans font-light leading-relaxed">
+                    Experiencing a bug, freeze, or error message? Describe what happened below, and we will automatically append your device details, page URL, and current session diagnostics.
+                  </p>
+                  
+                  {bugSubmittedStatus === 'success' ? (
+                    <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 text-center space-y-2.5 animate-fadeIn">
+                      <p className="text-xs font-bold text-emerald-900">🎉 Report Logged Successfully!</p>
+                      <p className="text-[10px] text-emerald-850 font-light leading-normal">
+                        Thank you for your report. Our engineering team has received your ticket and diagnostic trace.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBugSubmittedStatus('idle');
+                          setBugDescription('');
+                          setSupportMode('chat');
+                        }}
+                        className="mt-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] transition cursor-pointer"
+                      >
+                        Back to Support Chat
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 text-left">
+                      <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-wide font-mono block">
+                        Detailed Description
+                      </label>
+                      <textarea
+                        value={bugDescription}
+                        onChange={(e) => setBugDescription(e.target.value)}
+                        placeholder="I tried to process a YouTube video and saw a red error saying... / The screen froze when I..."
+                        rows={5}
+                        className="w-full bg-white border border-neutral-200 rounded-xl p-3 text-xs outline-none focus:border-blue-500 font-sans shadow-inner resize-none leading-relaxed"
+                      />
+                      
+                      {bugSubmittedStatus === 'error' && (
+                        <p className="text-[10px] text-rose-600 font-bold">
+                          ⚠️ Failed to submit report. Please check your connection and try again.
+                        </p>
+                      )}
 
-            {/* Quick Suggestions Pills */}
-            <div className="p-3 bg-white border-t border-neutral-100 shrink-0">
-              <span className="text-[9px] font-mono font-bold text-neutral-400 uppercase tracking-wider block mb-2 px-1">
-                Suggested Questions
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  "What is Zipytiny?",
-                  "How does the Pro Pass work?",
-                  "Is there a sandbox mode?",
-                  "Can I use my own Gemini key?"
-                ].map((q, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      setSupportInput(q);
-                      handleSendSupportMessage(q);
-                    }}
-                    className="bg-neutral-100 hover:bg-neutral-200/80 text-zinc-700 text-[10px] px-2.5 py-1.5 rounded-full transition cursor-pointer font-medium"
-                  >
-                    {q}
-                  </button>
-                ))}
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          disabled={bugSubmittedStatus === 'submitting' || !bugDescription.trim()}
+                          onClick={async () => {
+                            if (!bugDescription.trim()) return;
+                            setBugSubmittedStatus('submitting');
+                            try {
+                              const user = auth.currentUser;
+                              const refId = await logClientError({
+                                message: `User Reported Issue: ${bugDescription.trim().substring(0, 80)}...`,
+                                type: 'user_report',
+                                userNotes: bugDescription.trim(),
+                                userId: user?.uid,
+                                userEmail: user?.email || undefined,
+                                stack: 'Manual user report submitted via floating Support widget.'
+                              });
+                              if (refId) {
+                                setBugSubmittedStatus('success');
+                              } else {
+                                setBugSubmittedStatus('error');
+                              }
+                            } catch {
+                              setBugSubmittedStatus('error');
+                            }
+                          }}
+                          className="flex-1 bg-[#0071e3] hover:bg-[#0077ed] text-white py-2.5 rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50 text-center"
+                        >
+                          {bugSubmittedStatus === 'submitting' ? 'Submitting...' : 'Submit Report'}
+                        </button>
+                        
+                        <button
+                          type="button"
+                          disabled={bugSubmittedStatus === 'submitting'}
+                          onClick={() => {
+                            setSupportMode('chat');
+                            setBugDescription('');
+                          }}
+                          className="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 py-2.5 rounded-xl text-xs font-semibold transition cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="text-[9px] text-neutral-400 text-center leading-normal font-mono uppercase tracking-wide pt-2 border-t border-neutral-200/40 shrink-0">
+                  ⚡ Diagnostic payload will be attached
+                </div>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Support Messages List */}
+                <div className="p-4 flex-1 overflow-y-auto space-y-3.5 bg-neutral-50/50">
+                  {supportMessages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-1`}
+                    >
+                      <div
+                        className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs shadow-sm leading-relaxed ${
+                          msg.role === 'user'
+                            ? 'bg-[#0071e3] text-white rounded-tr-none'
+                            : 'bg-white text-zinc-800 border border-neutral-200/60 rounded-tl-none'
+                        }`}
+                      >
+                        {msg.text}
+                      </div>
+                      <span className="text-[8px] text-neutral-400 font-mono px-1">
+                        {msg.timestamp}
+                      </span>
+                    </div>
+                  ))}
+                  {isSupportTyping && (
+                    <div className="flex items-center space-x-1.5 bg-white border border-neutral-200/60 rounded-2xl px-3.5 py-2.5 text-xs text-neutral-500 w-24">
+                      <span className="h-1.5 w-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="h-1.5 w-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="h-1.5 w-1.5 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  )}
+                  <div ref={supportEndRef} />
+                </div>
 
-            {/* Input Footer */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendSupportMessage();
-              }}
-              className="p-3 bg-[#f5f5f7] border-t border-neutral-200/60 flex gap-2 shrink-0 items-center"
-            >
-              <input
-                type="text"
-                placeholder="Ask our Support Agent anything..."
-                value={supportInput}
-                onChange={(e) => setSupportInput(e.target.value)}
-                className="flex-1 bg-white border border-neutral-200 px-3.5 py-2 rounded-xl text-xs outline-none focus:border-blue-500 font-sans shadow-inner"
-              />
-              <button
-                type="submit"
-                disabled={!supportInput.trim() || isSupportTyping}
-                className="bg-[#0071e3] hover:bg-[#0077ed] text-white px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50"
-              >
-                Send
-              </button>
-            </form>
+                {/* Quick Suggestions Pills */}
+                <div className="p-3 bg-white border-t border-neutral-100 shrink-0">
+                  <div className="flex items-center justify-between gap-2 mb-2 px-1">
+                    <span className="text-[9px] font-mono font-bold text-neutral-400 uppercase tracking-wider block">
+                      Suggested Questions
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSupportMode('bug_report')}
+                      className="text-[9px] font-bold text-rose-500 hover:text-rose-600 hover:underline cursor-pointer flex items-center gap-0.5"
+                    >
+                      🐞 Report a Bug/Crash
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      "What is Zipytiny?",
+                      "How does the Pro Pass work?",
+                      "Is there a sandbox mode?",
+                      "Can I use my own Gemini key?"
+                    ].map((q, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setSupportInput(q);
+                          handleSendSupportMessage(q);
+                        }}
+                        className="bg-neutral-100 hover:bg-neutral-200/80 text-zinc-700 text-[10px] px-2.5 py-1.5 rounded-full transition cursor-pointer font-medium"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Input Footer */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSendSupportMessage();
+                  }}
+                  className="p-3 bg-[#f5f5f7] border-t border-neutral-200/60 flex gap-2 shrink-0 items-center"
+                >
+                  <input
+                    type="text"
+                    placeholder="Ask our Support Agent anything..."
+                    value={supportInput}
+                    onChange={(e) => setSupportInput(e.target.value)}
+                    className="flex-1 bg-white border border-neutral-200 px-3.5 py-2 rounded-xl text-xs outline-none focus:border-blue-500 font-sans shadow-inner"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!supportInput.trim() || isSupportTyping}
+                    className="bg-[#0071e3] hover:bg-[#0077ed] text-white px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                  >
+                    Send
+                  </button>
+                </form>
+              </>
+            )}
           </div>
         )}
       </div>

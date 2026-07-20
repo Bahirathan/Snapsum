@@ -5,6 +5,7 @@
 
 import React, { Component, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { logClientError } from '../utils/errorLogger';
 
 interface Props {
   children: ReactNode;
@@ -40,6 +41,13 @@ export class ErrorBoundary extends Component<Props, State> {
     this.setState({
       error,
       errorInfo,
+    });
+
+    // Log error to Firestore
+    logClientError({
+      message: `React ErrorBoundary catch: ${error.message || 'Unknown Error'}`,
+      stack: error.stack || errorInfo.componentStack || '',
+      type: 'exception'
     });
 
     // Call the optional callback

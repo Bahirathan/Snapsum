@@ -101,6 +101,25 @@
         "rocket": { "type": "integer" },
         "clap": { "type": "integer" }
       }
+    },
+    "ClientError": {
+      "title": "ClientError",
+      "description": "Captured client-side exceptions and user reported issues",
+      "type": "object",
+      "properties": {
+        "errorId": { "type": "string" },
+        "message": { "type": "string" },
+        "stack": { "type": "string" },
+        "url": { "type": "string" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userAgent": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "status": { "type": "string" },
+        "type": { "type": "string" },
+        "userNotes": { "type": "string" }
+      },
+      "required": ["message", "timestamp"]
     }
   },
   "firestore": {
@@ -135,6 +154,10 @@
     "reactions_summary/{reactionId}": {
       "schema": "SummaryReaction",
       "description": "Accumulated emojis reaction stats per workspace"
+    },
+    "client_errors/{errorId}": {
+      "schema": "ClientError",
+      "description": "Collection of client-side application exceptions and user reports"
     }
   }
 }

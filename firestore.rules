@@ -55,5 +55,10 @@ service cloud.firestore {
     match /document_chunks/{docId} {
       allow read, write: if true;
     }
+
+    // Client errors and user reported issues
+    match /client_errors/{docId} {
+      allow read, write: if true;
+    }
   }
 }
