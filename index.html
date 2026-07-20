@@ -149,6 +149,43 @@
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
       })(window, document, "clarity", "script", "xbjmajtwt0");
     </script>
+    
+    <!-- ⚡ Premium Anti-FOUC Instant Styling & Typography -->
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        background-color: #ffffff;
+        color: #1d1d1f;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        scroll-behavior: smooth;
+      }
+      
+      /* Target all prerender tags to avoid browser fallback to Times New Roman */
+      #root, #root h1, #root h2, #root h3, #root h4, #root p, #root a, #root li, #root span, #root nav, #root div, #root footer, #root header, #root main, #root section {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+      }
+
+      /* Subtle premium load fade-in animation */
+      @keyframes fadeInPrerender {
+        from { opacity: 0.85; }
+        to { opacity: 1; }
+      }
+      #root {
+        animation: fadeInPrerender 0.4s ease-out;
+      }
+
+      /* Clean styles for pre-render state active buttons */
+      a[href="/#landing-main-input"] {
+        transition: background-color 0.2s ease, transform 0.2s ease;
+      }
+      a[href="/#landing-main-input"]:hover {
+        background-color: #0077ed !important;
+        transform: translateY(-1px);
+      }
+    </style>
   </head>
   <body>
     <div id="root">
