@@ -415,6 +415,7 @@ import MobileBottomNav from './components/MobileBottomNav';
 import ChromeExtensionPage from './components/ChromeExtensionPage';
 import BlogPage from './components/BlogPage';
 import ToolPage from './components/ToolPage';
+import { FaqPage } from './components/FaqPage';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
 
 const getEmbedUrl = (url: string) => {
@@ -720,28 +721,28 @@ export default function App() {
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const [showStickyCta, setShowStickyCta] = useState(false);
   const [isCtaDismissed, setIsCtaDismissed] = useState(false);
+  const [isFooterVisible, setIsFooterVisible] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       const formElement = document.getElementById('url-submit-form');
+      
+      // Hide CTA if near the bottom of the page or footer is visible to prevent blocking footer links
+      const threshold = 600; // Increased threshold for safer mobile views
+      const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - threshold;
+      const shouldHide = isNearBottom || isFooterVisible;
+
       if (formElement) {
         const rect = formElement.getBoundingClientRect();
-        
-        // Hide CTA if near the bottom of the page to prevent blocking/hiding footer links
-        const threshold = 450; // px threshold from bottom of page
-        const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - threshold;
-        
-        setShowStickyCta(rect.bottom < 0 && !isNearBottom);
+        setShowStickyCta(rect.bottom < 0 && !shouldHide);
       } else {
-        // If form is not present, check scroll height to hide it near bottom
-        const threshold = 450;
-        const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - threshold;
-        setShowStickyCta(!isNearBottom);
+        setShowStickyCta(!shouldHide);
       }
     };
+    
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isFooterVisible]);
 
   // Advanced Source Inputs
   const [inputSourceType, setInputSourceType] = useState<'video' | 'website' | 'file' | 'text'>('video');
@@ -1441,7 +1442,7 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // MVP Screen navigation state
-  const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin' | 'terms' | 'privacy' | 'feature' | 'explainer' | 'extension' | 'blog' | 'tool'>(() => {
+  const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin' | 'terms' | 'privacy' | 'feature' | 'explainer' | 'extension' | 'blog' | 'tool' | 'faq'>(() => {
     try {
       if (typeof window !== 'undefined') {
         const pathLower = window.location.pathname.toLowerCase();
@@ -1466,16 +1467,20 @@ export default function App() {
           return 'billing';
         }
 
+        if (pathParts[0] === 'faq') {
+          return 'faq';
+        }
+
         // 1. Prioritize clean pathname (e.g. /admin, /billing)
         const pathScreen = pathParts[0];
-        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'explainer', 'blog', 'extension', 'tool'].includes(pathScreen)) {
+        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'explainer', 'blog', 'extension', 'tool', 'faq'].includes(pathScreen)) {
           return pathScreen as any;
         }
 
         // 2. Fallback to query params (?screen=admin)
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'tool'].includes(qScreen.toLowerCase())) {
+        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'tool', 'faq'].includes(qScreen.toLowerCase())) {
           return qScreen.toLowerCase() as any;
         }
         
@@ -1486,7 +1491,7 @@ export default function App() {
 
         // 3. Fallback to hash (#admin)
         const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
-        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'tool'].includes(hash)) {
+        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'tool', 'faq'].includes(hash)) {
           return hash as any;
         }
       }
@@ -1521,6 +1526,28 @@ export default function App() {
     } catch {}
     return '';
   });
+
+  // Robust IntersectionObserver for the footer to prevent overlapping/hiding social media links
+  useEffect(() => {
+    const footer = document.getElementById('app-footer');
+    if (!footer) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        setIsFooterVisible(entry.isIntersecting);
+      },
+      {
+        root: null,
+        threshold: 0.01, // trigger early when even 1% of the footer is visible
+      }
+    );
+
+    observer.observe(footer);
+    return () => {
+      observer.disconnect();
+    };
+  }, [currentScreen]);
 
   const [currentToolSlug, setCurrentToolSlug] = useState<string>(() => {
     try {
@@ -1569,8 +1596,13 @@ export default function App() {
           return;
         }
 
+        if (pathParts[0] === 'faq') {
+          setCurrentScreen('faq');
+          return;
+        }
+
         const pathScreen = pathParts[0];
-        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'blog', 'extension', 'explainer', 'tool'].includes(pathScreen)) {
+        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'blog', 'extension', 'explainer', 'tool', 'faq'].includes(pathScreen)) {
           setCurrentScreen(pathScreen as any);
           return;
         }
@@ -1578,7 +1610,7 @@ export default function App() {
         // Check query
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'extension', 'tool'].includes(qScreen.toLowerCase())) {
+        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'extension', 'tool', 'faq'].includes(qScreen.toLowerCase())) {
           setCurrentScreen(qScreen.toLowerCase() as any);
           return;
         }
@@ -1589,7 +1621,7 @@ export default function App() {
 
         // Check hash
         const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
-        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'extension', 'tool'].includes(hash)) {
+        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'extension', 'tool', 'faq'].includes(hash)) {
           setCurrentScreen(hash as any);
         }
       } catch (err) {
@@ -11392,6 +11424,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </div>
         )}
 
+        {/* ❓ DETAILED GEO/SEO FAQ PANEL */}
+        {currentScreen === 'faq' && (
+          <FaqPage onNavigateScreen={setCurrentScreen} />
+        )}
+
         {/* 📜 TERMS & PRIVACY LAW PANEL */}
         {['terms', 'privacy'].includes(currentScreen) && (
           <div className="space-y-8 animate-fadeIn transition-all duration-300 font-sans text-left pb-16">
@@ -12869,7 +12906,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       </section>
 
       {/* Humble Footer */}
-      <footer className="bg-slate-900 text-white mt-16 py-12 border-t border-slate-800 font-sans">
+      <footer id="app-footer" className="bg-slate-900 text-white mt-16 py-12 border-t border-slate-800 font-sans">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg overflow-hidden flex items-center justify-center bg-slate-900 border border-slate-800">
@@ -12954,6 +12991,17 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             >
               <Puzzle className="w-3.5 h-3.5" />
               <span>Chrome Extension</span>
+            </button>
+            <button 
+              onClick={() => {
+                setCurrentScreen('faq');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }} 
+              className="hover:text-emerald-400 text-emerald-500 font-semibold transition duration-200 text-left underline decoration-slate-700 hover:decoration-emerald-400 cursor-pointer flex items-center gap-1"
+              id="footer-faq-link-btn"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>FAQ</span>
             </button>
             <button 
               onClick={() => {
@@ -13300,7 +13348,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       />
 
       {/* Floating Sticky Conversion CTA */}
-      {showStickyCta && !isCtaDismissed && !activeSummary && !activeStack && (
+      {showStickyCta && !isCtaDismissed && !activeSummary && !activeStack && !isFooterVisible && (
         <div className="fixed bottom-20 left-4 right-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-xl z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border border-neutral-200 dark:border-zinc-800 rounded-2xl p-3.5 pr-8 shadow-xl flex items-center justify-between gap-4 animate-fadeIn font-sans relative">
           <button
             type="button"

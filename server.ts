@@ -941,6 +941,11 @@ app.get('/sitemap.xml', async (req, res) => {
     <loc>https://www.zipytiny.app/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.zipytiny.app/faq</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>${toolsUrls}${urls}
 </urlset>`;
 
@@ -1173,6 +1178,126 @@ function injectToolMetadata(html: string, slug: string): string {
 
   return normalized;
 }
+
+// Server-side meta injector for the FAQ page
+function injectFaqMetadata(html: string): string {
+  const title = 'Frequently Asked Questions (FAQ) | Zipytiny AI Active Recall Workspace';
+  const description = 'Get detailed answers to common questions about Zipytiny AI learning tools. Learn how to convert YouTube lectures into quizzes, generate study guides from PDFs, and study using active recall.';
+  const targetKeyword = 'ai active recall faq';
+  const url = 'https://www.zipytiny.app/faq';
+  const imageUrl = 'https://www.zipytiny.app/api/og-image?title=Zipytiny%20FAQ&t1=Active%20Recall%20Learning&t2=Frequently%20Asked%20Questions';
+
+  const faqItems = [
+    {
+      q: "What is an active recall study generator?",
+      a: "An active recall study generator is a cognitive learning tool that converts static documents and videos into interactive testing playgrounds. Instead of passively reading notes—which leads to the illusion of competence—Zipytiny forces you to actively retrieve facts from memory using custom quizzes, active-recall flashcards, and Socratic dialogues. Educational research proves active recall strengthens synaptic pathways and increases memory retention by over 150%."
+    },
+    {
+      q: "How does the AI YouTube Lecture Summarizer convert video lectures into practice quizzes?",
+      a: "By submitting a YouTube lecture URL, Zipytiny uses advanced generative models to extract transcription data and segment the lecture into precise chronological milestones. From this text, our custom AI pipeline compiles multi-choice practice exams with detailed explanations and citation timestamps, directly supporting active recall and the testing effect."
+    },
+    {
+      q: "Can I generate digital flashcards and study guides from uploaded PDFs and slides?",
+      a: "Yes! Zipytiny includes an AI PDF Study Guide Generator that parses textbook chapters, slide decks, and lecture handouts. It extracts essential technical terms and structures them into Cornell Notes and visual Bento Concept Sheets. Complex concepts are translated into everyday layman's analogies, and terms are instantly compiled into digital, flippable spaced-repetition flashcards."
+    },
+    {
+      q: "What is the Feynman Technique, and how does the Socratic AI Tutor help identify learning gaps?",
+      a: "The Feynman Technique states that if you cannot explain a concept simply to a child, you do not fully understand it. Our Socratic AI Tutor acts as a conversational partner. Instead of lecturing, it uses leading questions to prompt your explanation. The AI then analyzes your answers to spot and gently guide you back from conceptual blind spots and knowledge gaps."
+    },
+    {
+      q: "How does the Zipytiny spaced-repetition study loop work?",
+      a: "Spaced repetition is a learning technique where review intervals are mathematically spaced out based on recall ease. With Zipytiny, you generate flashcards, practice them on Day 1, review them on Day 3, engage in a Socratic debate on Day 7, and complete a final mock exam on Day 30 to guarantee maximum long-term memory storage."
+    },
+    {
+      q: "Is there a Chrome browser extension for instant video or page summarization?",
+      a: "Yes, Zipytiny provides a lightweight Chrome Extension. It allows you to analyze any YouTube video, news article, or textbook PDF directly from your browser toolbar, enabling instant workspace creation without copying and pasting links."
+    },
+    {
+      q: "Are Zipytiny educational workspaces free, and how do referral credits work?",
+      a: "Zipytiny operates on a freemium model. All users receive free monthly active-recall workspace generations. You can unlock premium workspace credits for free by participating in our referral program—each signup through your unique referral link earns you permanent active recall credits."
+    }
+  ];
+
+  const jsonLdFaq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqItems.map(item => ({
+      "@type": "Question",
+      "name": item.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": item.a
+      }
+    }))
+  };
+
+  const semanticContentHtml = `
+    <!-- Semantic crawlable body for search engines, AI bots, and LLM search agents (Hidden from display users to avoid CLS) -->
+    <article style="display: none;" aria-hidden="true">
+      <header style="margin-bottom: 2rem;">
+        <h1>Zipytiny Frequently Asked Questions (FAQ)</h1>
+        <p>Your ultimate resource for AI-powered active recall, spaced repetition, lecture summarization, and cognitive study workflows.</p>
+        <p>Target optimization: convert youtube lecture to quiz, ai study guide generator from pdf, active recall, spaced repetition</p>
+      </header>
+      ${faqItems.map(item => `
+        <section style="margin-bottom: 2.5rem; padding-left: 1rem; border-left: 3px solid #e5e7eb;">
+          <h2 style="font-size: 1.3rem; font-weight: 700; color: #111827; margin: 0.5rem 0;">${item.q}</h2>
+          <p style="color: #374151; line-height: 1.7; margin: 0.25rem 0;">${item.a}</p>
+        </section>
+      `).join('')}
+    </article>
+  `;
+
+  const metaHtml = `
+    <title>${title}</title>
+    <meta name="description" content="${description}" />
+    <meta name="keywords" content="${targetKeyword}, zipytiny faq, convert youtube lecture to quiz, ai study guide generator from pdf, active recall, spaced repetition" />
+    <link rel="canonical" href="${url}" />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="${title}" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:image" content="${imageUrl}" />
+    <meta property="og:url" content="${url}" />
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title}" />
+    <meta name="twitter:description" content="${description}" />
+    <meta name="twitter:image" content="${imageUrl}" />
+    <!-- Structured Microdata JSON-LD -->
+    <script type="application/ld+json">
+      ${JSON.stringify(jsonLdFaq)}
+    </script>
+  `;
+
+  let normalized = html.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
+  normalized = normalized.replace(/<link[^>]*rel="canonical"[^>]*>/gi, '');
+  normalized = normalized.replace('</head>', `${metaHtml}</head>`);
+  normalized = normalized.replace('</body>', `${semanticContentHtml}\n</body>`);
+
+  return normalized;
+}
+
+// Server-rendered public FAQ page
+app.get('/faq', (req, res) => {
+  try {
+    const htmlPath = process.env.NODE_ENV === 'production'
+      ? path.join(process.cwd(), 'dist', 'index.html')
+      : path.join(process.cwd(), 'index.html');
+
+    if (!fs.existsSync(htmlPath)) {
+      return res.status(404).send('index.html not found');
+    }
+
+    let html = fs.readFileSync(htmlPath, 'utf-8');
+    html = injectFaqMetadata(html);
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(html);
+  } catch (err) {
+    console.error('Error serving FAQ SEO page:', err);
+    return res.status(500).send('Internal Server Error');
+  }
+});
 
 // Server-rendered public tools SEO landing pages
 app.get('/tools/:slug', (req, res) => {
