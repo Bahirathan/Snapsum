@@ -414,6 +414,7 @@ const FeatureHighlightsGrid = () => {
 import MobileBottomNav from './components/MobileBottomNav';
 import ChromeExtensionPage from './components/ChromeExtensionPage';
 import BlogPage from './components/BlogPage';
+import ToolPage from './components/ToolPage';
 import { initGA, trackGAEvent, getSessionEvents, TrackedEvent, clearSessionEvents } from './utils/analytics';
 
 const getEmbedUrl = (url: string) => {
@@ -1440,7 +1441,7 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // MVP Screen navigation state
-  const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin' | 'terms' | 'privacy' | 'feature' | 'explainer' | 'extension' | 'blog'>(() => {
+  const [currentScreen, setCurrentScreen] = useState<'landing' | 'app' | 'domain' | 'billing' | 'marketing' | 'admin' | 'terms' | 'privacy' | 'feature' | 'explainer' | 'extension' | 'blog' | 'tool'>(() => {
     try {
       if (typeof window !== 'undefined') {
         const pathLower = window.location.pathname.toLowerCase();
@@ -1449,6 +1450,10 @@ export default function App() {
         }
 
         const pathParts = pathLower.split('/').filter(Boolean);
+        if (pathParts[0] === 'tools' && pathParts[1]) {
+          return 'tool';
+        }
+
         if (pathParts[0] === 'features' && pathParts[1]) {
           return 'feature';
         }
@@ -1463,14 +1468,14 @@ export default function App() {
 
         // 1. Prioritize clean pathname (e.g. /admin, /billing)
         const pathScreen = pathParts[0];
-        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'explainer', 'blog', 'extension'].includes(pathScreen)) {
+        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'explainer', 'blog', 'extension', 'tool'].includes(pathScreen)) {
           return pathScreen as any;
         }
 
         // 2. Fallback to query params (?screen=admin)
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog'].includes(qScreen.toLowerCase())) {
+        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'tool'].includes(qScreen.toLowerCase())) {
           return qScreen.toLowerCase() as any;
         }
         
@@ -1481,7 +1486,7 @@ export default function App() {
 
         // 3. Fallback to hash (#admin)
         const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
-        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog'].includes(hash)) {
+        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'tool'].includes(hash)) {
           return hash as any;
         }
       }
@@ -1517,6 +1522,19 @@ export default function App() {
     return '';
   });
 
+  const [currentToolSlug, setCurrentToolSlug] = useState<string>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const pathLower = window.location.pathname.toLowerCase();
+        const pathParts = pathLower.split('/').filter(Boolean);
+        if (pathParts[0] === 'tools' && pathParts[1]) {
+          return pathParts[1];
+        }
+      }
+    } catch {}
+    return '';
+  });
+
   // Synchronize browser URL navigation with active screen tab
   useEffect(() => {
     const syncScreenFromUrl = () => {
@@ -1528,6 +1546,12 @@ export default function App() {
         }
         // Check clean pathname
         const pathParts = pathLower.split('/').filter(Boolean);
+        if (pathParts[0] === 'tools' && pathParts[1]) {
+          setCurrentScreen('tool');
+          setCurrentToolSlug(pathParts[1]);
+          return;
+        }
+
         if (pathParts[0] === 'features' && pathParts[1]) {
           setCurrentScreen('feature');
           setCurrentFeatureSlug(pathParts[1]);
@@ -1546,7 +1570,7 @@ export default function App() {
         }
 
         const pathScreen = pathParts[0];
-        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'blog', 'extension', 'explainer'].includes(pathScreen)) {
+        if (pathScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'blog', 'extension', 'explainer', 'tool'].includes(pathScreen)) {
           setCurrentScreen(pathScreen as any);
           return;
         }
@@ -1554,7 +1578,7 @@ export default function App() {
         // Check query
         const params = new URLSearchParams(window.location.search);
         const qScreen = params.get('screen');
-        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'extension'].includes(qScreen.toLowerCase())) {
+        if (qScreen && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'extension', 'tool'].includes(qScreen.toLowerCase())) {
           setCurrentScreen(qScreen.toLowerCase() as any);
           return;
         }
@@ -1565,7 +1589,7 @@ export default function App() {
 
         // Check hash
         const hash = window.location.hash.toLowerCase().replace(/^#\/?/, '').replace(/\/$/, '').trim();
-        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'extension'].includes(hash)) {
+        if (hash && ['landing', 'app', 'domain', 'billing', 'marketing', 'admin', 'terms', 'privacy', 'feature', 'explainer', 'blog', 'extension', 'tool'].includes(hash)) {
           setCurrentScreen(hash as any);
         }
       } catch (err) {
@@ -1585,6 +1609,13 @@ export default function App() {
   useEffect(() => {
     try {
       if (window.location.pathname.toLowerCase().startsWith('/s/')) {
+        return;
+      }
+      if (currentScreen === 'tool') {
+        const targetPath = `/tools/${currentToolSlug}`;
+        if (window.location.pathname.toLowerCase() !== targetPath.toLowerCase()) {
+          window.history.pushState({ toolSlug: currentToolSlug }, document.title, targetPath + window.location.search);
+        }
         return;
       }
       if (currentScreen === 'feature') {
@@ -1615,7 +1646,7 @@ export default function App() {
     } catch (e) {
       console.warn('Failed to push history status:', e);
     }
-  }, [currentScreen, currentFeatureSlug, currentBlogSlug]);
+  }, [currentScreen, currentFeatureSlug, currentBlogSlug, currentToolSlug]);
 
   // Startup handle for referral code registration & tracking
   useEffect(() => {
@@ -1709,13 +1740,20 @@ export default function App() {
         billing: 'Premium Plans & Upgrades | Zipytiny',
         marketing: 'AI Viral Creator Hub | Zipytiny',
         admin: 'Administrative Console | Zipytiny',
-        explainer: 'Interactive Cinematic Tour & Screen Recorder | Zipytiny'
+        explainer: 'Interactive Cinematic Tour & Screen Recorder | Zipytiny',
+        tool: currentToolSlug === 'youtube-lecture-summarizer' 
+          ? 'AI YouTube Lecture Summarizer & Workspace | Zipytiny'
+          : currentToolSlug === 'pdf-study-guide-generator'
+            ? 'AI PDF Study Guide Generator & Workspace | Zipytiny'
+            : currentToolSlug === 'interactive-ai-tutor'
+              ? 'Interactive AI Tutor & Feynman Assistant | Zipytiny'
+              : 'Interactive AI Study Tools | Zipytiny'
       };
       document.title = titles[currentScreen] || 'Zipytiny - Instant AI Video Knowledge Engine';
     } catch (err) {
       console.warn('Failed to set tab title:', err);
     }
-  }, [currentScreen]);
+  }, [currentScreen, currentToolSlug]);
 
   // Stripe Live Status state
   const [stripeConfig, setStripeConfig] = useState<{
@@ -4766,6 +4804,31 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
             }}
             onLaunchApp={() => {
               setCurrentScreen('app');
+              window.scrollTo(0, 0);
+            }}
+          />
+        )}
+
+        {/* 🚀 SEO TOOLS LANDING SCREEN */}
+        {currentScreen === 'tool' && (
+          <ToolPage
+            currentToolSlug={currentToolSlug}
+            onLaunchApp={(url, type) => {
+              if (url) {
+                setVideoUrl(url);
+                setInputSourceType(type || 'video');
+                setCurrentScreen('app');
+                window.scrollTo(0, 0);
+                setTimeout(() => {
+                  handleSummarize(undefined, url, type || 'video');
+                }, 100);
+              } else {
+                setCurrentScreen('app');
+                window.scrollTo(0, 0);
+              }
+            }}
+            onNavigateHome={() => {
+              setCurrentScreen('landing');
               window.scrollTo(0, 0);
             }}
           />

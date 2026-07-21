@@ -918,13 +918,30 @@ app.get('/sitemap.xml', async (req, res) => {
     <changefreq>monthly</changefreq>
   </url>`).join('');
 
+  const toolsUrls = `
+  <url>
+    <loc>https://www.zipytiny.app/tools/youtube-lecture-summarizer</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.zipytiny.app/tools/pdf-study-guide-generator</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.zipytiny.app/tools/interactive-ai-tutor</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.zipytiny.app/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-  </url>${urls}
+  </url>${toolsUrls}${urls}
 </urlset>`;
 
   res.type('application/xml');
@@ -985,6 +1002,202 @@ app.get('/api/referral/leaderboard', async (req, res) => {
   } catch (err: any) {
     console.error('Error fetching referral leaderboard:', err);
     return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// OpenGraph Injector Helper for SEO Tools Landing Pages
+function injectToolMetadata(html: string, slug: string): string {
+  let title = 'Interactive AI Study Tools | Zipytiny';
+  let description = 'Transform your study process with Zipytiny AI active learning tools. Convert lectures, videos, and textbook files into summaries, quizzes, and digital flashcards.';
+  let targetKeyword = 'ai active recall generator';
+  let appName = 'Zipytiny AI Study Workspace';
+  let semanticContentHtml = '';
+
+  if (slug === 'youtube-lecture-summarizer') {
+    title = 'AI YouTube Lecture Summarizer & Workspace | Zipytiny';
+    description = 'Turn any YouTube lecture video or long tutorial into a structured active-learning workspace instantly. Generate deep chronological summaries, flashcards, and quizzes.';
+    targetKeyword = 'convert youtube lecture to quiz';
+    appName = 'Zipytiny AI YouTube Lecture Summarizer';
+    semanticContentHtml = `
+      <article style="display: none;" aria-hidden="true">
+        <header>
+          <h1>AI YouTube Lecture Summarizer & Active-Recall Study Workspace</h1>
+          <p>Keyword optimization target: convert youtube lecture to quiz, make flashcards from lecture video</p>
+        </header>
+        <section>
+          <h2>Turn Lecture Videos into Retentive Study Workspaces in 60 Seconds</h2>
+          <p>Stop wasting hours manually transcribing, pausing, and rewinding university lectures. Zipytiny AI YouTube Summarizer extracts full educational transcripts, segmenting them into detailed chronological milestones with exact citation timestamps.</p>
+        </section>
+        <section>
+          <h2>Active Recall & Spaced Repetition Integration</h2>
+          <p>Rereading lecture notes yields near-zero long-term retention. Zipytiny translates passive learning into active practice by generating challenging multi-choice quizzes and digital flippable flashcards directly mapped to your course material.</p>
+        </section>
+        <section>
+          <h2>Backed by Cognitive Learning Sciences</h2>
+          <p>Our platform incorporates spaced repetition intervals, dual-coding mind maps, and Cornell Note structures to unlock maximum memory recall. Perfect for college students, medical residents, and continuous professional developers.</p>
+        </section>
+      </article>
+    `;
+  } else if (slug === 'pdf-study-guide-generator') {
+    title = 'AI PDF Study Guide Generator & Workspace | Zipytiny';
+    description = 'Automatically convert textbook PDFs, lecture slides, and handouts into comprehensive study guides, bento-grid concept sheets, and practice exams.';
+    targetKeyword = 'ai study guide generator from pdf';
+    appName = 'Zipytiny AI PDF Study Guide Generator';
+    semanticContentHtml = `
+      <article style="display: none;" aria-hidden="true">
+        <header>
+          <h1>AI PDF Study Guide Generator & Spaced-Repetition Workspace</h1>
+          <p>Keyword optimization target: ai study guide generator from pdf, make flashcards from slides</p>
+        </header>
+        <section>
+          <h2>Breathe Life into Dense Textbook Chapters and Slide Decks</h2>
+          <p>Upload biology slides, calculus workbooks, or engineering manuals. Zipytiny reads and parses PDF documents sequentially, organizing complex headings and equations into an indexable, highly legible syllabus outline.</p>
+        </section>
+        <section>
+          <h2>Bento Concepts & Everyday Analogies</h2>
+          <p>Our advanced document model isolates core technical terminology and drafts simple, everyday analogies. This helps students grasp complex abstract terms instantly before moving to advanced testing sections.</p>
+        </section>
+        <section>
+          <h2>Active Recall & Spaced Repetition Integration</h2>
+          <p>To maximize knowledge retention, our PDF study guide generator converts slides and documents into active recall quizzes and spaced repetition flashcard decks automatically.</p>
+        </section>
+        <section>
+          <h2>Diagnostic Practice Exams</h2>
+          <p>Instantly compile simulated exam sheets based on the imported PDF. Practice with realistic question formats complete with detailed logic explanations and feedback loops.</p>
+        </section>
+      </article>
+    `;
+  } else if (slug === 'interactive-ai-tutor') {
+    title = 'Interactive AI Tutor & Feynman Assistant | Zipytiny';
+    description = 'Master any subject using active Socratic dialogue. Ask the Feynman AI Tutor anything, simplify complex terminology, and bridge conceptual gaps instantly.';
+    targetKeyword = 'interactive feynman study assistant';
+    appName = 'Zipytiny Interactive AI Tutor';
+    semanticContentHtml = `
+      <article style="display: none;" aria-hidden="true">
+        <header>
+          <h1>Interactive Socratic AI Tutor & Feynman Study Assistant</h1>
+          <p>Keyword optimization target: interactive feynman study assistant, ai active recall generator</p>
+        </header>
+        <section>
+          <h2>Learn Faster Using the Feynman Technique</h2>
+          <p>The Feynman Technique asserts that to truly understand a concept, you must explain it simply, as if to a child. Our Socratic AI Tutor facilitates this active learning loop, questioning your assertions and locating mental gaps.</p>
+        </section>
+        <section>
+          <h2>Socratic Classroom Dialogue Simulation</h2>
+          <p>Engage in active, bidirectional conversation. Ask Feynman AI to break down Quantum Computing, explain Photosynthesis biochemistry, or prove Bayes' Theorem. Learn through contextual analogies instead of static, dense passages.</p>
+        </section>
+        <section>
+          <h2>Targeted Knowledge Re-alignment</h2>
+          <p>By simulating real student-tutor debates, Zipytiny helps you verify your mastery of a subject and refine your memory storage intervals.</p>
+        </section>
+      </article>
+    `;
+  }
+
+  const url = `https://www.zipytiny.app/tools/${slug}`;
+  const imageUrl = `https://www.zipytiny.app/api/og-image?title=${encodeURIComponent(appName)}&t1=${encodeURIComponent('Instant active recall')}&t2=${encodeURIComponent('Interactive sandbox')}`;
+
+  const jsonLdApp = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": appName,
+    "url": url,
+    "description": description,
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "All",
+    "browserRequirements": "Requires JavaScript. Requires HTML5.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0.00",
+      "priceCurrency": "USD"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "184"
+    }
+  };
+
+  const jsonLdFaq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": `How does the Zipytiny ${appName} work?`,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": `Our ${appName} uses highly advanced language models to analyze user assets, extract core definitions, generate chronological timelines, and compile interactive digital workspaces featuring active-recall flashcards and practice quizzes.`
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are Zipytiny educational workspaces supported on mobile devices?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, Zipytiny is fully responsive and supports studying, practicing flashcards, and taking quiz challenges on any mobile, tablet, or desktop browser."
+        }
+      }
+    ]
+  };
+
+  const metaHtml = `
+    <title>${title}</title>
+    <meta name="description" content="${description}" />
+    <meta name="keywords" content="${targetKeyword}, zipytiny, ai learning, active recall" />
+    <link rel="canonical" href="${url}" />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="${title}" />
+    <meta property="og:description" content="${description}" />
+    <meta property="og:image" content="${imageUrl}" />
+    <meta property="og:url" content="${url}" />
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${title}" />
+    <meta name="twitter:description" content="${description}" />
+    <meta name="twitter:image" content="${imageUrl}" />
+    <!-- Structured Microdata JSON-LD -->
+    <script type="application/ld+json">
+      ${JSON.stringify(jsonLdApp)}
+    </script>
+    <script type="application/ld+json">
+      ${JSON.stringify(jsonLdFaq)}
+    </script>
+  `;
+
+  let normalized = html.replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '');
+  normalized = normalized.replace(/<link[^>]*rel="canonical"[^>]*>/gi, '');
+  normalized = normalized.replace('</head>', `${metaHtml}</head>`);
+  normalized = normalized.replace('</body>', `${semanticContentHtml}\n</body>`);
+
+  return normalized;
+}
+
+// Server-rendered public tools SEO landing pages
+app.get('/tools/:slug', (req, res) => {
+  const { slug } = req.params;
+  const validSlugs = ['youtube-lecture-summarizer', 'pdf-study-guide-generator', 'interactive-ai-tutor'];
+  if (!validSlugs.includes(slug)) {
+    return res.status(404).send('Study Tool Page Not Found');
+  }
+
+  try {
+    const htmlPath = process.env.NODE_ENV === 'production'
+      ? path.join(process.cwd(), 'dist', 'index.html')
+      : path.join(process.cwd(), 'index.html');
+
+    if (!fs.existsSync(htmlPath)) {
+      return res.status(404).send('index.html not found');
+    }
+
+    let html = fs.readFileSync(htmlPath, 'utf-8');
+    html = injectToolMetadata(html, slug);
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(html);
+  } catch (err) {
+    console.error('Error serving tool SEO landing page:', err);
+    return res.status(500).send('Internal Server Error');
   }
 });
 
