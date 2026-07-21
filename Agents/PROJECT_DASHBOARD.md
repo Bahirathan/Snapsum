@@ -21,8 +21,8 @@
 
 | Agent | Responsibility | Assigned Task | Status | Priority |
 | :--- | :--- | :--- | :--- | :--- |
-| **CEO** | Strategic Sponsor | Set strategic goals, KPIs, and define overall business objectives. | `Approved` | Critical |
-| **Product Manager** | Requirements (PRD) | Author the comprehensive **SEO & GEO Discovery Layer PRD** with core user stories, journeys, and exact acceptance criteria. | `Completed` | Critical |
+| **CEO** | Strategic Sponsor | Define overall business objectives and issue the **Market Leadership Research Initiative** strategic directive. | `Approved` | Critical |
+| **Product Manager** | Requirements (PRD) | Author the comprehensive **SEO & GEO Discovery Layer PRD** and translate leadership strategy into core requirements. | `Completed` | Critical |
 | **SEO & GEO Engineer** | Strategy & Schema | Map semantic keywords, define topic clusters, design JSON-LD Schema structures, and detail LLM GEO guidelines. | `Completed` | Critical |
 | **Software Architect** | System Design | Design metadata routing, dynamic sitemap compiler patterns, and schema-injection modules. | `Completed` | High |
 | **Frontend Engineer** | UI & Performance | Code responsive landing pages using semantic HTML, and optimize Core Web Vitals (LCP < 2.5s, CLS < 0.1). | `Completed` | High |
@@ -30,7 +30,7 @@
 | **AI Engineer** | Citation Pipeline | Refine prompt models in Gemini SDK to return structured JSON outputs with factual source timestamps. | `Completed` | High |
 | **QA Engineer** | Automation & Quality | Author Playwright testing plans to validate page metadata, JSON-LD schemas, and check accessibility across routes. | `Completed` | High |
 | **Customer Success** | Help Center Content | Draft Help Center knowledge articles addressing friction points and outlining detailed active recall workflows. | `Completed` | Medium |
-| **Marketing & Growth** | Launch & Copywriting | Write persuasive marketing copy for landing pages and plan the Product Hunt, X, and LinkedIn launch. | `Completed` | High |
+| **Marketing & Growth** | Launch & Copywriting | Execute **Competitive Domain Mapping & Growth Engine Blueprint** research. | `In Progress` | Critical |
 | **Digital Marketing Manager** | Campaign Execution & Optimization | Plan, monitor, and optimize marketing across Product Hunt, social media, email, and paid ads. | `Completed` | High |
 | **Implementation Engineer** | Core Quality & Production Polish | Polish review findings, fix defects, resolve accessibility/performance issues, and clear tech debt. | `Completed` | High |
 | **CTO Review** | Technical Governance | Perform pre-production performance audits, check security boundaries, and give final production approval. | `Approved` | Critical |
