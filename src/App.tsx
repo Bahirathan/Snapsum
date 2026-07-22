@@ -1539,7 +1539,8 @@ export default function App() {
       },
       {
         root: null,
-        threshold: 0.01, // trigger early when even 1% of any footer is visible
+        rootMargin: '350px 0px 0px 0px',
+        threshold: 0.01, // trigger early when any footer is near
       }
     );
 
@@ -1549,12 +1550,25 @@ export default function App() {
       const scrollPos = window.scrollY || window.pageYOffset;
       const windowHeight = window.innerHeight;
       const totalHeight = document.documentElement.scrollHeight;
-      if (totalHeight > 0 && windowHeight + scrollPos >= totalHeight - 550) {
+
+      const footersList = document.querySelectorAll('footer, #app-footer, #landing-footer');
+      let isFooterApproaching = false;
+      footersList.forEach((f) => {
+        const rect = f.getBoundingClientRect();
+        if (rect.top <= window.innerHeight + 300) {
+          isFooterApproaching = true;
+        }
+      });
+
+      if ((totalHeight > 0 && windowHeight + scrollPos >= totalHeight - 1200) || isFooterApproaching) {
         setIsFooterVisible(true);
+      } else {
+        setIsFooterVisible(false);
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
 
     return () => {
       observer.disconnect();

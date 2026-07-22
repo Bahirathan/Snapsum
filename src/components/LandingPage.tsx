@@ -263,6 +263,7 @@ export default function LandingPage({
       },
       {
         root: null,
+        rootMargin: '350px 0px 0px 0px',
         threshold: 0.01,
       }
     );
@@ -278,9 +279,19 @@ export default function LandingPage({
       const scrollPos = window.scrollY || window.pageYOffset;
       const windowHeight = window.innerHeight;
       const totalHeight = document.documentElement.scrollHeight;
-      const isNearBottom = totalHeight > 0 && (windowHeight + scrollPos >= totalHeight - 550);
 
-      if (scrollPos > 550 && !isKeyboardActive && !isNearBottom) {
+      const footers = document.querySelectorAll('footer, #landing-footer, #app-footer');
+      let isFooterApproaching = false;
+      footers.forEach((f) => {
+        const rect = f.getBoundingClientRect();
+        if (rect.top <= window.innerHeight + 300) {
+          isFooterApproaching = true;
+        }
+      });
+
+      const isNearBottom = totalHeight > 0 && (windowHeight + scrollPos >= totalHeight - 1200);
+
+      if (scrollPos > 550 && !isKeyboardActive && !isNearBottom && !isFooterApproaching) {
         setShowStickyCTA(true);
       } else {
         setShowStickyCTA(false);
