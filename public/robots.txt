@@ -5,4 +5,8 @@ Allow: /pricing
 Allow: /features/
 Allow: /blog/
 
+# Sitemap location
 Sitemap: https://www.zipytiny.app/sitemap.xml
+
+# LLM & AI Agents Directory
+# https://www.zipytiny.app/llms.txt

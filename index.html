@@ -11,8 +11,6 @@
     <link rel="apple-touch-icon" href="/favicon.svg?v=5" />
     
     <!-- Google Search Console Domain Verification -->
-    <meta name="google-site-verification" content="FhG78_6Ghd93hRjsbH7b102" />
-    <meta name="google-site-verification" content="google63b0633f78ae3e55" />
     <meta name="google-site-verification" content="63b0633f78ae3e55" />
     
     <!-- AI Search & Agent Discoverability (llms.txt) -->
@@ -40,7 +38,7 @@
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Zipytiny – AI Study Notes from Video, PDF, Slides & Articles" />
     <meta property="og:description" content="Turn any video, PDF, slide deck, article, or note into AI-generated summaries, key concepts, and study-ready notes in seconds. Free to start, Pro from $12/mo. Try Zipytiny." />
-    <meta property="og:url" content="https://www.zipytiny.app" />
+    <meta property="og:url" content="https://www.zipytiny.app/" />
     <meta property="og:site_name" content="Zipytiny" />
     <meta property="og:image" content="https://www.zipytiny.app/assets/og-preview.png" />
     <meta property="og:image:width" content="1200" />
@@ -53,6 +51,7 @@
     <meta name="twitter:title" content="Zipytiny – AI Study Notes from Video, PDF, Slides & Articles" />
     <meta name="twitter:description" content="Turn any video, PDF, slide deck, article, or note into AI-generated summaries, key concepts, and study-ready notes in seconds. Free to start, Pro from $12/mo. Try Zipytiny." />
     <meta name="twitter:image" content="https://www.zipytiny.app/assets/og-preview.png" />
+    <meta name="twitter:url" content="https://www.zipytiny.app/" />
     <meta name="twitter:creator" content="@ZipytinyApp" />
 
     <!-- Google Rich Snippets Structured Data (JSON-LD) -->
@@ -65,24 +64,41 @@
             "name": "Zipytiny",
             "url": "https://www.zipytiny.app/",
             "operatingSystem": "All",
-            "applicationCategory": "MultimediaApplication, EducationalApplication, ProductivityApplication",
-            "genre": "AI Video Processing & Knowledge Engine",
-            "description": "Premium AI-powered universal video knowledge engine. Summarize YouTube videos, Vimeo links, local MP4 files, audio recordings, and documents instantly with studio-grade audio synthesis and markdown exports.",
-            "offers": {
-              "@type": "Offer",
-              "price": "0.00",
-              "priceCurrency": "USD",
-              "description": "Free sandbox tier with daily guest limits. Paid premium plans are available."
-            },
+            "applicationCategory": "EducationalApplication, ProductivityApplication, MultimediaApplication",
+            "genre": "AI Study Workspace & Multi-Format Knowledge Engine",
+            "description": "Zipytiny is an AI-powered learning platform that turns videos, PDFs, slide decks, articles, and notes into clear summaries, key concepts, flashcards, mind maps, and study-ready notes in seconds.",
+            "offers": [
+              {
+                "@type": "Offer",
+                "name": "Free Workspace Plan",
+                "price": "0.00",
+                "priceCurrency": "USD",
+                "description": "Free study workspace with core AI note generation and summary capabilities."
+              },
+              {
+                "@type": "Offer",
+                "name": "Pro Plan",
+                "price": "12.00",
+                "priceCurrency": "USD",
+                "description": "Unlimited video, PDF & document uploads, mind maps, quizzes, and PowerPoint exports."
+              },
+              {
+                "@type": "Offer",
+                "name": "Enterprise Plan",
+                "price": "39.00",
+                "priceCurrency": "USD",
+                "description": "Team workspaces, high-speed processing, dedicated support and API access."
+              }
+            ],
             "featureList": [
-              "Instant YouTube & Vimeo video summaries",
-              "Local MP4 file audio transcription & summary",
-              "Local document analysis (PDF, Word, Excel, PowerPoint, Text, Screenshot OCR)",
-              "Premium studio-grade Text-to-Speech (TTS) voiceovers",
-              "High-quality Markdown summary document downloads",
-              "Specialized synthesis presets: Standard Thesis, Academic Study, Viral Bulletin, Shortened Video",
-              "Interactive multiple-choice diagnostics & study quizzes with rationales",
-              "Custom translation and multi-language support with full RTL Arabic compatibility"
+              "Instant YouTube, Vimeo & local video summarization",
+              "PDF document, slide deck, article & note analysis",
+              "Active recall flashcards & interactive practice quizzes",
+              "Visual mind maps and conceptual knowledge trees",
+              "Video-to-PowerPoint presentation export for Pro tier",
+              "High-fidelity Text-to-Speech (TTS) audio narration",
+              "Multi-language translation with full RTL Arabic support",
+              "One-click Markdown and structured document export"
             ]
           },
           {
@@ -93,39 +109,47 @@
                 "name": "What is Zipytiny?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Zipytiny is a universal AI-powered video summarizer, audio transcription utility, and cognitive learning workstation designed to help you process video, audio, and documents (PDF, Word) in seconds instead of watching hours of footage."
+                  "text": "Zipytiny is an AI-powered learning platform that turns videos, PDFs, slide decks, articles, and notes into clear summaries, key concepts, and study-ready notes in seconds."
                 }
               },
               {
                 "@type": "Question",
-                "name": "How do I summarize a YouTube video using Zipytiny?",
+                "name": "What file types can I upload to Zipytiny?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Simply paste any YouTube or Vimeo video URL into Zipytiny's input bar on the main dashboard. Zipytiny will immediately transcribe the audio, extract timestamps, generate core takeaways, synthesize a blog post, design a dynamic mind map, and create an interactive study quiz."
+                  "text": "You can upload YouTube videos, local video files (MP4, WebM, MOV), audio recordings (MP3, WAV), PDF documents, slide presentations, articles, and written notes. Zipytiny extracts content and generates structured study material automatically."
                 }
               },
               {
                 "@type": "Question",
-                "name": "Does Zipytiny support local files like MP4 or PDF?",
+                "name": "How much does Zipytiny cost?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Yes! Zipytiny supports uploading local video files (MP4, WebM, MOV), audio recordings (MP3, WAV, M4A), and documents (PDF, Word, Excel, PowerPoint) as well as screenshot OCR text extraction."
+                  "text": "Zipytiny has a free plan to get started. The Pro plan is $12/month and the Enterprise plan is $39/month, with additional features at each tier."
                 }
               },
               {
                 "@type": "Question",
-                "name": "Can I export summaries from Zipytiny to Notion?",
+                "name": "Can Zipytiny turn content into PowerPoint presentations or flashcards?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Yes! You can copy highly-formatted markdown structures with a single click, perfectly styled for easy import into Notion, Obsidian, Evernote, and other personal knowledge management tools."
+                  "text": "Yes. Zipytiny generates active recall flashcards, interactive quizzes, visual mind maps, and allows Pro users to export video or document content directly into PowerPoint presentations."
                 }
               },
               {
                 "@type": "Question",
-                "name": "Does Zipytiny support languages other than English?",
+                "name": "Who is Zipytiny for?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Absolutely! Zipytiny supports translating and summarizing content in over 15 world languages, including Arabic, Spanish, French, German, Japanese, Portuguese, Hindi, and Chinese, with complete RTL (Right-to-Left) reading compatibility for Arabic text."
+                  "text": "Zipytiny is built for students, researchers, educators, and professionals who need to quickly turn long-form lectures, documents, and videos into concise, usable study notes."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is there a free version of Zipytiny?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes, Zipytiny offers a free plan with core AI summarization and study note generation features."
                 }
               }
             ]
@@ -315,6 +339,37 @@
               <p style="font-size: 0.85rem; color: #555; margin: 3px 0 0 0;">Explore how nested visual mind maps support semantic chunking and accelerate retention.</p>
             </li>
           </ul>
+        </section>
+
+        <!-- 💡 Visible FAQ Section (Required by Google Rich Snippets Guidelines to match JSON-LD) -->
+        <section style="margin-bottom: 50px;" id="faq">
+          <h2 style="font-size: 1.8rem; border-bottom: 2px solid #eaeaea; padding-bottom: 10px; margin-bottom: 20px;">Frequently Asked Questions</h2>
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="padding: 15px; border-radius: 12px; background: #f9f9fb; border: 1px solid #f0f0f3;">
+              <h3 style="font-size: 1.15rem; color: #111; margin-top: 0; margin-bottom: 8px;">What is Zipytiny?</h3>
+              <p style="margin: 0; color: #444; font-size: 0.95rem;">Zipytiny is an AI-powered learning platform that turns videos, PDFs, slide decks, articles, and notes into clear summaries, key concepts, and study-ready notes in seconds.</p>
+            </div>
+            <div style="padding: 15px; border-radius: 12px; background: #f9f9fb; border: 1px solid #f0f0f3;">
+              <h3 style="font-size: 1.15rem; color: #111; margin-top: 0; margin-bottom: 8px;">What file types can I upload to Zipytiny?</h3>
+              <p style="margin: 0; color: #444; font-size: 0.95rem;">You can upload YouTube videos, local video files (MP4, WebM, MOV), audio recordings (MP3, WAV), PDF documents, slide presentations, articles, and written notes. Zipytiny extracts content and generates structured study material automatically.</p>
+            </div>
+            <div style="padding: 15px; border-radius: 12px; background: #f9f9fb; border: 1px solid #f0f0f3;">
+              <h3 style="font-size: 1.15rem; color: #111; margin-top: 0; margin-bottom: 8px;">How much does Zipytiny cost?</h3>
+              <p style="margin: 0; color: #444; font-size: 0.95rem;">Zipytiny has a free plan to get started. The Pro plan is $12/month and the Enterprise plan is $39/month, with additional features at each tier.</p>
+            </div>
+            <div style="padding: 15px; border-radius: 12px; background: #f9f9fb; border: 1px solid #f0f0f3;">
+              <h3 style="font-size: 1.15rem; color: #111; margin-top: 0; margin-bottom: 8px;">Can Zipytiny turn content into PowerPoint presentations or flashcards?</h3>
+              <p style="margin: 0; color: #444; font-size: 0.95rem;">Yes. Zipytiny generates active recall flashcards, interactive quizzes, visual mind maps, and allows Pro users to export video or document content directly into PowerPoint presentations.</p>
+            </div>
+            <div style="padding: 15px; border-radius: 12px; background: #f9f9fb; border: 1px solid #f0f0f3;">
+              <h3 style="font-size: 1.15rem; color: #111; margin-top: 0; margin-bottom: 8px;">Who is Zipytiny for?</h3>
+              <p style="margin: 0; color: #444; font-size: 0.95rem;">Zipytiny is built for students, researchers, educators, and professionals who need to quickly turn long-form lectures, documents, and videos into concise, usable study notes.</p>
+            </div>
+            <div style="padding: 15px; border-radius: 12px; background: #f9f9fb; border: 1px solid #f0f0f3;">
+              <h3 style="font-size: 1.15rem; color: #111; margin-top: 0; margin-bottom: 8px;">Is there a free version of Zipytiny?</h3>
+              <p style="margin: 0; color: #444; font-size: 0.95rem;">Yes, Zipytiny offers a free plan with core AI summarization and study note generation features.</p>
+            </div>
+          </div>
         </section>
       </main>
 

@@ -4172,6 +4172,43 @@ app.post('/api/presentation/generate', async (req, res) => {
   })();
 });
 
+// Canonical domain 301 redirect middleware (zipytiny.app -> www.zipytiny.app)
+app.use((req, res, next) => {
+  const host = req.headers.host || '';
+  if (host === 'zipytiny.app') {
+    return res.redirect(301, `https://www.zipytiny.app${req.originalUrl}`);
+  }
+  next();
+});
+
+// Explicit SEO endpoints for crawlers
+app.get('/sitemap.xml', (req, res) => {
+  const filePath = path.join(process.cwd(), 'public', 'sitemap.xml');
+  res.header('Content-Type', 'application/xml; charset=utf-8');
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send('Sitemap not found');
+});
+
+app.get('/robots.txt', (req, res) => {
+  const filePath = path.join(process.cwd(), 'public', 'robots.txt');
+  res.header('Content-Type', 'text/plain; charset=utf-8');
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send('Robots.txt not found');
+});
+
+app.get('/llms.txt', (req, res) => {
+  const filePath = path.join(process.cwd(), 'public', 'llms.txt');
+  res.header('Content-Type', 'text/plain; charset=utf-8');
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send('llms.txt not found');
+});
+
 // Initialize full-stack routing and server
 async function bootstrap() {
   if (process.env.NODE_ENV !== 'production') {
