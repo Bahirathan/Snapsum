@@ -30,7 +30,7 @@
 | **AI Engineer** | Citation Pipeline | Refine prompt models in Gemini SDK to return structured JSON outputs with factual source timestamps. | `Completed` | High |
 | **QA Engineer** | Automation & Quality | Author Playwright testing plans to validate page metadata, JSON-LD schemas, and check accessibility across routes. | `Completed` | High |
 | **Customer Success** | Help Center Content | Draft Help Center knowledge articles addressing friction points and outlining detailed active recall workflows. | `Completed` | Medium |
-| **Marketing & Growth** | Launch & Copywriting | Execute **Competitive Domain Mapping & Growth Engine Blueprint** research. | `In Progress` | Critical |
+| **Marketing & Growth** | Launch & Copywriting | Execute **Competitive Domain Mapping & Growth Engine Blueprint** research. | `Completed` | Critical |
 | **Digital Marketing Manager** | Campaign Execution & Optimization | Plan, monitor, and optimize marketing across Product Hunt, social media, email, and paid ads. | `Completed` | High |
 | **Implementation Engineer** | Core Quality & Production Polish | Polish review findings, fix defects, resolve accessibility/performance issues, and clear tech debt. | `Completed` | High |
 | **CTO Review** | Technical Governance | Perform pre-production performance audits, check security boundaries, and give final production approval. | `Approved` | Critical |
@@ -74,3 +74,5 @@
   * [x] Customer Success drafts Help Center documentation. (`/Agents/HELP_CENTER.md` & `/Agents/CUSTOMER_SUCCESS_STRATEGY.md`)
   * [x] Marketing executes the launch playbook. (`/Agents/MARKETING_LAUNCH_PLAYBOOK.md`)
   * [x] CTO Review signs off on production deployment. (`/Agents/CTO_REVIEW_REPORT.md`)
+* **Phase 4: Active Recall & Cognitive Optimization (August 13 - August 20)**
+  * [x] CEO & Implementation Team integrate native **Spaced-Repetition SM-2 Scheduler** (`/src/components/LearningWorkspace.tsx`) using the SuperMemo-2 algorithm, providing persistent local memory-weights tracking and interactive review modes.

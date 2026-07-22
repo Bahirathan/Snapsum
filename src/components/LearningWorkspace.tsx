@@ -142,6 +142,161 @@ export default function LearningWorkspace({
   // Interactive Flashcards States
   const [revealedFlashcards, setRevealedFlashcards] = useState<Record<number, boolean>>({});
   
+  // --- NATIVE SPACED REPETITION SM-2 STATE ENGINE ---
+  const [flashcardMode, setFlashcardMode] = useState<'review' | 'browse'>('review');
+  const [currentReviewIndex, setCurrentReviewIndex] = useState<number>(0);
+  const [sm2States, setSm2States] = useState<Record<number, {
+    interval: number;
+    repetition: number;
+    efactor: number;
+    nextReviewDate: number;
+    lastQualityRating?: number;
+    historyCount: number;
+  }>>(() => {
+    try {
+      const saved = localStorage.getItem(`zipytiny_sm2_states_${videoId}`);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (err) {
+      console.error('Error loading SM-2 states:', err);
+    }
+    return {};
+  });
+
+  // Keep localStorage synced
+  useEffect(() => {
+    try {
+      localStorage.setItem(`zipytiny_sm2_states_${videoId}`, JSON.stringify(sm2States));
+    } catch (err) {
+      console.error('Error saving SM-2 states:', err);
+    }
+  }, [sm2States, videoId]);
+
+  // Find which card indices are due for review
+  const getDueCardIndices = () => {
+    const dueIndices: number[] = [];
+    const now = Date.now();
+    flashcardsList.forEach((_, idx) => {
+      const state = sm2States[idx];
+      // If it has never been reviewed, or if nextReviewDate is in the past/present
+      if (!state || state.nextReviewDate <= now) {
+        dueIndices.push(idx);
+      }
+    });
+    return dueIndices;
+  };
+
+  const dueCardIndices = getDueCardIndices();
+
+  // Handle rating/scheduling a card with the SM-2 algorithm
+  const handleRateCard = (cardIdx: number, rating: number) => {
+    setSm2States(prev => {
+      const oldState = prev[cardIdx] || {
+        interval: 0,
+        repetition: 0,
+        efactor: 2.5,
+        nextReviewDate: 0,
+        historyCount: 0
+      };
+
+      let { interval, repetition, efactor, historyCount } = oldState;
+      historyCount += 1;
+
+      // Quality rating q is rating (1 to 5)
+      const q = rating;
+
+      if (q >= 3) {
+        if (repetition === 0) {
+          interval = 1; // 1 day spacing
+        } else if (repetition === 1) {
+          interval = 3; // 3 days spacing
+        } else {
+          interval = Math.round(interval * efactor);
+        }
+        repetition += 1;
+      } else {
+        repetition = 0;
+        interval = 1; // repeat tomorrow
+      }
+
+      // E-factor update
+      efactor = efactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+      if (efactor < 1.3) {
+        efactor = 1.3;
+      }
+
+      const nextReviewDate = Date.now() + interval * 24 * 60 * 60 * 1000;
+
+      const newState = {
+        interval,
+        repetition,
+        efactor,
+        nextReviewDate,
+        lastQualityRating: q,
+        historyCount
+      };
+
+      trackGAEvent?.('flashcard_reviewed_sm2', { index: cardIdx, rating: q, interval });
+      return {
+        ...prev,
+        [cardIdx]: newState
+      };
+    });
+
+    // Award bonus XP on successful active recall
+    if (rating >= 3) {
+      setXpPoints(prev => {
+        const newXp = prev + 15;
+        localStorage.setItem('zipytiny_user_xp', String(newXp));
+        return newXp;
+      });
+    }
+
+    // Close card flip state & advance review queue
+    setRevealedFlashcards(prev => ({ ...prev, [cardIdx]: false }));
+    
+    // Increment local state pointer or trigger success celebration
+    if (currentReviewIndex >= dueCardIndices.length - 1) {
+      // Completed last card
+      setCurrentReviewIndex(0);
+    }
+  };
+
+  const getNextIntervalPreview = (cardIdx: number, rating: number): string => {
+    const oldState = sm2States[cardIdx] || {
+      interval: 0,
+      repetition: 0,
+      efactor: 2.5,
+      nextReviewDate: 0,
+      historyCount: 0
+    };
+
+    let { interval, repetition, efactor } = oldState;
+    const q = rating;
+
+    if (q >= 3) {
+      if (repetition === 0) {
+        interval = 1;
+      } else if (repetition === 1) {
+        interval = 3;
+      } else {
+        interval = Math.round(interval * efactor);
+      }
+    } else {
+      interval = 1;
+    }
+
+    return interval === 1 ? '1 day' : `${interval} days`;
+  };
+
+  const handleResetSM2Deck = () => {
+    if (window.confirm("Are you sure you want to reset all spaced-repetition memory weights for this deck? This will restart your learning intervals.")) {
+      setSm2States({});
+      setCurrentReviewIndex(0);
+    }
+  };
+  
   // Smart Notes State
   const [notesText, setNotesText] = useState<string>(() => {
     return localStorage.getItem(`zipytiny_notes_${videoId}`) || '';
