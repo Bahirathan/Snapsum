@@ -3344,64 +3344,108 @@ export default function LandingPage({
                 <span>SOC2 Compliant · HIPAA Ready · SSL Secured</span>
               </div>
               
-              {/* Follow Us panel in landing footer */}
-              <div className="pt-2">
-                <div className="flex items-center gap-4 py-2 bg-neutral-900/60 px-4 rounded-xl border border-zinc-800/50 w-fit">
-                  <span className="text-xs font-bold text-zinc-300 tracking-wide font-sans">
-                    Follow us
+              {/* Follow Us panel in landing footer - Redesigned executive social hub */}
+              <div className="pt-3 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                   </span>
-                  <div className="flex items-center gap-3">
-                    <a 
-                      href={youtubeLink} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-zinc-400 hover:text-red-500 transition-colors duration-200"
-                      aria-label="Follow us on YouTube"
-                      id="landing-footer-youtube-link"
-                    >
-                      <Youtube className="w-4 h-4" />
-                    </a>
-                    <a 
-                      href={xLink} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-zinc-400 hover:text-white transition-colors duration-200"
-                      aria-label="Follow us on X"
-                      id="landing-footer-x-link"
-                    >
-                      <Twitter className="w-4 h-4" />
-                    </a>
-                    <a 
-                      href={facebookLink} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-zinc-400 hover:text-blue-500 transition-colors duration-200"
-                      aria-label="Follow us on Facebook"
-                      id="landing-footer-facebook-link"
-                    >
-                      <Facebook className="w-4 h-4" />
-                    </a>
-                    <a 
-                      href={linkedinLink} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-zinc-400 hover:text-sky-500 transition-colors duration-200"
-                      aria-label="Follow us on LinkedIn"
-                      id="landing-footer-linkedin-link"
-                    >
-                      <Linkedin className="w-4 h-4" />
-                    </a>
-                    <a 
-                      href={tiktokLink} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-zinc-400 hover:text-teal-400 transition-colors duration-200"
-                      aria-label="Follow us on TikTok"
-                      id="landing-footer-tiktok-link"
-                    >
-                      <Music className="w-4 h-4" />
-                    </a>
-                  </div>
+                  <span className="text-[11px] font-extrabold tracking-wider text-zinc-300 font-mono uppercase">
+                    Connect With Us
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* YouTube */}
+                  <a 
+                    href={youtubeLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="group relative flex items-center gap-2 px-3 py-2 bg-zinc-900/90 hover:bg-red-500/10 border border-zinc-800/80 hover:border-red-500/50 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-red-500/10"
+                    aria-label="Follow us on YouTube"
+                    id="landing-footer-youtube-link"
+                  >
+                    <div className="p-1 rounded-lg bg-red-500/10 text-red-500 group-hover:bg-red-500 group-hover:text-white transition-colors duration-200">
+                      <Youtube className="w-4 h-4 shrink-0" />
+                    </div>
+                    <span className="text-xs font-semibold text-zinc-300 group-hover:text-white font-sans">YouTube</span>
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-zinc-800 text-white text-[10px] font-medium px-2 py-0.5 rounded-md shadow-md pointer-events-none whitespace-nowrap border border-zinc-700 z-30">
+                      Watch Tutorials
+                    </span>
+                  </a>
+
+                  {/* X / Twitter */}
+                  <a 
+                    href={xLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="group relative flex items-center gap-2 px-3 py-2 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-800/80 hover:border-zinc-600 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-white/5"
+                    aria-label="Follow us on X"
+                    id="landing-footer-x-link"
+                  >
+                    <div className="p-1 rounded-lg bg-zinc-800 text-zinc-300 group-hover:bg-zinc-100 group-hover:text-zinc-900 transition-colors duration-200">
+                      <Twitter className="w-4 h-4 shrink-0" />
+                    </div>
+                    <span className="text-xs font-semibold text-zinc-300 group-hover:text-white font-sans">X / Twitter</span>
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-zinc-800 text-white text-[10px] font-medium px-2 py-0.5 rounded-md shadow-md pointer-events-none whitespace-nowrap border border-zinc-700 z-30">
+                      Product News
+                    </span>
+                  </a>
+
+                  {/* Facebook */}
+                  <a 
+                    href={facebookLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="group relative flex items-center gap-2 px-3 py-2 bg-zinc-900/90 hover:bg-blue-600/10 border border-zinc-800/80 hover:border-blue-500/50 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/10"
+                    aria-label="Follow us on Facebook"
+                    id="landing-footer-facebook-link"
+                  >
+                    <div className="p-1 rounded-lg bg-blue-500/10 text-blue-500 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
+                      <Facebook className="w-4 h-4 shrink-0" />
+                    </div>
+                    <span className="text-xs font-semibold text-zinc-300 group-hover:text-white font-sans">Facebook</span>
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-zinc-800 text-white text-[10px] font-medium px-2 py-0.5 rounded-md shadow-md pointer-events-none whitespace-nowrap border border-zinc-700 z-30">
+                      Community Group
+                    </span>
+                  </a>
+
+                  {/* LinkedIn */}
+                  <a 
+                    href={linkedinLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="group relative flex items-center gap-2 px-3 py-2 bg-zinc-900/90 hover:bg-sky-500/10 border border-zinc-800/80 hover:border-sky-500/50 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-sky-500/10"
+                    aria-label="Follow us on LinkedIn"
+                    id="landing-footer-linkedin-link"
+                  >
+                    <div className="p-1 rounded-lg bg-sky-500/10 text-sky-400 group-hover:bg-sky-500 group-hover:text-white transition-colors duration-200">
+                      <Linkedin className="w-4 h-4 shrink-0" />
+                    </div>
+                    <span className="text-xs font-semibold text-zinc-300 group-hover:text-white font-sans">LinkedIn</span>
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-zinc-800 text-white text-[10px] font-medium px-2 py-0.5 rounded-md shadow-md pointer-events-none whitespace-nowrap border border-zinc-700 z-30">
+                      Company Insights
+                    </span>
+                  </a>
+
+                  {/* TikTok */}
+                  <a 
+                    href={tiktokLink} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="group relative flex items-center gap-2 px-3 py-2 bg-zinc-900/90 hover:bg-teal-500/10 border border-zinc-800/80 hover:border-teal-500/50 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-teal-500/10"
+                    aria-label="Follow us on TikTok"
+                    id="landing-footer-tiktok-link"
+                  >
+                    <div className="p-1 rounded-lg bg-teal-500/10 text-teal-400 group-hover:bg-teal-400 group-hover:text-zinc-950 transition-colors duration-200">
+                      <Music className="w-4 h-4 shrink-0" />
+                    </div>
+                    <span className="text-xs font-semibold text-zinc-300 group-hover:text-white font-sans">TikTok</span>
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-150 bg-zinc-800 text-white text-[10px] font-medium px-2 py-0.5 rounded-md shadow-md pointer-events-none whitespace-nowrap border border-zinc-700 z-30">
+                      Study Clips
+                    </span>
+                  </a>
                 </div>
               </div>
             </div>
