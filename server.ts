@@ -4185,6 +4185,7 @@ app.use((req, res, next) => {
 app.get('/sitemap.xml', (req, res) => {
   const filePath = path.join(process.cwd(), 'public', 'sitemap.xml');
   res.header('Content-Type', 'application/xml; charset=utf-8');
+  res.header('Cache-Control', 'public, max-age=0, must-revalidate');
   if (fs.existsSync(filePath)) {
     return res.sendFile(filePath);
   }
@@ -4194,6 +4195,7 @@ app.get('/sitemap.xml', (req, res) => {
 app.get('/robots.txt', (req, res) => {
   const filePath = path.join(process.cwd(), 'public', 'robots.txt');
   res.header('Content-Type', 'text/plain; charset=utf-8');
+  res.header('Cache-Control', 'public, max-age=0, must-revalidate');
   if (fs.existsSync(filePath)) {
     return res.sendFile(filePath);
   }
@@ -4203,6 +4205,7 @@ app.get('/robots.txt', (req, res) => {
 app.get('/llms.txt', (req, res) => {
   const filePath = path.join(process.cwd(), 'public', 'llms.txt');
   res.header('Content-Type', 'text/plain; charset=utf-8');
+  res.header('Cache-Control', 'public, max-age=0, must-revalidate');
   if (fs.existsSync(filePath)) {
     return res.sendFile(filePath);
   }
