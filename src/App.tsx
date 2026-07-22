@@ -1527,25 +1527,38 @@ export default function App() {
     return '';
   });
 
-  // Robust IntersectionObserver for the footer to prevent overlapping/hiding social media links
+  // Robust IntersectionObserver for all footers to prevent overlapping/hiding social media links
   useEffect(() => {
-    const footer = document.getElementById('app-footer');
-    if (!footer) return;
+    const footers = document.querySelectorAll('footer, #app-footer, #landing-footer');
+    if (footers.length === 0) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const [entry] = entries;
-        setIsFooterVisible(entry.isIntersecting);
+        const anyIntersecting = entries.some((entry) => entry.isIntersecting);
+        setIsFooterVisible(anyIntersecting);
       },
       {
         root: null,
-        threshold: 0.01, // trigger early when even 1% of the footer is visible
+        threshold: 0.01, // trigger early when even 1% of any footer is visible
       }
     );
 
-    observer.observe(footer);
+    footers.forEach((f) => observer.observe(f));
+
+    const handleScroll = () => {
+      const scrollPos = window.scrollY || window.pageYOffset;
+      const windowHeight = window.innerHeight;
+      const totalHeight = document.documentElement.scrollHeight;
+      if (totalHeight > 0 && windowHeight + scrollPos >= totalHeight - 550) {
+        setIsFooterVisible(true);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
     return () => {
       observer.disconnect();
+      window.removeEventListener('scroll', handleScroll);
     };
   }, [currentScreen]);
 
@@ -12877,7 +12890,8 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
       )}
 
       {/* Dynamic Social Proof Indicators Section */}
-      <section className="bg-neutral-50 dark:bg-zinc-950/40 py-12 border-t border-b border-neutral-200/50 dark:border-zinc-800/80 font-sans text-center">
+      {currentScreen !== 'landing' && (
+        <section className="bg-neutral-50 dark:bg-zinc-950/40 py-12 border-t border-b border-neutral-200/50 dark:border-zinc-800/80 font-sans text-center">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="space-y-1.5 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-black/[0.03] dark:border-white/[0.02] shadow-xs hover:scale-103 transition duration-300">
@@ -12904,9 +12918,11 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </div>
         </div>
       </section>
+      )}
 
       {/* Humble Footer */}
-      <footer id="app-footer" className="bg-slate-900 text-white mt-16 py-12 border-t border-slate-800 font-sans">
+      {currentScreen !== 'landing' && (
+        <footer id="app-footer" className="bg-slate-900 text-white mt-16 py-12 border-t border-slate-800 font-sans">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg overflow-hidden flex items-center justify-center bg-slate-900 border border-slate-800">
@@ -13027,6 +13043,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </div>
         </div>
       </footer>
+      )}
 
       {/* 💬 Zipytiny Elite AI Customer Support Hub */}
       <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 font-sans text-left">

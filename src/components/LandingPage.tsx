@@ -4,7 +4,7 @@ import {
   Sparkles, Zap, ArrowRight, CheckCircle, FileText, Globe, MessageSquare, 
   Video, Play, Bookmark, Headphones, Users, ChevronDown, Download, Award,
   Upload, Brain, Share2, Star, TrendingUp, Clock, Shield, Cpu, Frown, Smile, XCircle,
-  BarChart2, Layers, BookOpen, Mic, PenTool, Hash, ChevronRight,
+  BarChart2, Layers, BookOpen, Mic, PenTool, Hash, ChevronRight, X,
   Youtube, Presentation, HelpCircle, Lock, Calculator, Settings, Gift,
   Twitter, Facebook, Linkedin, Music
 } from 'lucide-react';
@@ -249,13 +249,38 @@ export default function LandingPage({
   }, []);
 
   const [showStickyCTA, setShowStickyCTA] = useState(false);
+  const [isFooterVisible, setIsFooterVisible] = useState(false);
+  const [isCtaDismissed, setIsCtaDismissed] = useState(false);
+
+  useEffect(() => {
+    const footers = document.querySelectorAll('footer, #landing-footer, #app-footer');
+    if (footers.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const anyIntersecting = entries.some((entry) => entry.isIntersecting);
+        setIsFooterVisible(anyIntersecting);
+      },
+      {
+        root: null,
+        threshold: 0.01,
+      }
+    );
+
+    footers.forEach((f) => observer.observe(f));
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let initialHeight = window.innerHeight;
     const handleScroll = () => {
-      // Check if scrolled past hero (e.g. 500px) and keyboard is not open
       const isKeyboardActive = window.innerHeight < initialHeight * 0.75;
-      if (window.scrollY > 550 && !isKeyboardActive) {
+      const scrollPos = window.scrollY || window.pageYOffset;
+      const windowHeight = window.innerHeight;
+      const totalHeight = document.documentElement.scrollHeight;
+      const isNearBottom = totalHeight > 0 && (windowHeight + scrollPos >= totalHeight - 550);
+
+      if (scrollPos > 550 && !isKeyboardActive && !isNearBottom) {
         setShowStickyCTA(true);
       } else {
         setShowStickyCTA(false);
@@ -264,6 +289,7 @@ export default function LandingPage({
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll, { passive: true });
+    handleScroll();
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
@@ -3288,7 +3314,7 @@ export default function LandingPage({
       </section>
 
       {/* 10. PREMIUM SAAS FOOTER */}
-      <footer className="w-full bg-neutral-950 text-zinc-400 pt-16 pb-8 border-t border-zinc-800 relative z-10">
+      <footer id="landing-footer" className="w-full bg-neutral-950 text-zinc-400 pt-16 pb-8 border-t border-zinc-800 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
             {/* Brand Column */}
@@ -3411,8 +3437,17 @@ export default function LandingPage({
       </footer>
 
       {/* Floating Sticky CTA Bar (Goal 9) */}
-      {showStickyCTA && (
-        <div className="fixed bottom-0 sm:bottom-6 left-0 sm:left-1/2 sm:-translate-x-1/2 z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-4 py-3 sm:px-6 sm:py-3.5 sm:rounded-full border-t sm:border border-neutral-200/60 dark:border-zinc-800 shadow-2xl flex flex-col sm:flex-row items-center gap-2 sm:gap-4 animate-slideUp w-full sm:max-w-xl sm:w-auto justify-between">
+      {showStickyCTA && !isFooterVisible && !isCtaDismissed && (
+        <div className="fixed bottom-0 sm:bottom-6 left-0 sm:left-1/2 sm:-translate-x-1/2 z-50 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md px-4 py-3 sm:px-6 sm:py-3.5 sm:rounded-full border-t sm:border border-neutral-200/60 dark:border-zinc-800 shadow-2xl flex flex-col sm:flex-row items-center gap-2 sm:gap-4 animate-slideUp w-full sm:max-w-xl sm:w-auto justify-between relative">
+          <button
+            type="button"
+            onClick={() => setIsCtaDismissed(true)}
+            className="absolute top-2 right-2 sm:-top-2 sm:-right-2 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 dark:text-zinc-300 p-1.5 rounded-full shadow-md transition cursor-pointer z-10"
+            title="Dismiss CTA"
+            aria-label="Dismiss banner"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
           <div className="hidden sm:flex flex-col text-left">
             <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">ZIPYTINY STUDY SUITE</span>
             <span className="text-xs font-semibold text-neutral-500 dark:text-zinc-400 font-sans">Free • No Credit Card Required</span>
