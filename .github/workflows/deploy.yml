@@ -74,14 +74,20 @@ jobs:
           # Allows public (unauthenticated) traffic to access the app
           flags: --allow-unauthenticated
 
-      # Deploy Firebase Hosting configuration to activate domain rewrites to Cloud Run
+      # Set up Node.js for building static distribution assets
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Deploy Firebase Hosting with full build output to ensure CDN static files are updated
       - name: Deploy Firebase Hosting
         continue-on-error: true
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
         run: |
-          mkdir -p dist
-          touch dist/.gitkeep
+          npm ci
+          npm run build
           npx firebase-tools deploy --only hosting --project ${{ env.PROJECT_ID }} --non-interactive || {
             echo "::warning::Firebase Hosting deployment failed. This is expected if the service account does not have the 'Firebase Hosting Admin' role, or if Firebase Hosting is not initialized on project ${{ env.PROJECT_ID }}."
             exit 0
