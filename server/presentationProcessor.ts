@@ -211,7 +211,7 @@ Strictly output ONLY valid JSON. No conversational wrapper, no markdown block ex
   }));
 }
 
-function generateFallbackSlides(summaryData: any, style: string): PresentationSlide[] {
+export function generateFallbackSlides(summaryData: any, style: string): PresentationSlide[] {
   const title = summaryData.title || 'Executive Masterclass Summary';
   const summary = summaryData.summary || 'Comprehensive breakdown of core concepts and strategic implications.';
   const takeaways = Array.isArray(summaryData.takeaways) 

@@ -54,6 +54,7 @@ interface AIPresentationGeneratorProps {
   videoId: string;
   getHeaders?: () => Record<string, string>;
   videoTitle?: string;
+  activeSummary?: any;
 }
 
 // Themes mapping
@@ -72,7 +73,7 @@ const PRESENTATION_STYLES = [
   'Training', 'Classroom', 'Marketing', 'Sales', 'Technology', 'Startup'
 ];
 
-export default function AIPresentationGenerator({ videoId, getHeaders, videoTitle }: AIPresentationGeneratorProps) {
+export default function AIPresentationGenerator({ videoId, getHeaders, videoTitle, activeSummary }: AIPresentationGeneratorProps) {
   const [presentation, setPresentation] = useState<AIPresentation | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [activeSlideIdx, setActiveSlideIdx] = useState<number>(0);
@@ -177,7 +178,8 @@ export default function AIPresentationGenerator({ videoId, getHeaders, videoTitl
           videoId,
           videoTitle,
           style: selectedStyle,
-          theme: selectedTheme
+          theme: selectedTheme,
+          summaryData: activeSummary
         })
       });
       const data = await res.json();

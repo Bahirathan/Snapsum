@@ -1765,6 +1765,7 @@ export default function LearningWorkspace({
                   videoId={videoId || ''}
                   getHeaders={getHeaders}
                   videoTitle={videoTitle}
+                  activeSummary={activeSummary}
                 />
               </motion.div>
             )}

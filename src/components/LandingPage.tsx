@@ -145,6 +145,8 @@ export default function LandingPage({
   const [ytUrl, setYtUrl] = useState('');
   const [urlError, setUrlError] = useState('');
   const [landingSourceType, setLandingSourceType] = useState<'video' | 'website' | 'file' | 'text'>('video');
+  const [landingMeetingSelected, setLandingMeetingSelected] = useState(false);
+  const [landingLectureSelected, setLandingLectureSelected] = useState(false);
   const [landingWebsiteUrl, setLandingWebsiteUrl] = useState('');
   const [landingPastedText, setLandingPastedText] = useState('');
   const [landingFiles, setLandingFiles] = useState<{name: string; size: number; type: string; textContent?: string}[]>([]);
@@ -469,17 +471,17 @@ export default function LandingPage({
               </div>
               
               <h1 id="landing-hero-headline" className="text-4xl sm:text-5xl md:text-6xl font-extrabold font-display tracking-tight leading-[1.08] text-[#1d1d1f] dark:text-zinc-50">
-                Turn Any Video or Document Into <br className="hidden sm:inline" />
-                <span className="bg-gradient-to-r from-[#0071e3] via-blue-600 to-indigo-600 bg-clip-text text-transparent">Your Personal AI Study Workspace</span>
+                Turn Videos, Lectures & Meetings Into <br className="hidden sm:inline" />
+                <span className="bg-gradient-to-r from-[#0071e3] via-blue-600 to-indigo-600 bg-clip-text text-transparent">AI Notes, Slide Decks & Study Guides</span>
               </h1>
               
               <p className="text-neutral-700 dark:text-zinc-200 text-base sm:text-lg md:text-xl max-w-2xl leading-relaxed font-medium tracking-normal">
-                Paste any YouTube video or document and instantly get AI notes, flashcards, quizzes, mind maps and an AI tutor—all in under 60 seconds.
+                Paste any YouTube video, university lecture, or upload Zoom, Google Meet & Teams meeting recordings/transcripts to instantly generate double-length summaries, slide presentations, quizzes & mind maps in under 60 seconds.
               </p>
 
               {/* 🎯 Differentiation statement directly below subheadline */}
               <p className="text-xs sm:text-sm text-neutral-500 dark:text-zinc-400 leading-relaxed max-w-2xl font-normal">
-                Unlike generic AI chat, Zipytiny automatically transforms videos and documents into a complete AI study workspace with notes, quizzes, flashcards, mind maps and an AI tutor.
+                Unlike basic AI tools, Zipytiny automatically transforms YouTube videos, class lectures, Zoom / GMeet / Teams meetings, and PDFs into double-detailed summaries, complete slide presentations, quizzes, active recall flashcards, and an AI tutor.
               </p>
 
               {/* 💬 Authentic and specific testimonial above the fold */}
@@ -508,17 +510,27 @@ export default function LandingPage({
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-3.5">
                   <div className="flex flex-wrap gap-1 bg-neutral-100/90 dark:bg-zinc-900/80 p-1 rounded-2xl w-fit border border-neutral-250 dark:border-zinc-800/80 shadow-xs">
                     {[
-                      { id: 'video', label: 'YouTube Video', icon: Video, color: 'text-red-500 bg-red-500/10' },
-                      { id: 'file', label: 'Document Upload', icon: Upload, color: 'text-amber-500 bg-amber-500/10' },
+                      { id: 'video', label: 'YouTube & Videos', icon: Video, color: 'text-red-500 bg-red-500/10' },
+                      { id: 'meeting', label: 'Zoom, GMeet & Teams Meetings', icon: Users, color: 'text-indigo-500 bg-indigo-500/10' },
+                      { id: 'lecture', label: 'Lectures & Seminars', icon: BookOpen, color: 'text-emerald-500 bg-emerald-500/10' },
+                      { id: 'file', label: 'PDFs & Documents', icon: Upload, color: 'text-amber-500 bg-amber-500/10' },
                     ].map((tab) => {
                       const TabIcon = tab.icon;
-                      const isSelected = landingSourceType === tab.id;
+                      const isSelected = landingSourceType === tab.id || (tab.id === 'meeting' && landingSourceType === 'file' && landingMeetingSelected) || (tab.id === 'lecture' && landingSourceType === 'file' && landingLectureSelected);
                       return (
                         <button
                           key={tab.id}
                           type="button"
                           onClick={() => {
-                            setLandingSourceType(tab.id as any);
+                            if (tab.id === 'meeting' || tab.id === 'lecture') {
+                              setLandingSourceType('file');
+                              setLandingMeetingSelected(tab.id === 'meeting');
+                              setLandingLectureSelected(tab.id === 'lecture');
+                            } else {
+                              setLandingSourceType(tab.id as any);
+                              setLandingMeetingSelected(false);
+                              setLandingLectureSelected(false);
+                            }
                             setUrlError('');
                           }}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer active:scale-95 duration-150 ${
@@ -714,10 +726,10 @@ export default function LandingPage({
                       <div className="flex items-center gap-2.5">
                         <Upload className="w-5 h-5 text-amber-500 shrink-0 animate-pulse" />
                         <label className="text-xs font-semibold text-neutral-700 dark:text-zinc-300 cursor-pointer flex flex-wrap items-center gap-1.5 hover:text-[#0071e3] transition">
-                          <span>Drop documents here or</span>
+                          <span>{landingMeetingSelected ? 'Drop Zoom, GMeet or Teams transcripts/recordings here or' : landingLectureSelected ? 'Drop lecture notes, recordings or slides here or' : 'Drop PDFs, slides, Zoom/GMeet/Teams transcripts or recordings here or'}</span>
                           <input
                             type="file"
-                            accept=".pdf,.docx,.pptx,.txt"
+                            accept=".pdf,.docx,.pptx,.txt,.vtt,.srt,.mp3,.wav,.m4a,.mp4,.webm"
                             multiple
                             onChange={(e) => {
                               if (e.target.files) {
