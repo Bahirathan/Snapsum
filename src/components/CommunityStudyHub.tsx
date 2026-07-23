@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   Search, BookOpen, Brain, Sparkles, Star, Users, ArrowRight, 
-  Tag, Clock, CheckCircle2, Share2, Download, ExternalLink, Filter 
+  Tag, Clock, CheckCircle2, Share2, Download, ExternalLink, Filter,
+  Play, Video
 } from 'lucide-react';
 
 export interface StudyResource {
@@ -17,6 +18,8 @@ export interface StudyResource {
   hasFlashcards: boolean;
   hasMindMap: boolean;
   hasQuiz: boolean;
+  youtubeId?: string;
+  thumbnailUrl?: string;
 }
 
 export const COMMUNITY_STUDY_RESOURCES: StudyResource[] = [
@@ -33,6 +36,8 @@ export const COMMUNITY_STUDY_RESOURCES: StudyResource[] = [
     hasFlashcards: true,
     hasMindMap: true,
     hasQuiz: true,
+    youtubeId: 'aircAruvnKk',
+    thumbnailUrl: 'https://img.youtube.com/vi/aircAruvnKk/hqdefault.jpg',
   },
   {
     id: 'yc-ai-playbook',
@@ -47,6 +52,8 @@ export const COMMUNITY_STUDY_RESOURCES: StudyResource[] = [
     hasFlashcards: true,
     hasMindMap: true,
     hasQuiz: true,
+    youtubeId: '67_aMPDk28U',
+    thumbnailUrl: 'https://img.youtube.com/vi/67_aMPDk28U/hqdefault.jpg',
   },
   {
     id: 'stanford-focus-mastery',
@@ -61,6 +68,8 @@ export const COMMUNITY_STUDY_RESOURCES: StudyResource[] = [
     hasFlashcards: true,
     hasMindMap: true,
     hasQuiz: true,
+    youtubeId: 'gXVUJjp462U',
+    thumbnailUrl: 'https://img.youtube.com/vi/gXVUJjp462U/hqdefault.jpg',
   },
   {
     id: 'mcat-biochem-pathways',
@@ -75,6 +84,8 @@ export const COMMUNITY_STUDY_RESOURCES: StudyResource[] = [
     hasFlashcards: true,
     hasMindMap: true,
     hasQuiz: true,
+    youtubeId: '0I25N26aUOk',
+    thumbnailUrl: 'https://img.youtube.com/vi/0I25N26aUOk/hqdefault.jpg',
   },
   {
     id: 'law-constitutional-rights',
@@ -89,6 +100,8 @@ export const COMMUNITY_STUDY_RESOURCES: StudyResource[] = [
     hasFlashcards: true,
     hasMindMap: true,
     hasQuiz: true,
+    youtubeId: 'yA53v7s0R-A',
+    thumbnailUrl: 'https://img.youtube.com/vi/yA53v7s0R-A/hqdefault.jpg',
   },
   {
     id: 'quantum-computing-101',
@@ -103,6 +116,8 @@ export const COMMUNITY_STUDY_RESOURCES: StudyResource[] = [
     hasFlashcards: true,
     hasMindMap: true,
     hasQuiz: true,
+    youtubeId: 'F_Riqjdh2oM',
+    thumbnailUrl: 'https://img.youtube.com/vi/F_Riqjdh2oM/hqdefault.jpg',
   }
 ];
 
@@ -179,56 +194,85 @@ export default function CommunityStudyHub({ onSelectResource, onOpenReferralModa
         {filteredResources.map((res) => (
           <div
             key={res.id}
-            className="group bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 hover:border-indigo-300 dark:hover:border-indigo-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between text-left space-y-4"
+            className="group bg-white dark:bg-zinc-900 border border-neutral-200/80 dark:border-zinc-800 hover:border-indigo-300 dark:hover:border-indigo-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between text-left"
           >
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold font-mono uppercase px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-150 dark:border-indigo-900">
-                  {res.category}
-                </span>
-                <div className="flex items-center gap-1 text-amber-500 text-xs font-bold">
-                  <Star className="w-3.5 h-3.5 fill-amber-500" />
-                  <span>{res.rating}</span>
-                  <span className="text-neutral-400 font-normal">({(res.studyCount / 1000).toFixed(1)}k studies)</span>
+            {/* YouTube Video Thumbnail Banner */}
+            <div className="relative w-full aspect-video bg-neutral-900 overflow-hidden cursor-pointer" onClick={() => onSelectResource(res)}>
+              <img
+                src={res.thumbnailUrl || (res.youtubeId ? `https://img.youtube.com/vi/${res.youtubeId}/hqdefault.jpg` : '')}
+                alt={res.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-center justify-center">
+                <div className="w-11 h-11 rounded-full bg-white/90 dark:bg-zinc-900/90 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  <Play className="w-5 h-5 fill-current ml-0.5" />
                 </div>
               </div>
-
-              <h3 className="text-base font-bold text-neutral-900 dark:text-zinc-100 font-display group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
-                {res.title}
-              </h3>
-
-              <p className="text-xs text-neutral-600 dark:text-zinc-400 leading-relaxed line-clamp-3">
-                {res.summary}
-              </p>
-
-              {/* Key Concepts Tags */}
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {res.keyConcepts.map((concept, i) => (
-                  <span 
-                    key={i} 
-                    className="text-[10px] bg-neutral-100 dark:bg-zinc-800 text-neutral-600 dark:text-zinc-400 px-2 py-0.5 rounded-md font-medium"
-                  >
-                    #{concept}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-neutral-100 dark:border-zinc-800/80 flex items-center justify-between">
-              <div className="flex items-center gap-3 text-[11px] font-mono font-medium text-neutral-500 dark:text-zinc-400">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-indigo-500" />
+              <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-[10px] font-mono font-medium text-white">
+                <span className="px-2 py-0.5 rounded bg-black/75 backdrop-blur-xs flex items-center gap-1">
+                  <Video className="w-3 h-3 text-red-500 fill-red-500" />
+                  {res.sourceTitle}
+                </span>
+                <span className="px-2 py-0.5 rounded bg-black/75 backdrop-blur-xs font-bold">
                   {res.duration}
                 </span>
               </div>
+            </div>
 
-              <button
-                onClick={() => onSelectResource(res)}
-                className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm shadow-indigo-600/20 active:scale-95"
-              >
-                <span>Study Deck</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+            <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold font-mono uppercase px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-150 dark:border-indigo-900">
+                    {res.category}
+                  </span>
+                  <div className="flex items-center gap-1 text-amber-500 text-xs font-bold">
+                    <Star className="w-3.5 h-3.5 fill-amber-500" />
+                    <span>{res.rating}</span>
+                    <span className="text-neutral-400 font-normal">({(res.studyCount / 1000).toFixed(1)}k studies)</span>
+                  </div>
+                </div>
+
+                <h3 
+                  onClick={() => onSelectResource(res)}
+                  className="text-base font-bold text-neutral-900 dark:text-zinc-100 font-display group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition cursor-pointer"
+                >
+                  {res.title}
+                </h3>
+
+                <p className="text-xs text-neutral-600 dark:text-zinc-400 leading-relaxed line-clamp-3">
+                  {res.summary}
+                </p>
+
+                {/* Key Concepts Tags */}
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {res.keyConcepts.map((concept, i) => (
+                    <span 
+                      key={i} 
+                      className="text-[10px] bg-neutral-100 dark:bg-zinc-800 text-neutral-600 dark:text-zinc-400 px-2 py-0.5 rounded-md font-medium"
+                    >
+                      #{concept}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-neutral-100 dark:border-zinc-800/80 flex items-center justify-between">
+                <div className="flex items-center gap-3 text-[11px] font-mono font-medium text-neutral-500 dark:text-zinc-400">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-indigo-500" />
+                    {res.duration}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => onSelectResource(res)}
+                  className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-sm shadow-indigo-600/20 active:scale-95"
+                >
+                  <span>Study Deck</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         ))}
