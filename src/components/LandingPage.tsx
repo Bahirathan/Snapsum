@@ -9,6 +9,7 @@ import {
   Twitter, Facebook, Linkedin, Music
 } from 'lucide-react';
 import { CinematicExplainer } from './CinematicExplainer';
+import CommunityStudyHub, { StudyResource } from './CommunityStudyHub';
 
 interface LandingPageProps {
   onLaunchApp: (targetTab?: string, targetSubTab?: string) => void;
@@ -19,6 +20,7 @@ interface LandingPageProps {
   visitorUser: any;
   onGoogleSignIn: () => void;
   onStartFreeSummary?: (input: string, type?: 'video' | 'website' | 'file' | 'text', filesList?: any[], depth?: 'quick' | 'study' | 'mastery') => void;
+  onOpenReferralModal?: () => void;
   youtubeLink?: string;
   xLink?: string;
   facebookLink?: string;
@@ -130,6 +132,7 @@ export default function LandingPage({
   visitorUser, 
   onGoogleSignIn, 
   onStartFreeSummary,
+  onOpenReferralModal,
   youtubeLink = 'https://www.youtube.com',
   xLink = 'https://x.com',
   facebookLink = 'https://facebook.com',
@@ -3195,6 +3198,14 @@ export default function LandingPage({
             );
           })}
         </div>
+      </section>
+
+      {/* 7.5 PUBLIC COMMUNITY STUDY HUB */}
+      <section className="w-full py-12 bg-white dark:bg-zinc-950 border-t border-neutral-200/80 dark:border-zinc-800">
+        <CommunityStudyHub 
+          onSelectResource={(res) => onStartFreeSummary?.(res.title, 'text')} 
+          onOpenReferralModal={onOpenReferralModal} 
+        />
       </section>
 
       {/* 8. FAQ SECTION */}

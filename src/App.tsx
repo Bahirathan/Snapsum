@@ -99,6 +99,10 @@ import { KeyRound, ShieldAlert, Eye, EyeOff, MessageSquare, Headphones, Users, C
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { initGlobalErrorLogging, logClientError } from './utils/errorLogger';
 import { AppScreenSkeleton, WorkspaceSkeleton, PageLoadingIndicator } from './components/LoadingSkeletons';
+import { getRouteSeoData } from './server/seoPrerender';
+import { useSeoMeta } from './hooks/useSeoMeta';
+import ReferralModal from './components/ReferralModal';
+import CommunityStudyHub from './components/CommunityStudyHub';
 
 const LearningDashboardModule = lazy(() => import('./components/LearningDashboard').then(m => ({ default: m.LearningProgressDashboard })));
 const ActiveLearningDashboardModule = lazy(() => import('./components/LearningDashboard').then(m => ({ default: m.ActiveLearningDashboard })));
@@ -1527,6 +1531,24 @@ export default function App() {
     return '';
   });
 
+  const [showReferralModal, setShowReferralModal] = useState(false);
+
+  // Signal to the DOM that the React app has fully mounted and rendered content
+  useEffect(() => {
+    // Add react-mounted class to html element
+    document.documentElement.classList.add('react-mounted');
+
+    // Explicitly transition prerender and loading screen elements
+    const seoPrerenderEl = document.getElementById('seo-prerender');
+    if (seoPrerenderEl) {
+      seoPrerenderEl.style.display = 'none';
+    }
+    const appLoadingEl = document.getElementById('app-loading-screen');
+    if (appLoadingEl) {
+      appLoadingEl.style.display = 'none';
+    }
+  }, []);
+
   // Robust IntersectionObserver for all footers to prevent overlapping/hiding social media links
   useEffect(() => {
     const footers = document.querySelectorAll('footer, #app-footer, #landing-footer');
@@ -1587,6 +1609,29 @@ export default function App() {
       }
     } catch {}
     return '';
+  });
+
+  // Active client route calculation for dynamic head metadata updates
+  const clientActivePath = useMemo(() => {
+    if (currentScreen === 'landing') return '/';
+    if (currentScreen === 'blog') return currentBlogSlug ? `/blog/${currentBlogSlug}` : '/blog';
+    if (currentScreen === 'feature') return currentFeatureSlug ? `/features/${currentFeatureSlug}` : '/features/mind-maps';
+    if (currentScreen === 'billing') return '/pricing';
+    if (currentScreen === 'faq') return '/faq';
+    return typeof window !== 'undefined' ? window.location.pathname : '/';
+  }, [currentScreen, currentBlogSlug, currentFeatureSlug]);
+
+  const clientSeoData = useMemo(() => {
+    return getRouteSeoData(clientActivePath);
+  }, [clientActivePath]);
+
+  useSeoMeta({
+    title: clientSeoData.title,
+    description: clientSeoData.description,
+    keywords: clientSeoData.keywords,
+    canonical: clientSeoData.canonical,
+    ogType: clientSeoData.ogType,
+    jsonLd: clientSeoData.jsonLd,
   });
 
   // Synchronize browser URL navigation with active screen tab
@@ -13414,6 +13459,14 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </button>
         </div>
       )}
+
+      {/* Viral Referral Loop & Study Buddy Invite Modal */}
+      <ReferralModal
+        isOpen={showReferralModal}
+        onClose={() => setShowReferralModal(false)}
+        userId={visitorUser?.uid || 'STUDY_2026'}
+        userEmail={visitorUser?.email}
+      />
 
       </div>
     </ErrorBoundary>

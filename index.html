@@ -213,8 +213,12 @@
         transform: translateY(-1px);
       }
 
-      /* ⚡ Premium Anti-FOUC Hiding Rules */
-      .js #seo-prerender {
+      /* ⚡ Premium Anti-FOUC & Deferred SEO Prerender Hiding Rules */
+      /* Keep #seo-prerender visible in DOM for Googlebot/crawlers until React mounts */
+      .react-mounted #seo-prerender {
+        display: none !important;
+      }
+      .react-mounted #app-loading-screen {
         display: none !important;
       }
       .no-js #app-loading-screen {

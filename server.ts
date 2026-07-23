@@ -22,6 +22,7 @@ import { generateSecret, generateURI, verifySync } from 'otplib';
 import multer from 'multer';
 import { runDocumentIndexing } from './server/documentIndexer';
 import { getDocuments, deleteDocument, searchVectorStore, indexingProgress } from './server/vectorDb';
+import { getRouteSeoData, injectSeoIntoHtmlTemplate } from './src/server/seoPrerender';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -4192,6 +4193,59 @@ app.get('/sitemap.xml', (req, res) => {
   return res.status(404).send('Sitemap not found');
 });
 
+app.get('/rss.xml', (req, res) => {
+  res.header('Content-Type', 'application/xml; charset=utf-8');
+  res.header('Cache-Control', 'public, max-age=3600');
+  
+  const rssXml = `<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+  <channel>
+    <title>Zipytiny AI Study &amp; Learning Blog</title>
+    <link>https://www.zipytiny.app/blog</link>
+    <description>Actionable strategies for active recall, video distillation, spaced repetition, and exam prep.</description>
+    <language>en-us</language>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    <item>
+      <title>How to Turn a 2-Hour Video Lecture into 5-Minute Study Notes</title>
+      <link>https://www.zipytiny.app/blog/turn-video-lecture-to-study-notes</link>
+      <description>Learn how active recall, spaced repetition, and AI video distillation help postgrad students summarize YouTube lectures effortlessly.</description>
+      <pubDate>Mon, 20 Jul 2026 00:00:00 GMT</pubDate>
+      <guid>https://www.zipytiny.app/blog/turn-video-lecture-to-study-notes</guid>
+    </item>
+    <item>
+      <title>Top AI Tools to Turn Video Slides into Interactive Flashcards in 2026</title>
+      <link>https://www.zipytiny.app/blog/ai-tool-make-flashcards-slides</link>
+      <description>Discover how automated flashcard generation from slide decks and lecture videos speeds up memory retention and Anki export.</description>
+      <pubDate>Sat, 18 Jul 2026 00:00:00 GMT</pubDate>
+      <guid>https://www.zipytiny.app/blog/ai-tool-make-flashcards-slides</guid>
+    </item>
+    <item>
+      <title>How to Convert Zoom &amp; Teams Recorded Lectures into Practice Quizzes</title>
+      <link>https://www.zipytiny.app/blog/convert-zoom-recording-quiz</link>
+      <description>Turn recorded webinars, Zoom meetings, and Teams lectures into interactive multiple-choice practice quizzes automatically.</description>
+      <pubDate>Wed, 15 Jul 2026 00:00:00 GMT</pubDate>
+      <guid>https://www.zipytiny.app/blog/convert-zoom-recording-quiz</guid>
+    </item>
+    <item>
+      <title>Automated Study Guide Generation from Course Syllabi &amp; Video Series</title>
+      <link>https://www.zipytiny.app/blog/generate-study-guide-syllabus-pdf</link>
+      <description>Learn how to combine multi-video lecture playlists and PDF syllabi into structured, exam-ready study guides.</description>
+      <pubDate>Sun, 12 Jul 2026 00:00:00 GMT</pubDate>
+      <guid>https://www.zipytiny.app/blog/generate-study-guide-syllabus-pdf</guid>
+    </item>
+    <item>
+      <title>Why Visual Learners Retention Soars with AI Video Mind Maps</title>
+      <link>https://www.zipytiny.app/blog/visual-learners-video-mind-map-generator</link>
+      <description>Explore concept mapping and visual node connections for video lectures to boost recall and comprehension.</description>
+      <pubDate>Fri, 10 Jul 2026 00:00:00 GMT</pubDate>
+      <guid>https://www.zipytiny.app/blog/visual-learners-video-mind-map-generator</guid>
+    </item>
+  </channel>
+</rss>`;
+
+  res.send(rssXml);
+});
+
 app.get('/robots.txt', (req, res) => {
   const filePath = path.join(process.cwd(), 'public', 'robots.txt');
   res.header('Content-Type', 'text/plain; charset=utf-8');
@@ -4219,12 +4273,50 @@ async function bootstrap() {
       server: { middlewareMode: true },
       appType: 'spa',
     });
+
+    // Dynamic HTML SEO prerender middleware for dev mode
+    app.get('*', async (req, res, next) => {
+      if (req.path.startsWith('/api') || req.path.includes('.')) {
+        return next();
+      }
+      try {
+        const indexPath = path.join(process.cwd(), 'index.html');
+        if (fs.existsSync(indexPath)) {
+          const template = fs.readFileSync(indexPath, 'utf-8');
+          const seoData = getRouteSeoData(req.path);
+          let injectedHtml = injectSeoIntoHtmlTemplate(template, seoData);
+          injectedHtml = await vite.transformIndexHtml(req.originalUrl, injectedHtml);
+          return res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).send(injectedHtml);
+        }
+        next();
+      } catch (e) {
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
+      }
+    });
+
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    app.use(express.static(distPath, { index: false }));
+
+    // Dynamic HTML SEO prerender middleware for production Cloud Run
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api') || req.path.includes('.')) {
+        return next();
+      }
+      try {
+        const indexPath = path.join(distPath, 'index.html');
+        if (fs.existsSync(indexPath)) {
+          const template = fs.readFileSync(indexPath, 'utf-8');
+          const seoData = getRouteSeoData(req.path);
+          const injectedHtml = injectSeoIntoHtmlTemplate(template, seoData);
+          return res.status(200).set({ 'Content-Type': 'text/html; charset=utf-8' }).send(injectedHtml);
+        }
+        res.sendFile(path.join(distPath, 'index.html'));
+      } catch (err) {
+        next(err);
+      }
     });
   }
 
