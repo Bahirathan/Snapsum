@@ -57,6 +57,7 @@ import AIChatWithSummary from './AIChatWithSummary';
 import SummaryPremiumExporter from './SummaryPremiumExporter';
 import WorkspaceComments from './WorkspaceComments';
 import AIPresentationGenerator from './AIPresentationGenerator';
+import FormattedSummaryView from './FormattedSummaryView';
 
 interface LearningWorkspaceProps {
   activeSummary: YouTubeSummaryResponse;
@@ -1041,14 +1042,7 @@ export default function LearningWorkspace({
                     </div>
 
                     {/* Executive Summary Narrative Text */}
-                    <div className="bg-white dark:bg-zinc-900 border border-black/[0.03] dark:border-zinc-850 p-6 rounded-3xl shadow-sm text-left space-y-3">
-                      <h3 className="text-base font-bold font-display text-slate-900 dark:text-white border-l-4 border-indigo-600 pl-3">
-                        Executive Core Thesis & Narrative
-                      </h3>
-                      <p className="text-slate-600 dark:text-zinc-300 text-sm leading-relaxed whitespace-pre-line font-sans">
-                        {summaryText}
-                      </p>
-                    </div>
+                    <FormattedSummaryView summaryText={summaryText} />
 
                     {/* Value Takeaways & direct lessons */}
                     <div className="bg-white dark:bg-zinc-900 border border-black/[0.03] dark:border-zinc-850 p-6 rounded-3xl shadow-sm text-left space-y-4">

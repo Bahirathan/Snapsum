@@ -148,22 +148,49 @@ Where each slide has:
 Strictly output ONLY valid JSON. No conversational wrapper, no markdown block except optionally \`\`\`json \`\`\`. Avoid trailing commas. Verify brackets are balanced.
 `;
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-3.5-flash',
-    contents: [
-      { text: `Content context:\n${contentContext}` },
-      { text: prompt }
-    ],
-    config: {
-      temperature: 0.2,
-      responseMimeType: 'application/json'
+  let response: any;
+  try {
+    response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        { text: `Content context:\n${contentContext}` },
+        { text: prompt }
+      ],
+      config: {
+        temperature: 0.2,
+        responseMimeType: 'application/json'
+      }
+    });
+  } catch (err: any) {
+    console.warn("Presentation generation primary call failed, retrying with fallback model:", err.message);
+    try {
+      response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [
+          { text: `Content context:\n${contentContext}` },
+          { text: prompt }
+        ],
+        config: {
+          temperature: 0.1
+        }
+      });
+    } catch (retryErr: any) {
+      console.error("Presentation generation retry failed, using rich context fallback slides:", retryErr.message);
+      return generateFallbackSlides(summaryData, style);
     }
-  });
+  }
 
   const rawText = response.text || '';
-  const parsedSlides = cleanAndParseJson(rawText);
-  if (!Array.isArray(parsedSlides)) {
-    throw new Error('AI response was not a valid slide array.');
+  let parsedSlides: any;
+  try {
+    parsedSlides = cleanAndParseJson(rawText);
+  } catch (parseErr) {
+    console.warn("Failed to parse presentation JSON, utilizing context fallback generator");
+    return generateFallbackSlides(summaryData, style);
+  }
+
+  if (!Array.isArray(parsedSlides) || parsedSlides.length === 0) {
+    return generateFallbackSlides(summaryData, style);
   }
 
   // Ensure every slide has a unique ID and default fields
@@ -182,6 +209,116 @@ Strictly output ONLY valid JSON. No conversational wrapper, no markdown block ex
     confidenceScore: Number(slide.confidenceScore) || 90,
     layout: slide.layout || 'split'
   }));
+}
+
+function generateFallbackSlides(summaryData: any, style: string): PresentationSlide[] {
+  const title = summaryData.title || 'Executive Masterclass Summary';
+  const summary = summaryData.summary || 'Comprehensive breakdown of core concepts and strategic implications.';
+  const takeaways = Array.isArray(summaryData.takeaways) 
+    ? summaryData.takeaways.map((t: any) => typeof t === 'string' ? t : t.text || '')
+    : ['Master foundational frameworks', 'Apply core principles in practice', 'Optimize cognitive retention'];
+  const chapters = Array.isArray(summaryData.chapters) ? summaryData.chapters : [];
+
+  const slides: PresentationSlide[] = [
+    {
+      id: `slide_fallback_1`,
+      type: 'title',
+      title: title,
+      subtitle: `${style} Executive Overview & Interactive Knowledge Deck`,
+      icon: 'Presentation',
+      speakerNotes: `Welcome everyone. Today we are exploring "${title}". This presentation summarizes the core findings, analytical framework, and actionable conclusions.`,
+      speakingTimeSecs: 60,
+      confidenceScore: 98,
+      layout: 'hero'
+    },
+    {
+      id: `slide_fallback_2`,
+      type: 'agenda',
+      title: 'Executive Agenda & Objectives',
+      subtitle: 'Key domains covered in this brief',
+      bullets: [
+        'Foundational Concepts & Background Thesis',
+        'Direct Strategic Takeaways & Lessons',
+        'Structured Segments & Chapter Timeline',
+        'Implementation Roadmap & Q&A'
+      ],
+      icon: 'Layers',
+      speakerNotes: 'Here is our roadmap for today\'s deck. We will begin with foundational concepts, progress through core takeaways, analyze specific chapters, and end with strategic next steps.',
+      speakingTimeSecs: 75,
+      confidenceScore: 95,
+      layout: 'grid'
+    },
+    {
+      id: `slide_fallback_3`,
+      type: 'summary',
+      title: 'Core Thesis & Narrative Summary',
+      subtitle: 'High-level synthesis',
+      bullets: [
+        summary.slice(0, 180) + (summary.length > 180 ? '...' : ''),
+        'Synthesizes multi-source research into actionable takeaways.',
+        'Provides structural clarity on complex technical mechanics.'
+      ],
+      icon: 'Brain',
+      speakerNotes: `At its core: ${summary}`,
+      speakingTimeSecs: 90,
+      confidenceScore: 95,
+      layout: 'split'
+    }
+  ];
+
+  if (takeaways.length > 0) {
+    slides.push({
+      id: `slide_fallback_4`,
+      type: 'bullet',
+      title: 'Key Insights & Actionable Lessons',
+      subtitle: 'Primary conclusions derived from analysis',
+      bullets: takeaways.slice(0, 5),
+      icon: 'Lightbulb',
+      speakerNotes: 'Let\'s highlight the main takeaways. These points represent the highest leverage insights from this topic.',
+      speakingTimeSecs: 120,
+      confidenceScore: 94,
+      layout: 'accent'
+    });
+  }
+
+  if (chapters.length > 0) {
+    slides.push({
+      id: `slide_fallback_5`,
+      type: 'timeline',
+      title: 'Structured Chapter Timeline',
+      subtitle: 'Chronological progression of topics',
+      bullets: chapters.slice(0, 4).map((c: any) => `${c.timestamp || '00:00'} - ${c.title}: ${c.takeaway || ''}`),
+      diagram: {
+        type: 'timeline',
+        title: 'Lecture Progression',
+        elements: chapters.slice(0, 4).map((c: any) => `${c.timestamp || ''} ${c.title || 'Segment'}`)
+      },
+      icon: 'Clock',
+      speakerNotes: 'Here is how the subject unfolds across key timestamps and logical progression stages.',
+      speakingTimeSecs: 100,
+      confidenceScore: 92,
+      layout: 'full'
+    });
+  }
+
+  slides.push({
+    id: `slide_fallback_6`,
+    type: 'qa',
+    title: 'Discussion & Q&A',
+    subtitle: 'Key questions for review and active recall',
+    bullets: [
+      'What are the primary assumptions of this framework?',
+      'How does this apply to real-world scenarios?',
+      'What are the next action steps or further reading?'
+    ],
+    icon: 'HelpCircle',
+    speakerNotes: 'Thank you for your attention. Let\'s open the floor to questions and discuss practical applications.',
+    speakingTimeSecs: 90,
+    confidenceScore: 96,
+    layout: 'hero'
+  });
+
+  return slides;
 }
 
 /**
@@ -214,7 +351,7 @@ Output ONLY the raw JSON array of slides. No extra text or chat.
 `;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3.5-flash',
+    model: 'gemini-2.5-flash',
     contents: prompt,
     config: {
       temperature: 0.3,

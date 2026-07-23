@@ -175,6 +175,7 @@ export default function AIPresentationGenerator({ videoId, getHeaders, videoTitl
         },
         body: JSON.stringify({
           videoId,
+          videoTitle,
           style: selectedStyle,
           theme: selectedTheme
         })
