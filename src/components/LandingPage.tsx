@@ -3203,7 +3203,10 @@ export default function LandingPage({
       {/* 7.5 PUBLIC COMMUNITY STUDY HUB */}
       <section className="w-full py-12 bg-white dark:bg-zinc-950 border-t border-neutral-200/80 dark:border-zinc-800">
         <CommunityStudyHub 
-          onSelectResource={(res) => onStartFreeSummary?.(res.title, 'text')} 
+          onSelectResource={(res) => {
+            const videoUrl = res.youtubeId ? `https://www.youtube.com/watch?v=${res.youtubeId}` : res.title;
+            onStartFreeSummary?.(videoUrl, 'video');
+          }} 
           onOpenReferralModal={onOpenReferralModal} 
         />
       </section>

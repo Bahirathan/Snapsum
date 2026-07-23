@@ -309,6 +309,15 @@ function handleGeminiError(err: any, res: express.Response) {
   ) {
     errorMessage = 'The public Gemini API key quota has been exhausted due to high user traffic. To get instant, unlimited high-speed summaries with no waiting, please insert your own Gemini API key in the Settings (top-right icon) or upgrade your account!';
     statusCode = 429;
+  } else if (
+    errorMessage.includes('503') ||
+    errorMessage.includes('UNAVAILABLE') ||
+    errorMessage.includes('high demand') ||
+    errorMessage.includes('experiencing high demand') ||
+    errorMessage.includes('Overloaded')
+  ) {
+    errorMessage = 'Google Gemini servers are currently experiencing peak demand (503 High Demand). Please try clicking "Create Your AI Learn Workspace" again in a few seconds, or explore one of our instant pre-rendered Community Study Decks below!';
+    statusCode = 503;
   } else {
     errorMessage = 'Failed to generate summary. Details: ' + errorMessage;
   }
@@ -1895,14 +1904,28 @@ CRITICAL JSON FORMATTING INSTRUCTION:
       contents = { parts };
     }
 
-    const generatePromise = activeAi.models.generateContent({
-      model: requestedModel,
-      contents,
-      config,
-    });
-
-    // Race the generation request against the timeout
-    const response = await Promise.race([generatePromise, timeoutPromise]);
+    let response: any;
+    try {
+      const generatePromise = activeAi.models.generateContent({
+        model: requestedModel,
+        contents,
+        config,
+      });
+      // Race the generation request against the timeout
+      response = await Promise.race([generatePromise, timeoutPromise]);
+    } catch (firstErr: any) {
+      console.warn('Primary model call failed, attempting fallback retry with gemini-2.5-flash:', firstErr.message || firstErr);
+      try {
+        const fallbackPromise = activeAi.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents,
+          config,
+        });
+        response = await Promise.race([fallbackPromise, timeoutPromise]);
+      } catch (secondErr: any) {
+        throw firstErr;
+      }
+    }
 
     const outputText = response.text;
     if (!outputText) {

@@ -688,4 +688,285 @@ Your time is limited, so don't waste it living someone else's life. Be brave eno
       }
     ]
   },
+  {
+    metadata: {
+      videoId: 'aircAruvnKk',
+      videoUrl: 'https://www.youtube.com/watch?v=aircAruvnKk',
+      title: 'MIT 6.S191: Introduction to Deep Learning',
+      author: 'MIT OpenCourseWare',
+      thumbnailUrl: 'https://img.youtube.com/vi/aircAruvnKk/hqdefault.jpg',
+      duration: '115 mins',
+    },
+    summary: 'An authoritative introduction to deep learning fundamentals from MIT. Covers neural network building blocks, perceptrons, activation functions, loss functions, backpropagation via gradient descent, and advanced optimization algorithms like Adam. Essential for understanding modern AI architectures.',
+    takeaways: [
+      'Perceptrons & Activation Functions: Non-linear activation functions (ReLU, Sigmoid) are essential for neural networks to approximate complex non-linear functions.',
+      'Gradient Descent & Backpropagation: Backpropagation uses the chain rule of calculus to compute loss gradients relative to weights, enabling automated learning.',
+      'Loss Function Selection: Binary cross-entropy, mean squared error, and categorical cross-entropy guide parameter tuning based on problem domain.',
+      'Optimization & Regularization: Adam and Momentum optimizers prevent stagnation in local minima, while Dropout prevents overfitting.',
+      'Deep Network Scaling: Layer depth enables hierarchical abstraction, from simple edge detection to complex semantic understanding.'
+    ],
+    chapters: [
+      { timestamp: '00:00', secondsCount: 0, title: 'Course Overview & Deep Learning Era', takeaway: 'Why deep learning transformed computer vision, NLP, and decision intelligence.' },
+      { timestamp: '18:30', secondsCount: 1110, title: 'The Perceptron & Neural Building Blocks', takeaway: 'Mathematical breakdown of weights, biases, linear combinations, and non-linear activations.' },
+      { timestamp: '42:15', secondsCount: 2535, title: 'Loss Functions & Optimization', takeaway: 'Measuring network error and navigating high-dimensional loss landscapes.' },
+      { timestamp: '75:00', secondsCount: 4500, title: 'Backpropagation Algorithm', takeaway: 'Applying the chain rule backward from output to input to update network parameters.' },
+      { timestamp: '100:20', secondsCount: 6020, title: 'Regularization & Generalization', takeaway: 'Using Dropout, batch normalization, and early stopping to prevent memorization.' }
+    ],
+    blogPost: `# MIT 6.S191: Master Deep Learning Fundamentals\n\nDeep learning powers today's AI revolution. In this famous lecture from MIT OpenCourseWare, leading researchers break down the core mathematics and intuitions behind artificial neural networks.\n\n## 1. What is a Perceptron?\nThe fundamental unit of a neural network is the perceptron. It takes input vector x, applies weight matrix W and bias b, and passes the result through a non-linear activation function.\n\n## 2. Why Activation Functions Matter\nWithout non-linear activations like ReLU or Sigmoid, a multi-layer neural network collapses mathematically into a single linear regression model. Non-linearities unlock deep expressiveness.\n\n## 3. Backpropagation Unlocked\nLearning happens through backpropagation. By calculating partial derivatives of the loss function using the calculus chain rule, the network adjusts weights in the direction that minimizes prediction error.`,
+    twitterThread: [
+      '1/ Want to master Deep Learning? Here is a breakdown of MIT\'s famous 6.S191 intro lecture: 🧵',
+      '2/ Perceptrons combine inputs with weights and bias. Non-linear activations (ReLU) enable learning non-linear patterns.',
+      '3/ Loss functions quantify prediction error. Gradient descent steps down the loss hill to find optimal weights.',
+      '4/ Backpropagation uses the chain rule to propagate error backward layer by layer.',
+      '5/ Regularization (Dropout) keeps models generalizable so they perform well on unseen data. 🧠'
+    ],
+    socialSnippet: '🧠 Master Deep Learning with MIT 6.S191! Explore neural network math, loss landscapes, and backpropagation in this comprehensive interactive study deck. #DeepLearning #MIT #AI #MachineLearning',
+    quiz: [
+      {
+        question: 'What happens to a multi-layer neural network if no non-linear activation functions are used?',
+        options: [
+          'It collapses mathematically into a single linear function.',
+          'It becomes exponentially faster to train.',
+          'It automatically regularizes itself against overfitting.',
+          'It can only process image data.'
+        ],
+        answerIndex: 0,
+        explanation: 'Linear combinations of linear functions are still linear. Without non-linear activations, a 100-layer network has no more representational power than a single-layer linear model.'
+      },
+      {
+        question: 'Which mathematical rule forms the cornerstone of the backpropagation algorithm?',
+        options: ['The Chain Rule of Calculus', 'Bayes Theorem', 'L\'Hôpital\'s Rule', 'Pythagorean Theorem'],
+        answerIndex: 0,
+        explanation: 'Backpropagation computes the derivative of the final loss relative to intermediate weights by multiplying local gradients using the chain rule.'
+      }
+    ],
+    mindmap: [
+      { concept: 'MIT Deep Learning', category: 'Architecture', description: 'Core principles of neural networks and deep learning architectures.' },
+      { concept: 'Perceptron', category: 'MIT Deep Learning', description: 'Linear dot product plus bias fed into an activation function.' },
+      { concept: 'Backpropagation', category: 'MIT Deep Learning', description: 'Reverse-mode automatic differentiation using calculus chain rule.' },
+      { concept: 'Regularization', category: 'MIT Deep Learning', description: 'Techniques like Dropout and Batch Norm to improve generalization.' }
+    ],
+    keyConcepts: [
+      { concept: 'Neural Network', definition: 'A computational model inspired by biological brains, structured in input, hidden, and output layers.', simplifiedExplanation: 'Think of it as a series of connected dials that tune themselves to recognize complex patterns.' },
+      { concept: 'Backpropagation', definition: 'An algorithm for supervised learning of artificial neural networks using gradient descent.', simplifiedExplanation: 'Like reviewing exam mistakes backward to figure out exactly which study habits to tweak.' },
+      { concept: 'Activation Function', definition: 'A mathematical gate in a neural network node that determines if it should fire.', simplifiedExplanation: 'A light switch that only turns on when enough signal pushes past its threshold.' }
+    ],
+    flashcards: [
+      { question: 'What is the role of weights in a neural network layer?', answer: 'Weights determine the relative importance or strength of each input feature in influencing the node\'s output.' },
+      { question: 'Why is Adam optimizer preferred over standard SGD?', answer: 'Adam uses adaptive learning rates for each parameter by combining ideas from Momentum and RMSprop.' }
+    ],
+    rememberSummary: 'Deep learning thrives on non-linear activations, loss minimization via gradient descent, and chain-rule backpropagation to tune network weights efficiently.',
+    reelScript: {
+      title: 'MIT Deep Learning in 60 Seconds',
+      hookType: 'Educational Mind-Blower',
+      estimatedDuration: 45,
+      themeSuggestion: 'Futuristic AI Neon',
+      scenes: [
+        { sceneNumber: 1, durationSeconds: 10, visualHook: 'MIT Lecture hall with glowing neural networks', voiceover: 'Ever wondered how AI actually learns? MIT breaks it down in 3 simple steps.', textOverlay: 'How AI Thinks 🧠' },
+        { sceneNumber: 2, durationSeconds: 20, visualHook: 'Interactive math diagram of backpropagation', voiceover: 'First: inputs multiply by weights. Second: non-linear activations unlock complex reasoning. Third: backprop fixes mistakes.', textOverlay: 'Weights + Activations + Backprop' },
+        { sceneNumber: 3, durationSeconds: 15, visualHook: 'Animated accuracy meter shooting up to 99%', voiceover: 'That is how neural networks conquer vision, speech, and reasoning!', textOverlay: 'Master AI Today 🚀' }
+      ],
+      readyMadeCaption: 'Learn MIT Deep Learning concepts in 60s! #AI #Tech #MIT #Learning',
+      callToAction: 'Study the full interactive deck on Zipytiny!'
+    }
+  },
+  {
+    metadata: {
+      videoId: '67_aMPDk28U',
+      videoUrl: 'https://www.youtube.com/watch?v=67_aMPDk28U',
+      title: 'Y Combinator: How to Build an AI Startup in 2026',
+      author: 'Y Combinator',
+      thumbnailUrl: 'https://img.youtube.com/vi/67_aMPDk28U/hqdefault.jpg',
+      duration: '90 mins',
+    },
+    summary: 'A strategic, actionable guide from Y Combinator partners on building defensible AI startups. Covers agentic workflows, serverless vector databases, model selection trade-offs, and building enduring moats beyond simple wrapper applications.',
+    takeaways: [
+      'Moat Building: Proprietary data flywheels and deep workflow integration create long-term enterprise moats.',
+      'Agentic Systems: Shifting from single prompt-response loops to autonomous, multi-step agent feedback loops.',
+      'Cost & Efficiency: Optimizing token usage via caching, smaller fine-tuned models, and hybrid execution.',
+      'Distribution Advantage: Speed of iteration and founder-led sales beat incumbents before they react.'
+    ],
+    chapters: [
+      { timestamp: '00:00', secondsCount: 0, title: 'The 2026 AI Founder Opportunity', takeaway: 'Why lower latency and reasoning models create new product categories.' },
+      { timestamp: '22:10', secondsCount: 1330, title: 'Architecting Agentic Workflows', takeaway: 'Building reliable state machines around non-deterministic LLM calls.' },
+      { timestamp: '50:40', secondsCount: 3040, title: 'Data Flywheels & Enterprise Defensibility', takeaway: 'Turning active customer usage into proprietary fine-tuning datasets.' },
+      { timestamp: '75:00', secondsCount: 4500, title: 'Pricing & Unit Economics', takeaway: 'Value-based pricing models vs raw API cost pass-throughs.' }
+    ],
+    blogPost: `# Y Combinator Guide: Building Next-Gen AI Startups\n\nAI is reshaping startup playbook basics. In this seminal talk, Y Combinator partners lay out what differentiates breakout startups from temporary wrapper tools.\n\n## 1. Beyond the Wrapper\nIf your startup is just an API call behind a basic UI, a model upgrade from Google or OpenAI can replace you overnight. You need workflow lock-in and unique data loops.\n\n## 2. Agentic Autonomy\nThe biggest market opportunities lie in autonomous workflows that replace multi-hour human tasks rather than just drafting single text completions.`,
+    twitterThread: [
+      '1/ Y Combinator\'s top advice for AI founders in 2026: 🧵',
+      '2/ Don\'t build thin wrappers. Build deep workflow integrations that become essential.',
+      '3/ Agentic multi-step loops outperform simple single-shot prompts.',
+      '4/ Price on value created, not on raw token costs. 💡'
+    ],
+    socialSnippet: '🚀 Building an AI startup? Explore Y Combinator\'s 2026 playbook on defensibility, agentic systems, and distribution strategy. #Startups #YCombinator #AI #Entrepreneurship',
+    quiz: [
+      {
+        question: 'What is considered the strongest moat for an AI startup according to Y Combinator?',
+        options: ['Proprietary data flywheels and workflow integration', 'A secret prompt template', 'Buying expensive GPU hardware', 'Having a fancy domain name'],
+        answerIndex: 0,
+        explanation: 'Workflows embedded deeply into user daily routines combined with proprietary data feedback loops create enduring competitive moats.'
+      }
+    ],
+    mindmap: [
+      { concept: 'YC AI Playbook', category: 'Strategy', description: 'Building high-growth defensible AI companies.' },
+      { concept: 'Agentic Workflows', category: 'YC AI Playbook', description: 'Autonomous multi-step execution loops.' },
+      { concept: 'Data Flywheel', category: 'YC AI Playbook', description: 'Usage data feeding proprietary model fine-tuning.' }
+    ],
+    keyConcepts: [
+      { concept: 'Agentic Workflow', definition: 'An AI system that autonomously executes multi-step tasks, uses tools, and evaluates its own progress.', simplifiedExplanation: 'An AI assistant that does not just write an email, but researches the recipient, drafts, edits, and schedules it.' }
+    ],
+    flashcards: [
+      { question: 'Why is value-based pricing crucial for AI startups?', answer: 'Value-based pricing aligns your revenue with customer ROI rather than fluctuating API token expenses.' }
+    ],
+    rememberSummary: 'Win in AI by embedding deep into customer workflows, leveraging agentic execution, and building data flywheels.',
+    reelScript: {
+      title: 'How to Build an AI Startup',
+      hookType: 'Startup Secret',
+      estimatedDuration: 40,
+      themeSuggestion: 'Minimalist Tech',
+      scenes: [
+        { sceneNumber: 1, durationSeconds: 10, visualHook: 'Y Combinator logo and silicon valley cityscape', voiceover: 'Stop building thin AI wrappers! Here is Y Combinator\'s formula for real defensibility.', textOverlay: 'YC AI Playbook 🚀' }
+      ],
+      readyMadeCaption: 'YC guide for AI founders! #Startups #Tech #YCombinator',
+      callToAction: 'View full study guide on Zipytiny!'
+    }
+  },
+  {
+    metadata: {
+      videoId: 'gXVUJjp462U',
+      videoUrl: 'https://www.youtube.com/watch?v=gXVUJjp462U',
+      title: 'Stanford Neuroscience: Deep Work & Focus Mastery',
+      author: 'Stanford Seminars',
+      thumbnailUrl: 'https://img.youtube.com/vi/gXVUJjp462U/hqdefault.jpg',
+      duration: '120 mins',
+    },
+    summary: 'A neuroscience-backed exploration of human focus, cognitive stamina, dopamine regulation, and attention management. Learn how to structure 90-minute ultradian focus cycles, eliminate context switching, and boost daily mental throughput.',
+    takeaways: [
+      'Ultradian Rhythms: Human focus naturally operates in 90-minute cognitive cycles.',
+      'Attention Residue: Frequent context switching severely impairs problem-solving depth.',
+      'Dopamine Baseline: Managing stimulation spikes preserves long-term intrinsic motivation.'
+    ],
+    chapters: [
+      { timestamp: '00:00', secondsCount: 0, title: 'Neuroscience of Human Attention', takeaway: 'How the prefrontal cortex directs executive attention.' },
+      { timestamp: '30:15', secondsCount: 1815, title: 'Ultradian Focus Cycles', takeaway: 'Structuring 90-minute deep work blocks for maximum retention.' }
+    ],
+    blogPost: `# Neuroscience of Focus: Master Deep Work\n\nUnderstand how your brain manages attention and energy to achieve flow states on demand.`,
+    twitterThread: ['1/ Science-backed focus habits from Stanford neuroscience: 🧵', '2/ Work in 90-minute ultradian blocks for peak cognitive throughput.'],
+    socialSnippet: '🧠 Boost your cognitive focus with neuroscience principles from Stanford! #Productivity #Neuroscience #DeepWork',
+    quiz: [{ question: 'What is the optimal length of a natural ultradian focus cycle?', options: ['90 minutes', '20 minutes', '4 hours', '10 minutes'], answerIndex: 0, explanation: 'Neuroscience research shows human alertness peaks and declines in approximately 90-minute ultradian rhythms.' }],
+    mindmap: [{ concept: 'Focus Mastery', category: 'Neuroscience', description: 'Brain mechanisms governing attention.' }],
+    keyConcepts: [{ concept: 'Attention Residue', definition: 'The cognitive lag when switching tasks before full focus is restored.', simplifiedExplanation: 'Mental dust left behind when you quickly check your phone while studying.' }],
+    flashcards: [{ question: 'How do ultradian rhythms affect study sessions?', answer: 'They dictate 90-minute peak focus windows followed by required rest to restore neurotransmitters.' }],
+    rememberSummary: 'Leverage 90-minute focus blocks, minimize interruptions, and regulate dopamine for sustainable focus.',
+    reelScript: {
+      title: 'Stanford Focus Protocol',
+      hookType: 'Life Hack',
+      estimatedDuration: 30,
+      themeSuggestion: 'Clean Slate',
+      scenes: [{ sceneNumber: 1, durationSeconds: 10, visualHook: 'Brain scan visual with glowing focus nodes', voiceover: 'Stanford neuroscience reveals the 90-minute focus secret.', textOverlay: 'Deep Work Protocol 🧠' }],
+      readyMadeCaption: 'Master deep focus with Stanford science! #Focus #Productivity',
+      callToAction: 'Get the study deck on Zipytiny!'
+    }
+  },
+  {
+    metadata: {
+      videoId: '0I25N26aUOk',
+      videoUrl: 'https://www.youtube.com/watch?v=0I25N26aUOk',
+      title: 'MCAT Biochemistry: Metabolic Pathways & Enzyme Kinetics',
+      author: 'Harvard Medical Prep',
+      thumbnailUrl: 'https://img.youtube.com/vi/0I25N26aUOk/hqdefault.jpg',
+      duration: '140 mins',
+    },
+    summary: 'A thorough review of essential MCAT biochemistry topics: Glycolysis, Krebs Cycle, Oxidative Phosphorylation, Gluconeogenesis, and Michaelis-Menten enzyme kinetics.',
+    takeaways: [
+      'Glycolysis Rate Limiting Step: PFK-1 regulates glycolytic flux based on ATP/AMP energy ratios.',
+      'Michaelis-Menten Equation: Km represents the substrate concentration at half-maximal velocity (Vmax/2).'
+    ],
+    chapters: [
+      { timestamp: '00:00', secondsCount: 0, title: 'Glycolysis & Regulation', takeaway: 'Key enzymatic controls in glucose breakdown.' }
+    ],
+    blogPost: `# MCAT Biochemistry Masterclass\n\nConquer metabolic pathways with clear visual breakdowns and high-yield mnemonics.`,
+    twitterThread: ['1/ Ace your MCAT Biochem exam with these core insights: 🧵'],
+    socialSnippet: '🩺 Master MCAT Biochemistry pathways and enzyme kinetics with interactive practice quizzes! #MCAT #Biochemistry #PreMed',
+    quiz: [{ question: 'What is the rate-limiting enzyme of glycolysis?', options: ['Phosphofructokinase-1 (PFK-1)', 'Hexokinase', 'Pyruvate Kinase', 'Aldolase'], answerIndex: 0, explanation: 'PFK-1 is the primary rate-limiting and regulatory enzyme of glycolysis.' }],
+    mindmap: [{ concept: 'Metabolism', category: 'Biochemistry', description: 'Cellular energy production pathways.' }],
+    keyConcepts: [{ concept: 'Km (Michaelis Constant)', definition: 'Substrate concentration at which reaction rate is half of Vmax.', simplifiedExplanation: 'Measures enzyme affinity: lower Km means higher affinity.' }],
+    flashcards: [{ question: 'Where does the Krebs Cycle take place?', answer: 'In the mitochondrial matrix.' }],
+    rememberSummary: 'Master PFK-1 regulation, Michaelis-Menten kinetics, and ATP yield calculations for MCAT prep.',
+    reelScript: {
+      title: 'MCAT Biochem Made Easy',
+      hookType: 'Exam Prep',
+      estimatedDuration: 30,
+      themeSuggestion: 'Medical Blue',
+      scenes: [{ sceneNumber: 1, durationSeconds: 10, visualHook: 'Mitochondria 3D animation', voiceover: 'Mastering MCAT Biochem pathways in under a minute!', textOverlay: 'MCAT Biochem 🩺' }],
+      readyMadeCaption: 'High-yield MCAT Biochem deck! #PreMed #MCAT',
+      callToAction: 'Practice on Zipytiny now!'
+    }
+  },
+  {
+    metadata: {
+      videoId: 'yA53v7s0R-A',
+      videoUrl: 'https://www.youtube.com/watch?v=yA53v7s0R-A',
+      title: 'Constitutional Law: Supreme Court Precedents & Due Process',
+      author: 'Yale Law School',
+      thumbnailUrl: 'https://img.youtube.com/vi/yA53v7s0R-A/hqdefault.jpg',
+      duration: '105 mins',
+    },
+    summary: 'An in-depth legal review of 14th Amendment Equal Protection, Procedural and Substantive Due Process, and judicial standards of review.',
+    takeaways: [
+      'Scrutiny Tiers: Strict Scrutiny requires a compelling state interest and narrow tailoring.'
+    ],
+    chapters: [{ timestamp: '00:00', secondsCount: 0, title: '14th Amendment Framework', takeaway: 'Understanding Due Process and Equal Protection.' }],
+    blogPost: `# Constitutional Law Review\n\nDetailed breakdown of landmark Supreme Court precedents.`,
+    twitterThread: ['1/ Constitutional Law key precedents summarized: 🧵'],
+    socialSnippet: '⚖️ Essential Constitutional Law review for law students and legal enthusiasts. #LawSchool #ConLaw',
+    quiz: [{ question: 'Which level of judicial scrutiny applies to suspect classifications like race?', options: ['Strict Scrutiny', 'Intermediate Scrutiny', 'Rational Basis', 'Arbitrary Scrutiny'], answerIndex: 0, explanation: 'Racial classifications trigger Strict Scrutiny, requiring a compelling government interest.' }],
+    mindmap: [{ concept: 'Con Law', category: 'Legal Framework', description: 'Constitutional rights and judicial review.' }],
+    keyConcepts: [{ concept: 'Strict Scrutiny', definition: 'The highest standard of judicial review applied by U.S. courts.', simplifiedExplanation: 'The law must serve a compelling state interest and be narrowly tailored.' }],
+    flashcards: [{ question: 'What triggers Rational Basis review?', answer: 'General economic or social welfare legislation without suspect classifications.' }],
+    rememberSummary: 'Know the three tiers of judicial scrutiny and landmark 14th Amendment precedents.',
+    reelScript: {
+      title: 'Con Law Tiers of Scrutiny',
+      hookType: 'Legal Explainer',
+      estimatedDuration: 30,
+      themeSuggestion: 'Legal Scales',
+      scenes: [{ sceneNumber: 1, durationSeconds: 10, visualHook: 'Supreme Court building graphic', voiceover: 'Understanding judicial scrutiny tiers in Constitutional Law!', textOverlay: 'Con Law Prep ⚖️' }],
+      readyMadeCaption: 'Con Law exam study deck! #LawSchool #ConLaw',
+      callToAction: 'Study legal cases on Zipytiny!'
+    }
+  },
+  {
+    metadata: {
+      videoId: 'F_Riqjdh2oM',
+      videoUrl: 'https://www.youtube.com/watch?v=F_Riqjdh2oM',
+      title: 'Quantum Computing Foundations: Qubits & Entanglement',
+      author: 'IBM Quantum',
+      thumbnailUrl: 'https://img.youtube.com/vi/F_Riqjdh2oM/hqdefault.jpg',
+      duration: '80 mins',
+    },
+    summary: 'A clear introduction to quantum computing principles: Bloch sphere, superposition, quantum logic gates, entanglement, and algorithm speedups.',
+    takeaways: [
+      'Superposition vs Classical Bits: Qubits exist in linear combinations of 0 and 1 until measured.'
+    ],
+    chapters: [{ timestamp: '00:00', secondsCount: 0, title: 'Qubits & Bloch Sphere', takeaway: 'Representing quantum states in complex Hilbert space.' }],
+    blogPost: `# Quantum Computing Foundations\n\nDemystifying quantum mechanics for computer scientists.`,
+    twitterThread: ['1/ Quantum Computing basics made simple: 🧵'],
+    socialSnippet: '⚛️ Explore qubits, superposition, and entanglement in this interactive Quantum Computing deck. #Quantum #Tech',
+    quiz: [{ question: 'What property allows a qubit to represent 0 and 1 simultaneously?', options: ['Superposition', 'Entanglement', 'Interference', 'Decoherence'], answerIndex: 0, explanation: 'Superposition enables qubits to exist in a linear combination of states simultaneously.' }],
+    mindmap: [{ concept: 'Quantum Computing', category: 'Physics & CS', description: 'Quantum mechanics for information processing.' }],
+    keyConcepts: [{ concept: 'Qubit', definition: 'The fundamental unit of quantum information.', simplifiedExplanation: 'Unlike a classical light switch (0 or 1), a qubit is like a spinning coin.' }],
+    flashcards: [{ question: 'What is quantum entanglement?', answer: 'A phenomenon where quantum states of two or more qubits are inextricably linked regardless of distance.' }],
+    rememberSummary: 'Master superposition, quantum gates (Hadamard, CNOT), and entanglement foundations.',
+    reelScript: {
+      title: 'Quantum Computing 101',
+      hookType: 'Tech Marvel',
+      estimatedDuration: 30,
+      themeSuggestion: 'Quantum Glow',
+      scenes: [{ sceneNumber: 1, durationSeconds: 10, visualHook: 'Glowing Bloch sphere animation', voiceover: 'Quantum computing is changing technology forever!', textOverlay: 'Quantum 101 ⚛️' }],
+      readyMadeCaption: 'Quantum computing foundations! #Quantum #Tech #Innovation',
+      callToAction: 'Learn on Zipytiny today!'
+    }
+  }
 ];
+
