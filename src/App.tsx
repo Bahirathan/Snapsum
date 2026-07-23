@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, lazy, Suspense, useMemo } from 'react';
+import SocialLogosBar from './components/SocialLogosBar';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Youtube,
@@ -13004,62 +13005,18 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </div>
 
           {/* Follow Us Feature */}
-          <div className="flex items-center gap-4 py-2 bg-slate-800/20 px-5 rounded-full border border-slate-800/40">
-            <span className="text-xs font-bold text-slate-300 tracking-wide font-sans">
-              Follow us
+          <div className="flex flex-col sm:flex-row items-center gap-3 py-3 bg-slate-900/60 px-6 rounded-2xl border border-slate-800/60 shadow-inner">
+            <span className="text-xs font-bold text-slate-300 tracking-wider font-mono uppercase shrink-0">
+              Follow Us
             </span>
-            <div className="flex items-center gap-3.5">
-              <a 
-                href={youtubeLink} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-slate-400 hover:text-red-500 transition-colors duration-200"
-                aria-label="Follow us on YouTube"
-                id="footer-youtube-link"
-              >
-                <Youtube className="w-4 h-4" />
-              </a>
-              <a 
-                href={xLink} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-slate-400 hover:text-white transition-colors duration-200"
-                aria-label="Follow us on X"
-                id="footer-x-link"
-              >
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a 
-                href={facebookLink} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-slate-400 hover:text-blue-500 transition-colors duration-200"
-                aria-label="Follow us on Facebook"
-                id="footer-facebook-link"
-              >
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a 
-                href={linkedinLink} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-slate-400 hover:text-sky-500 transition-colors duration-200"
-                aria-label="Follow us on LinkedIn"
-                id="footer-linkedin-link"
-              >
-                <Linkedin className="w-4 h-4" />
-              </a>
-              <a 
-                href={tiktokLink} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-slate-400 hover:text-teal-400 transition-colors duration-200"
-                aria-label="Follow us on TikTok"
-                id="footer-tiktok-link"
-              >
-                <Music className="w-4 h-4" />
-              </a>
-            </div>
+            <SocialLogosBar
+              youtubeLink={youtubeLink}
+              xLink={xLink}
+              facebookLink={facebookLink}
+              linkedinLink={linkedinLink}
+              tiktokLink={tiktokLink}
+              size="sm"
+            />
           </div>
           
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 text-xs text-slate-400 font-sans">
