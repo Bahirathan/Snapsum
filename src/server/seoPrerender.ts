@@ -914,8 +914,8 @@ export function injectSeoIntoHtmlTemplate(htmlTemplate: string, seoData: RouteSe
   // Inject prerender HTML into #seo-prerender
   if (output.includes('id="seo-prerender"')) {
     output = output.replace(
-      /<div\s+id="seo-prerender"[^>]*>.*?<\/div>/s,
-      `<div id="seo-prerender">${seoData.prerenderHtml}</div>`
+      /<div\s+id="seo-prerender"[^>]*>[\s\S]*?<!--\s*END_SEO_PRERENDER\s*-->/s,
+      `<div id="seo-prerender">${seoData.prerenderHtml}</div><!-- END_SEO_PRERENDER -->`
     );
   }
 

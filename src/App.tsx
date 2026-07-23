@@ -1535,18 +1535,24 @@ export default function App() {
 
   // Signal to the DOM that the React app has fully mounted and rendered content
   useEffect(() => {
-    // Add react-mounted class to html element
-    document.documentElement.classList.add('react-mounted');
+    // Ensure real React UI has painted to screen before hiding prerender and adding react-mounted class
+    const frameId = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.documentElement.classList.add('react-mounted');
 
-    // Explicitly transition prerender and loading screen elements
-    const seoPrerenderEl = document.getElementById('seo-prerender');
-    if (seoPrerenderEl) {
-      seoPrerenderEl.style.display = 'none';
-    }
-    const appLoadingEl = document.getElementById('app-loading-screen');
-    if (appLoadingEl) {
-      appLoadingEl.style.display = 'none';
-    }
+        // Explicitly transition prerender and loading screen elements
+        const seoPrerenderEl = document.getElementById('seo-prerender');
+        if (seoPrerenderEl) {
+          seoPrerenderEl.style.display = 'none';
+        }
+        const appLoadingEl = document.getElementById('app-loading-screen');
+        if (appLoadingEl) {
+          appLoadingEl.style.display = 'none';
+        }
+      });
+    });
+
+    return () => cancelAnimationFrame(frameId);
   }, []);
 
   // Robust IntersectionObserver for all footers to prevent overlapping/hiding social media links
