@@ -4336,6 +4336,16 @@ app.get('/llms.txt', (req, res) => {
   return res.status(404).send('llms.txt not found');
 });
 
+app.get('/BingSiteAuth.xml', (req, res) => {
+  const filePath = path.join(process.cwd(), 'public', 'BingSiteAuth.xml');
+  res.header('Content-Type', 'application/xml; charset=utf-8');
+  res.header('Cache-Control', 'public, max-age=0, must-revalidate');
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send('BingSiteAuth.xml not found');
+});
+
 // Initialize full-stack routing and server
 async function bootstrap() {
   if (process.env.NODE_ENV !== 'production') {
