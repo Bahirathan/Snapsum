@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { PRO_PLAN_MONTHLY_PRICE, PRO_PLAN_ANNUAL_MONTHLY_PRICE } from '../constants/pricing';
 import SocialLogosBar from './SocialLogosBar';
 import confetti from 'canvas-confetti';
 import { 
@@ -2595,7 +2596,7 @@ export default function LandingPage({
                 onClick={() => onLaunchApp()}
                 className="w-full bg-[#0071e3] hover:bg-[#0077ed] text-white py-2.5 rounded-lg text-xs font-bold transition cursor-pointer text-center"
               >
-                Try It Natively
+                Start free — no card required
               </button>
             </div>
 
@@ -2687,7 +2688,7 @@ export default function LandingPage({
               <div className="flex flex-col pt-1">
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold font-display text-neutral-900 dark:text-zinc-50">
-                    {isAnnualBilling ? "$6.99" : "$9.99"}
+                    {isAnnualBilling ? `$${PRO_PLAN_ANNUAL_MONTHLY_PRICE}` : `$${PRO_PLAN_MONTHLY_PRICE}`}
                   </span>
                   <span className="text-xs text-[#86868b] font-medium font-mono">/ MONTH</span>
                 </div>

@@ -1,3 +1,5 @@
+import { FREE_PLAN_PRICE, PRO_PLAN_MONTHLY_PRICE, ENTERPRISE_PLAN_MONTHLY_PRICE } from '../constants/pricing';
+
 export interface RouteSeoData {
   title: string;
   description: string;
@@ -42,7 +44,8 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
     'sameAs': [
       'https://twitter.com/zipytiny',
       'https://github.com/zipytiny',
-      'https://linkedin.com/company/zipytiny'
+      'https://linkedin.com/company/zipytiny',
+      'https://www.producthunt.com/products/zipytiny'
     ]
   };
 
@@ -647,7 +650,7 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
   if (cleanPath === '/pricing') {
     return {
       title: 'Zipytiny Pricing & Workspace Plans - Free to Start',
-      description: 'Compare Zipytiny Free, Pro ($12/mo), and Enterprise plans. Start summarizing YouTube videos, PDFs, and slide decks today.',
+      description: 'Compare Zipytiny Free, Pro ($9.99/mo), and Enterprise plans. Start summarizing YouTube videos, PDFs, and slide decks today.',
       keywords: 'zipytiny pricing, free youtube summarizer, pro study suite, Enterprise AI notes',
       canonical: `${DOMAIN}/pricing`,
       ogType: 'website',
@@ -683,7 +686,7 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
 
             <div style="border: 2px solid #4f46e5; border-radius: 12px; padding: 24px; background: #fafafa;">
               <h2 style="margin-top:0; color: #4f46e5;">Pro Plan</h2>
-              <p style="font-size: 1.8rem; font-weight: bold;">$12 <span style="font-size: 1rem; color: #666;">/ month</span></p>
+              <p style="font-size: 1.8rem; font-weight: bold;">$9.99 <span style="font-size: 1rem; color: #666;">/ month</span></p>
               <p>For postgrads, medical/law students, & creators.</p>
               <ul>
                 <li>Unlimited Video & PDF Uploads</li>
@@ -715,13 +718,23 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
           'mainEntity': [
             {
               '@type': 'Question',
-              'name': 'Is Zipytiny free to use?',
-              'acceptedAnswer': { '@type': 'Answer', 'text': 'Yes! Zipytiny offers a free workspace plan with standard video summarization and active recall tools.' }
+              'name': 'What types of content formats can Zipytiny summarize?',
+              'acceptedAnswer': { '@type': 'Answer', 'text': 'Zipytiny supports YouTube videos, custom website links, pasted articles, raw text, and file uploads including PDFs, Word documents, PowerPoint presentations, Excel sheets, images with text OCR, MP3 and WAV audio recordings, and MP4 or WebM video files.' }
             },
             {
               '@type': 'Question',
-              'name': 'What video sources are supported?',
-              'acceptedAnswer': { '@type': 'Answer', 'text': 'Zipytiny supports YouTube URLs, Vimeo, local MP4 video uploads, Zoom cloud recordings, and PDF documents.' }
+              'name': 'How does the AI Chat Q&A work?',
+              'acceptedAnswer': { '@type': 'Answer', 'text': 'The AI Chat Q&A allows users to ask specific follow-up questions on generated summaries using the complete transcription and metadata powered by Google Gemini AI reasoning in real-time.' }
+            },
+            {
+              '@type': 'Question',
+              'name': 'Can I export summaries to other workspaces?',
+              'acceptedAnswer': { '@type': 'Answer', 'text': 'Yes, Zipytiny allows users to export generated summaries, timeline chapters, and quiz structures to formatted PDF reports, Microsoft Word documents, raw Markdown files, or directly to Notion.' }
+            },
+            {
+              '@type': 'Question',
+              'name': 'Is there a limit on free guest usage?',
+              'acceptedAnswer': { '@type': 'Answer', 'text': 'Free guest users receive a daily allocation of summaries to test Zipytiny, and can upgrade to the Pro Plan for unlimited processing speeds, PDF and Word exports, and premium AI templates.' }
             }
           ]
         },
@@ -739,11 +752,17 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
           <nav style="font-size: 0.9rem; margin-bottom: 20px;"><a href="/" style="color: #4f46e5; text-decoration: none;">← Back to Zipytiny Home</a></nav>
           <h1 style="font-size: 2.2rem; margin-top: 10px; color: #111;">Frequently Asked Questions</h1>
           <dl style="margin-top: 30px;">
-            <dt style="font-size: 1.2rem; font-weight: bold; color: #111; margin-top: 20px;">Is Zipytiny free to use?</dt>
-            <dd style="color: #555; margin-left: 0; margin-top: 5px;">Yes! Zipytiny offers a free workspace plan with standard video summarization, active recall flashcards, and note generation.</dd>
+            <dt style="font-size: 1.2rem; font-weight: bold; color: #111; margin-top: 20px;">What types of content formats can Zipytiny summarize?</dt>
+            <dd style="color: #555; margin-left: 0; margin-top: 5px;">Zipytiny supports YouTube videos, custom website links, pasted articles, raw text, and file uploads including PDFs, Word documents, PowerPoint presentations, Excel sheets, images with text OCR, MP3 and WAV audio recordings, and MP4 or WebM video files.</dd>
             
-            <dt style="font-size: 1.2rem; font-weight: bold; color: #111; margin-top: 20px;">What file and video formats are supported?</dt>
-            <dd style="color: #555; margin-left: 0; margin-top: 5px;">Zipytiny accepts YouTube links, local MP4/WebM videos, PDF documents, PowerPoint slide decks, and plain text notes.</dd>
+            <dt style="font-size: 1.2rem; font-weight: bold; color: #111; margin-top: 20px;">How does the AI Chat Q&amp;A work?</dt>
+            <dd style="color: #555; margin-left: 0; margin-top: 5px;">The AI Chat Q&amp;A allows users to ask specific follow-up questions on generated summaries using the complete transcription and metadata powered by Google Gemini AI reasoning in real-time.</dd>
+
+            <dt style="font-size: 1.2rem; font-weight: bold; color: #111; margin-top: 20px;">Can I export summaries to other workspaces?</dt>
+            <dd style="color: #555; margin-left: 0; margin-top: 5px;">Yes, Zipytiny allows users to export generated summaries, timeline chapters, and quiz structures to formatted PDF reports, Microsoft Word documents, raw Markdown files, or directly to Notion.</dd>
+
+            <dt style="font-size: 1.2rem; font-weight: bold; color: #111; margin-top: 20px;">Is there a limit on free guest usage?</dt>
+            <dd style="color: #555; margin-left: 0; margin-top: 5px;">Free guest users receive a daily allocation of summaries to test Zipytiny, and can upgrade to the Pro Plan for unlimited processing speeds, PDF and Word exports, and premium AI templates.</dd>
           </dl>
         </main>
       `
@@ -751,9 +770,10 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
   }
 
   // DEFAULT / LANDING PAGE: '/'
+  // TODO: add aggregateRating (ratingValue, reviewCount) once we have a verified, real rating source — do not use placeholder or estimated numbers, this violates Google's structured data policies.
   return {
     title: 'Zipytiny – AI Study Notes from Video, PDF, Slides & Articles',
-    description: 'Turn any YouTube video, PDF, slide deck, article, or note into AI-generated summaries, key concepts, flashcards, mind maps, and quizzes in seconds. Free to start.',
+    description: 'Turn any video, PDF, slide deck, article, or note into AI summaries and study notes in seconds. Free to start, Pro from $9.99/mo. Try Zipytiny!',
     keywords: 'pdf summarizer, youtube summarizer, slides summary, document to flashcards, ai study guide, video to quiz, mindmap generator, active recall workspace, zipytiny',
     canonical: `${DOMAIN}/`,
     ogType: 'website',
@@ -765,11 +785,51 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
         'name': 'Zipytiny',
         'url': `${DOMAIN}/`,
         'operatingSystem': 'All',
-        'applicationCategory': 'EducationalApplication, ProductivityApplication',
-        'description': 'Universal AI-powered video summarizer and interactive recall workspace.',
+        'applicationCategory': 'EducationalApplication, ProductivityApplication, MultimediaApplication',
+        'genre': 'AI Study Workspace & Multi-Format Knowledge Engine',
+        'description': 'Zipytiny is an AI-powered learning platform that turns videos, PDFs, slide decks, articles, and notes into clear summaries, key concepts, flashcards, mind maps, and study-ready notes in seconds.',
         'offers': [
-          { '@type': 'Offer', 'name': 'Free Workspace Plan', 'price': '0.00', 'priceCurrency': 'USD' },
-          { '@type': 'Offer', 'name': 'Pro Plan', 'price': '12.00', 'priceCurrency': 'USD' }
+          { '@type': 'Offer', 'name': 'Free Workspace Plan', 'price': FREE_PLAN_PRICE, 'priceCurrency': 'USD', 'description': 'Free study workspace with core AI note generation and summary capabilities.' },
+          { '@type': 'Offer', 'name': 'Pro Plan', 'price': PRO_PLAN_MONTHLY_PRICE, 'priceCurrency': 'USD', 'description': 'Unlimited video, PDF & document uploads, mind maps, quizzes, and PowerPoint exports.' },
+          { '@type': 'Offer', 'name': 'Enterprise Plan', 'price': ENTERPRISE_PLAN_MONTHLY_PRICE, 'priceCurrency': 'USD', 'description': 'Team workspaces, high-speed processing, dedicated support and API access.' }
+        ]
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        'mainEntity': [
+          {
+            '@type': 'Question',
+            'name': 'What types of content formats can Zipytiny summarize?',
+            'acceptedAnswer': {
+              '@type': 'Answer',
+              'text': 'Zipytiny supports YouTube videos, custom website links, pasted articles, raw text, and file uploads including PDFs, Word documents, PowerPoint presentations, Excel sheets, images with text OCR, MP3 and WAV audio recordings, and MP4 or WebM video files.'
+            }
+          },
+          {
+            '@type': 'Question',
+            'name': 'How does the AI Chat Q&A work?',
+            'acceptedAnswer': {
+              '@type': 'Answer',
+              'text': 'The AI Chat Q&A allows users to ask specific follow-up questions on generated summaries using the complete transcription and metadata powered by Google Gemini AI reasoning in real-time.'
+            }
+          },
+          {
+            '@type': 'Question',
+            'name': 'Can I export summaries to other workspaces?',
+            'acceptedAnswer': {
+              '@type': 'Answer',
+              'text': 'Yes, Zipytiny allows users to export generated summaries, timeline chapters, and quiz structures to formatted PDF reports, Microsoft Word documents, raw Markdown files, or directly to Notion.'
+            }
+          },
+          {
+            '@type': 'Question',
+            'name': 'Is there a limit on free guest usage?',
+            'acceptedAnswer': {
+              '@type': 'Answer',
+              'text': 'Free guest users receive a daily allocation of summaries to test Zipytiny, and can upgrade to the Pro Plan for unlimited processing speeds, PDF and Word exports, and premium AI templates.'
+            }
+          }
         ]
       },
       orgSchema
@@ -778,13 +838,13 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
       <div style="max-width: 1100px; margin: 0 auto; padding: 40px 20px; font-family: system-ui, sans-serif; color: #111; line-height: 1.6;">
         <header style="text-align: center; margin-bottom: 40px;">
           <h1 style="font-size: 2.8rem; font-weight: 800; letter-spacing: -0.02em; color: #0f172a; margin-bottom: 12px;">
-            Zipytiny: Universal AI Video Summarizer & Study Suite
+            Turn Videos, Lectures & Meetings Into AI Notes, Slide Decks & Study Guides
           </h1>
           <p style="font-size: 1.25rem; color: #475569; max-width: 780px; margin: 0 auto 24px;">
-            Convert multi-source YouTube videos, recorded lectures, PDFs, and slide decks into interactive active recall systems, mind maps, flashcards, and quizzes in seconds.
+            Paste any YouTube video, university lecture, or upload Zoom, Google Meet & Teams meeting recordings/transcripts to instantly generate double-length summaries, slide presentations, quizzes & mind maps in under 60 seconds.
           </p>
           <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-            <a href="/" style="padding: 12px 28px; background: #4f46e5; color: white; border-radius: 9999px; font-weight: 700; text-decoration: none;">Get Started Free Now →</a>
+            <a href="/" style="padding: 12px 28px; background: #4f46e5; color: white; border-radius: 9999px; font-weight: 700; text-decoration: none;">Start free — no card required</a>
             <a href="/pricing" style="padding: 12px 24px; background: #f1f5f9; color: #334155; border-radius: 9999px; font-weight: 600; text-decoration: none;">View Workspace Pricing</a>
           </div>
         </header>

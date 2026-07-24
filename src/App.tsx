@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, lazy, Suspense, useMemo } from 'react';
+import { PRO_PLAN_MONTHLY_PRICE, PRO_PLAN_ANNUAL_MONTHLY_PRICE } from './constants/pricing';
 import SocialLogosBar from './components/SocialLogosBar';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -2313,8 +2314,8 @@ export default function App() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   // Dynamic Pricing & Promotions State (Firestore Backed)
-  const [proMonthlyPrice, setProMonthlyPrice] = useState<number>(8.99);
-  const [proYearlyPrice, setProYearlyPrice] = useState<number>(7.49);
+  const [proMonthlyPrice, setProMonthlyPrice] = useState<number>(Number(PRO_PLAN_MONTHLY_PRICE));
+  const [proYearlyPrice, setProYearlyPrice] = useState<number>(Number(PRO_PLAN_ANNUAL_MONTHLY_PRICE));
   const [enterpriseMonthlyPrice, setEnterpriseMonthlyPrice] = useState<number>(12.99);
   const [enterpriseYearlyPrice, setEnterpriseYearlyPrice] = useState<number>(11.49);
 

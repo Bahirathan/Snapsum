@@ -1,16 +1,16 @@
-# Zipytiny: AI Study Notes from Video, PDF, Slides & Articles
+# Zipytiny: Turn Videos, Lectures & Meetings Into AI Notes, Slide Decks & Study Guides
 
-Welcome to the AI-optimized documentation directory for **Zipytiny**, the AI-powered learning platform that turns videos, PDFs, slide decks, articles, and notes into clear summaries, key concepts, flashcards, mind maps, and study-ready notes in seconds.
+Welcome to the AI-optimized documentation directory for **Zipytiny**, the AI-powered learning workspace that turns videos, university lectures, meeting recordings (Zoom, Google Meet, Teams), PDFs, slide decks, articles, and notes into clear summaries, key concepts, flashcards, mind maps, slide presentations, and study-ready notes in seconds.
 
 - **Primary URL**: https://www.zipytiny.app/
 - **Alias Domains**: https://zipytiny.app/
-- **Core Purpose**: Empowering students, researchers, and professionals to stop rewatching hours of lectures and reading long PDFs. Zipytiny processes multimedia and documents (YouTube, Vimeo, local MP4/WebM videos, MP3/WAV audio, PDFs, Word, PowerPoint slides, and articles) and instantly synthesizes high-fidelity study notes, timeline chapters, interactive quizzes, flashcard decks, visual mind maps, and PowerPoint presentations.
+- **Core Purpose**: Empowering students, researchers, and professionals to stop rewatching hours of lectures and meetings or reading long PDFs. Zipytiny processes multimedia and documents (YouTube, Vimeo, Zoom/Meet/Teams recordings, local MP4/WebM videos, MP3/WAV audio, PDFs, Word, PowerPoint slides, and articles) and instantly synthesizes high-fidelity study notes, timeline chapters, interactive quizzes, flashcard decks, visual mind maps, and PowerPoint presentations.
 
 ---
 
 ## 💰 Pricing Tiers
 - **Free Plan**: $0/forever — core summarization features and AI study notes.
-- **Pro Plan**: $12/month — unlimited video, PDF & document uploads, mind maps, quizzes, and video-to-PowerPoint export.
+- **Pro Plan**: $9.99/month ($6.99/month billed annually) — unlimited video, PDF & document uploads, mind maps, quizzes, and video-to-PowerPoint export.
 - **Enterprise Plan**: $39/month — highest processing limits, team folders, dedicated support, and API webhooks.
 
 ---
@@ -18,7 +18,7 @@ Welcome to the AI-optimized documentation directory for **Zipytiny**, the AI-pow
 ## 🎯 Core Capabilities & Features
 
 ### 1. Multi-Format Input & Document Processing
-- **Video & Audio**: YouTube URLs, Vimeo links, local MP4, WebM, MOV, MP3, WAV, and audio recordings.
+- **Video, Audio & Meetings**: YouTube URLs, Vimeo links, Zoom, Google Meet & Teams meeting recordings/transcripts, local MP4, WebM, MOV, MP3, WAV, and audio recordings.
 - **Documents & Slides**: PDF handouts, Word files (.docx), PowerPoint presentations (.pptx), Excel sheets, raw text, and web articles.
 - **OCR Screenshot Extraction**: Upload images or screenshots containing text or lecture slides for automatic extraction.
 
@@ -42,4 +42,3 @@ Welcome to the AI-optimized documentation directory for **Zipytiny**, the AI-pow
 - **Learning Blog**: `https://www.zipytiny.app/blog`
 - **Dynamic Sitemap**: `https://www.zipytiny.app/sitemap.xml`
 - **Robots Policy**: `https://www.zipytiny.app/robots.txt`
-
