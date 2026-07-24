@@ -13005,15 +13005,15 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           </div>
 
           {/* Follow Us Feature */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 py-3 bg-slate-900/60 px-6 rounded-2xl border border-slate-800/60 shadow-inner">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 py-2.5 bg-slate-900/60 px-5 rounded-2xl border border-slate-800/60 shadow-inner">
             <span className="text-xs font-bold text-slate-300 tracking-wider font-mono uppercase shrink-0">
               Follow Us
             </span>
             <SocialLogosBar
-              youtubeLink={youtubeLink}
-              xLink={xLink}
               facebookLink={facebookLink}
               linkedinLink={linkedinLink}
+              xLink={xLink}
+              youtubeLink={youtubeLink}
               tiktokLink={tiktokLink}
               size="sm"
             />

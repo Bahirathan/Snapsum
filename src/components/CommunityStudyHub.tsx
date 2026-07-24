@@ -203,6 +203,10 @@ export default function CommunityStudyHub({ onSelectResource, onOpenReferralModa
                 alt={res.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  // TODO: replace placeholder thumbnail
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop';
+                }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-center justify-center">
                 <div className="w-11 h-11 rounded-full bg-white/90 dark:bg-zinc-900/90 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
