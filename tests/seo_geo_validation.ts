@@ -41,8 +41,8 @@ async function runTests() {
     const res = await fetch(`${BASE_URL}/robots.txt`);
     assert(res.status === 200, 'robots.txt status', `Expected 200, got ${res.status}`);
     const text = await res.text();
-    assert(text.includes('Sitemap: https://www.zipytiny.app/sitemap.xml'), 'robots.txt Sitemap', 'Sitemap directive missing');
-    assert(text.includes('Link: https://www.zipytiny.app/llms.txt; rel="llms"'), 'robots.txt LLM discovery', 'llms.txt discoverability tag missing');
+    assert(text.includes('Sitemap: https://zipytiny.app/sitemap.xml'), 'robots.txt Sitemap', 'Sitemap directive missing');
+    assert(text.includes('Link: https://zipytiny.app/llms.txt; rel="llms"'), 'robots.txt LLM discovery', 'llms.txt discoverability tag missing');
   } catch (err: any) {
     assert(false, 'robots.txt fetch', `Failed to fetch: ${err.message}`);
   }
@@ -71,9 +71,9 @@ async function runTests() {
     assert(xml.includes('<urlset'), 'sitemap.xml outer tag', 'Missing <urlset> tag');
     
     // Check specific tools links are present
-    assert(xml.includes('<loc>https://www.zipytiny.app/tools/youtube-lecture-summarizer</loc>'), 'Sitemap YouTube tools route', 'YouTube lecture summarizer tools route missing in sitemap');
-    assert(xml.includes('<loc>https://www.zipytiny.app/tools/pdf-study-guide-generator</loc>'), 'Sitemap PDF tools route', 'PDF study guide generator tools route missing in sitemap');
-    assert(xml.includes('<loc>https://www.zipytiny.app/tools/interactive-ai-tutor</loc>'), 'Sitemap Tutor tools route', 'Interactive AI tutor tools route missing in sitemap');
+    assert(xml.includes('<loc>https://zipytiny.app/tools/youtube-lecture-summarizer</loc>'), 'Sitemap YouTube tools route', 'YouTube lecture summarizer tools route missing in sitemap');
+    assert(xml.includes('<loc>https://zipytiny.app/tools/pdf-study-guide-generator</loc>'), 'Sitemap PDF tools route', 'PDF study guide generator tools route missing in sitemap');
+    assert(xml.includes('<loc>https://zipytiny.app/tools/interactive-ai-tutor</loc>'), 'Sitemap Tutor tools route', 'Interactive AI tutor tools route missing in sitemap');
   } catch (err: any) {
     assert(false, 'sitemap.xml fetch', `Failed to fetch: ${err.message}`);
   }
@@ -112,12 +112,12 @@ async function runTests() {
       assert(html.includes(`<title>${info.expectedTitle}</title>`), `${info.slug} title`, `Title tag missing or mismatched. Expected: ${info.expectedTitle}`);
       
       // 2. Check canonical link
-      const canonicalRegex = new RegExp(`<link[^>]*rel="canonical"[^>]*href="https://www.zipytiny.app/tools/${info.slug}"[^>]*>`, 'i');
+      const canonicalRegex = new RegExp(`<link[^>]*rel="canonical"[^>]*href="https://zipytiny.app/tools/${info.slug}"[^>]*>`, 'i');
       assert(canonicalRegex.test(html), `${info.slug} canonical link`, `Canonical link tag missing or incorrect for ${info.slug}`);
       
       // 3. Check OpenGraph and Twitter cards
       assert(html.includes(`<meta property="og:title" content="${info.expectedTitle}" />`), `${info.slug} og:title`, 'og:title missing or incorrect');
-      assert(html.includes(`<meta property="og:url" content="https://www.zipytiny.app/tools/${info.slug}" />`), `${info.slug} og:url`, 'og:url missing or incorrect');
+      assert(html.includes(`<meta property="og:url" content="https://zipytiny.app/tools/${info.slug}" />`), `${info.slug} og:url`, 'og:url missing or incorrect');
       assert(html.includes('<meta name="twitter:card" content="summary_large_image" />'), `${info.slug} twitter:card`, 'twitter:card missing or incorrect');
       
       // 4. Validate JSON-LD Scripts (crucial for SEO & GEO schema validation)

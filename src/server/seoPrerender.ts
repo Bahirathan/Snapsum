@@ -11,7 +11,7 @@ export interface RouteSeoData {
   prerenderHtml: string;
 }
 
-const DOMAIN = 'https://www.zipytiny.app';
+const DOMAIN = 'https://zipytiny.app';
 const DEFAULT_OG_IMAGE = `${DOMAIN}/og-image.png`;
 
 export const ALL_ROUTES = [
@@ -838,10 +838,10 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
       <div style="max-width: 1100px; margin: 0 auto; padding: 40px 20px; font-family: system-ui, sans-serif; color: #111; line-height: 1.6;">
         <header style="text-align: center; margin-bottom: 40px;">
           <h1 style="font-size: 2.8rem; font-weight: 800; letter-spacing: -0.02em; color: #0f172a; margin-bottom: 12px;">
-            Turn Videos, Lectures & Meetings Into AI Notes, Slide Decks & Study Guides
+            Turn Any Video, PDF, Slide Deck, Article or Note Into AI Summaries & Study Notes
           </h1>
           <p style="font-size: 1.25rem; color: #475569; max-width: 780px; margin: 0 auto 24px;">
-            Paste any YouTube video, university lecture, or upload Zoom, Google Meet & Teams meeting recordings/transcripts to instantly generate double-length summaries, slide presentations, quizzes & mind maps in under 60 seconds.
+            Turn any video, PDF, slide deck, article, or note into AI summaries and study notes in seconds. Upload files, paste YouTube links or Zoom, Teams & Meet recordings to instantly generate mind maps, flashcards, quizzes, and formatted study guides.
           </p>
           <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
             <a href="/" style="padding: 12px 28px; background: #4f46e5; color: white; border-radius: 9999px; font-weight: 700; text-decoration: none;">Start free — no card required</a>
