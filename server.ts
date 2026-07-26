@@ -37,6 +37,24 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
+// Canonical domain 301 redirect middleware (www.zipytiny.app -> zipytiny.app)
+// Placed FIRST in the middleware pipeline before any static assets, API routes, or SSR
+app.use((req, res, next) => {
+  const hostHeader = (
+    req.headers['x-fh-requested-host'] ||
+    req.headers['x-forwarded-host'] ||
+    req.headers.host ||
+    ''
+  ).toString().toLowerCase();
+
+  const hostName = hostHeader.split(':')[0].trim();
+
+  if (hostName === 'www.zipytiny.app') {
+    return res.redirect(301, `https://zipytiny.app${req.originalUrl}`);
+  }
+  next();
+});
+
 // Initialize Gemini Client
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -4241,15 +4259,6 @@ app.post('/api/presentation/generate', async (req, res) => {
       fallbackPresentations[videoId] = resilientPresentation;
     }
   })();
-});
-
-// Canonical domain 301 redirect middleware (www.zipytiny.app -> zipytiny.app)
-app.use((req, res, next) => {
-  const host = req.headers.host || '';
-  if (host === 'www.zipytiny.app') {
-    return res.redirect(301, `https://zipytiny.app${req.originalUrl}`);
-  }
-  next();
 });
 
 // Explicit SEO endpoints for crawlers
