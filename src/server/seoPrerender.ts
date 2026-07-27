@@ -1027,6 +1027,50 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
           </div>
         </section>
 
+        <section style="margin: 50px 0;" id="pricing">
+          <h2 style="font-size: 1.8rem; text-align: center; margin-bottom: 30px; color: #0f172a;">Affordable Pricing Plans</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+            <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; text-align: center;">
+              <h3 style="margin-top: 0; font-size: 1.25rem; color: #0f172a;">Free Workspace Plan</h3>
+              <p style="font-size: 1.75rem; font-weight: bold; margin: 10px 0; color: #4f46e5;">$0</p>
+              <p style="color: #64748b; font-size: 0.95rem; line-height: 1.5; margin: 0;">Free study workspace with core AI note generation and summary capabilities.</p>
+            </div>
+            <div style="padding: 20px; border: 2px solid #4f46e5; border-radius: 12px; background: #ffffff; text-align: center; position: relative;">
+              <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #4f46e5; color: white; padding: 2px 10px; font-size: 0.75rem; border-radius: 9999px; font-weight: bold; text-transform: uppercase;">Most Popular</span>
+              <h3 style="margin-top: 8px; font-size: 1.25rem; color: #0f172a;">Pro Plan</h3>
+              <p style="font-size: 1.75rem; font-weight: bold; margin: 10px 0; color: #4f46e5;">$9.99 <span style="font-size: 0.9rem; font-weight: normal; color: #64748b;">/ mo</span></p>
+              <p style="color: #64748b; font-size: 0.95rem; line-height: 1.5; margin: 0;">Unlimited video, PDF &amp; document uploads, mind maps, quizzes, and PowerPoint exports.</p>
+            </div>
+            <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; text-align: center;">
+              <h3 style="margin-top: 0; font-size: 1.25rem; color: #0f172a;">Enterprise Plan</h3>
+              <p style="font-size: 1.75rem; font-weight: bold; margin: 10px 0; color: #4f46e5;">$39 <span style="font-size: 0.9rem; font-weight: normal; color: #64748b;">/ mo</span></p>
+              <p style="color: #64748b; font-size: 0.95rem; line-height: 1.5; margin: 0;">Team workspaces, high-speed processing, dedicated support and API access.</p>
+            </div>
+          </div>
+        </section>
+
+        <section style="margin: 50px 0;" id="faq">
+          <h2 style="font-size: 1.8rem; text-align: center; margin-bottom: 30px; color: #0f172a;">Frequently Asked Questions</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+            <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+              <h3 style="margin-top: 0; font-size: 1.1rem; color: #0f172a; font-weight: 700;">What types of content formats can Zipytiny summarize?</h3>
+              <p style="color: #64748b; font-size: 0.95rem; line-height: 1.5; margin-bottom: 0;">Zipytiny supports YouTube videos, custom website links, pasted articles, raw text, and file uploads including PDFs, Word documents, PowerPoint presentations, Excel sheets, images with text OCR, MP3 and WAV audio recordings, and MP4 or WebM video files.</p>
+            </div>
+            <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+              <h3 style="margin-top: 0; font-size: 1.1rem; color: #0f172a; font-weight: 700;">How does the AI Chat Q&amp;A work?</h3>
+              <p style="color: #64748b; font-size: 0.95rem; line-height: 1.5; margin-bottom: 0;">The AI Chat Q&amp;A allows users to ask specific follow-up questions on generated summaries using the complete transcription and metadata powered by Google Gemini AI reasoning in real-time.</p>
+            </div>
+            <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+              <h3 style="margin-top: 0; font-size: 1.1rem; color: #0f172a; font-weight: 700;">Can I export summaries to other workspaces?</h3>
+              <p style="color: #64748b; font-size: 0.95rem; line-height: 1.5; margin-bottom: 0;">Yes, Zipytiny allows users to export generated summaries, timeline chapters, and quiz structures to formatted PDF reports, Microsoft Word documents, raw Markdown files, or directly to Notion.</p>
+            </div>
+            <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+              <h3 style="margin-top: 0; font-size: 1.1rem; color: #0f172a; font-weight: 700;">Is there a limit on free guest usage?</h3>
+              <p style="color: #64748b; font-size: 0.95rem; line-height: 1.5; margin-bottom: 0;">Free guest users receive a daily allocation of summaries to test Zipytiny, and can upgrade to the Pro Plan for unlimited processing speeds, PDF and Word exports, and premium AI templates.</p>
+            </div>
+          </div>
+        </section>
+
         <section style="margin: 50px 0; padding: 30px; background: #0f172a; color: white; border-radius: 16px;">
           <h2 style="margin-top: 0; font-size: 1.8rem; color: white;">Latest Learning & AI Strategy Guides</h2>
           <ul style="list-style: none; padding: 0; display: grid; gap: 16px; margin-top: 20px;">
