@@ -24,6 +24,192 @@ interface BlogPageProps {
 export default function BlogPage({ currentBlogSlug, onNavigateHome, onNavigateToBlog, onLaunchApp }: BlogPageProps) {
   const blogPosts: BlogPost[] = [
     {
+      slug: 'why-i-built-zipytiny',
+      title: 'Turn Any Video, PDF, or Lecture Into Study Notes in Seconds — Why I Built Zipytiny',
+      description: 'The story behind Zipytiny: why manual study note creation wastes millions of hours, how active recall removes friction, and why I built an AI study workspace as a solo founder.',
+      date: 'July 27, 2026',
+      readTime: '7 min read',
+      category: "Founder's Story",
+      targetKeyword: 'why i built zipytiny',
+      icon: Sparkles,
+      content: (
+        <div className="space-y-6 text-neutral-800 dark:text-zinc-200 leading-relaxed text-sm sm:text-base">
+          <p className="font-semibold text-lg text-indigo-600 dark:text-indigo-400">
+            I want to tell you about a problem that quietly wastes millions of hours every semester, and what I've been building to fix it.
+          </p>
+          <p>
+            If you've ever sat through a 90-minute lecture recording, a dense 40-page PDF, or a stack of slide decks the night before an exam, you already know the real cost of learning isn't understanding the material. It's finding the time to process it. Watching is not studying. Reading is not retaining. And most students — along with professionals prepping for certifications, career-switchers learning new skills, and lifelong learners just trying to keep up — don't have a system that turns raw content into something they can actually study from.
+          </p>
+          <p>
+            That gap is why I built <strong>Zipytiny</strong>: an AI-powered study workspace that turns video, PDF, slide decks, articles, and notes into structured summaries, flashcards, mind maps, and quizzes in under a minute.
+          </p>
+          <p>
+            This isn't a pitch. It's the story of a real problem, the product I built to solve it, and a few lessons on AI-assisted learning that I think are worth sharing regardless of whether you ever try the tool.
+          </p>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            The Problem With How We Study Today
+          </h2>
+          <p>
+            Think about the last time you had to learn something dense and unfamiliar — a technical course, a compliance training video, a 60-slide onboarding deck, a research paper for work. What did you actually do?
+          </p>
+          <p>
+            Most of us do one of two things. We either consume the content passively — watching, reading, highlighting — and hope some of it sticks. Or we manually convert it into something usable: typing out notes, building flashcards by hand, drafting our own summary. The first approach feels efficient but produces weak retention. The second approach produces strong retention but eats hours you don't have.
+          </p>
+          <p>
+            Active recall and spaced repetition are, by a wide margin, the most well-supported techniques in learning science for long-term retention. The problem was never the <em>technique</em>. It was always the <em>tooling</em>. Manually converting a 90-minute lecture into a spaced-repetition flashcard deck can easily take longer than the lecture itself. Most people simply give up and default to re-reading or re-watching, which research consistently shows is one of the least effective ways to learn.
+          </p>
+          <p>
+            This is the gap AI is genuinely well-suited to close — not by replacing the learning process, but by removing the friction of preparing material for it.
+          </p>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            What Zipytiny Actually Does
+          </h2>
+          <p>
+            Zipytiny takes almost any format of content — a YouTube video, a lecture recording, a Zoom or Teams meeting transcript, a PDF, a Word document, a PowerPoint deck, an Excel sheet, a scanned image, an MP3 or MP4 file, or even a pasted article link — and converts it into a structured study workspace in seconds.
+          </p>
+          <p className="font-medium">Once content is uploaded, Zipytiny generates:</p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li><strong>AI Summaries</strong> — concise, structured breakdowns of the key ideas, organized by topic rather than by timestamp, so you get the <em>meaning</em> of the content, not a transcript.</li>
+            <li><strong>Active Recall Flashcards</strong> — spaced-repetition-ready decks with double-sided testing, exportable to formats like Anki for anyone who already has an existing study workflow.</li>
+            <li><strong>Visual Mind Maps</strong> — interactive concept hierarchies that show how ideas connect to each other, which is especially useful for visual learners tackling technical or interdependent material.</li>
+            <li><strong>Practice Quizzes</strong> — multiple-choice and exam-style questions generated directly from the source content, with real-time feedback, so you can test retention immediately instead of guessing whether you actually understood something.</li>
+            <li><strong>Timestamped Notes</strong> — for video and audio content, notes that link directly back to the exact moment in the source material, so you can jump straight to the part you need to re-watch instead of scrubbing through an hour of footage.</li>
+            <li><strong>AI Chat Q&amp;A</strong> — the ability to ask follow-up questions directly against the source material, powered by the full transcript and context, so you're not limited to what the initial summary chose to highlight.</li>
+          </ul>
+          <p>
+            Everything can be exported — to PDF, Word, Markdown, or directly into Notion — so Zipytiny fits into whatever workflow you already use rather than forcing you into a new one.
+          </p>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            Why I Built This as a Solo Founder
+          </h2>
+          <p>
+            I've spent over a decade working in enterprise software — specifically ERP systems for industries like construction and manufacturing, where the entire discipline revolves around taking messy, unstructured operational data and turning it into something people can act on. Batching data, weighbridge readings, production logs — the throughline in that work has always been: raw input in, structured, usable output out.
+          </p>
+          <p>
+            Studying has the exact same shape of problem. Raw input — a lecture, a PDF, a meeting recording — and the value is entirely in how well you can convert it into something actionable. That parallel is what pulled me toward building Zipytiny.
+          </p>
+          <p>
+            I'm building this as a bootstrapped, zero-marketing-budget solo founder, which means every part of Zipytiny — from the AI processing pipeline to the security architecture protecting user data, to the SEO and technical infrastructure behind the product — has to be built and maintained without a team behind it. That's a genuinely different discipline than building inside a company with dedicated growth, security, and infrastructure teams. It also means I have to be honest about what the product is good at right now, rather than overclaiming.
+          </p>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            Where Zipytiny Is Genuinely Useful Today
+          </h2>
+          <ul className="list-disc pl-5 space-y-2">
+            <li><strong>Students</strong> converting lecture recordings and course PDFs into flashcards and quizzes ahead of exams, especially in dense, high-volume subjects like medicine, law, and engineering, where the sheer volume of material makes manual note-taking impractical.</li>
+            <li><strong>Working professionals</strong> processing long training videos, compliance modules, or industry reports into a five-minute summary they can actually retain, instead of a two-hour video they'll never rewatch.</li>
+            <li><strong>Career-switchers and self-learners</strong> working through online courses, technical documentation, or YouTube-based tutorials, who need a faster way to convert scattered content into a structured study plan.</li>
+            <li><strong>Teams</strong> who record meetings on Zoom, Google Meet, or Microsoft Teams and want a structured summary and searchable knowledge base afterward, instead of a raw transcript nobody rereads.</li>
+          </ul>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            Where It Still Has Room to Grow
+          </h2>
+          <p>
+            I'd rather be direct about this than pretend the product is finished. Zipytiny is early. I'm actively working through the first cohort of paying customers post-launch, refining pricing clarity, tightening the onboarding experience, and expanding language support. If you try it and something feels rough, that's useful — not embarrassing — feedback, and I read every message that comes in.
+          </p>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            A Quick Comparison: Where Zipytiny Fits Among Study Tools
+          </h2>
+          <p>
+            The AI study-tool space has grown quickly over the past couple of years, and it's worth being honest about where different tools fit rather than pretending Zipytiny is the only option worth considering.
+          </p>
+          <p>
+            Tools built primarily around manual flashcard creation and spaced repetition — the category Anki has led for years — are still excellent if you're comfortable building your own decks by hand and want maximum control over card format. What they don't solve is the upstream problem: converting a two-hour lecture or a 40-page PDF into flashcard-ready material in the first place. That conversion step is where most study time actually gets lost, and it's the specific gap Zipytiny is built around.
+          </p>
+          <p>
+            Community-driven platforms with massive pre-made content libraries solve a different problem — they're excellent if someone else has already studied your exact material and shared their notes. But they're far less useful for original, unique, or recently updated content: a professor's own lecture recording, an internal company training video, a niche technical paper. There's no pre-made deck for content that doesn't exist anywhere else, which is most of what working professionals and graduate students actually need to process.
+          </p>
+          <p>
+            Zipytiny's focus is specifically on that gap: original, unique source material — your lecture, your meeting recording, your PDF — converted into study-ready formats without requiring you to already know what you're looking for, or hoping someone else already made the deck you need.
+          </p>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            A Real Example of the Problem, and What Changes
+          </h2>
+          <p>
+            Picture a nursing student with a 45-minute lecture recording on pharmacology, due to be tested on it in three days. The traditional path looks like this: watch the full lecture once, taking rough notes by hand. Rewatch sections that were unclear, pausing and rewinding repeatedly. Manually convert scattered notes into flashcards, one at a time, which for a dense pharmacology lecture can easily mean 60 to 100 individual cards. Only after all of that manual conversion work is done can actual studying — the active recall and repetition that drives retention — even begin. Realistically, that entire preparation phase eats two to three hours before a single minute of effective studying has happened.
+          </p>
+          <p>
+            With Zipytiny, the same lecture recording is uploaded once. Within roughly a minute, the system returns a structured summary organized by topic, a full flashcard deck with double-sided testing already generated from the source material, timestamped notes linking directly back to specific moments in the recording for quick reference, and a practice quiz to immediately test retention. The manual conversion labor — the two to three hours of transcription and flashcard-building — is eliminated. What's left is exactly the part of studying that should take up a student's time and attention: actually reviewing, recalling, and testing the material.
+          </p>
+          <div className="border-l-4 border-indigo-500 pl-4 py-2 my-4 bg-indigo-500/5 rounded-r-xl font-semibold text-indigo-900 dark:text-indigo-300">
+            That's the entire value proposition in one sentence: Zipytiny doesn't change how you study. It changes how long it takes to get to the part where real studying starts.
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            Frequently Asked Questions
+          </h2>
+          <div className="space-y-4">
+            <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-zinc-900/60 border border-black/5 dark:border-zinc-800">
+              <h3 className="font-bold text-neutral-900 dark:text-zinc-100 mb-1">What file and content formats does Zipytiny support?</h3>
+              <p className="text-sm text-neutral-600 dark:text-zinc-400">Zipytiny supports YouTube videos, direct website links, pasted articles and raw text, PDF documents, Word documents, PowerPoint presentations, Excel spreadsheets, images with text (via OCR), and audio or video files including MP3, WAV, MP4, and WebM.</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-zinc-900/60 border border-black/5 dark:border-zinc-800">
+              <h3 className="font-bold text-neutral-900 dark:text-zinc-100 mb-1">Can I ask follow-up questions about the material I uploaded?</h3>
+              <p className="text-sm text-neutral-600 dark:text-zinc-400">Yes. The AI Chat Q&amp;A feature lets you ask specific questions against the full transcript and context of whatever you uploaded, so you're not limited to only what the automatically generated summary chose to highlight.</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-zinc-900/60 border border-black/5 dark:border-zinc-800">
+              <h3 className="font-bold text-neutral-900 dark:text-zinc-100 mb-1">Can I export what Zipytiny generates?</h3>
+              <p className="text-sm text-neutral-600 dark:text-zinc-400">Yes. Summaries, flashcard decks, and quiz structures can be exported as formatted PDF reports, Word documents, raw Markdown files, or pushed directly into Notion.</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-zinc-900/60 border border-black/5 dark:border-zinc-800">
+              <h3 className="font-bold text-neutral-900 dark:text-zinc-100 mb-1">Is there a free way to try Zipytiny?</h3>
+              <p className="text-sm text-neutral-600 dark:text-zinc-400">Yes. Free users get a daily allocation of AI-generated study material to test the platform, with the option to upgrade to Pro for unlimited processing, exports, and premium templates.</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-neutral-50 dark:bg-zinc-900/60 border border-black/5 dark:border-zinc-800">
+              <h3 className="font-bold text-neutral-900 dark:text-zinc-100 mb-1">Does Zipytiny replace studying, or just speed up preparation?</h3>
+              <p className="text-sm text-neutral-600 dark:text-zinc-400">It speeds up preparation. Zipytiny converts raw content into study-ready formats — flashcards, quizzes, summaries — but the actual learning still happens through active recall and review on your end. The tool removes the manual formatting labor, not the thinking.</p>
+            </div>
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            The Bigger Idea: AI Shouldn't Replace Learning, It Should Remove the Friction Before It
+          </h2>
+          <p>
+            There's a legitimate and important conversation happening right now about AI potentially undermining learning — about students using AI to skip the thinking part entirely. I take that concern seriously, and it shaped a specific design decision in Zipytiny: the product is built to accelerate the <em>preparation</em> stage of learning, not the <em>thinking</em> stage.
+          </p>
+          <p>
+            Zipytiny doesn't write your essay or answer your exam questions for you. It takes content you still have to engage with — quiz yourself on, review, actively recall — and removes the hours of manual formatting that used to stand between "I consumed this content" and "I can actually study from this material using proven techniques." The active recall and retention work still has to happen in your own head. Zipytiny just gets you to that starting line faster.
+          </p>
+          <p>
+            That distinction matters, and I think it's the difference between AI tools that quietly erode learning and AI tools that genuinely support it.
+          </p>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            What's Next
+          </h2>
+          <ol className="list-decimal pl-5 space-y-2">
+            <li><strong>Expanding format support</strong> — deeper handling of scanned documents, more language coverage for non-English content, and better handling of longer-form technical material like full textbook chapters.</li>
+            <li><strong>Refining the AI Chat Q&amp;A</strong> experience so it feels less like a chatbot bolted onto a summary and more like a genuine study partner that understands the full context of what you uploaded.</li>
+            <li><strong>Building out team and classroom workflows</strong> — shared workspaces for study groups, students, and small teams who want to build a collective knowledge base from shared source material.</li>
+            <li><strong>Continued security hardening and infrastructure work</strong>, since as a solo-built product, staying disciplined about data protection and system reliability has to scale alongside feature growth, not lag behind it.</li>
+          </ol>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            If You Want to Try It
+          </h2>
+          <p>
+            Zipytiny is free to start — no card required — with a Pro tier for unlimited processing, exports, and premium templates for anyone who needs it as a daily tool. You can try it directly at <a href="https://zipytiny.app" className="text-indigo-600 dark:text-indigo-400 font-semibold underline">zipytiny.app</a>.
+          </p>
+          <p>
+            If you're a student drowning in lecture recordings, a professional trying to actually retain the compliance training you just sat through, or just someone who's tired of re-reading the same PDF three times hoping something sticks — I built this for you, and I'd genuinely value your feedback.
+          </p>
+          <p>
+            And if you're building something yourself as a solo founder or bootstrapper, I'm always happy to compare notes on the zero-budget grind. It's a specific kind of hard, and it helps to talk to people doing the same thing.
+          </p>
+
+          <div className="pt-6 border-t border-black/5 dark:border-zinc-800 text-xs italic text-neutral-500 dark:text-zinc-400">
+            Zipytiny is an AI-powered study workspace that converts video, PDF, slides, articles, and notes into summaries, flashcards, mind maps, and quizzes. Learn more at <a href="https://zipytiny.app" className="text-indigo-600 dark:text-indigo-400 underline font-medium">zipytiny.app</a>.
+          </div>
+        </div>
+      )
+    },
+    {
       slug: 'turn-video-lecture-to-study-notes',
       title: 'How to Turn Video Lectures into Study Notes in Under 60 Seconds',
       description: 'Stop spending hours pausing and rewinding. Learn how to turn video lectures into study notes instantly using AI to save hours every week.',
