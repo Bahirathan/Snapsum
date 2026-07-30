@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useRef, lazy, Suspense, useMemo } from 'react';
 import { PRICING_CONFIG, PRO_PLAN_MONTHLY_PRICE, PRO_PLAN_ANNUAL_MONTHLY_PRICE, ENTERPRISE_PLAN_MONTHLY_PRICE } from './config/pricing.config';
+import { PricingCards } from './components/PricingCards';
 import SocialLogosBar from './components/SocialLogosBar';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -9139,191 +9140,13 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 )}
               </div>
 
-              {/* Plans Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 text-left">
-                
-                {/* Tier 1: Free Tier */}
-                <div className="border border-black/[0.04] rounded-3xl p-6 bg-[#f5f5f7]/40 flex flex-col justify-between relative overflow-hidden text-left font-sans">
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-mono font-bold uppercase text-[#86868b] tracking-widest block">Tier 01</span>
-                      <h4 className="text-lg font-bold text-[#1d1d1f]">
-                        Starter
-                      </h4>
-                      <p className="text-[#86868b] text-xs font-light leading-relaxed">
-                        Top-of-funnel acquisition; no credit card required to start.
-                      </p>
-                    </div>
-                    
-                    <div className="py-2">
-                      <span className="text-3xl font-bold text-[#1d1d1f]">$0</span>
-                      <span className="text-[#86868b] text-xs font-medium"> / forever</span>
-                    </div>
-
-                    <div className="border-t border-black/[0.04] pt-4 space-y-3">
-                      <span className="text-[#1d1d1f] text-[10px] font-mono font-bold block uppercase tracking-wider">INCLUDED LIMITATIONS:</span>
-                      <ul className="space-y-2.5 text-xs text-[#86868b] leading-normal font-light">
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
-                          <span>5 Video summaries / month</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
-                          <span>Text-only summary output</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
-                          <span>1 Synthesis preset (Short Script only)</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="pt-6">
-                    <button
-                      disabled
-                      className="w-full bg-[#f5f5f7] border border-black/[0.02] text-[#86868b] py-3 rounded-xl text-xs font-semibold block text-center"
-                    >
-                      {!isPremium ? 'Your Current Active Tier' : 'Starter Tier'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Tier 2: Pro Tier */}
-                <div className="border border-[#0071e3] rounded-3xl p-6 bg-white dark:bg-zinc-900 flex flex-col justify-between relative shadow-md overflow-hidden text-left font-sans ring-1 ring-[#0071e3]/20">
-                  <div className="absolute right-0 top-0 bg-gradient-to-r from-[#0071e3] to-indigo-600 text-white text-[8px] font-mono tracking-wider font-bold uppercase py-1.5 px-4 rounded-bl-xl">
-                    ⭐ Most Popular
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-mono font-bold uppercase text-[#0071e3] tracking-widest block">Tier 02</span>
-                      <h4 className="text-lg font-bold text-[#1d1d1f] dark:text-zinc-100 flex items-center gap-1.5">
-                        <Zap className="w-4 h-4 fill-[#0071e3] text-[#0071e3]" />
-                        Pro Creator Pass
-                      </h4>
-                      <p className="text-[#86868b] dark:text-zinc-400 text-xs font-light leading-relaxed">Everything you need to learn faster and create better content — unlimited.</p>
-                    </div>
-
-                    <div className="py-2">
-                      <span className="text-3xl font-bold text-[#1d1d1f] dark:text-zinc-100">
-                        {billingCycle === 'monthly' ? `$${proMonthlyPrice}` : `$${proYearlyPrice}`}
-                      </span>
-                      <span className="text-[#86868b] dark:text-zinc-500 text-xs font-medium">
-                        {billingCycle === 'monthly' ? ' / month' : ` / month ($${(proYearlyPrice * 12).toFixed(2)}/yr)`}
-                      </span>
-                    </div>
-
-                    <div className="border-t border-black/[0.04] dark:border-zinc-800 pt-4 space-y-3">
-                      <span className="text-[#1d1d1f] dark:text-zinc-300 text-[10px] font-mono font-bold block uppercase tracking-wider">Everything in Starter, plus:</span>
-                      <ul className="space-y-2.5 text-xs leading-normal">
-                        {[
-                          { label: 'Unlimited AI summaries (150/mo fair-use)', highlight: true },
-                          { label: 'Studio voiceover synthesis (300 min/mo)', highlight: true },
-                          { label: 'All 9 export formats — PDF, Word, Notion…', highlight: false },
-                          { label: 'Visual Mind Map generation', highlight: false },
-                          { label: 'AI Chat — unlimited messages', highlight: false },
-                          { label: 'Spaced repetition learning engine', highlight: false },
-                          { label: 'Custom domain & white-label links', highlight: false },
-                        ].map(({ label, highlight }) => (
-                          <li key={label} className={`flex items-start gap-2 ${highlight ? 'font-semibold text-[#1d1d1f] dark:text-zinc-100' : 'text-[#515154] dark:text-zinc-400 font-light'}`}>
-                            <CheckCircle className="w-4 h-4 text-[#0071e3] shrink-0 mt-0.5" />
-                            <span>{label}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="pt-6 space-y-3">
-                    {isPremium && (localStorage.getItem('youtube_summarizer_plan') || 'pro') === 'pro' ? (
-                      <div className="bg-[#f5f5f7] dark:bg-zinc-800 text-[#1d1d1f] dark:text-zinc-100 border border-black/[0.04] dark:border-zinc-700 py-3 rounded-xl text-xs font-mono font-bold text-center block select-none">
-                        ✓ PRO SUBSCRIPTION ACTIVE
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => handleCheckoutClick('pro')}
-                        className="w-full bg-gradient-to-r from-[#0071e3] to-indigo-600 hover:opacity-90 text-white py-3.5 rounded-xl text-xs font-bold block text-center transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md active:scale-[0.98]"
-                      >
-                        <Zap className="w-3.5 h-3.5 fill-white" />
-                        <span>
-                          {isAdminAuthenticated
-                            ? (stripeConfig.stripeConfigured ? 'Subscribe Now (Secure Stripe)' : 'Simulate checkout (Stripe)')
-                            : 'Upgrade to Pro Now'
-                          }
-                        </span>
-                      </button>
-                    )}
-                    <p className="text-center text-[10px] text-neutral-400 dark:text-zinc-600">14-day money-back guarantee · Cancel anytime</p>
-                  </div>
-                </div>
-
-                {/* Tier 3: Enterprise Agency */}
-                <div className="border border-black/[0.04] rounded-3xl p-6 bg-[#f5f5f7]/40 flex flex-col justify-between relative overflow-hidden text-left font-sans">
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-mono font-bold uppercase text-[#86868b] tracking-widest block">Tier 03</span>
-                      <h4 className="text-lg font-bold text-[#1d1d1f]">Enterprise Agency Hub</h4>
-                      <p className="text-[#86868b] text-xs font-light leading-relaxed">For professional content teams and digital growth agencies.</p>
-                    </div>
-                    
-                    <div className="py-2">
-                      <span className="text-3xl font-bold text-[#1d1d1f]">
-                        {billingCycle === 'monthly' ? `$${enterpriseMonthlyPrice}` : `$${enterpriseYearlyPrice}`}
-                      </span>
-                      <span className="text-[#86868b] text-xs font-medium">
-                        {billingCycle === 'monthly' ? ' / month' : ` / month ($${(enterpriseYearlyPrice * 12).toFixed(2)}/yr)`}
-                      </span>
-                    </div>
-
-                    <div className="border-t border-black/[0.04] pt-4 space-y-3">
-                      <span className="text-[#1d1d1f] text-[10px] font-mono font-bold block uppercase tracking-wider">AGENCY GRADE CONTROLS:</span>
-                      <ul className="space-y-2.5 text-xs text-[#86868b] leading-normal font-light">
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
-                          <span>Multi-seat access (3 seats included)</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
-                          <span>Ceiling raised to 500 summaries/month</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
-                          <span>Voiceover capped at 800 mins/month</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
-                          <span>White-label exports & full API access</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 text-[#1d1d1f] shrink-0 mt-0.5" />
-                          <span>Priority processing queue</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="pt-6">
-                    {isPremium && (localStorage.getItem('youtube_summarizer_plan') === 'enterprise') ? (
-                      <div className="bg-[#f5f5f7] text-[#1d1d1f] border border-black/[0.04] py-3 rounded-xl text-xs font-mono font-bold text-center block select-none">
-                        ✓ ENTERPRISE ACTIVE
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => handleCheckoutClick('enterprise')}
-                        className="w-full bg-[#1d1d1f] hover:bg-black text-white py-3 rounded-xl text-xs font-semibold block text-center transition cursor-pointer"
-                      >
-                        <span>
-                          {isAdminAuthenticated 
-                            ? (stripeConfig.stripeConfigured ? 'Start Enterprise Pass (Stripe)' : 'Simulate checkout (Stripe)')
-                            : 'Upgrade to Enterprise'
-                          }
-                        </span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
+              {/* Single Source of Truth Pricing Component */}
+              <div className="pt-4">
+                <PricingCards
+                  onSelectPlan={(plan) => handleCheckoutClick(plan)}
+                  onLaunchFree={() => setCurrentScreen('app')}
+                  isAnnualDefault={billingCycle === 'yearly'}
+                />
               </div>
 
               {/* Testimonials section */}
@@ -10233,7 +10056,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                         <div className="grid grid-cols-2 gap-3">
                           {/* Pro Plan Prices */}
                           <div className="space-y-2 p-3 bg-[#f5f5f7]/50 rounded-2xl border border-black/[0.02]">
-                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0071e3] block">Pro Creator Pass</span>
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#0071e3] block">{PRICING_CONFIG.pro.name}</span>
                             <div className="space-y-1.5">
                               <div>
                                 <label className="text-[9px] font-medium text-neutral-500 block">Monthly Price ($)</label>
@@ -10258,7 +10081,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
 
                           {/* Enterprise Plan Prices */}
                           <div className="space-y-2 p-3 bg-[#f5f5f7]/50 rounded-2xl border border-black/[0.02]">
-                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-800 block">Enterprise Agency Hub</span>
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-800 block">{PRICING_CONFIG.enterprise.name}</span>
                             <div className="space-y-1.5">
                               <div>
                                 <label className="text-[9px] font-medium text-neutral-500 block">Monthly Price ($)</label>
@@ -11653,7 +11476,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                     <section id="payments" className="scroll-mt-24 space-y-3">
                       <h2 className="text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-2">4. Subscriptions, Payments &amp; Gated Token Gating</h2>
                       <p>
-                        Our platform offers a mock premium upgrade model ("Pro Creator Pass") featuring a Stripe Sandbox Gateway simulator. 
+                        Our platform offers a premium upgrade model ("Pro Plan") featuring a Stripe Gateway integration. 
                       </p>
                       <p>
                         All payment workflows run completely locally in premium mock simulations. No actual financial storage, credit card clearance, or regional payment capture takes place on live database networks, resulting in zero real monetization liabilities under local trading laws. To hard-gate active privileges, we issue localized gating tokens (e.g. <code>ZipytinyPro=True</code>) bound to local clients.
@@ -11807,7 +11630,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   <span className="text-[9px] uppercase font-bold tracking-widest text-neutral-400 font-mono block">Order Summary</span>
                   <div className="space-y-1">
                     <h3 className="text-base font-bold font-display text-white">
-                      {selectedPlanCode === 'enterprise' ? 'Enterprise Agency Hub' : 'Pro Creator Pass'}
+                      {selectedPlanCode === 'enterprise' ? PRICING_CONFIG.enterprise.name : PRICING_CONFIG.pro.name}
                     </h3>
                     <p className="text-[11px] text-neutral-405">
                       {billingCycle === 'monthly' ? 'Monthly auto-renew subscription' : 'Annual value saving subscription'}

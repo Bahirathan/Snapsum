@@ -3006,18 +3006,18 @@ app.post('/api/customer-support', async (req, res) => {
     }
 
     if (q.includes('price') || q.includes('pricing') || q.includes('plan') || q.includes('pro') || q.includes('cost') || q.includes('subscription') || q.includes('premium') || q.includes('billing') || q.includes('buy') || q.includes('upgrade') || q.includes('starter')) {
-      answer += `We've kept Zipytiny pricing super simple and transparent! We have two core premium tiers and an enterprise option tailored to your learning pace:\n\n` +
-                `1. 🌟 **Basic Starter Plan ($0/forever)**:\n` +
-                `   - Perfect for general learners! It gives you standard summaries for videos up to 30 minutes long.\n` +
-                `   - Access to standard Active Recall quizzing & handy study tools.\n\n` +
-                `2. 🔥 **Pro Plan ($9.99/month or $6.99/month billed annually)**:\n` +
-                `   - This is our most popular plan! You get **unlimited video, PDF, and document processing**.\n` +
-                `   - Access to interactive concept mindmaps and dynamic study flashcards.\n` +
-                `   - Quiz generator, PowerPoint & Anki exports, high-speed Gemini Flash engine.\n` +
-                `   - Priority queueing (blazing-fast generation speeds).\n\n` +
-                `3. 🏢 **Enterprise Plan ($39/month)**:\n` +
-                `   - Team workspaces, high-speed processing queue, dedicated support, and API access.\n\n` +
-                `*Tip: Since we are running in a sandbox environment, you can actually test the entire Pro checkout flow and play with premium features completely for free without spending a single cent!*`;
+        answer += `We've kept Zipytiny pricing super simple and transparent! We have two core premium tiers and an enterprise option tailored to your learning pace:\n\n` +
+                  `1. 🌟 **Free Workspace ($0/forever)**:\n` +
+                  `   - Perfect for general learners! It gives you 3 video summaries/week with core AI note generation.\n` +
+                  `   - Access to standard Active Recall quizzing & handy study tools.\n\n` +
+                  `2. 🔥 **Pro Plan ($9.99/month or $6.99/month billed annually)**:\n` +
+                  `   - This is our most popular plan! You get **unlimited video, PDF, and document processing**.\n` +
+                  `   - Access to interactive concept mindmaps and dynamic study flashcards.\n` +
+                  `   - Quiz generator, PowerPoint & Anki exports, high-speed Gemini Flash engine.\n` +
+                  `   - Priority queueing (blazing-fast generation speeds).\n\n` +
+                  `3. 🏢 **Enterprise Plan ($39/month)**:\n` +
+                  `   - Team workspaces, high-speed processing queue, dedicated support, and API access.\n\n` +
+                  `*Tip: Since we are running in a sandbox environment, you can actually test the entire Pro checkout flow and play with premium features completely for free without spending a single cent!*`;
     } else if (q.includes('sandbox') || q.includes('test') || q.includes('stripe') || q.includes('card') || q.includes('payment') || q.includes('checkout') || q.includes('simulate') || q.includes('charge')) {
       answer += `Our sandbox mode is actually one of the coolest parts of the platform! It lets you test out the entire Pro upgrade flow and play with premium features without spending a single penny.\n\n` +
                 `- **How it works**: When you click "Upgrade to Pro" or head over to the Pricing section, the app automatically detects if you're in the developer sandbox testing mode.\n` +
@@ -3030,7 +3030,7 @@ app.post('/api/customer-support', async (req, res) => {
                 `- **Your Security**: We treat your privacy seriously. Your custom key is stored safely inside your local browser's private storage (localStorage) and sent directly to the Gemini API securely server-side. It is never shared or persisted on any third-party database.`;
     } else if (q.includes('referral') || q.includes('refer') || q.includes('invite') || q.includes('unlocked') || q.includes('code') || q.includes('friend')) {
       answer += `👥 **Unlock Premium for Free with Referrals!**\n\n` +
-                `Yes, we have an awesome referral system! You can unlock the Pro Creator Pass features entirely for free just by sharing the love with your friends.\n\n` +
+                `Yes, we have an awesome referral system! You can unlock Pro Plan features entirely for free just by sharing the love with your friends.\n\n` +
                 `- **How**: Share your unique referral link (you can find it right on your main workspace dashboard).\n` +
                 `- **The Goal**: When **2 visitors** click your link and sign in using Google SSO, your account is instantly upgraded to premium status! No credit card, no charge — just free Pro access!`;
     } else if (q.includes('feature') || q.includes('summar') || q.includes('tts') || q.includes('audio') || q.includes('chapter') || q.includes('mindmap') || q.includes('quiz') || q.includes('reel') || q.includes('video') || q.includes('transcript')) {

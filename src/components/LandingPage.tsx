@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PRICING_CONFIG, PRO_PLAN_MONTHLY_PRICE, PRO_PLAN_ANNUAL_MONTHLY_PRICE, ENTERPRISE_PLAN_MONTHLY_PRICE } from '../config/pricing.config';
+import { PricingCards } from './PricingCards';
 import SocialLogosBar from './SocialLogosBar';
 import confetti from 'canvas-confetti';
 import { 
@@ -2617,159 +2618,13 @@ export default function LandingPage({
           </p>
         </div>
 
-        {/* Billing Cycle Toggle Switch (Priority 14) */}
-        <div className="flex items-center justify-center gap-3 mb-10">
-          <span className={`text-xs font-semibold ${!isAnnualBilling ? 'text-[#1d1d1f] dark:text-zinc-50' : 'text-[#86868b] dark:text-zinc-400'}`}>
-            Billed Monthly
-          </span>
-          <button
-            type="button"
-            onClick={() => setIsAnnualBilling(!isAnnualBilling)}
-            className="w-11 h-6 bg-black/[0.08] dark:bg-zinc-800 rounded-full p-0.5 transition-colors duration-200 focus:outline-none cursor-pointer relative"
-          >
-            <div
-              className={`w-5 h-5 bg-[#0071e3] rounded-full shadow-xs transform transition-transform duration-200 ${
-                isAnnualBilling ? 'translate-x-5' : 'translate-x-0'
-              }`}
-            />
-          </button>
-          <span className={`text-xs font-semibold flex items-center gap-1.5 ${isAnnualBilling ? 'text-[#1d1d1f] dark:text-zinc-50' : 'text-[#86868b] dark:text-zinc-400'}`}>
-            <span>Billed Annually</span>
-            <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold font-mono px-2 py-0.5 rounded-full uppercase tracking-wider">
-              Save 30%
-            </span>
-          </span>
-        </div>
-
-        {/* Plans Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto text-left mb-16">
-          
-          {/* Free Trial Card */}
-          <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 p-6 sm:p-8 rounded-2xl flex flex-col justify-between hover:shadow-md transition">
-            <div className="space-y-4">
-              <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-neutral-450">Standard Entry</span>
-              <h3 className="text-xl font-extrabold text-neutral-800 dark:text-zinc-100 font-display">{PRICING_CONFIG.free.name}</h3>
-              
-              <div className="flex items-baseline gap-1 pt-1">
-                <span className="text-4xl font-extrabold font-display text-neutral-900 dark:text-zinc-50">{PRICING_CONFIG.free.displayPrice}</span>
-                <span className="text-xs text-[#86868b] font-medium font-mono">/ FOREVER</span>
-              </div>
-              
-              <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
-                {PRICING_CONFIG.free.description}
-              </p>
-              
-              <ul className="space-y-2.5 text-xs text-neutral-700 dark:text-zinc-350 pt-4 border-t border-black/[0.04] dark:border-zinc-800">
-                {PRICING_CONFIG.free.features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <button
-              type="button"
-              onClick={() => onLaunchApp('app')}
-              className="mt-8 w-full py-3.5 bg-neutral-900 dark:bg-zinc-800 hover:bg-black text-white rounded-xl text-xs font-extrabold transition cursor-pointer text-center shadow-md active:scale-98"
-            >
-              Start free — no card required
-            </button>
-          </div>
-
-          {/* Pro Plan Card */}
-          <div className="bg-white dark:bg-zinc-900 border-2 border-[#0071e3] p-6 sm:p-8 rounded-2xl relative flex flex-col justify-between shadow-lg">
-            <div className="absolute top-4 right-4 bg-emerald-500/10 text-emerald-600 text-[9px] font-mono font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-emerald-500/15">
-              {isAnnualBilling ? "Save 30%" : "Most Popular"}
-            </div>
-            
-            <div className="space-y-4">
-              <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-[#0071e3]">Unlimited Learning</span>
-              <h3 className="text-xl font-extrabold text-neutral-800 dark:text-zinc-100 font-display">{PRICING_CONFIG.pro.name}</h3>
-              
-              <div className="flex flex-col pt-1">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold font-display text-neutral-900 dark:text-zinc-50">
-                    {isAnnualBilling ? `$${PRO_PLAN_ANNUAL_MONTHLY_PRICE}` : PRICING_CONFIG.pro.displayPrice}
-                  </span>
-                  <span className="text-xs text-[#86868b] font-medium font-mono">/ MONTH</span>
-                </div>
-                <span className="text-[10px] text-neutral-500 dark:text-zinc-500 font-mono font-bold uppercase mt-1">
-                  {isAnnualBilling ? "Billed annually ($83.88 / yr)" : "Billed monthly"}
-                </span>
-              </div>
-              
-              <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
-                {PRICING_CONFIG.pro.description}
-              </p>
-              
-              <ul className="space-y-2.5 text-xs text-neutral-700 dark:text-zinc-350 pt-4 border-t border-black/[0.04] dark:border-zinc-800">
-                {PRICING_CONFIG.pro.features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-[#0071e3] shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* High-contrast Viral Referral sub-card */}
-              <div className="mt-4 p-4 bg-indigo-50/80 dark:bg-indigo-950/20 border border-dashed border-indigo-300 dark:border-indigo-900/60 rounded-xl space-y-2 text-left">
-                <p className="text-[11px] font-bold text-indigo-900 dark:text-indigo-300 flex items-center gap-1.5 uppercase font-mono tracking-wider">
-                  <Gift className="w-4 h-4 text-indigo-600 shrink-0" />
-                  <span>Invite 2 Friends</span>
-                </p>
-                <p className="text-[11.5px] text-neutral-600 dark:text-zinc-300 font-light leading-relaxed">
-                  Unlock Premium Features Free for Life by inviting 2 friends (referral count is tracked live).
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={onUpgrade}
-              className="mt-8 w-full py-3 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-xl text-xs font-extrabold transition cursor-pointer text-center shadow-md"
-            >
-              Get Pro Now
-            </button>
-          </div>
-
-          {/* Enterprise Plan Card */}
-          <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 p-6 sm:p-8 rounded-2xl flex flex-col justify-between hover:shadow-md transition">
-            <div className="space-y-4">
-              <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-purple-600 dark:text-purple-400">Team Workspaces</span>
-              <h3 className="text-xl font-extrabold text-neutral-800 dark:text-zinc-100 font-display">{PRICING_CONFIG.enterprise.name}</h3>
-              
-              <div className="flex flex-col pt-1">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold font-display text-neutral-900 dark:text-zinc-50">{PRICING_CONFIG.enterprise.displayPrice}</span>
-                  <span className="text-xs text-[#86868b] font-medium font-mono">/ MONTH</span>
-                </div>
-                <span className="text-[10px] text-neutral-500 dark:text-zinc-500 font-mono font-bold uppercase mt-1">
-                  Billed monthly
-                </span>
-              </div>
-              
-              <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
-                {PRICING_CONFIG.enterprise.description}
-              </p>
-              
-              <ul className="space-y-2.5 text-xs text-neutral-700 dark:text-zinc-350 pt-4 border-t border-black/[0.04] dark:border-zinc-800">
-                {PRICING_CONFIG.enterprise.features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-purple-500 shrink-0" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <button
-              type="button"
-              onClick={onUpgrade}
-              className="mt-8 w-full py-3.5 bg-neutral-900 dark:bg-zinc-800 hover:bg-black text-white rounded-xl text-xs font-extrabold transition cursor-pointer text-center shadow-md active:scale-98"
-            >
-              Upgrade to Enterprise
-            </button>
-          </div>
-
+        {/* Single Source of Truth Pricing Component */}
+        <div className="mb-16">
+          <PricingCards
+            onSelectPlan={(plan) => onUpgrade()}
+            onLaunchFree={() => onLaunchApp('app')}
+            isAnnualDefault={isAnnualBilling}
+          />
         </div>
 
         {/* Comparison Table */}
