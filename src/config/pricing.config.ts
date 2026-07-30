@@ -28,7 +28,7 @@ export const PRICING_CONFIG: PricingConfig = {
     displayPrice: '$0',
     period: 'forever',
     billingInterval: 'forever',
-    priceId: null, // Fill in Stripe Price ID when available
+    priceId: null,
     description: 'Free study workspace with core AI note generation and summary capabilities.',
     features: [
       '3 video summaries/week',
@@ -45,7 +45,7 @@ export const PRICING_CONFIG: PricingConfig = {
     displayPrice: '$9.99',
     period: 'mo',
     billingInterval: 'monthly',
-    priceId: null, // Fill in Stripe Price ID when available
+    priceId: 'price_1TytQeFD2EMa85IJtGXxe05pb',
     description: 'Unlimited video, PDF & document uploads, mind maps, quiz generator, PowerPoint & Anki exports, high-speed Gemini Flash engine.',
     features: [
       'Unlimited video/PDF/document uploads',
@@ -64,7 +64,7 @@ export const PRICING_CONFIG: PricingConfig = {
     displayPrice: '$39',
     period: 'mo',
     billingInterval: 'monthly',
-    priceId: null, // Fill in Stripe Price ID when available
+    priceId: 'price_1TytkmFD2EMa85IJvzRNHN9W',
     description: 'Team workspaces, high-speed processing, dedicated support, API access.',
     features: [
       'Team workspaces & shared folders',

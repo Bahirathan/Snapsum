@@ -23,6 +23,7 @@ import multer from 'multer';
 import { runDocumentIndexing } from './server/documentIndexer';
 import { getDocuments, deleteDocument, searchVectorStore, indexingProgress } from './server/vectorDb';
 import { getRouteSeoData, injectSeoIntoHtmlTemplate } from './src/server/seoPrerender';
+import { PRICING_CONFIG, PRO_PLAN_ANNUAL_MONTHLY_PRICE } from './src/config/pricing.config';
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -3266,6 +3267,17 @@ app.get('/api/subscription-status', async (req, res) => {
   return res.json({ subscription });
 });
 
+app.post('/api/save-subscription', async (req, res) => {
+  const { email, plan, status } = req.body;
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ error: 'Valid email is required' });
+  }
+  const validPlan = (plan === 'enterprise' || plan === 'pro') ? plan : 'pro';
+  const validStatus = status === 'canceled' ? 'canceled' : 'active';
+  await saveSubscription(email, validPlan, validStatus);
+  return res.json({ success: true, email, plan: validPlan, status: validStatus });
+});
+
 app.get('/api/download-extension', (req, res) => {
   try {
     const zip = new AdmZip();
@@ -3621,10 +3633,13 @@ app.post('/api/create-checkout-session', async (req, res) => {
   }
 
   try {
-    let proMonthly = 9.99;
-    let proYearly = 6.99;
-    let enterpriseMonthly = 39;
-    let enterpriseYearly = 39;
+    const isYearly = billingCycle === 'yearly';
+    const targetPlan = planCode === 'enterprise' ? PRICING_CONFIG.enterprise : PRICING_CONFIG.pro;
+    
+    let proMonthly = PRICING_CONFIG.pro.price;
+    let proYearly = Number(PRO_PLAN_ANNUAL_MONTHLY_PRICE);
+    let enterpriseMonthly = PRICING_CONFIG.enterprise.price;
+    let enterpriseYearly = PRICING_CONFIG.enterprise.price;
     let promotions: any[] = [];
 
     if (db) {
@@ -3643,17 +3658,18 @@ app.post('/api/create-checkout-session', async (req, res) => {
       }
     }
 
-    const isYearly = billingCycle === 'yearly';
-    let planName = 'Pro Creator Pass';
+    let planName = targetPlan.name;
     let unitAmount = isYearly ? proYearly : proMonthly;
     let isSubscription = true;
+    let serverPriceId: string | null = (!promoCode && !isYearly && targetPlan.priceId) ? targetPlan.priceId : null;
 
     if (planCode === 'test' || planCode === 'test_1usd') {
       planName = 'Stripe Live Verification (One-Time)';
       unitAmount = 1; // $1.00 USD
       isSubscription = false;
+      serverPriceId = null;
     } else if (planCode === 'enterprise') {
-      planName = 'Enterprise Agency Hub';
+      planName = targetPlan.name;
       unitAmount = isYearly ? enterpriseYearly : enterpriseMonthly;
     }
 
@@ -3673,21 +3689,29 @@ app.post('/api/create-checkout-session', async (req, res) => {
       }
     }
 
-    // Convert prices to cents for Stripe
-    unitAmount = Math.round(unitAmount * 100);
-
     const payload = new URLSearchParams();
     payload.append('payment_method_types[0]', 'card');
-    payload.append('line_items[0][price_data][currency]', 'usd');
-    payload.append('line_items[0][price_data][product_data][name]', planName);
-    payload.append('line_items[0][price_data][unit_amount]', String(unitAmount));
-    if (isSubscription) {
-      payload.append('line_items[0][price_data][recurring][interval]', 'month');
+
+    if (serverPriceId) {
+      // Use standard pre-created Stripe Price ID
+      payload.append('line_items[0][price]', serverPriceId);
+      payload.append('line_items[0][quantity]', '1');
       payload.append('mode', 'subscription');
     } else {
-      payload.append('mode', 'payment');
+      // Convert prices to cents for custom price_data fallback
+      const amountInCents = Math.round(unitAmount * 100);
+      payload.append('line_items[0][price_data][currency]', 'usd');
+      payload.append('line_items[0][price_data][product_data][name]', planName);
+      payload.append('line_items[0][price_data][unit_amount]', String(amountInCents));
+      if (isSubscription) {
+        payload.append('line_items[0][price_data][recurring][interval]', 'month');
+        payload.append('mode', 'subscription');
+      } else {
+        payload.append('mode', 'payment');
+      }
+      payload.append('line_items[0][quantity]', '1');
     }
-    payload.append('line_items[0][quantity]', '1');
+
     payload.append('success_url', `${returnUrl || 'http://localhost:3000'}?checkout_success=true&session_id={CHECKOUT_SESSION_ID}`);
     payload.append('cancel_url', `${returnUrl || 'http://localhost:3000'}?checkout_cancel=true`);
 
