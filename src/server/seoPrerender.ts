@@ -1,4 +1,4 @@
-import { FREE_PLAN_PRICE, PRO_PLAN_MONTHLY_PRICE, ENTERPRISE_PLAN_MONTHLY_PRICE } from '../constants/pricing';
+import { FREE_PLAN_PRICE, PRO_PLAN_MONTHLY_PRICE, ENTERPRISE_PLAN_MONTHLY_PRICE, PRICING_CONFIG } from '../config/pricing.config';
 
 export interface RouteSeoData {
   title: string;
@@ -802,12 +802,27 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
   if (cleanPath === '/pricing') {
     return {
       title: 'Zipytiny Pricing & Workspace Plans - Free to Start',
-      description: 'Compare Zipytiny Free, Pro ($9.99/mo), and Enterprise plans. Start summarizing YouTube videos, PDFs, and slide decks today.',
+      description: `Compare Zipytiny Free, Pro ($${PRO_PLAN_MONTHLY_PRICE}/mo), and Enterprise ($${ENTERPRISE_PLAN_MONTHLY_PRICE}/mo) plans. Start summarizing YouTube videos, PDFs, and slide decks today.`,
       keywords: 'zipytiny pricing, free youtube summarizer, pro study suite, Enterprise AI notes',
       canonical: `${DOMAIN}/pricing`,
       ogType: 'website',
       ogImage: DEFAULT_OG_IMAGE,
       jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          'name': 'Zipytiny',
+          'url': `${DOMAIN}/pricing`,
+          'operatingSystem': 'All',
+          'applicationCategory': 'EducationalApplication, ProductivityApplication, MultimediaApplication',
+          'genre': 'AI Study Workspace & Multi-Format Knowledge Engine',
+          'description': 'Zipytiny pricing plans: Free Workspace ($0), Pro Plan ($9.99/mo), and Enterprise Plan ($39/mo).',
+          'offers': [
+            { '@type': 'Offer', 'name': 'Free Workspace Plan', 'price': FREE_PLAN_PRICE, 'priceCurrency': 'USD', 'description': 'Free study workspace with core AI note generation and summary capabilities.' },
+            { '@type': 'Offer', 'name': 'Pro Plan', 'price': PRO_PLAN_MONTHLY_PRICE, 'priceCurrency': 'USD', 'description': 'Unlimited video, PDF & document uploads, mind maps, quizzes, and PowerPoint exports.' },
+            { '@type': 'Offer', 'name': 'Enterprise Plan', 'price': ENTERPRISE_PLAN_MONTHLY_PRICE, 'priceCurrency': 'USD', 'description': 'Team workspaces, high-speed processing, dedicated support and API access.' }
+          ]
+        },
         {
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
@@ -823,7 +838,7 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
           <h1 style="font-size: 2.5rem; margin-top: 10px; color: #111;">Simple, Transparent Pricing for Students & Teams</h1>
           <p style="font-size: 1.1rem; color: #666;">Choose the workspace plan that fits your study schedule.</p>
 
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-top: 30px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-top: 30px;">
             <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; background: #fff;">
               <h2 style="margin-top:0;">Free Tier</h2>
               <p style="font-size: 1.8rem; font-weight: bold;">$0 <span style="font-size: 1rem; color: #666;">/ forever</span></p>
@@ -847,6 +862,19 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
                 <li>High-speed Gemini Flash Engine</li>
               </ul>
               <a href="/" style="display: block; text-align:center; padding: 10px; background: #4f46e5; color: white; border-radius: 6px; text-decoration:none; margin-top: 20px;">Upgrade to Pro</a>
+            </div>
+
+            <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; background: #fff;">
+              <h2 style="margin-top:0; color: #7c3aed;">Enterprise Plan</h2>
+              <p style="font-size: 1.8rem; font-weight: bold;">$39 <span style="font-size: 1rem; color: #666;">/ month</span></p>
+              <p>For team workspaces, institutions & agencies.</p>
+              <ul>
+                <li>Team Workspaces & Shared Folders</li>
+                <li>High-Speed Priority Processing Queue</li>
+                <li>Dedicated Onboarding & Support</li>
+                <li>API Access & Custom Webhooks</li>
+              </ul>
+              <a href="/" style="display: block; text-align:center; padding: 10px; background: #7c3aed; color: white; border-radius: 6px; text-decoration:none; margin-top: 20px;">Upgrade to Enterprise</a>
             </div>
           </div>
         </main>

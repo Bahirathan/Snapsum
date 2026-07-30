@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, lazy, Suspense, useMemo } from 'react';
-import { PRO_PLAN_MONTHLY_PRICE, PRO_PLAN_ANNUAL_MONTHLY_PRICE } from './constants/pricing';
+import { PRICING_CONFIG, PRO_PLAN_MONTHLY_PRICE, PRO_PLAN_ANNUAL_MONTHLY_PRICE, ENTERPRISE_PLAN_MONTHLY_PRICE } from './config/pricing.config';
 import SocialLogosBar from './components/SocialLogosBar';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -2314,10 +2314,10 @@ export default function App() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   // Dynamic Pricing & Promotions State (Firestore Backed)
-  const [proMonthlyPrice, setProMonthlyPrice] = useState<number>(Number(PRO_PLAN_MONTHLY_PRICE));
+  const [proMonthlyPrice, setProMonthlyPrice] = useState<number>(PRICING_CONFIG.pro.price);
   const [proYearlyPrice, setProYearlyPrice] = useState<number>(Number(PRO_PLAN_ANNUAL_MONTHLY_PRICE));
-  const [enterpriseMonthlyPrice, setEnterpriseMonthlyPrice] = useState<number>(12.99);
-  const [enterpriseYearlyPrice, setEnterpriseYearlyPrice] = useState<number>(11.49);
+  const [enterpriseMonthlyPrice, setEnterpriseMonthlyPrice] = useState<number>(PRICING_CONFIG.enterprise.price);
+  const [enterpriseYearlyPrice, setEnterpriseYearlyPrice] = useState<number>(PRICING_CONFIG.enterprise.price);
 
   // Social Media Link states (Firestore & localStorage Backed)
   const [youtubeLink, setYoutubeLink] = useState(() => localStorage.getItem('social_youtube') || 'https://www.youtube.com');

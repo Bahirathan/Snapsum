@@ -1,33 +1,33 @@
-// Single Source of Truth for Zipytiny Pricing Plans
-// Verification Note for Stripe Dashboard Sync:
-// - Free Plan: $0.00 / forever
-// - Pro Plan Monthly: $9.99 / month
-// - Pro Plan Annual: $6.99 / month ($83.88 / year)
-// - Enterprise Plan Monthly: $39.00 / month
+// Re-exports from src/config/pricing.config.ts (Single Source of Truth)
+import { PRICING_CONFIG } from '../config/pricing.config';
 
-export const FREE_PLAN_PRICE = "0.00";
-export const PRO_PLAN_MONTHLY_PRICE = "9.99";
-export const PRO_PLAN_ANNUAL_MONTHLY_PRICE = "6.99";
-export const ENTERPRISE_PLAN_MONTHLY_PRICE = "39.00";
+export {
+  PRICING_CONFIG,
+  FREE_PLAN_PRICE,
+  PRO_PLAN_MONTHLY_PRICE,
+  PRO_PLAN_ANNUAL_MONTHLY_PRICE,
+  ENTERPRISE_PLAN_MONTHLY_PRICE,
+} from '../config/pricing.config';
 
 export const PRICING_SUMMARY = {
   free: {
-    price: FREE_PLAN_PRICE,
-    displayPrice: "$0",
-    period: "forever",
-    description: "Free study workspace with core AI note generation and summary capabilities."
+    price: PRICING_CONFIG.free.price.toFixed(2),
+    displayPrice: PRICING_CONFIG.free.displayPrice,
+    period: PRICING_CONFIG.free.period,
+    description: PRICING_CONFIG.free.description,
   },
   pro: {
-    monthlyPrice: PRO_PLAN_MONTHLY_PRICE,
-    annualMonthlyPrice: PRO_PLAN_ANNUAL_MONTHLY_PRICE,
-    displayPriceMonthly: "$9.99",
+    monthlyPrice: PRICING_CONFIG.pro.price.toFixed(2),
+    annualMonthlyPrice: "6.99",
+    displayPriceMonthly: PRICING_CONFIG.pro.displayPrice,
     displayPriceAnnual: "$6.99",
-    description: "Unlimited video, PDF & document uploads, mind maps, quizzes, and video-to-PowerPoint export."
+    description: PRICING_CONFIG.pro.description,
   },
   enterprise: {
-    price: ENTERPRISE_PLAN_MONTHLY_PRICE,
-    displayPrice: "$39.00",
+    price: PRICING_CONFIG.enterprise.price.toFixed(2),
+    displayPrice: PRICING_CONFIG.enterprise.displayPrice,
     period: "month",
-    description: "Team workspaces, high-speed processing, dedicated support and API access."
-  }
+    description: PRICING_CONFIG.enterprise.description,
+  },
 };
+

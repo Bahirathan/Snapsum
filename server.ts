@@ -3009,14 +3009,13 @@ app.post('/api/customer-support', async (req, res) => {
                 `1. 🌟 **Basic Starter Plan ($0/forever)**:\n` +
                 `   - Perfect for general learners! It gives you standard summaries for videos up to 30 minutes long.\n` +
                 `   - Access to standard Active Recall quizzing & handy study tools.\n\n` +
-                `2. 🔥 **Pro Creator Pass ($28/month or $19/month billed annually)**:\n` +
-                `   - This is our most popular plan! You get **completely unlimited video processing** (no daily quota limits).\n` +
-                `   - Premium, high-fidelity humanlike AI voiceovers for a beautiful listening experience.\n` +
-                `   - Access to fully interactive concept mindmaps and dynamic study flashcards.\n` +
-                `   - High-contrast vertical viral reels & script exports to repurpose content in seconds.\n` +
+                `2. 🔥 **Pro Plan ($9.99/month or $6.99/month billed annually)**:\n` +
+                `   - This is our most popular plan! You get **unlimited video, PDF, and document processing**.\n` +
+                `   - Access to interactive concept mindmaps and dynamic study flashcards.\n` +
+                `   - Quiz generator, PowerPoint & Anki exports, high-speed Gemini Flash engine.\n` +
                 `   - Priority queueing (blazing-fast generation speeds).\n\n` +
-                `3. 🏢 **Enterprise Tier ($68/month or $48/month billed annually)**:\n` +
-                `   - Custom LLM fine-tuning, high-volume API access, custom integrations, and dedicated support for organizations.\n\n` +
+                `3. 🏢 **Enterprise Plan ($39/month)**:\n` +
+                `   - Team workspaces, high-speed processing queue, dedicated support, and API access.\n\n` +
                 `*Tip: Since we are running in a sandbox environment, you can actually test the entire Pro checkout flow and play with premium features completely for free without spending a single cent!*`;
     } else if (q.includes('sandbox') || q.includes('test') || q.includes('stripe') || q.includes('card') || q.includes('payment') || q.includes('checkout') || q.includes('simulate') || q.includes('charge')) {
       answer += `Our sandbox mode is actually one of the coolest parts of the platform! It lets you test out the entire Pro upgrade flow and play with premium features without spending a single penny.\n\n` +
@@ -3112,8 +3111,8 @@ Key facts about Zipytiny to guide your replies:
 1. Zipytiny transforms YouTube videos, lectures, and custom uploads into elegant structured summaries, key takeaways, quizzes, interactive mindmaps, and premium audio voiceovers (TTS).
 2. Pricing and Billing:
    - Basic Starter Plan: $0/forever, offering standard summaries (up to 30 mins videos) and basic quizzes.
-   - Pro Creator Pass: $28/month (or $19/month billed annually), offering unlimited processing, premium high-fidelity voiceovers, interactive mindmaps, dynamic flashcards, and priority queueing.
-   - Enterprise Tier: $68/month (or $48/month billed annually), offering simultaneous bulk processing, automated web scheduler, API webhooks, and priority queueing.
+   - Pro Plan: $9.99/month (or $6.99/month billed annually), offering unlimited video/PDF processing, mind maps, quizzes, and Anki/PowerPoint exports.
+   - Enterprise Plan: $39/month, offering team workspaces, priority queueing, dedicated support, and API access.
 3. Sandbox Environment: Zipytiny features a secure simulated sandbox environment. Connecting a Stripe test key or simulating Pro checkout allows developers/users to test the entire premium subscription flow at zero cost. No actual credit card is charged.
 4. Custom Gemini API Key Override: Users can paste their own Google Gemini API key in the Developer Settings tab (in-app or in the Admin panel). This allows users to completely bypass server daily credit quotas and utilize their personal free-tier API quotas.
 5. Other Features: Referrals (refer 2 visitors to unlock premium features), 2FA Security in Admin, IP tracker rate limit controls, Cinematic explainers, Active Recall quizzing, and audio transcription.
@@ -3622,10 +3621,10 @@ app.post('/api/create-checkout-session', async (req, res) => {
   }
 
   try {
-    let proMonthly = 28;
-    let proYearly = 19;
-    let enterpriseMonthly = 68;
-    let enterpriseYearly = 48;
+    let proMonthly = 9.99;
+    let proYearly = 6.99;
+    let enterpriseMonthly = 39;
+    let enterpriseYearly = 39;
     let promotions: any[] = [];
 
     if (db) {

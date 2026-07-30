@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { PRO_PLAN_MONTHLY_PRICE, PRO_PLAN_ANNUAL_MONTHLY_PRICE } from '../constants/pricing';
+import { PRICING_CONFIG, PRO_PLAN_MONTHLY_PRICE, PRO_PLAN_ANNUAL_MONTHLY_PRICE, ENTERPRISE_PLAN_MONTHLY_PRICE } from '../config/pricing.config';
 import SocialLogosBar from './SocialLogosBar';
 import confetti from 'canvas-confetti';
 import { 
@@ -2642,53 +2642,55 @@ export default function LandingPage({
         </div>
 
         {/* Plans Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto text-left mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto text-left mb-16">
           
           {/* Free Trial Card */}
-          <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 p-8 rounded-2xl flex flex-col justify-between hover:shadow-md transition">
+          <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 p-6 sm:p-8 rounded-2xl flex flex-col justify-between hover:shadow-md transition">
             <div className="space-y-4">
               <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-neutral-450">Standard Entry</span>
-              <h3 className="text-xl font-extrabold text-neutral-800 dark:text-zinc-100 font-display">Free Trial</h3>
+              <h3 className="text-xl font-extrabold text-neutral-800 dark:text-zinc-100 font-display">{PRICING_CONFIG.free.name}</h3>
               
               <div className="flex items-baseline gap-1 pt-1">
-                <span className="text-4xl font-extrabold font-display text-neutral-900 dark:text-zinc-50">$0</span>
+                <span className="text-4xl font-extrabold font-display text-neutral-900 dark:text-zinc-50">{PRICING_CONFIG.free.displayPrice}</span>
                 <span className="text-xs text-[#86868b] font-medium font-mono">/ FOREVER</span>
               </div>
               
               <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
-                Test-drive core features with basic daily video summaries and active recall quizzes.
+                {PRICING_CONFIG.free.description}
               </p>
               
               <ul className="space-y-2.5 text-xs text-neutral-700 dark:text-zinc-350 pt-4 border-t border-black/[0.04] dark:border-zinc-800">
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> 3 daily credits</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> YouTube & Web summaries</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> Basic conceptual quizzes</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> Local memory storage</li>
+                {PRICING_CONFIG.free.features.map((feature, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
               </ul>
             </div>
             <button
               type="button"
               onClick={() => onLaunchApp('app')}
-              className="mt-8 w-full py-3.5 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-xl text-xs font-extrabold transition cursor-pointer text-center shadow-md hover:shadow-lg active:scale-98"
+              className="mt-8 w-full py-3.5 bg-neutral-900 dark:bg-zinc-800 hover:bg-black text-white rounded-xl text-xs font-extrabold transition cursor-pointer text-center shadow-md active:scale-98"
             >
               Start free — no card required
             </button>
           </div>
 
           {/* Pro Plan Card */}
-          <div className="bg-white dark:bg-zinc-900 border-2 border-[#0071e3] p-8 rounded-2xl relative flex flex-col justify-between shadow-lg">
+          <div className="bg-white dark:bg-zinc-900 border-2 border-[#0071e3] p-6 sm:p-8 rounded-2xl relative flex flex-col justify-between shadow-lg">
             <div className="absolute top-4 right-4 bg-emerald-500/10 text-emerald-600 text-[9px] font-mono font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border border-emerald-500/15">
-              {isAnnualBilling ? "Save 30%" : "Best Seller"}
+              {isAnnualBilling ? "Save 30%" : "Most Popular"}
             </div>
             
             <div className="space-y-4">
               <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-[#0071e3]">Unlimited Learning</span>
-              <h3 className="text-xl font-extrabold text-neutral-800 dark:text-zinc-100 font-display">Pro Plan</h3>
+              <h3 className="text-xl font-extrabold text-neutral-800 dark:text-zinc-100 font-display">{PRICING_CONFIG.pro.name}</h3>
               
               <div className="flex flex-col pt-1">
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold font-display text-neutral-900 dark:text-zinc-50">
-                    {isAnnualBilling ? `$${PRO_PLAN_ANNUAL_MONTHLY_PRICE}` : `$${PRO_PLAN_MONTHLY_PRICE}`}
+                    {isAnnualBilling ? `$${PRO_PLAN_ANNUAL_MONTHLY_PRICE}` : PRICING_CONFIG.pro.displayPrice}
                   </span>
                   <span className="text-xs text-[#86868b] font-medium font-mono">/ MONTH</span>
                 </div>
@@ -2698,16 +2700,16 @@ export default function LandingPage({
               </div>
               
               <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
-                Unlock absolute processing capabilities, deep multi-format documents, and unlimited speeds.
+                {PRICING_CONFIG.pro.description}
               </p>
               
               <ul className="space-y-2.5 text-xs text-neutral-700 dark:text-zinc-350 pt-4 border-t border-black/[0.04] dark:border-zinc-800">
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> <strong>Unlimited</strong> Workspaces & Uploads</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> High-speed processing speeds</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> HD custom mind maps export</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> Unlimited AI Tutor Socratic Chat</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> Priority 24/7 dedicated support</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" /> <strong>No watermarks</strong> or advertising overlays</li>
+                {PRICING_CONFIG.pro.features.map((feature, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-[#0071e3] shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
               </ul>
 
               {/* High-contrast Viral Referral sub-card */}
@@ -2727,6 +2729,44 @@ export default function LandingPage({
               className="mt-8 w-full py-3 bg-[#0071e3] hover:bg-[#0077ed] text-white rounded-xl text-xs font-extrabold transition cursor-pointer text-center shadow-md"
             >
               Get Pro Now
+            </button>
+          </div>
+
+          {/* Enterprise Plan Card */}
+          <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 p-6 sm:p-8 rounded-2xl flex flex-col justify-between hover:shadow-md transition">
+            <div className="space-y-4">
+              <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-purple-600 dark:text-purple-400">Team Workspaces</span>
+              <h3 className="text-xl font-extrabold text-neutral-800 dark:text-zinc-100 font-display">{PRICING_CONFIG.enterprise.name}</h3>
+              
+              <div className="flex flex-col pt-1">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-extrabold font-display text-neutral-900 dark:text-zinc-50">{PRICING_CONFIG.enterprise.displayPrice}</span>
+                  <span className="text-xs text-[#86868b] font-medium font-mono">/ MONTH</span>
+                </div>
+                <span className="text-[10px] text-neutral-500 dark:text-zinc-500 font-mono font-bold uppercase mt-1">
+                  Billed monthly
+                </span>
+              </div>
+              
+              <p className="text-xs text-[#86868b] dark:text-zinc-400 font-light leading-relaxed">
+                {PRICING_CONFIG.enterprise.description}
+              </p>
+              
+              <ul className="space-y-2.5 text-xs text-neutral-700 dark:text-zinc-350 pt-4 border-t border-black/[0.04] dark:border-zinc-800">
+                {PRICING_CONFIG.enterprise.features.map((feature, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-purple-500 shrink-0" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <button
+              type="button"
+              onClick={onUpgrade}
+              className="mt-8 w-full py-3.5 bg-neutral-900 dark:bg-zinc-800 hover:bg-black text-white rounded-xl text-xs font-extrabold transition cursor-pointer text-center shadow-md active:scale-98"
+            >
+              Upgrade to Enterprise
             </button>
           </div>
 
