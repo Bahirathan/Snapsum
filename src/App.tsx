@@ -2374,9 +2374,9 @@ export default function App() {
   const getPlanPrice = (planCode: 'pro' | 'enterprise' | 'test', cycle: 'monthly' | 'yearly') => {
     if (planCode === 'test') return 1;
     if (planCode === 'enterprise') {
-      return cycle === 'monthly' ? enterpriseMonthlyPrice : enterpriseYearlyPrice;
+      return cycle === 'monthly' ? PRICING_CONFIG.enterprise.price : PRICING_CONFIG.enterprise.price;
     }
-    return cycle === 'monthly' ? proMonthlyPrice : proYearlyPrice;
+    return cycle === 'monthly' ? PRICING_CONFIG.pro.price : Number(PRO_PLAN_ANNUAL_MONTHLY_PRICE);
   };
 
   const getPlanTotalPrice = (planCode: 'pro' | 'enterprise' | 'test', cycle: 'monthly' | 'yearly') => {
@@ -2393,11 +2393,18 @@ export default function App() {
         const snap = await getDoc(docRef);
         if (snap.exists()) {
           const data = snap.data();
-          if (data.proMonthlyPrice !== undefined) setProMonthlyPrice(Number(data.proMonthlyPrice));
-          if (data.proYearlyPrice !== undefined) setProYearlyPrice(Number(data.proYearlyPrice));
-          if (data.enterpriseMonthlyPrice !== undefined) setEnterpriseMonthlyPrice(Number(data.enterpriseMonthlyPrice));
-          if (data.enterpriseYearlyPrice !== undefined) setEnterpriseYearlyPrice(Number(data.enterpriseYearlyPrice));
           if (Array.isArray(data.promotions)) setPromotionsList(data.promotions);
+
+          // If stored prices in Firestore are outdated, update Firestore to match PRICING_CONFIG
+          if (data.proMonthlyPrice !== PRICING_CONFIG.pro.price || data.enterpriseMonthlyPrice !== PRICING_CONFIG.enterprise.price) {
+            await setDoc(docRef, {
+              proMonthlyPrice: PRICING_CONFIG.pro.price,
+              proYearlyPrice: Number(PRO_PLAN_ANNUAL_MONTHLY_PRICE),
+              enterpriseMonthlyPrice: PRICING_CONFIG.enterprise.price,
+              enterpriseYearlyPrice: PRICING_CONFIG.enterprise.price,
+              updatedAt: new Date().toISOString()
+            }, { merge: true });
+          }
 
           // Synchronize social links
           if (data.youtubeLink !== undefined) {

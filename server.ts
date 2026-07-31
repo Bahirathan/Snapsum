@@ -3647,10 +3647,6 @@ app.post('/api/create-checkout-session', async (req, res) => {
         const pricingDoc = await db.collection('admin_settings').doc('pricing').get();
         if (pricingDoc.exists) {
           const pData = pricingDoc.data();
-          if (pData?.proMonthlyPrice !== undefined) proMonthly = Number(pData.proMonthlyPrice);
-          if (pData?.proYearlyPrice !== undefined) proYearly = Number(pData.proYearlyPrice);
-          if (pData?.enterpriseMonthlyPrice !== undefined) enterpriseMonthly = Number(pData.enterpriseMonthlyPrice);
-          if (pData?.enterpriseYearlyPrice !== undefined) enterpriseYearly = Number(pData.enterpriseYearlyPrice);
           if (Array.isArray(pData?.promotions)) promotions = pData.promotions;
         }
       } catch (err) {
