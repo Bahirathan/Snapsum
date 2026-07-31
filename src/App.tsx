@@ -9020,125 +9020,90 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                 </div>
               )}
 
-              {/* Monthly / Yearly Billing Cycle Switcher */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 text-left">
-                <div>
-                  <h3 className="text-sm font-semibold text-[#1d1d1f]">
-                    {isAdminAuthenticated ? "Choose a package for your MVP testing" : "Choose the perfect plan for you"}
-                  </h3>
-                  <p className="text-[#86868b] text-xs font-light">
-                    {isAdminAuthenticated 
-                      ? "Mock transactions will securely simulate real customer handshakes."
-                      : "Find a flexible plan that aligns with your scale and requirements."}
-                  </p>
-                </div>
-                
-                {/* Toggle Switch */}
-                <div className="bg-[#f5f5f7] p-1 rounded-full border border-black/[0.04] flex items-center gap-1 shadow-inner">
-                  <button
-                    onClick={() => setBillingCycle('monthly')}
-                    className={`px-5 py-2 rounded-full text-xs font-semibold transition cursor-pointer ${
-                      billingCycle === 'monthly' ? 'bg-white text-[#1d1d1f] shadow-sm' : 'text-[#86868b] hover:text-[#1d1d1f]'
-                    }`}
-                  >
-                    Monthly Billing
-                  </button>
-                  <button
-                    onClick={() => setBillingCycle('yearly')}
-                    className={`px-5 py-2 rounded-full text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 ${
-                      billingCycle === 'yearly' ? 'bg-white text-[#1d1d1f] shadow-sm' : 'text-[#86868b] hover:text-[#1d1d1f]'
-                    }`}
-                  >
-                    <span>Yearly Billing</span>
-                    <span className="bg-[#0071e3] text-white text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-full select-none">
-                      Save 25%
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Stripe Connection Real-Time Status Banner & $1 Test Button */}
-              <div className="mb-6 space-y-4">
-                <div className="bg-gradient-to-r from-emerald-500/[0.04] to-teal-500/[0.02] border border-emerald-500/20 p-5 rounded-3xl text-left flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm font-sans">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold font-mono ${stripeConfig.stripeConfigured ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'} uppercase tracking-wider`}>
-                        {stripeConfig.stripeConfigured ? 'Live Stripe Connected' : 'Stripe Key Config Required'}
-                      </span>
-                      {stripeConfig.accountInfo && (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold font-mono ${stripeConfig.accountInfo.chargesEnabled ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'} uppercase tracking-wider`}>
-                          {stripeConfig.accountInfo.chargesEnabled ? 'Charges Active' : 'Charges Restricted'}
+              {/* Stripe Connection Real-Time Status Banner & $1 Test Button (Admin Only) */}
+              {isAdminAuthenticated && (
+                <div className="mb-6 space-y-4">
+                  <div className="bg-gradient-to-r from-emerald-500/[0.04] to-teal-500/[0.02] border border-emerald-500/20 p-5 rounded-3xl text-left flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm font-sans">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold font-mono ${stripeConfig.stripeConfigured ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'} uppercase tracking-wider`}>
+                          {stripeConfig.stripeConfigured ? 'Live Stripe Connected' : 'Stripe Key Config Required'}
                         </span>
+                        {stripeConfig.accountInfo && (
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold font-mono ${stripeConfig.accountInfo.chargesEnabled ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'} uppercase tracking-wider`}>
+                            {stripeConfig.accountInfo.chargesEnabled ? 'Charges Active' : 'Charges Restricted'}
+                          </span>
+                        )}
+                        <h4 className="text-sm font-bold text-[#1d1d1f]">Secure Live Payment Verification ($1.00 USD)</h4>
+                      </div>
+                      <p className="text-xs text-[#515154] font-light max-w-2xl leading-relaxed">
+                        {stripeConfig.stripeConfigured 
+                          ? 'Your Stripe credentials are authenticated! Click below to perform a real **$1.00 USD** secure test payment using your card to verify full end-to-end checkout routing.'
+                          : 'To perform a real live payment check, make sure you have added your Stripe keys to your environment secrets in AI Studio. Currently showing simulator fallback.'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleCheckoutClick('test')}
+                      disabled={stripePaymentLoading}
+                      className="shrink-0 w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-5 py-3 rounded-2xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {stripePaymentLoading ? (
+                        <span>Loading Checkout...</span>
+                      ) : (
+                        <>
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>Pay $1.00 USD & Check Live</span>
+                        </>
                       )}
-                      <h4 className="text-sm font-bold text-[#1d1d1f]">Secure Live Payment Verification ($1.00 USD)</h4>
-                    </div>
-                    <p className="text-xs text-[#515154] font-light max-w-2xl leading-relaxed">
-                      {stripeConfig.stripeConfigured 
-                        ? 'Your Stripe credentials are authenticated! Click below to perform a real **$1.00 USD** secure test payment using your card to verify full end-to-end checkout routing.'
-                        : 'To perform a real live payment check, make sure you have added your Stripe keys to your environment secrets in AI Studio. Currently showing simulator fallback.'}
-                    </p>
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleCheckoutClick('test')}
-                    disabled={stripePaymentLoading}
-                    className="shrink-0 w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-5 py-3 rounded-2xl shadow-sm transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                  >
-                    {stripePaymentLoading ? (
-                      <span>Loading Checkout...</span>
-                    ) : (
-                      <>
-                        <ShieldCheck className="w-4 h-4" />
-                        <span>Pay $1.00 USD & Check Live</span>
-                      </>
-                    )}
-                  </button>
+
+                  {/* Account Restriction alert boxes directly visible on the checkout page */}
+                  {stripeConfig.stripeConfigured && stripeConfig.accountInfo && !stripeConfig.accountInfo.chargesEnabled && (
+                    <div className="bg-rose-50 border border-rose-200/50 rounded-2xl p-4 text-xs text-rose-950 font-sans text-left space-y-2">
+                      <div className="flex items-start gap-2.5">
+                        <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <span className="font-extrabold text-rose-900 block font-mono text-[10px] uppercase tracking-wider">⚠️ Connected Stripe Account is Restricted from Processing Payments</span>
+                          <p className="leading-relaxed text-rose-800">
+                            Your connected Stripe account (<strong>{stripeConfig.accountInfo.id}</strong> in {stripeConfig.accountInfo.country}) has charges disabled (<code>charges_enabled: false</code>). Stripe will block live credit card checkout sessions from starting until onboarding details are verified.
+                          </p>
+                          <div className="bg-rose-100/50 p-3 rounded-xl border border-rose-200/30 font-mono text-[10px] text-rose-950 space-y-1 leading-relaxed">
+                            <div><strong>Account ID:</strong> {stripeConfig.accountInfo.id}</div>
+                            <div><strong>Country:</strong> {stripeConfig.accountInfo.country}</div>
+                            <div><strong>Details Submitted:</strong> {String(stripeConfig.accountInfo.detailsSubmitted)}</div>
+                            <div><strong>Capabilities Card Payments:</strong> {stripeConfig.accountInfo.capabilities?.card_payments || 'unknown'}</div>
+                            <div><strong>Capabilities Transfers:</strong> {stripeConfig.accountInfo.capabilities?.transfers || 'unknown'}</div>
+                          </div>
+                          <p className="text-[10px] text-rose-700 leading-snug">
+                            <strong>Action Required:</strong> Log in to your <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener noreferrer" className="underline font-bold text-rose-900 hover:text-rose-950">Stripe Dashboard Payments/Onboarding panel</a> and complete any pending verification tasks (like representative details or business registration) to activate your account.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {stripeConfig.error && (
+                    <div className="bg-amber-50 border border-amber-200/50 rounded-2xl p-4 text-xs text-amber-950 font-sans text-left">
+                      <div className="flex items-start gap-2.5">
+                        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          <span className="font-extrabold text-amber-900 block font-mono text-[10px] uppercase tracking-wider">⚠️ Stripe API Key Initialization Warning</span>
+                          <p className="leading-relaxed text-amber-800">
+                            The server encountered an error while verifying your Stripe keys:
+                          </p>
+                          <div className="bg-amber-100/50 p-2.5 rounded-xl border border-amber-200/30 font-mono text-[10px] text-amber-950 break-words leading-relaxed">
+                            {stripeConfig.error}
+                          </div>
+                          <p className="text-[10px] text-amber-700 leading-snug">
+                            Make sure the <code>STRIPE_SECRET_KEY</code> and <code>STRIPE_PUBLISHABLE_KEY</code> are correctly set in your environment variables.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-
-                {/* Account Restriction alert boxes directly visible on the checkout page */}
-                {stripeConfig.stripeConfigured && stripeConfig.accountInfo && !stripeConfig.accountInfo.chargesEnabled && (
-                  <div className="bg-rose-50 border border-rose-200/50 rounded-2xl p-4 text-xs text-rose-950 font-sans text-left space-y-2">
-                    <div className="flex items-start gap-2.5">
-                      <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-                      <div className="space-y-1">
-                        <span className="font-extrabold text-rose-900 block font-mono text-[10px] uppercase tracking-wider">⚠️ Connected Stripe Account is Restricted from Processing Payments</span>
-                        <p className="leading-relaxed text-rose-800">
-                          Your connected Stripe account (<strong>{stripeConfig.accountInfo.id}</strong> in {stripeConfig.accountInfo.country}) has charges disabled (<code>charges_enabled: false</code>). Stripe will block live credit card checkout sessions from starting until onboarding details are verified.
-                        </p>
-                        <div className="bg-rose-100/50 p-3 rounded-xl border border-rose-200/30 font-mono text-[10px] text-rose-950 space-y-1 leading-relaxed">
-                          <div><strong>Account ID:</strong> {stripeConfig.accountInfo.id}</div>
-                          <div><strong>Country:</strong> {stripeConfig.accountInfo.country}</div>
-                          <div><strong>Details Submitted:</strong> {String(stripeConfig.accountInfo.detailsSubmitted)}</div>
-                          <div><strong>Capabilities Card Payments:</strong> {stripeConfig.accountInfo.capabilities?.card_payments || 'unknown'}</div>
-                          <div><strong>Capabilities Transfers:</strong> {stripeConfig.accountInfo.capabilities?.transfers || 'unknown'}</div>
-                        </div>
-                        <p className="text-[10px] text-rose-700 leading-snug">
-                          <strong>Action Required:</strong> Log in to your <a href="https://dashboard.stripe.com/payments" target="_blank" rel="noopener noreferrer" className="underline font-bold text-rose-900 hover:text-rose-950">Stripe Dashboard Payments/Onboarding panel</a> and complete any pending verification tasks (like representative details or business registration) to activate your account.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {stripeConfig.error && (
-                  <div className="bg-amber-50 border border-amber-200/50 rounded-2xl p-4 text-xs text-amber-950 font-sans text-left">
-                    <div className="flex items-start gap-2.5">
-                      <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                      <div className="space-y-1">
-                        <span className="font-extrabold text-amber-900 block font-mono text-[10px] uppercase tracking-wider">⚠️ Stripe API Key Initialization Warning</span>
-                        <p className="leading-relaxed text-amber-800">
-                          The server encountered an error while verifying your Stripe keys:
-                        </p>
-                        <div className="bg-amber-100/50 p-2.5 rounded-xl border border-amber-200/30 font-mono text-[10px] text-amber-950 break-words leading-relaxed">
-                          {stripeConfig.error}
-                        </div>
-                        <p className="text-[10px] text-amber-700 leading-snug">
-                          Make sure the <code>STRIPE_SECRET_KEY</code> and <code>STRIPE_PUBLISHABLE_KEY</code> are correctly set in your environment variables.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
 
               {/* Single Source of Truth Pricing Component */}
               <div className="pt-4">

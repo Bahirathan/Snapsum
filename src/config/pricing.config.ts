@@ -1,3 +1,4 @@
+// This is the ONLY file where prices should be edited. Do not hardcode prices, plan names, or price_ids anywhere else in the codebase.
 // Single Source of Truth for Zipytiny Pricing Plans
 // Centralized configuration for pricing cards, checkout flows, SEO metadata, and AI assistant prompts.
 

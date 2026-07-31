@@ -410,7 +410,7 @@ async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: 
   }
 
   // Determine limits based on active plan
-  let limit = 5; // default Starter monthly limit
+  let limit = 5; // default Free monthly limit
   const isPro = userPlan === 'pro';
   const isEnterprise = userPlan === 'enterprise';
 
@@ -422,7 +422,7 @@ async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: 
     limit = 8; // one-time first-session bonus
   }
 
-  // Handle Free / Starter tier limit
+  // Handle Free tier limit
   if (!isPro && !isEnterprise) {
     if (mUsage.count >= limit) {
       return {
@@ -432,7 +432,7 @@ async function checkAndIncrementUsage(req: express.Request): Promise<{ allowed: 
         remaining: 0,
         message: mUsage.isFirstCycle
           ? 'Your one-time first-session bonus limit of 8 summaries has been reached. Please upgrade to Pro or Enterprise for unlimited processing!'
-          : 'Your Starter plan is limited to 5 summaries per month. Please upgrade to Pro or Enterprise for unlimited processing!'
+          : 'Your Free plan is limited to 5 summaries per month. Please upgrade to Pro or Enterprise for unlimited processing!'
       };
     }
   }
@@ -2420,7 +2420,7 @@ app.post('/api/tts', ttsLimiter, async (req, res) => {
 
   if (!isPro && !isEnterprise) {
     return res.status(403).json({
-      error: 'Your current Starter plan does not include voiceover generation. Please upgrade to Pro or Enterprise to unlock studio voice synthesis!'
+      error: 'Your current Free plan does not include voiceover generation. Please upgrade to Pro or Enterprise to unlock studio voice synthesis!'
     });
   }
 
@@ -3045,7 +3045,7 @@ app.post('/api/customer-support', async (req, res) => {
       answer += `Hey there! It's so nice to meet you! I am your friendly support assistant here at Zipytiny. 😊\n\n` +
                 `I am here to help you get the absolute most out of our platform! Whether you're curious about our pricing plans, want to try out our free payment sandbox, or want to know how to plug in your own Gemini API key for unlimited free processing, I've got you covered.\n\n` +
                 `What can I help you explore today? Feel free to ask me about any of these:\n` +
-                `- **Plans & Pricing** 💳 (We have great Starter and Pro options)\n` +
+                `- **Plans & Pricing** 💳 (We have great Free and Pro options)\n` +
                 `- **Interactive Sandbox Mode** 🧪 (Test checkout flows at $0 cost!)\n` +
                 `- **Using Custom Gemini Keys** 🔑 (To bypass server quotas for free)\n` +
                 `- **Our Core Features** 🎬 (Summaries, quizzes, mindmaps, and voiceovers!)`;
@@ -3111,7 +3111,7 @@ Always write with a warm, conversational, welcoming, and highly human touch. Spe
 Key facts about Zipytiny to guide your replies:
 1. Zipytiny transforms YouTube videos, lectures, and custom uploads into elegant structured summaries, key takeaways, quizzes, interactive mindmaps, and premium audio voiceovers (TTS).
 2. Pricing and Billing:
-   - Basic Starter Plan: $0/forever, offering standard summaries (up to 30 mins videos) and basic quizzes.
+   - Free Workspace Plan: $0/forever, offering standard summaries (up to 30 mins videos) and basic quizzes.
    - Pro Plan: $9.99/month (or $6.99/month billed annually), offering unlimited video/PDF processing, mind maps, quizzes, and Anki/PowerPoint exports.
    - Enterprise Plan: $39/month, offering team workspaces, priority queueing, dedicated support, and API access.
 3. Sandbox Environment: Zipytiny features a secure simulated sandbox environment. Connecting a Stripe test key or simulating Pro checkout allows developers/users to test the entire premium subscription flow at zero cost. No actual credit card is charged.
