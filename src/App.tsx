@@ -2331,6 +2331,17 @@ export default function App() {
   const [promotionsList, setPromotionsList] = useState<any[]>(() => {
     return [
       {
+        code: 'SAVE30',
+        discountType: 'percentage',
+        discountValue: 30,
+        active: true,
+        discountDurationType: 'first_month_only',
+        redemptionCap: 500,
+        redemptionsCount: 18,
+        expiryDate: '2026-12-31',
+        plans: 'monthly_only'
+      },
+      {
         code: 'LAUNCH07',
         discountType: 'percentage',
         discountValue: 80,

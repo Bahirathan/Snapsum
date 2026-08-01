@@ -109,7 +109,7 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
   const [currentTime, setCurrentTime] = useState<number>(0); 
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [playSpeed, setPlaySpeed] = useState<number>(1);
-  const [activeTab, setActiveTab] = useState<'simulation' | 'script' | 'voiceover' | 'recorder'>('simulation');
+  const [activeTab, setActiveTab] = useState<'simulation' | 'script' | 'voiceover' | 'recorder' | 'youtube'>('simulation');
   const [audioSupported, setAudioSupported] = useState<boolean>(true);
   
   // Built-in Screen Recorder State
@@ -1553,20 +1553,20 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
 
           {/* Quick tab controls */}
           <div className="flex bg-black/[0.04] p-0.5 rounded-lg border border-black/[0.02] flex-wrap gap-y-0.5">
-            {(['simulation', 'script', 'voiceover', 'recorder'] as const).map((tab) => (
+            {(['simulation', 'script', 'voiceover', 'recorder', 'youtube'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
                   setActiveTab(tab);
                   playSynthBeep(260 + (tab === 'script' ? 10 : 20), 'sine', 0.1);
                 }}
-                className={`flex-1 py-1 text-[10px] font-medium rounded-md capitalize transition duration-150 min-w-[65px] ${
+                className={`flex-1 py-1 text-[9.5px] font-medium rounded-md capitalize transition duration-150 min-w-[58px] ${
                   activeTab === tab
-                    ? 'bg-white text-neutral-900 shadow-xs'
+                    ? 'bg-white text-neutral-900 shadow-xs font-semibold'
                     : 'text-neutral-500 hover:text-neutral-800'
                 }`}
               >
-                {tab === 'voiceover' ? '🎙️ Voiceover' : tab === 'recorder' ? '📹 Recorder' : tab}
+                {tab === 'voiceover' ? '🎙️ Voice' : tab === 'recorder' ? '📹 Record' : tab === 'youtube' ? '📺 YouTube' : tab}
               </button>
             ))}
           </div>
@@ -1817,6 +1817,92 @@ export const CinematicExplainer: React.FC<CinematicExplainerProps> = ({ onStartL
                 <span className="text-[8px] font-mono font-bold text-indigo-700 uppercase block">💡 PRO TIP FOR PERSISTENCE</span>
                 <p className="text-[9.5px] text-neutral-600 leading-relaxed font-sans">
                   To save and load your audio automatically for everyone: name your ElevenLabs download file <code className="bg-black/5 px-1 py-0.5 rounded text-[8.5px] font-mono">voiceover.mp3</code> or <code className="bg-black/5 px-1 py-0.5 rounded text-[8.5px] font-mono">voiceover.wav</code> and save it in the project's <code className="bg-black/5 px-1 py-0.5 rounded text-[8.5px] font-mono">public/</code> directory.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'youtube' && (
+            <div className="space-y-3 animate-fadeIn text-left text-[10px] text-neutral-600 leading-normal max-h-[310px] overflow-y-auto scrollbar-thin pr-1">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-neutral-900 flex items-center gap-1.5">
+                  <span className="text-red-600">📺</span> YouTube Publishing Package & Kit
+                </p>
+                <p className="text-[9.5px] text-neutral-500 font-light leading-relaxed">
+                  Ready-to-copy metadata, titles, description, timestamps, and tags to upload your demo video to YouTube.
+                </p>
+              </div>
+
+              {/* YouTube Title */}
+              <div className="bg-white border border-black/10 p-2.5 rounded-xl space-y-1 shadow-2xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-[8px] font-mono font-bold uppercase text-red-600">Video Title Option 1 (Recommended)</span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText("Zipytiny Demo: Transform Long Videos into Interactive Study Kits with Gemini AI ⚡");
+                      playSynthBeep(520, 'sine', 0.1);
+                      alert("Title copied to clipboard!");
+                    }}
+                    className="text-[8px] font-mono font-bold text-indigo-600 hover:underline cursor-pointer"
+                  >
+                    Copy Title
+                  </button>
+                </div>
+                <p className="text-[10px] font-semibold text-neutral-800">
+                  Zipytiny Demo: Transform Long Videos into Interactive Study Kits with Gemini AI ⚡
+                </p>
+              </div>
+
+              {/* Description & Timestamps */}
+              <div className="bg-white border border-black/10 p-2.5 rounded-xl space-y-1.5 shadow-2xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-[8px] font-mono font-bold uppercase text-indigo-600">Description & Timestamps</span>
+                  <button
+                    onClick={() => {
+                      const desc = `Stop wasting hours passively watching video lectures! Zipytiny uses Google Gemini AI to compile multi-hour videos into interactive chapters, diagnostic quizzes, conceptual mind maps, and flashcards.\n\n🚀 Try Zipytiny for Free: https://zipytiny.app\n\n📌 Timestamps / Chapters:\n00:00 - The Problem: Passive Learning Decay\n00:12 - Zipytiny Dynamic Ingestion Pipeline\n00:25 - Gemini Multi-Modal Compilation Engine\n00:40 - Interactive Workspace Tour & Quizzes\n01:05 - Retention Comparison & Active Recall\n01:20 - Start Learning Free with Zipytiny\n\n#Zipytiny #AI #StudyTool #GeminiAI #EdTech #Productivity`;
+                      navigator.clipboard.writeText(desc);
+                      playSynthBeep(520, 'sine', 0.1);
+                      alert("YouTube Description copied to clipboard!");
+                    }}
+                    className="text-[8px] font-mono font-bold text-indigo-600 hover:underline cursor-pointer"
+                  >
+                    Copy Description
+                  </button>
+                </div>
+                <div className="bg-neutral-50 p-2 rounded-lg font-mono text-[9px] text-neutral-700 whitespace-pre-line leading-relaxed max-h-36 overflow-y-auto">
+{`Stop wasting hours passively watching video lectures! Zipytiny uses Google Gemini AI to compile multi-hour videos into interactive chapters, diagnostic quizzes, conceptual mind maps, and flashcards.
+
+🚀 Try Zipytiny for Free: https://zipytiny.app
+
+📌 Timestamps / Chapters:
+00:00 - The Problem: Passive Learning Decay
+00:12 - Zipytiny Dynamic Ingestion Pipeline
+00:25 - Gemini Multi-Modal Compilation Engine
+00:40 - Interactive Workspace Tour & Quizzes
+01:05 - Retention Comparison & Active Recall
+01:20 - Start Learning Free with Zipytiny
+
+#Zipytiny #AI #StudyTool #GeminiAI #EdTech #Productivity`}
+                </div>
+              </div>
+
+              {/* YouTube Tags */}
+              <div className="bg-white border border-black/10 p-2.5 rounded-xl space-y-1 shadow-2xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-[8px] font-mono font-bold uppercase text-neutral-500">YouTube Tags</span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText("zipytiny, zipytiny demo, ai video summarizer, youtube to flashcards, youtube quiz generator, gemini ai study tool, active recall edtech, smart video notes");
+                      playSynthBeep(520, 'sine', 0.1);
+                      alert("Tags copied to clipboard!");
+                    }}
+                    className="text-[8px] font-mono font-bold text-indigo-600 hover:underline cursor-pointer"
+                  >
+                    Copy Tags
+                  </button>
+                </div>
+                <p className="text-[8.5px] font-mono text-neutral-600 leading-normal">
+                  zipytiny, zipytiny demo, ai video summarizer, youtube to flashcards, youtube quiz generator, gemini ai study tool, active recall edtech, smart video notes
                 </p>
               </div>
             </div>
