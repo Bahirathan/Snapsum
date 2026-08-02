@@ -9,7 +9,7 @@ import {
   Upload, Brain, Share2, Star, TrendingUp, Clock, Shield, Cpu, Frown, Smile, XCircle,
   BarChart2, Layers, BookOpen, Mic, PenTool, Hash, ChevronRight, X,
   Youtube, Presentation, HelpCircle, Lock, Calculator, Settings, Gift,
-  Twitter, Facebook, Linkedin, Music
+  Twitter, Facebook, Linkedin, Music, CheckSquare, ListTodo, Briefcase
 } from 'lucide-react';
 import { CinematicExplainer } from './CinematicExplainer';
 import CommunityStudyHub, { StudyResource } from './CommunityStudyHub';
