@@ -199,6 +199,7 @@ export default function LandingPage({
   const [quizDemoSelected, setQuizDemoSelected] = useState<string | null>(null);
   const [mindMapDemoNode, setMindMapDemoNode] = useState<string>('Neural Networks');
   const [isAnnualBilling, setIsAnnualBilling] = useState<boolean>(true);
+  const [heroMode, setHeroMode] = useState<'students' | 'professionals'>('students');
   const [preQuery, setPreQuery] = useState('');
   const [preAnswer, setPreAnswer] = useState('');
   const [hoveredPreviewIdx, setHoveredPreviewIdx] = useState<number | null>(null);
@@ -434,6 +435,10 @@ export default function LandingPage({
       a: "Zipytiny is a universal processor! It supports YouTube videos, custom website links, pasted articles, raw text, and file uploads (including PDFs, Word documents, PowerPoint presentations, Excel sheets, images with text OCR, MP3/WAV audio recordings, and direct MP4/WebM video files)."
     },
     {
+      q: "Can I use Zipytiny for work meetings, not just studying?",
+      a: "Yes, absolutely! Zipytiny supports Zoom, Microsoft Teams, and Google Meet recordings and transcripts. In addition to study tools, Zipytiny automatically generates structured meeting notes, auto-extracts action items with owners, creates executive summaries for stakeholders, and can export key meeting takeaways directly into presentation slide decks."
+    },
+    {
       q: "How does the AI Chat Q&A work?",
       a: "After generating a summary, you can open the 'AI Chat Q&A' tab to ask specific follow-up questions. It uses the entire text transcription/metadata and Gemini's deep logical reasoning to answer your custom queries in real-time."
     },
@@ -464,10 +469,39 @@ export default function LandingPage({
             {/* Left Column: Title, Copy, URL input box, and CTA */}
             <div className="col-span-1 lg:col-span-7 space-y-6 text-left">
               <div className="space-y-3">
-                <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/10 dark:bg-[#0071e3]/25 px-3 py-1 rounded-full text-[11px] font-mono font-semibold text-[#0071e3] dark:text-sky-400 w-fit">
-                  <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-                  <span>Value-First AI Learning Workspace</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="inline-flex items-center gap-1.5 bg-[#0071e3]/10 dark:bg-[#0071e3]/25 px-3 py-1 rounded-full text-[11px] font-mono font-semibold text-[#0071e3] dark:text-sky-400 w-fit">
+                    <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                    <span>Value-First AI Learning Workspace</span>
+                  </div>
+
+                  {/* 🎓 For Students / 💼 For Professionals Toggle */}
+                  <div className="inline-flex items-center gap-1 bg-neutral-200/80 dark:bg-zinc-800/80 p-1 rounded-2xl border border-neutral-300/60 dark:border-zinc-700">
+                    <button
+                      type="button"
+                      onClick={() => setHeroMode('students')}
+                      className={`px-3 py-1 rounded-xl text-xs font-extrabold transition duration-150 cursor-pointer ${
+                        heroMode === 'students'
+                          ? 'bg-white dark:bg-zinc-900 text-[#0071e3] dark:text-sky-400 shadow-xs border border-neutral-200 dark:border-zinc-700'
+                          : 'text-neutral-600 dark:text-zinc-400 hover:text-neutral-900 dark:hover:text-zinc-200'
+                      }`}
+                    >
+                      🎓 For Students
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHeroMode('professionals')}
+                      className={`px-3 py-1 rounded-xl text-xs font-extrabold transition duration-150 cursor-pointer ${
+                        heroMode === 'professionals'
+                          ? 'bg-white dark:bg-zinc-900 text-indigo-600 dark:text-sky-400 shadow-xs border border-neutral-200 dark:border-zinc-700'
+                          : 'text-neutral-600 dark:text-zinc-400 hover:text-neutral-900 dark:hover:text-zinc-200'
+                      }`}
+                    >
+                      💼 For Professionals
+                    </button>
+                  </div>
                 </div>
+
                 <p className="text-xs sm:text-sm font-extrabold tracking-wide text-indigo-600 dark:text-indigo-400 uppercase font-mono">
                   Stop Watching Twice. Learn Once, Remember More.
                 </p>
@@ -482,10 +516,61 @@ export default function LandingPage({
                 Paste any YouTube video, university lecture, or upload Zoom, Google Meet & Teams meeting recordings/transcripts to instantly generate double-length summaries, slide presentations, quizzes & mind maps in under 60 seconds.
               </p>
 
-              {/* 🎯 Differentiation statement directly below subheadline */}
-              <p className="text-xs sm:text-sm text-neutral-500 dark:text-zinc-400 leading-relaxed max-w-2xl font-normal">
-                Unlike basic AI tools, Zipytiny automatically transforms YouTube videos, class lectures, Zoom / GMeet / Teams meetings, and PDFs into double-detailed summaries, complete slide presentations, quizzes, active recall flashcards, and an AI tutor.
+              {/* 🎯 Explicit professional positioning line directly below subheadline */}
+              <p className="text-sm sm:text-base font-semibold text-[#0071e3] dark:text-sky-400 max-w-2xl leading-relaxed">
+                Also built for work: turn Zoom, Teams, and Google Meet recordings into meeting notes, action items, and ready-to-share slide decks.
               </p>
+
+              {/* 🎯 Dynamic supporting copy and icon badges depending on toggle */}
+              {heroMode === 'students' ? (
+                <div className="space-y-3">
+                  <p className="text-xs sm:text-sm text-neutral-600 dark:text-zinc-300 leading-relaxed max-w-2xl font-normal">
+                    Built for academic success: turn lecture videos, textbook PDFs, and class recordings into spaced-repetition flashcards, interactive mind maps, structured study notes, and practice quizzes.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <a href="/features/mind-maps" onClick={(e) => { e.preventDefault(); if (onLaunchApp) onLaunchApp('mindmap'); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800 text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:scale-105 transition cursor-pointer">
+                      <Brain className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>🧠 Visual Mind Maps</span>
+                    </a>
+                    <a href="/features/flashcards" onClick={(e) => { e.preventDefault(); if (onLaunchApp) onLaunchApp('flashcards'); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-800 text-xs font-bold text-rose-700 dark:text-rose-300 hover:scale-105 transition cursor-pointer">
+                      <Layers className="w-3.5 h-3.5 text-rose-500" />
+                      <span>🎴 Active Recall Flashcards</span>
+                    </a>
+                    <a href="/features/study-notes" onClick={(e) => { e.preventDefault(); if (onLaunchApp) onLaunchApp('overview'); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:scale-105 transition cursor-pointer">
+                      <BookOpen className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>📝 Structured Study Notes</span>
+                    </a>
+                    <a href="/features/quiz-gen" onClick={(e) => { e.preventDefault(); if (onLaunchApp) onLaunchApp('quiz'); }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800 text-xs font-bold text-amber-700 dark:text-amber-300 hover:scale-105 transition cursor-pointer">
+                      <CheckSquare className="w-3.5 h-3.5 text-amber-500" />
+                      <span>⚡ Interactive Practice Quizzes</span>
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs sm:text-sm text-neutral-600 dark:text-zinc-300 leading-relaxed max-w-2xl font-normal">
+                    Built for workplace efficiency: turn Zoom, Teams, and Google Meet call recordings or documents into concise meeting notes, auto-detected action items, executive recaps, and PowerPoint slide decks.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <a href="/features/meeting-notes" onClick={(e) => { e.preventDefault(); window.location.href = '/features/meeting-notes'; }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800 text-xs font-bold text-indigo-700 dark:text-indigo-300 hover:scale-105 transition cursor-pointer">
+                      <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                      <span>📝 Automatic Meeting Notes</span>
+                    </a>
+                    <a href="/features/action-items" onClick={(e) => { e.preventDefault(); window.location.href = '/features/action-items'; }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:scale-105 transition cursor-pointer">
+                      <ListTodo className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>🎯 Action Item Extraction</span>
+                    </a>
+                    <a href="/features/presentation-export" onClick={(e) => { e.preventDefault(); window.location.href = '/features/presentation-export'; }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200/60 dark:border-purple-800 text-xs font-bold text-purple-700 dark:text-purple-300 hover:scale-105 transition cursor-pointer">
+                      <Share2 className="w-3.5 h-3.5 text-purple-500" />
+                      <span>📊 Instant Presentation Export</span>
+                    </a>
+                    <a href="/features/executive-summaries" onClick={(e) => { e.preventDefault(); window.location.href = '/features/executive-summaries'; }} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800 text-xs font-bold text-amber-700 dark:text-amber-300 hover:scale-105 transition cursor-pointer">
+                      <Briefcase className="w-3.5 h-3.5 text-amber-500" />
+                      <span>📄 One-Paragraph Executive Recaps</span>
+                    </a>
+                  </div>
+                </div>
+              )}
 
               {/* 💬 Authentic and specific testimonial above the fold */}
               <div className="flex items-center bg-indigo-50/40 dark:bg-zinc-900/40 border border-indigo-100/20 dark:border-zinc-800/50 px-4 py-2.5 rounded-2xl max-w-2xl text-left shadow-2xs">
@@ -2458,6 +2543,122 @@ export default function LandingPage({
               {tag}
             </span>
           ))}
+        </div>
+      </section>
+
+      {/* 5.5 CORE PROFESSIONAL MODULES SECTION */}
+      <section className="py-20 w-full bg-slate-50/50 dark:bg-zinc-950/40 border-b border-black/[0.03] dark:border-zinc-900 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="space-y-3.5 text-center max-w-3xl mx-auto mb-14">
+            <div className="inline-flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-150 dark:border-indigo-900/30 px-3 py-1 rounded-full text-xs font-mono font-bold text-indigo-700 dark:text-indigo-400">
+              <Briefcase className="w-3.5 h-3.5" />
+              <span>Workplace Productivity Suite</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-extrabold font-display tracking-tight text-[#1d1d1f] dark:text-zinc-50 leading-tight">
+              Core Professional Modules
+            </h2>
+            <p className="text-[#86868b] dark:text-zinc-400 font-light text-base leading-relaxed">
+              Turn Zoom, Teams, and Google Meet call recordings into decision-ready business intelligence, task lists, and slide presentations.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+            {/* Module 1: Meeting Notes Generator */}
+            <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition duration-300">
+              <div className="space-y-3">
+                <div className="h-10 w-10 bg-indigo-500/10 text-indigo-500 rounded-xl flex items-center justify-center">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-mono font-bold text-indigo-500 uppercase tracking-widest block">Meeting Notes</span>
+                <h3 className="text-base font-extrabold text-neutral-900 dark:text-zinc-100">Meeting Notes Generator</h3>
+                <p className="text-xs text-neutral-500 dark:text-zinc-400 font-normal leading-relaxed">
+                  "Never take notes in a meeting again" — Automatically turn call recordings and transcripts into structured meeting notes with key discussion topics.
+                </p>
+              </div>
+              <a
+                href="/features/meeting-notes"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = '/features/meeting-notes';
+                }}
+                className="text-indigo-600 dark:text-indigo-400 hover:underline font-bold text-xs flex items-center gap-1 self-start pt-2 cursor-pointer"
+              >
+                <span>Explore Meeting Notes →</span>
+              </a>
+            </div>
+
+            {/* Module 2: Action Item Extraction */}
+            <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition duration-300">
+              <div className="space-y-3">
+                <div className="h-10 w-10 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center">
+                  <ListTodo className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-mono font-bold text-emerald-500 uppercase tracking-widest block">Task Extraction</span>
+                <h3 className="text-base font-extrabold text-neutral-900 dark:text-zinc-100">Action Item Extraction</h3>
+                <p className="text-xs text-neutral-500 dark:text-zinc-400 font-normal leading-relaxed">
+                  Auto-detected next steps, deliverables, and assigned task owners extracted directly from meeting audio or transcripts.
+                </p>
+              </div>
+              <a
+                href="/features/action-items"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = '/features/action-items';
+                }}
+                className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold text-xs flex items-center gap-1 self-start pt-2 cursor-pointer"
+              >
+                <span>Explore Action Items →</span>
+              </a>
+            </div>
+
+            {/* Module 3: Instant Presentation Export */}
+            <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition duration-300">
+              <div className="space-y-3">
+                <div className="h-10 w-10 bg-purple-500/10 text-purple-500 rounded-xl flex items-center justify-center">
+                  <Share2 className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-mono font-bold text-purple-500 uppercase tracking-widest block">Slide Generation</span>
+                <h3 className="text-base font-extrabold text-neutral-900 dark:text-zinc-100">Instant Presentation Export</h3>
+                <p className="text-xs text-neutral-500 dark:text-zinc-400 font-normal leading-relaxed">
+                  Turn a meeting or document into a shareable PowerPoint slide deck with auto-formatted bullet points and visual summaries.
+                </p>
+              </div>
+              <a
+                href="/features/presentation-export"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = '/features/presentation-export';
+                }}
+                className="text-purple-600 dark:text-purple-400 hover:underline font-bold text-xs flex items-center gap-1 self-start pt-2 cursor-pointer"
+              >
+                <span>Explore Presentation Export →</span>
+              </a>
+            </div>
+
+            {/* Module 4: Executive Summaries */}
+            <div className="bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-800 rounded-2xl p-6 space-y-4 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition duration-300">
+              <div className="space-y-3">
+                <div className="h-10 w-10 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center">
+                  <Briefcase className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-mono font-bold text-amber-500 uppercase tracking-widest block">Executive Recaps</span>
+                <h3 className="text-base font-extrabold text-neutral-900 dark:text-zinc-100">Executive Summaries</h3>
+                <p className="text-xs text-neutral-500 dark:text-zinc-400 font-normal leading-relaxed">
+                  One-paragraph recap and decision matrix tailored for managers, team leads, and stakeholders who couldn't attend.
+                </p>
+              </div>
+              <a
+                href="/features/executive-summaries"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.href = '/features/executive-summaries';
+                }}
+                className="text-amber-600 dark:text-amber-400 hover:underline font-bold text-xs flex items-center gap-1 self-start pt-2 cursor-pointer"
+              >
+                <span>Explore Executive Summaries →</span>
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 

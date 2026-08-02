@@ -28,6 +28,10 @@ export const ALL_ROUTES = [
   '/features/study-notes',
   '/features/quiz-gen',
   '/features/podcast-gen',
+  '/features/meeting-notes',
+  '/features/action-items',
+  '/features/presentation-export',
+  '/features/executive-summaries',
   '/pricing',
   '/faq'
 ];
@@ -798,6 +802,138 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
     };
   }
 
+  // 11b. FEATURES: /features/meeting-notes
+  if (cleanPath === '/features/meeting-notes') {
+    return {
+      title: 'AI Meeting Notes Generator for Zoom, Teams & Google Meet | Zipytiny',
+      description: 'Never take notes in a meeting again. Turn uploaded Zoom, Teams, and Google Meet call recordings and transcripts into structured meeting notes instantly.',
+      keywords: 'ai meeting notes generator, zoom meeting notes, teams transcript summarizer, google meet notes, workplace notes, zipytiny',
+      canonical: `${DOMAIN}/features/meeting-notes`,
+      ogType: 'website',
+      ogImage: DEFAULT_OG_IMAGE,
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          'itemListElement': [
+            { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': DOMAIN },
+            { '@type': 'ListItem', 'position': 2, 'name': 'Features', 'item': `${DOMAIN}/features` },
+            { '@type': 'ListItem', 'position': 3, 'name': 'Meeting Notes Generator', 'item': `${DOMAIN}/features/meeting-notes` }
+          ]
+        }
+      ],
+      prerenderHtml: `
+        <main style="max-width: 800px; margin: 0 auto; padding: 40px 20px; font-family: system-ui, sans-serif; color: #333; line-height: 1.7;">
+          <nav style="font-size: 0.9rem; margin-bottom: 20px;"><a href="/" style="color: #4f46e5; text-decoration: none;">← Back to Zipytiny Home</a></nav>
+          <h1 style="font-size: 2.2rem; margin-top: 10px; color: #111;">AI Meeting Notes Generator</h1>
+          <p style="font-size: 1.1rem; color: #555;">Never take manual notes in a meeting again. Transform Zoom, Teams, and Google Meet recordings into structured agenda recaps and decision logs.</p>
+          <div style="margin-top: 40px; text-align: center;">
+            <a href="/" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; border-radius: 8px; text-decoration: none; font-weight: bold;">Generate Meeting Notes Now →</a>
+          </div>
+        </main>
+      `
+    };
+  }
+
+  // 11c. FEATURES: /features/action-items
+  if (cleanPath === '/features/action-items') {
+    return {
+      title: 'Action Item Extraction from Meeting Recordings & Docs | Zipytiny',
+      description: 'Automatically extract clear action items, assigned owners, and key deliverables directly from meeting recordings, calls, and documents.',
+      keywords: 'action item extraction, ai task extractor, meeting next steps, automated action items, project task detection, zipytiny',
+      canonical: `${DOMAIN}/features/action-items`,
+      ogType: 'website',
+      ogImage: DEFAULT_OG_IMAGE,
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          'itemListElement': [
+            { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': DOMAIN },
+            { '@type': 'ListItem', 'position': 2, 'name': 'Features', 'item': `${DOMAIN}/features` },
+            { '@type': 'ListItem', 'position': 3, 'name': 'Action Item Extraction', 'item': `${DOMAIN}/features/action-items` }
+          ]
+        }
+      ],
+      prerenderHtml: `
+        <main style="max-width: 800px; margin: 0 auto; padding: 40px 20px; font-family: system-ui, sans-serif; color: #333; line-height: 1.7;">
+          <nav style="font-size: 0.9rem; margin-bottom: 20px;"><a href="/" style="color: #4f46e5; text-decoration: none;">← Back to Zipytiny Home</a></nav>
+          <h1 style="font-size: 2.2rem; margin-top: 10px; color: #111;">Action Item Extraction</h1>
+          <p style="font-size: 1.1rem; color: #555;">Auto-detect next steps, deliverables, and assigned task owners from meeting recordings and call transcripts.</p>
+          <div style="margin-top: 40px; text-align: center;">
+            <a href="/" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; border-radius: 8px; text-decoration: none; font-weight: bold;">Extract Action Items Now →</a>
+          </div>
+        </main>
+      `
+    };
+  }
+
+  // 11d. FEATURES: /features/presentation-export
+  if (cleanPath === '/features/presentation-export') {
+    return {
+      title: 'Instant Presentation Export — Turn Meetings & Docs to Slides | Zipytiny',
+      description: 'Convert meeting notes, transcripts, or dense documents into professionally formatted PowerPoint presentation slide decks in seconds.',
+      keywords: 'meeting to presentation ai, document to slides generator, powerpoint slide export, ai presentation generator, zipytiny',
+      canonical: `${DOMAIN}/features/presentation-export`,
+      ogType: 'website',
+      ogImage: DEFAULT_OG_IMAGE,
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          'itemListElement': [
+            { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': DOMAIN },
+            { '@type': 'ListItem', 'position': 2, 'name': 'Features', 'item': `${DOMAIN}/features` },
+            { '@type': 'ListItem', 'position': 3, 'name': 'Instant Presentation Export', 'item': `${DOMAIN}/features/presentation-export` }
+          ]
+        }
+      ],
+      prerenderHtml: `
+        <main style="max-width: 800px; margin: 0 auto; padding: 40px 20px; font-family: system-ui, sans-serif; color: #333; line-height: 1.7;">
+          <nav style="font-size: 0.9rem; margin-bottom: 20px;"><a href="/" style="color: #4f46e5; text-decoration: none;">← Back to Zipytiny Home</a></nav>
+          <h1 style="font-size: 2.2rem; margin-top: 10px; color: #111;">Instant Presentation Export</h1>
+          <p style="font-size: 1.1rem; color: #555;">Turn meetings, call recordings, or documents into ready-to-share PowerPoint slide decks with formatted bullet points.</p>
+          <div style="margin-top: 40px; text-align: center;">
+            <a href="/" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; border-radius: 8px; text-decoration: none; font-weight: bold;">Export Presentation Deck →</a>
+          </div>
+        </main>
+      `
+    };
+  }
+
+  // 11e. FEATURES: /features/executive-summaries
+  if (cleanPath === '/features/executive-summaries') {
+    return {
+      title: 'Executive Summaries & One-Paragraph Recaps | Zipytiny',
+      description: 'Generate high-density one-paragraph recaps and bulleted decision briefs for team leaders, managers, and stakeholders who missed the call.',
+      keywords: 'executive summary generator, one paragraph meeting recap, stakeholder brief ai, meeting decision matrix, zipytiny',
+      canonical: `${DOMAIN}/features/executive-summaries`,
+      ogType: 'website',
+      ogImage: DEFAULT_OG_IMAGE,
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          'itemListElement': [
+            { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': DOMAIN },
+            { '@type': 'ListItem', 'position': 2, 'name': 'Features', 'item': `${DOMAIN}/features` },
+            { '@type': 'ListItem', 'position': 3, 'name': 'Executive Summaries', 'item': `${DOMAIN}/features/executive-summaries` }
+          ]
+        }
+      ],
+      prerenderHtml: `
+        <main style="max-width: 800px; margin: 0 auto; padding: 40px 20px; font-family: system-ui, sans-serif; color: #333; line-height: 1.7;">
+          <nav style="font-size: 0.9rem; margin-bottom: 20px;"><a href="/" style="color: #4f46e5; text-decoration: none;">← Back to Zipytiny Home</a></nav>
+          <h1 style="font-size: 2.2rem; margin-top: 10px; color: #111;">Executive Summaries</h1>
+          <p style="font-size: 1.1rem; color: #555;">Generate high-density one-paragraph recaps and decision briefs for stakeholders who couldn't attend.</p>
+          <div style="margin-top: 40px; text-align: center;">
+            <a href="/" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; border-radius: 8px; text-decoration: none; font-weight: bold;">Generate Executive Summary →</a>
+          </div>
+        </main>
+      `
+    };
+  }
+
   // 12. PRICING: /pricing
   if (cleanPath === '/pricing') {
     return {
@@ -952,9 +1088,9 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
   // DEFAULT / LANDING PAGE: '/'
   // TODO: add aggregateRating (ratingValue, reviewCount) once we have a verified, real rating source — do not use placeholder or estimated numbers, this violates Google's structured data policies.
   return {
-    title: 'Zipytiny – AI Study Notes from Video, PDF, Slides & Articles',
-    description: 'Turn any video, PDF, slide deck, article, or note into AI summaries and study notes in seconds. Free to start, Pro from $9.99/mo. Try Zipytiny!',
-    keywords: 'pdf summarizer, youtube summarizer, slides summary, document to flashcards, ai study guide, video to quiz, mindmap generator, active recall workspace, zipytiny',
+    title: 'Zipytiny – AI Notes & Summaries from Video, Meetings, PDFs & Slides',
+    description: 'Turn any video, PDF, slide deck, article, Zoom or Teams recording into AI summaries, study notes, or meeting notes and presentations in seconds. Free to start, Pro from $9.99/mo.',
+    keywords: 'pdf summarizer, youtube summarizer, slides summary, document to flashcards, ai study guide, video to quiz, mindmap generator, active recall workspace, zipytiny, zoom meeting summarizer, ai meeting notes, meeting to presentation ai, teams call summary, ai presentation generator',
     canonical: `${DOMAIN}/`,
     ogType: 'website',
     ogImage: DEFAULT_OG_IMAGE,
@@ -967,7 +1103,7 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
         'operatingSystem': 'All',
         'applicationCategory': 'EducationalApplication, ProductivityApplication, MultimediaApplication',
         'genre': 'AI Study Workspace & Multi-Format Knowledge Engine',
-        'description': 'Zipytiny is an AI-powered learning platform that turns videos, PDFs, slide decks, articles, and notes into clear summaries, key concepts, flashcards, mind maps, and study-ready notes in seconds.',
+        'description': 'Zipytiny is an AI-powered learning and productivity platform that turns videos, PDFs, slide decks, articles, notes, and Zoom, Teams or Meet meeting recordings into clear summaries, key concepts, meeting notes, action items, flashcards, mind maps, and presentation decks in seconds.',
         'offers': [
           { '@type': 'Offer', 'name': 'Free Workspace Plan', 'price': FREE_PLAN_PRICE, 'priceCurrency': 'USD', 'description': 'Free study workspace with core AI note generation and summary capabilities.' },
           { '@type': 'Offer', 'name': 'Pro Plan', 'price': PRO_PLAN_MONTHLY_PRICE, 'priceCurrency': 'USD', 'description': 'Unlimited video, PDF & document uploads, mind maps, quizzes, and PowerPoint exports.' },
@@ -984,6 +1120,14 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
             'acceptedAnswer': {
               '@type': 'Answer',
               'text': 'Zipytiny supports YouTube videos, custom website links, pasted articles, raw text, and file uploads including PDFs, Word documents, PowerPoint presentations, Excel sheets, images with text OCR, MP3 and WAV audio recordings, and MP4 or WebM video files.'
+            }
+          },
+          {
+            '@type': 'Question',
+            'name': 'Can I use Zipytiny for work meetings, not just studying?',
+            'acceptedAnswer': {
+              '@type': 'Answer',
+              'text': 'Yes, absolutely! Zipytiny supports Zoom, Microsoft Teams, and Google Meet recordings and transcripts. In addition to study tools, Zipytiny automatically generates structured meeting notes, auto-extracts action items with owners, creates executive summaries for stakeholders, and can export key meeting takeaways directly into presentation slide decks.'
             }
           },
           {
@@ -1018,10 +1162,13 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
       <div style="max-width: 1100px; margin: 0 auto; padding: 40px 20px; font-family: system-ui, sans-serif; color: #111; line-height: 1.6;">
         <header style="text-align: center; margin-bottom: 40px;">
           <h1 style="font-size: 2.8rem; font-weight: 800; letter-spacing: -0.02em; color: #0f172a; margin-bottom: 12px;">
-            Turn Any Video, PDF, Slide Deck, Article or Note Into AI Summaries & Study Notes
+            Turn Any Video, PDF, Slide Deck, Article or Meeting Recording Into AI Summaries & Study Notes
           </h1>
-          <p style="font-size: 1.25rem; color: #475569; max-width: 780px; margin: 0 auto 24px;">
+          <p style="font-size: 1.25rem; color: #475569; max-width: 780px; margin: 0 auto 12px;">
             Turn any video, PDF, slide deck, article, or note into AI summaries and study notes in seconds. Upload files, paste YouTube links or Zoom, Teams & Meet recordings to instantly generate mind maps, flashcards, quizzes, and formatted study guides.
+          </p>
+          <p style="font-size: 1.05rem; color: #0071e3; font-weight: 600; max-width: 780px; margin: 0 auto 24px;">
+            Also built for work: turn Zoom, Teams, and Google Meet recordings into meeting notes, action items, and ready-to-share slide decks.
           </p>
           <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
             <a href="/" style="padding: 12px 28px; background: #4f46e5; color: white; border-radius: 9999px; font-weight: 700; text-decoration: none;">Start free — no card required</a>
@@ -1051,6 +1198,28 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
             <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
               <h3 style="margin-top: 0; font-size: 1.25rem;"><a href="/features/podcast-gen" style="color: #4f46e5; text-decoration: none;">Audio Podcasts</a></h3>
               <p style="color: #64748b; font-size: 0.95rem;">AI-generated conversational audio overviews for commute learning.</p>
+            </div>
+          </div>
+        </section>
+
+        <section style="margin: 50px 0;">
+          <h2 style="font-size: 1.8rem; text-align: center; margin-bottom: 30px;">Core Professional Modules</h2>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+            <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+              <h3 style="margin-top: 0; font-size: 1.25rem;"><a href="/features/meeting-notes" style="color: #4f46e5; text-decoration: none;">Meeting Notes Generator</a></h3>
+              <p style="color: #64748b; font-size: 0.95rem;">Automatically turn call recordings and transcripts into structured meeting notes with key discussion topics.</p>
+            </div>
+            <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+              <h3 style="margin-top: 0; font-size: 1.25rem;"><a href="/features/action-items" style="color: #4f46e5; text-decoration: none;">Action Item Extraction</a></h3>
+              <p style="color: #64748b; font-size: 0.95rem;">Auto-detected next steps, deliverables, and assigned task owners from meeting audio or transcripts.</p>
+            </div>
+            <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+              <h3 style="margin-top: 0; font-size: 1.25rem;"><a href="/features/presentation-export" style="color: #4f46e5; text-decoration: none;">Instant Presentation Export</a></h3>
+              <p style="color: #64748b; font-size: 0.95rem;">Turn a meeting or document into a shareable PowerPoint slide deck with auto-formatted bullet points.</p>
+            </div>
+            <div style="padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc;">
+              <h3 style="margin-top: 0; font-size: 1.25rem;"><a href="/features/executive-summaries" style="color: #4f46e5; text-decoration: none;">Executive Summaries</a></h3>
+              <p style="color: #64748b; font-size: 0.95rem;">One-paragraph recap and decision matrix tailored for managers and stakeholders.</p>
             </div>
           </div>
         </section>

@@ -139,18 +139,60 @@ export default function FeaturePage({ featureSlug, onNavigateHome, onLaunchApp }
         'Eliminates filler speech to give you instant intelligence.'
       ]
     },
+    'executive-summaries': {
+      title: 'Executive Summaries',
+      tagline: 'One-paragraph recap for stakeholders',
+      description: 'Generate high-density one-paragraph recaps and bulleted decision briefs for team leaders, managers, and stakeholders who missed the call.',
+      icon: Briefcase,
+      badge: 'Executive Brief',
+      accentColor: 'amber',
+      previewType: 'summary',
+      highlights: [
+        'One-paragraph recap for stakeholders who didn’t attend.',
+        'Highlights core problem, thesis, and strategic decisions.',
+        'Perfect for sharing in Slack, Teams, or email updates.'
+      ]
+    },
     'action-items': {
-      title: 'Actionable Todo Lists',
-      tagline: 'Go from listening to execution',
-      description: 'Don’t let knowledge sit. Automatically translate educational advice, video tutorials, and guides into a structured, interactive checkbox list.',
+      title: 'Action Item Extraction',
+      tagline: 'Auto-detected next steps & owners',
+      description: 'Automatically extract clear action items, assigned owners, and key deliverables directly from meeting recordings, calls, and documents.',
       icon: ListTodo,
-      badge: 'Productivity',
-      accentColor: 'pink',
+      badge: 'Task Detection',
+      accentColor: 'emerald',
       previewType: 'action-items',
       highlights: [
-        'Direct extraction of clear, actionable milestones.',
-        'Interactive checkbox interface with progress percentage trackers.',
-        'Seamlessly bridges the gap between learning theory and real execution.'
+        'Auto-detected next steps and owners from the recording.',
+        'Clear task list ready for project managers and teams.',
+        'Export directly into your task management tools.'
+      ]
+    },
+    'meeting-notes': {
+      title: 'Meeting Notes Generator',
+      tagline: 'Never take notes in a meeting again',
+      description: 'Turn uploaded Zoom, Microsoft Teams, or Google Meet call recordings and transcripts into structured, comprehensive meeting notes instantly.',
+      icon: FileText,
+      badge: 'Workplace Notes',
+      accentColor: 'indigo',
+      previewType: 'notes',
+      highlights: [
+        'Never take manual notes in a meeting again.',
+        'Structured agenda recap, decision logs, and speaker highlights.',
+        'Export directly to Notion, PDF, or Word in one click.'
+      ]
+    },
+    'presentation-export': {
+      title: 'Instant Presentation Export',
+      tagline: 'Turn meetings or docs into shareable slide decks',
+      description: 'Convert meeting notes, transcripts, or dense documents into professionally formatted PowerPoint presentation slide decks in seconds.',
+      icon: Share2,
+      badge: 'Slide Generator',
+      accentColor: 'purple',
+      previewType: 'presentation',
+      highlights: [
+        'Turn a meeting or document into a shareable slide deck.',
+        'Auto-formatted topic slides with bullet points and takeaways.',
+        'Download as .pptx or open directly in PowerPoint.'
       ]
     },
     'meeting-minutes': {
