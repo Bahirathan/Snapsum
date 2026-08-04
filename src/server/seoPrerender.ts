@@ -592,16 +592,142 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
           <nav style="font-size: 0.9rem; margin-bottom: 20px;">
             <a href="/" style="color: #4f46e5; text-decoration: none;">Home</a> &gt; 
             <a href="/blog" style="color: #4f46e5; text-decoration: none;">Blog</a> &gt; 
-            <span style="color: #666;">15 Best AI Tools for Turning Videos, Lectures & Meetings Into Notes (2026)</span>
+            <span style="color: #666;">15 Best AI Tools for Turning Videos, Lectures &amp; Meetings Into Notes (2026)</span>
           </nav>
-          <h1 style="font-size: 2.2rem; margin-top: 10px; color: #111;">15 Best AI Tools for Turning Videos, Lectures & Meetings Into Notes (2026)</h1>
-          <p style="color: #666; font-size: 0.9rem;">Published August 4, 2026 • 8 min read • Category: Tool Comparison</p>
-          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
-          <p style="font-size: 1.1rem; font-weight: 500; color: #444;">
-            A hands-on comparison of the best AI note-taking and summarization tools in 2026 — for students, researchers, and professionals who need videos, lectures, and meetings turned into usable notes fast.
-          </p>
-          <div style="margin-top: 40px; padding: 20px; background: #f3f4f6; border-radius: 12px; text-align: center;">
-            <a href="/" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; border-radius: 8px; text-decoration: none; font-weight: bold;">Try Zipytiny AI Note Generator Free →</a>
+          <header style="margin-bottom: 30px;">
+            <span style="display: inline-block; padding: 4px 12px; background: #e0e7ff; color: #4338ca; border-radius: 9999px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">Tool Comparison</span>
+            <h1 style="font-size: 2.2rem; font-weight: 800; color: #111; margin-top: 12px; margin-bottom: 8px;">15 Best AI Tools for Turning Videos, Lectures &amp; Meetings Into Notes (2026)</h1>
+            <p style="color: #666; font-size: 0.9rem;">Published August 4, 2026 • 8 min read</p>
+          </header>
+
+          <div style="font-size: 1.05rem; color: #111;">
+            <p style="font-weight: 600; font-size: 1.1rem; color: #4338ca;">
+              If you spend your week switching between lecture recordings, Zoom calls, PDFs, and slide decks, you've probably noticed the same problem everywhere: the information is there, but turning it into something you can actually study or act on takes almost as long as consuming it in the first place.
+            </p>
+            <p style="margin-top: 16px;">
+              AI note-taking tools have gotten genuinely good at solving this — but "good" means different things depending on whether you're a student cramming for finals, a researcher synthesizing papers, or a professional trying to stop losing meeting details. This list breaks tools down by what they're actually best at, not just what they claim to do.
+            </p>
+
+            <h2 style="font-size: 1.5rem; font-weight: 700; color: #111; margin-top: 36px; border-bottom: 1px solid #eee; padding-bottom: 8px;">For Deep Multi-Document Research</h2>
+
+            <div style="margin-top: 20px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">1. Gemini Notebook (formerly NotebookLM)</h3>
+              <p>Google's source-grounded research assistant remains the strongest option when you need to synthesize across many long documents — research papers, reports, entire books — with citations back to your original sources. Its Audio Overviews (AI-generated podcast-style discussions of your material) are genuinely useful for reviewing dense content passively. Where it's more limited: it's built around uploaded documents rather than live meeting workflows, and its outputs lean research-oriented rather than task-oriented.</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: researchers, grad students, anyone synthesizing across many long-form sources.</p>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">2. Elicit</h3>
+              <p>A research-specific tool built for academic literature review — strong at finding and summarizing relevant papers, weaker outside of academic/research use cases.</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: academic researchers doing literature reviews.</p>
+            </div>
+
+            <h2 style="font-size: 1.5rem; font-weight: 700; color: #111; margin-top: 36px; border-bottom: 1px solid #eee; padding-bottom: 8px;">For Video and Lecture Summarization</h2>
+
+            <div style="margin-top: 20px; padding: 20px; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 12px;">
+              <h3 style="font-size: 1.25rem; font-weight: 800; color: #111; margin-bottom: 6px; margin-top: 0;">3. Zipytiny <span style="font-size: 0.75rem; background: #4f46e5; color: white; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase; font-weight: bold; margin-left: 8px;">Editor's Pick</span></h3>
+              <p>Built specifically around turning a single video, lecture, or meeting recording into a full set of study or work outputs in one pass — paste a YouTube link or upload a Zoom, Teams, or Google Meet recording, and it generates timestamped notes, visual mind maps, flashcards with spaced repetition, and practice quizzes, or — on the professional side — meeting notes, action items, and a ready-to-share slide deck. The dual positioning (student tools and professional tools from the same input) is fairly unusual; most competitors pick one audience. Free tier available, Pro from $9.99/mo.</p>
+              <p style="font-size: 0.85rem; font-weight: 700; color: #3730a3; background: #ffffff; border: 1px solid #c7d2fe; padding: 6px 12px; border-radius: 6px; display: inline-block; margin-top: 10px;">Best for: anyone processing a single video or recording who wants multiple output formats (notes, flashcards, mind map, quiz, or presentation) without stitching together several tools.</p>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">4. Turbo AI</h3>
+              <p>A well-reviewed mobile-first note taker built around recording live lectures, with strong marks for filtering out classroom side-conversation and producing organized notes from messy audio.</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: students who record lectures live on their phone.</p>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">5. PolarNotes AI</h3>
+              <p>An iOS-native AI note taker focused on students, with offline support — a genuinely useful differentiator if you study somewhere with unreliable wifi. Turns lectures, slides, and PDFs into notes, study guides, and flashcards.</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: iOS users who want offline-capable note-taking.</p>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">6. StudyFetch</h3>
+              <p>A broader study platform — AI tutor with live voice conversation, personalized study scheduling, and note generation from course material, going further into "AI tutor" territory than most tools on this list.</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: students who want an interactive tutor, not just note generation.</p>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">7. NotesXP</h3>
+              <p>A straightforward, no-login-required study app that turns PDFs, textbook pages, and lecture notes into quizzes, flashcards, mind maps, and short podcasts. Built by an indie developer with a clear no-ads, no-data-selling stance.</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: students who want a fast, privacy-conscious tool with no account friction.</p>
+            </div>
+
+            <h2 style="font-size: 1.5rem; font-weight: 700; color: #111; margin-top: 36px; border-bottom: 1px solid #eee; padding-bottom: 8px;">For Work Meetings and Professional Use</h2>
+
+            <div style="margin-top: 20px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">8. MeetGeek</h3>
+              <p>Purpose-built for meeting transcription and summaries, with solid multi-language support and automatic action-item extraction. Works reasonably well on recorded lectures too, though it's designed business-first.</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: teams who need consistent meeting documentation across many recurring calls.</p>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">9. Otter.ai</h3>
+              <p>One of the longest-standing names in AI meeting transcription — real-time transcription during live calls, with automatic summaries and speaker identification.</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: live transcription during the meeting itself, not after-the-fact summarization.</p>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">10. Fireflies.ai</h3>
+              <p>A meeting assistant that integrates directly into calendar and video-call tools, auto-joining meetings to record and summarize without manual upload.</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: teams who want zero-friction, automatic meeting capture.</p>
+            </div>
+
+            <h2 style="font-size: 1.5rem; font-weight: 700; color: #111; margin-top: 36px; border-bottom: 1px solid #eee; padding-bottom: 8px;">For General Productivity and Note Organization</h2>
+
+            <div style="margin-top: 20px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">11. Notion AI</h3>
+              <p>Less a dedicated note-taker and more a productivity workspace with AI layered in — strong if you already live in Notion for projects and want summarization built into the same place as your other work.</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: teams and individuals already using Notion as their main workspace.</p>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">12. Mem AI</h3>
+              <p>An AI-native notes app built around automatically organizing and connecting your notes without manual folder structures.</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: people who take a high volume of scattered notes and want AI to find the connections.</p>
+            </div>
+
+            <h2 style="font-size: 1.5rem; font-weight: 700; color: #111; margin-top: 36px; border-bottom: 1px solid #eee; padding-bottom: 8px;">Specialized Tools Worth Knowing About</h2>
+
+            <div style="margin-top: 20px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">13. Speechify</h3>
+              <p>Primarily a text-to-speech tool, but increasingly used to "listen through" long documents and articles — a different angle on the same underlying problem (too much to read, too little time).</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: converting long text into audio for passive consumption.</p>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">14. Glean</h3>
+              <p>An AI research and knowledge-search tool aimed at enterprise teams trying to find information across many internal documents and tools.</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: larger organizations with substantial internal knowledge bases.</p>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <h3 style="font-size: 1.2rem; font-weight: 700; color: #111; margin-bottom: 6px;">15. Study Note – AI Note Taker</h3>
+              <p>A transcription-focused note app pitched at students, professionals, and content creators alike, with a straightforward "record and organize" workflow.</p>
+              <p style="font-size: 0.85rem; font-weight: 600; color: #4338ca; background: #e0e7ff; padding: 4px 10px; border-radius: 6px; display: inline-block; margin-top: 8px;">Best for: anyone who wants a simple, no-frills transcription-to-notes pipeline.</p>
+            </div>
+
+            <h2 style="font-size: 1.5rem; font-weight: 700; color: #111; margin-top: 36px; border-bottom: 1px solid #eee; padding-bottom: 8px;">How to Actually Choose</h2>
+            <p style="margin-top: 16px;">
+              The honest answer is that most people on this list end up using two tools, not one — a research-synthesis tool for long-form deep work (Gemini Notebook, Elicit) alongside something faster and more tactical for single videos, lectures, or meetings (Zipytiny, Turbo AI, MeetGeek). Trying to force one tool to do both jobs usually means it does neither particularly well.
+            </p>
+            <p style="font-weight: bold; margin-top: 16px;">A reasonable way to decide:</p>
+            <ul style="padding-left: 20px; margin-top: 8px; space-y: 8px;">
+              <li><strong>Synthesizing many long documents or papers?</strong> Start with Gemini Notebook.</li>
+              <li><strong>Turning a single video, lecture, or recording into notes, flashcards, or a quiz?</strong> Start with Zipytiny.</li>
+              <li><strong>Documenting recurring work meetings automatically?</strong> Start with MeetGeek or Fireflies.ai.</li>
+              <li><strong>Already living inside Notion for everything else?</strong> Notion AI keeps things in one place.</li>
+            </ul>
+            <p style="margin-top: 16px;">
+              Most of these tools offer a free tier or trial, so the fastest way to know what fits your workflow is to run the same real lecture or meeting recording through two or three of them and compare the actual output — not just the marketing page.
+            </p>
+          </div>
+
+          <div style="margin-top: 40px; padding: 24px; background: #f3f4f6; border-radius: 12px; text-align: center;">
+            <h3 style="font-size: 1.2rem; font-weight: bold; margin-top: 0; color: #111;">Ready to turn your videos and meetings into notes in seconds?</h3>
+            <p style="color: #555; margin-bottom: 16px;">Try Zipytiny for free — no credit card required.</p>
+            <a href="/" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; border-radius: 8px; text-decoration: none; font-weight: bold;">Get Started Free →</a>
           </div>
         </article>
       `
