@@ -4304,6 +4304,13 @@ app.get('/rss.xml', (req, res) => {
     <language>en-us</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
     <item>
+      <title>15 Best AI Tools for Turning Videos, Lectures &amp; Meetings Into Notes (2026)</title>
+      <link>https://zipytiny.app/blog/best-ai-tools-video-lecture-meeting-notes</link>
+      <description>A hands-on comparison of the best AI note-taking and summarization tools in 2026 — for students, researchers, and professionals who need videos, lectures, and meetings turned into usable notes fast.</description>
+      <pubDate>Tue, 04 Aug 2026 00:00:00 GMT</pubDate>
+      <guid>https://zipytiny.app/blog/best-ai-tools-video-lecture-meeting-notes</guid>
+    </item>
+    <item>
       <title>How to Turn a 2-Hour Video Lecture into 5-Minute Study Notes</title>
       <link>https://zipytiny.app/blog/turn-video-lecture-to-study-notes</link>
       <description>Learn how active recall, spaced repetition, and AI video distillation help postgrad students summarize YouTube lectures effortlessly.</description>

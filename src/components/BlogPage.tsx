@@ -24,6 +24,251 @@ interface BlogPageProps {
 export default function BlogPage({ currentBlogSlug, onNavigateHome, onNavigateToBlog, onLaunchApp }: BlogPageProps) {
   const blogPosts: BlogPost[] = [
     {
+      slug: 'best-ai-tools-video-lecture-meeting-notes',
+      title: '15 Best AI Tools for Turning Videos, Lectures & Meetings Into Notes (2026)',
+      description: 'A hands-on comparison of the best AI note-taking and summarization tools in 2026 — for students, researchers, and professionals who need videos, lectures, and meetings turned into usable notes fast.',
+      date: 'August 4, 2026',
+      readTime: '8 min read',
+      category: 'Tool Comparison',
+      targetKeyword: 'best ai note taker',
+      icon: FileText,
+      content: (
+        <div className="space-y-6 text-neutral-800 dark:text-zinc-200 leading-relaxed text-sm sm:text-base">
+          <p className="font-semibold text-lg text-indigo-600 dark:text-indigo-400">
+            If you spend your week switching between lecture recordings, Zoom calls, PDFs, and slide decks, you've probably noticed the same problem everywhere: the information is there, but turning it into something you can actually study or act on takes almost as long as consuming it in the first place.
+          </p>
+          <p>
+            AI note-taking tools have gotten genuinely good at solving this — but "good" means different things depending on whether you're a student cramming for finals, a researcher synthesizing papers, or a professional trying to stop losing meeting details. This list breaks tools down by what they're actually best at, not just what they claim to do.
+          </p>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            For Deep Multi-Document Research
+          </h2>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              1. Gemini Notebook (formerly NotebookLM)
+            </h3>
+            <p>
+              Google's source-grounded research assistant remains the strongest option when you need to synthesize across many long documents — research papers, reports, entire books — with citations back to your original sources. Its Audio Overviews (AI-generated podcast-style discussions of your material) are genuinely useful for reviewing dense content passively. Where it's more limited: it's built around uploaded documents rather than live meeting workflows, and its outputs lean research-oriented rather than task-oriented.
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: researchers, grad students, anyone synthesizing across many long-form sources.
+            </p>
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              2. Elicit
+            </h3>
+            <p>
+              A research-specific tool built for academic literature review — strong at finding and summarizing relevant papers, weaker outside of academic/research use cases.
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: academic researchers doing literature reviews.
+            </p>
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            For Video and Lecture Summarization
+          </h2>
+
+          <div className="space-y-4 bg-gradient-to-br from-indigo-50/70 to-blue-50/40 dark:from-zinc-900/80 dark:to-zinc-900/30 p-5 rounded-2xl border border-indigo-100 dark:border-zinc-800">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-extrabold text-neutral-900 dark:text-zinc-100 flex items-center gap-2">
+                <span>3. Zipytiny</span>
+                <span className="text-[10px] bg-indigo-600 text-white font-mono uppercase tracking-wider px-2 py-0.5 rounded-full font-bold">Featured Editor's Pick</span>
+              </h3>
+            </div>
+            <p>
+              Built specifically around turning a single video, lecture, or meeting recording into a full set of study or work outputs in one pass — paste a YouTube link or upload a Zoom, Teams, or Google Meet recording, and it generates timestamped notes, visual mind maps, flashcards with spaced repetition, and practice quizzes, or — on the professional side — meeting notes, action items, and a ready-to-share slide deck. The dual positioning (student tools and professional tools from the same input) is fairly unusual; most competitors pick one audience. Free tier available, Pro from $9.99/mo.
+            </p>
+            <p className="text-xs font-bold text-indigo-700 dark:text-sky-400 bg-white dark:bg-zinc-950 px-3 py-1.5 rounded-lg border border-indigo-200/60 dark:border-zinc-800 w-fit">
+              Best for: anyone processing a single video or recording who wants multiple output formats (notes, flashcards, mind map, quiz, or presentation) without stitching together several tools.
+            </p>
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              4. Turbo AI
+            </h3>
+            <p>
+              A well-reviewed mobile-first note taker built around recording live lectures, with strong marks for filtering out classroom side-conversation and producing organized notes from messy audio.
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: students who record lectures live on their phone.
+            </p>
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              5. PolarNotes AI
+            </h3>
+            <p>
+              An iOS-native AI note taker focused on students, with offline support — a genuinely useful differentiator if you study somewhere with unreliable wifi. Turns lectures, slides, and PDFs into notes, study guides, and flashcards.
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: iOS users who want offline-capable note-taking.
+            </p>
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              6. StudyFetch
+            </h3>
+            <p>
+              A broader study platform — AI tutor with live voice conversation, personalized study scheduling, and note generation from course material, going further into "AI tutor" territory than most tools on this list.
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: students who want an interactive tutor, not just note generation.
+            </p>
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              7. NotesXP
+            </h3>
+            <p>
+              A straightforward, no-login-required study app that turns PDFs, textbook pages, and lecture notes into quizzes, flashcards, mind maps, and short podcasts. Built by an indie developer with a clear no-ads, no-data-selling stance.
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: students who want a fast, privacy-conscious tool with no account friction.
+            </p>
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            For Work Meetings and Professional Use
+          </h2>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              8. MeetGeek
+            </h3>
+            <p>
+              Purpose-built for meeting transcription and summaries, with solid multi-language support and automatic action-item extraction. Works reasonably well on recorded lectures too, though it's designed business-first.
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: teams who need consistent meeting documentation across many recurring calls.
+            </p>
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              9. Otter.ai
+            </h3>
+            <p>
+              One of the longest-standing names in AI meeting transcription — real-time transcription during live calls, with automatic summaries and speaker identification.
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: live transcription during the meeting itself, not after-the-fact summarization.
+            </p>
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              10. Fireflies.ai
+            </h3>
+            <p>
+              A meeting assistant that integrates directly into calendar and video-call tools, auto-joining meetings to record and summarize without manual upload.
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: teams who want zero-friction, automatic meeting capture.
+            </p>
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            For General Productivity and Note Organization
+          </h2>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              11. Notion AI
+            </h3>
+            <p>
+              Less a dedicated note-taker and more a productivity workspace with AI layered in — strong if you already live in Notion for projects and want summarization built into the same place as your other work.
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: teams and individuals already using Notion as their main workspace.
+            </p>
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              12. Mem AI
+            </h3>
+            <p>
+              An AI-native notes app built around automatically organizing and connecting your notes without manual folder structures.
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: people who take a high volume of scattered notes and want AI to find the connections.
+            </p>
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            Specialized Tools Worth Knowing About
+          </h2>
+
+          <div className="space-y-4">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              13. Speechify
+            </h3>
+            <p>
+              Primarily a text-to-speech tool, but increasingly used to "listen through" long documents and articles — a different angle on the same underlying problem (too much to read, too little time).
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: converting long text into audio for passive consumption.
+            </p>
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              14. Glean
+            </h3>
+            <p>
+              An AI research and knowledge-search tool aimed at enterprise teams trying to find information across many internal documents and tools.
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: larger organizations with substantial internal knowledge bases.
+            </p>
+          </div>
+
+          <div className="space-y-4 pt-2">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-zinc-100">
+              15. Study Note – AI Note Taker
+            </h3>
+            <p>
+              A transcription-focused note app pitched at students, professionals, and content creators alike, with a straightforward "record and organize" workflow.
+            </p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-3 py-1 rounded-lg w-fit">
+              Best for: anyone who wants a simple, no-frills transcription-to-notes pipeline.
+            </p>
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-zinc-50 pt-4 border-b border-black/5 dark:border-zinc-800 pb-2">
+            How to Actually Choose
+          </h2>
+          <p>
+            The honest answer is that most people on this list end up using two tools, not one — a research-synthesis tool for long-form deep work (Gemini Notebook, Elicit) alongside something faster and more tactical for single videos, lectures, or meetings (Zipytiny, Turbo AI, MeetGeek). Trying to force one tool to do both jobs usually means it does neither particularly well.
+          </p>
+          <p className="font-semibold">A reasonable way to decide:</p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li><strong>Synthesizing many long documents or papers?</strong> Start with Gemini Notebook.</li>
+            <li><strong>Turning a single video, lecture, or recording into notes, flashcards, or a quiz?</strong> Start with Zipytiny.</li>
+            <li><strong>Documenting recurring work meetings automatically?</strong> Start with MeetGeek or Fireflies.ai.</li>
+            <li><strong>Already living inside Notion for everything else?</strong> Notion AI keeps things in one place.</li>
+          </ul>
+          <p>
+            Most of these tools offer a free tier or trial, so the fastest way to know what fits your workflow is to run the same real lecture or meeting recording through two or three of them and compare the actual output — not just the marketing page.
+          </p>
+
+          <hr className="my-6 border-black/5 dark:border-zinc-800" />
+          <p className="text-xs text-neutral-500 dark:text-zinc-400 italic">
+            Have a tool that should be on this list, or found one of these descriptions out of date? Feel free to contact us — this list gets updated as tools evolve.
+          </p>
+        </div>
+      )
+    },
+    {
       slug: 'why-i-built-zipytiny',
       title: 'Turn Any Video, PDF, or Lecture Into Study Notes in Seconds — Why I Built Zipytiny',
       description: 'The story behind Zipytiny: why manual study note creation wastes millions of hours, how active recall removes friction, and why I built an AI study workspace as a solo founder.',

@@ -2873,6 +2873,16 @@ export default function LandingPage({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
             {
+              slug: 'best-ai-tools-video-lecture-meeting-notes',
+              title: '15 Best AI Tools for Turning Videos, Lectures & Meetings Into Notes (2026)',
+              description: 'A hands-on comparison of the best AI note-taking and summarization tools in 2026 — for students, researchers, and professionals.',
+              date: 'August 4, 2026',
+              readTime: '8 min read',
+              category: 'Comparison',
+              icon: FileText,
+              iconColor: 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-950/40',
+            },
+            {
               slug: 'turn-video-lecture-to-study-notes',
               title: 'How to Turn Video Lectures into Study Notes in Under 60 Seconds',
               description: 'Stop spending hours pausing and rewinding. Learn how to turn video lectures into study notes instantly using AI to save hours every week.',

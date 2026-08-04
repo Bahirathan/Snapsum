@@ -17,6 +17,7 @@ const DEFAULT_OG_IMAGE = `${DOMAIN}/og-image.png`;
 export const ALL_ROUTES = [
   '/',
   '/blog',
+  '/blog/best-ai-tools-video-lecture-meeting-notes',
   '/blog/why-i-built-zipytiny',
   '/blog/turn-video-lecture-to-study-notes',
   '/blog/ai-tool-make-flashcards-slides',
@@ -555,6 +556,58 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
     };
   }
 
+  // 0. BLOG POST: best-ai-tools-video-lecture-meeting-notes
+  if (cleanPath === '/blog/best-ai-tools-video-lecture-meeting-notes') {
+    return {
+      title: '15 Best AI Tools for Turning Videos, Lectures & Meetings Into Notes (2026) | Zipytiny Blog',
+      description: 'A hands-on comparison of the best AI note-taking and summarization tools in 2026 — for students, researchers, and professionals who need videos, lectures, and meetings turned into usable notes fast.',
+      keywords: 'best ai note taker, ai lecture notes, ai meeting notes tool, video to notes ai, ai study tools 2026, notebooklm alternative',
+      canonical: `${DOMAIN}/blog/best-ai-tools-video-lecture-meeting-notes`,
+      ogType: 'article',
+      ogImage: DEFAULT_OG_IMAGE,
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
+          'headline': '15 Best AI Tools for Turning Videos, Lectures & Meetings Into Notes (2026)',
+          'description': 'A hands-on comparison of the best AI note-taking and summarization tools in 2026 — for students, researchers, and professionals who need videos, lectures, and meetings turned into usable notes fast.',
+          'author': orgSchema,
+          'publisher': orgSchema,
+          'datePublished': '2026-08-04',
+          'dateModified': '2026-08-04',
+          'mainEntityOfPage': `${DOMAIN}/blog/best-ai-tools-video-lecture-meeting-notes`
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          'itemListElement': [
+            { '@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': DOMAIN },
+            { '@type': 'ListItem', 'position': 2, 'name': 'Blog', 'item': `${DOMAIN}/blog` },
+            { '@type': 'ListItem', 'position': 3, 'name': '15 Best AI Tools for Turning Videos, Lectures & Meetings Into Notes (2026)', 'item': `${DOMAIN}/blog/best-ai-tools-video-lecture-meeting-notes` }
+          ]
+        }
+      ],
+      prerenderHtml: `
+        <article style="max-width: 800px; margin: 0 auto; padding: 40px 20px; font-family: system-ui, sans-serif; color: #333; line-height: 1.7;">
+          <nav style="font-size: 0.9rem; margin-bottom: 20px;">
+            <a href="/" style="color: #4f46e5; text-decoration: none;">Home</a> &gt; 
+            <a href="/blog" style="color: #4f46e5; text-decoration: none;">Blog</a> &gt; 
+            <span style="color: #666;">15 Best AI Tools for Turning Videos, Lectures & Meetings Into Notes (2026)</span>
+          </nav>
+          <h1 style="font-size: 2.2rem; margin-top: 10px; color: #111;">15 Best AI Tools for Turning Videos, Lectures & Meetings Into Notes (2026)</h1>
+          <p style="color: #666; font-size: 0.9rem;">Published August 4, 2026 • 8 min read • Category: Tool Comparison</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 1.1rem; font-weight: 500; color: #444;">
+            A hands-on comparison of the best AI note-taking and summarization tools in 2026 — for students, researchers, and professionals who need videos, lectures, and meetings turned into usable notes fast.
+          </p>
+          <div style="margin-top: 40px; padding: 20px; background: #f3f4f6; border-radius: 12px; text-align: center;">
+            <a href="/" style="display: inline-block; padding: 12px 24px; background: #4f46e5; color: white; border-radius: 8px; text-decoration: none; font-weight: bold;">Try Zipytiny AI Note Generator Free →</a>
+          </div>
+        </article>
+      `
+    };
+  }
+
   // 6. BLOG HUB: /blog
   if (cleanPath === '/blog') {
     return {
@@ -588,6 +641,11 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
           <p style="font-size: 1.1rem; color: #666; margin-bottom: 30px;">Actionable strategies for active recall, video distillation, spaced repetition, and exam prep.</p>
           
           <div style="display: grid; gap: 24px;">
+            <article style="padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff;">
+              <h2 style="margin-top: 0; font-size: 1.3rem;"><a href="/blog/best-ai-tools-video-lecture-meeting-notes" style="color: #4f46e5; text-decoration: none;">15 Best AI Tools for Turning Videos, Lectures & Meetings Into Notes (2026)</a></h2>
+              <p style="color: #555; font-size: 0.95rem;">A hands-on comparison of the best AI note-taking and summarization tools in 2026 — for students, researchers, and professionals who need videos, lectures, and meetings turned into usable notes fast.</p>
+              <a href="/blog/best-ai-tools-video-lecture-meeting-notes" style="color: #4f46e5; font-weight: bold; font-size: 0.9rem;">Read Full Guide →</a>
+            </article>
             <article style="padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff;">
               <h2 style="margin-top: 0; font-size: 1.3rem;"><a href="/blog/why-i-built-zipytiny" style="color: #4f46e5; text-decoration: none;">Turn Any Video, PDF, or Lecture Into Study Notes in Seconds — Why I Built Zipytiny</a></h2>
               <p style="color: #555; font-size: 0.95rem;">The story behind Zipytiny: why manual study note creation wastes millions of hours, how active recall removes friction, and why I built an AI study workspace as a solo founder.</p>
@@ -1271,6 +1329,7 @@ export function getRouteSeoData(urlPath: string): RouteSeoData {
         <section style="margin: 50px 0; padding: 30px; background: #0f172a; color: white; border-radius: 16px;">
           <h2 style="margin-top: 0; font-size: 1.8rem; color: white;">Latest Learning & AI Strategy Guides</h2>
           <ul style="list-style: none; padding: 0; display: grid; gap: 16px; margin-top: 20px;">
+            <li><a href="/blog/best-ai-tools-video-lecture-meeting-notes" style="color: #818cf8; font-weight: 600; text-decoration: none; font-size: 1.1rem;">• 15 Best AI Tools for Turning Videos, Lectures & Meetings Into Notes (2026) →</a></li>
             <li><a href="/blog/why-i-built-zipytiny" style="color: #818cf8; font-weight: 600; text-decoration: none; font-size: 1.1rem;">• Turn Any Video, PDF, or Lecture Into Study Notes in Seconds — Why I Built Zipytiny →</a></li>
             <li><a href="/blog/turn-video-lecture-to-study-notes" style="color: #818cf8; font-weight: 600; text-decoration: none; font-size: 1.1rem;">• How to Turn a 2-Hour Video Lecture into 5-Minute Study Notes →</a></li>
             <li><a href="/blog/ai-tool-make-flashcards-slides" style="color: #818cf8; font-weight: 600; text-decoration: none; font-size: 1.1rem;">• Top AI Tools to Turn Video Slides into Interactive Flashcards in 2026 →</a></li>
