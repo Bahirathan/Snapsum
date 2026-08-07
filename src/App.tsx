@@ -7166,132 +7166,104 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
                   <LoadingTimeline loadingStep={loadingStep} />
                 )}
 
-                {/* Technical Error Box */}
+                {/* Clean, Public-Friendly Error Box */}
                 {error && (
-                  <div className="mt-6 p-5 bg-rose-50/70 border border-rose-200/60 rounded-2xl text-[#1d1d1f] animate-fadeIn space-y-3">
-                    <div className="flex items-center gap-2 text-xs font-bold font-mono uppercase tracking-wider text-rose-800">
-                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                      <span>Server Request Interrupted</span>
-                    </div>
-                    {error.includes("dunning decision") || error.includes("Lightning dunning") || error.toLowerCase().includes("deny for project") || error.includes("UNAUTHENTICATED") || error.includes("unauthenticated") || error.includes("ACCESS_TOKEN_TYPE_UNSUPPORTED") || error.includes("API_KEY_SERVICE_BLOCKED") || error.includes("invalid authentication credentials") || error.includes("API keys are not supported") || error.includes("No valid Gemini API Key is configured") ? (
-                      <div className="space-y-2.5">
-                        <p className="text-sm font-semibold text-rose-950 flex items-center gap-1.5">
-                          <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
-                          Google Cloud Billing Hold (Dunning Status Active)
-                        </p>
-                        <p className="text-xs text-neutral-600 leading-relaxed font-sans">
-                          Google Cloud has restricted API requests for your GCP project (<code>projects/39732050718</code>) because of a billing hold, unpaid charge, or temporary suspended state (called <strong>Dunning</strong>). Because you just added a new payment method, Google needs a brief moment to sync, and you may need to complete a few quick setup steps!
-                        </p>
-                        <div className="bg-white/95 p-4 rounded-xl border border-rose-100/50 space-y-2.5">
-                          <p className="text-xs font-semibold text-neutral-800">How to restore your API access immediately:</p>
-                          <ul className="text-xs text-neutral-600 list-disc list-inside space-y-2 bg-neutral-50/50 p-3 rounded-lg border border-neutral-100 leading-relaxed">
-                            <li>
-                              <strong className="text-neutral-900">Add Prepay Credits (Critical)</strong>: Google AI Studio operates on a <strong>Prepaid Billing Model</strong> for new developer accounts. Simply linking a new credit card is <strong>not enough</strong>! You must manually buy starting prepay credits. Go to your <a href="https://aistudio.google.com/app/billing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 font-semibold underline inline-flex items-center gap-0.5 hover:text-indigo-800">Google AI Studio Billing Console</a>, click <strong>Add Funds / Buy Credits</strong>, and load a positive balance (e.g., $10). Google will immediately lift the block once your balance is positive!
-                            </li>
-                            <li>
-                              <strong className="text-neutral-900">Check Project Association</strong>: Ensure your newly added billing account is actively linked to your Google Cloud Project <code>39732050718</code> in the <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 font-medium underline">GCP Billing Panel</a>.
-                            </li>
-                            <li>
-                              <strong className="text-neutral-900">Wait for Sync</strong>: Once you purchase prepay credits, Google Cloud usually takes 15-30 minutes to propagate the billing update across global GenAI servers.
-                            </li>
-                            <li>
-                              <strong className="text-neutral-950 bg-amber-50 px-1 py-0.5 rounded border border-amber-200">Instant Bypass</strong>: While waiting, you can paste your own personal developer Gemini API key inside our {" "}
-                              <button
-                                onClick={() => setCurrentScreen('billing')}
-                                className="text-indigo-600 font-bold hover:underline bg-transparent border-none p-0 inline cursor-pointer"
-                              >
-                                Billing (Sandbox)
-                              </button>{" "}
-                              tab above to test the app completely free with zero limits!
-                            </li>
-                          </ul>
-                        </div>
-                        <p className="text-[10px] text-rose-800/80 font-mono">Original Error Details: {error}</p>
+                  <div className="mt-6 p-5 bg-rose-50/80 dark:bg-rose-950/30 border border-rose-200/80 dark:border-rose-900/50 rounded-2xl text-[#1d1d1f] dark:text-rose-100 animate-fadeIn space-y-3 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-rose-800 dark:text-rose-300 font-sans">
+                        <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                        <span>
+                          {customApiKey
+                            ? "Custom API Key Notice"
+                            : error.includes("dunning") || error.includes("No valid Gemini") || error.includes("429") || error.includes("RESOURCE_EXHAUSTED") || error.includes("quota") || error.includes("UNAUTHENTICATED") || error.includes("temporarily unavailable")
+                            ? "AI Service Temporarily Busy"
+                            : "Generation Notice"}
+                        </span>
                       </div>
-                    ) : error.includes("RESOURCE_EXHAUSTED") || error.includes("prepayment credits") || error.includes("429") ? (
-                      customApiKey ? (
-                        <div className="space-y-2.5">
-                          <p className="text-sm font-semibold text-rose-950">
-                            Custom Gemini API Key - Rate Limit or Quota Exhausted
-                          </p>
-                          <p className="text-xs text-neutral-600 leading-relaxed font-sans">
-                            A 429 / RESOURCE_EXHAUSTED response was returned by Gemini using your <strong>custom API key</strong>. This typically means your personal API key has hit the Google AI Studio free tier limits (such as Requests Per Minute) or doesn't have an active billing profile linked in Google Cloud.
-                          </p>
-                          <div className="bg-white/95 p-3.5 rounded-xl border border-rose-100/50 space-y-2">
-                            <p className="text-xs font-semibold text-neutral-800">Troubleshooting Steps:</p>
-                            <ul className="text-xs text-neutral-600 list-disc list-inside space-y-1 bg-neutral-50/50 p-2.5 rounded-lg border border-neutral-100">
-                              <li>Verify your key status on <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline font-medium">Google AI Studio</a>.</li>
-                              <li>Check if your Google AI Studio project has hit its rate limits (e.g., Requests Per Minute limit).</li>
-                              <li>Wait a few minutes and try again.</li>
-                              <li>You can clear your custom key from the Billing tab to revert to Zipytiny host defaults.</li>
-                            </ul>
-                          </div>
-                          <p className="text-[10px] text-rose-800/80 font-mono">Original Error: {error}</p>
+                    </div>
+
+                    {/* Scenario 1: Public end-user seeing a server quota / billing / key issue */}
+                    {!customApiKey && (error.includes("dunning") || error.includes("No valid Gemini") || error.includes("429") || error.includes("RESOURCE_EXHAUSTED") || error.includes("quota") || error.includes("UNAUTHENTICATED") || error.includes("unauthenticated") || error.includes("API_KEY") || error.includes("temporarily unavailable")) ? (
+                      <div className="space-y-3">
+                        <p className="text-sm font-semibold text-rose-950 dark:text-rose-100 flex items-center gap-2">
+                          <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                          High Demand — AI Processing Servers Busy
+                        </p>
+                        <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-sans">
+                          Our public AI processing nodes are currently at capacity or undergoing brief maintenance. Please try your request again in a few seconds, or explore one of our instant pre-rendered study decks below!
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={(e) => handleSummarize(e)}
+                            className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold transition cursor-pointer shadow-sm"
+                          >
+                            Try Again
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleLoadVideoById("UF8uR6Z6KLc", true)}
+                            className="px-3.5 py-1.5 bg-white dark:bg-zinc-800 border border-neutral-200 dark:border-zinc-700 hover:bg-neutral-50 dark:hover:bg-zinc-700 text-neutral-800 dark:text-zinc-200 rounded-lg text-xs font-semibold transition cursor-pointer"
+                          >
+                            Explore Demo Study Deck
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setCurrentScreen('billing')}
+                            className="px-3.5 py-1.5 text-indigo-600 dark:text-indigo-400 hover:underline text-xs font-semibold cursor-pointer ml-auto"
+                          >
+                            BYOK / Custom API Key →
+                          </button>
                         </div>
-                      ) : (
-                        <div className="space-y-2.5">
-                          <p className="text-sm font-semibold text-rose-950 flex items-center gap-1.5">
-                            <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
-                            Google AI Studio Prepayment Credits Depleted
-                          </p>
-                          <p className="text-xs text-neutral-600 leading-relaxed font-sans">
-                            A 429 Exhausted status indicates your Gemini endpoint has run out of tokens, or your Google AI Studio prepaid credit balance is currently $0.00. Because you just updated your card, let's complete the final step!
-                          </p>
-                          <div className="bg-white/95 p-4 rounded-xl border border-rose-100/50 space-y-2.5">
-                            <p className="text-xs font-semibold text-neutral-800">Required Steps for Paid Tier Gemini API:</p>
-                            <ul className="text-xs text-neutral-600 list-disc list-inside space-y-2 bg-neutral-50/50 p-3 rounded-lg border border-neutral-100 leading-relaxed">
-                              <li>
-                                <strong className="text-neutral-900">Purchase Prepaid Credits (Required)</strong>: Under Google AI Studio's paid plan, simply linking a credit card is <strong>not enough</strong> to start. You must go to <a href="https://aistudio.google.com/app/billing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 font-semibold underline hover:text-indigo-800">Google AI Studio Billing</a> and click <strong>Add Funds / Buy Credits</strong> to purchase prepay credits (minimum $10). Once your balance is positive, Google immediately activates paid requests.
-                              </li>
-                              <li>
-                                <strong className="text-neutral-900">Verify Project Linking</strong>: Ensure your billing account is actively linked to Google Cloud Project ID <code>39732050718</code> in the Google Cloud Billing console.
-                              </li>
-                              <li>
-                                <strong className="text-neutral-900">Instant Bypass</strong>: While your prepay balance is syncing, you can enter your private personal Gemini API key inside our {" "}
-                                <button
-                                  onClick={() => setCurrentScreen('billing')}
-                                  className="text-indigo-600 font-bold hover:underline bg-transparent border-none p-0 inline cursor-pointer"
-                                >
-                                  Billing (Sandbox) Tab
-                                </button>{" "}
-                                above to completely bypass server limits and summarize videos instantly for free!
-                              </li>
-                              <li>
-                                <strong className="text-neutral-900">Cached Templates</strong>: Select Steve Jobs or Simon Sinek in the side rail for zero-cost, high-fidelity analyses.
-                              </li>
+
+                        {/* Collapsible Developer & Site Admin Diagnostic Panel */}
+                        <details className="mt-3 text-xs border-t border-rose-200/50 dark:border-rose-900/50 pt-2.5 text-neutral-500 dark:text-neutral-400">
+                          <summary className="cursor-pointer font-medium hover:text-neutral-800 dark:hover:text-neutral-200 text-[11px] select-none flex items-center gap-1.5">
+                            <span>🛠️ Site Admin & Developer Diagnostics</span>
+                          </summary>
+                          <div className="mt-2.5 p-3 bg-white/90 dark:bg-zinc-900/90 rounded-xl border border-neutral-200/80 dark:border-zinc-800 space-y-2 text-[11px] leading-relaxed">
+                            <p className="font-semibold text-neutral-900 dark:text-zinc-100">Production Billing & API Key Setup Instructions for Site Owner:</p>
+                            <ul className="list-disc list-inside space-y-1 text-neutral-600 dark:text-zinc-400">
+                              <li><strong>Google AI Studio Prepaid Credits</strong>: Ensure your GCP Project has a positive balance ($10+) in <a href="https://aistudio.google.com/app/billing" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 underline font-medium">Google AI Studio Billing Console</a>.</li>
+                              <li><strong>Server Environment Secret</strong>: Verify that <code>GEMINI_API_KEY</code> is correctly set in your host/Cloud Run secrets.</li>
+                              <li><strong>GCP Project Association</strong>: Ensure billing account is linked to GCP Project <code>39732050718</code>.</li>
                             </ul>
+                            <div className="p-2 bg-neutral-100 dark:bg-zinc-800 rounded font-mono text-[10px] text-neutral-700 dark:text-zinc-300 break-all">
+                              Raw Error Log: {error}
+                            </div>
                           </div>
-                        </div>
-                      )
-                    ) : error.toLowerCase().includes("api_key_invalid") || error.toLowerCase().includes("api key not valid") || error.toLowerCase().includes("invalid api key") || error.toLowerCase().includes("key is invalid") ? (
+                        </details>
+                      </div>
+                    ) : customApiKey && (error.includes("429") || error.includes("RESOURCE_EXHAUSTED") || error.toLowerCase().includes("invalid")) ? (
+                      /* Scenario 2: Custom API key user encountering rate limit / invalid key */
                       <div className="space-y-2.5">
-                        <p className="text-sm font-semibold text-rose-950">
-                          Invalid Custom Gemini API Key Detected
+                        <p className="text-sm font-semibold text-rose-950 dark:text-rose-100">
+                          Custom Gemini API Key - Quota or Rate Limit Reached
                         </p>
-                        <p className="text-xs text-neutral-600 leading-relaxed font-sans">
-                          Gemini rejected the request because the custom API key provided in your Admin settings is invalid or has expired.
+                        <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-sans">
+                          A rate limit or invalid status was returned from Google AI Studio for your <strong>custom API key</strong>. Please verify your key on Google AI Studio console or wait a few moments.
                         </p>
-                        <div className="bg-white/95 p-3.5 rounded-xl border border-rose-100/50 space-y-2">
-                          <p className="text-xs font-semibold text-neutral-800">How to resolve this:</p>
-                          <ul className="text-xs text-neutral-600 list-disc list-inside space-y-1 bg-neutral-50/50 p-2.5 rounded-lg border border-neutral-100">
-                            <li>Make sure you copied your entire key correctly from <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline font-medium">Google AI Studio Console</a> (typically starts with <code>AIzaSy</code>).</li>
-                            <li>Go to the <strong>Admin tab</strong> at the top, paste the key again, and click <strong>Save API Settings</strong>.</li>
-                            <li>Make sure you did not paste an OpenAI key (which starts with <code>sk-</code>) or another service provider's key.</li>
-                            <li>You can also clear the custom API key to use Zipytiny's default host limits.</li>
+                        <div className="bg-white/95 dark:bg-zinc-900/95 p-3 rounded-xl border border-rose-100 dark:border-rose-900/50 space-y-1.5 text-xs">
+                          <p className="font-semibold text-neutral-800 dark:text-zinc-200">How to resolve:</p>
+                          <ul className="list-disc list-inside text-neutral-600 dark:text-zinc-400 space-y-1">
+                            <li>Verify your API key status on <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 dark:text-indigo-400 underline">Google AI Studio</a>.</li>
+                            <li>Clear or update your key in the <strong>Settings</strong> tab.</li>
                           </ul>
                         </div>
-                        <p className="text-[10px] text-rose-800/80 font-mono">Original Error: {error}</p>
+                        <p className="text-[10px] text-rose-800/80 dark:text-rose-400/80 font-mono">Original Error: {error}</p>
                       </div>
                     ) : (
+                      /* Scenario 3: Standard user error (missing transcript, invalid URL, etc.) */
                       <>
-                        <p className="text-xs font-mono leading-relaxed text-rose-800/90">{error}</p>
+                        <p className="text-xs font-mono leading-relaxed text-rose-800/90 dark:text-rose-300">{error}</p>
                         {customApiKey && (
-                          <p className="text-xs text-amber-850 bg-amber-50 p-3 rounded-xl border border-amber-100/50">
-                            ⚠️ Note: You are currently running Zipytiny using a <strong>custom Gemini API Key</strong>. Please verify that this key has adequate permissions and billing configuration.
+                          <p className="text-xs text-amber-850 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 p-3 rounded-xl border border-amber-100 dark:border-amber-900/50">
+                            ⚠️ Note: You are currently running Zipytiny using a <strong>custom Gemini API Key</strong>.
                           </p>
                         )}
-                        <p className="text-[11px] text-[#515154] bg-white/60 p-3 rounded-xl leading-relaxed border border-rose-100/30 font-light">
-                          💡 Tip: Some videos do not contain public english subtitles. You can simply enable the <strong className="text-[#1d1d1f] font-medium">"Custom Transcript override"</strong> box below, paste any video dialogue paragraph, and Gemini will render the summary of that text!
+                        <p className="text-[11px] text-[#515154] dark:text-zinc-400 bg-white/60 dark:bg-zinc-900/60 p-3 rounded-xl leading-relaxed border border-rose-100/30 dark:border-rose-900/30 font-light">
+                          💡 Tip: Some videos do not contain public english subtitles. You can enable the <strong className="text-[#1d1d1f] dark:text-zinc-200 font-medium">"Custom Transcript override"</strong> box below, paste any video dialogue paragraph, and Gemini will render the summary of that text!
                         </p>
                       </>
                     )}
@@ -8440,6 +8412,7 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
           <div id="summary-dashboard" dir={isRtl ? 'rtl' : 'ltr'} className={`bg-white dark:bg-zinc-900 rounded-3xl border border-neutral-200/80 dark:border-zinc-800 shadow-sm overflow-hidden animate-fadeIn ${isRtl ? 'text-right' : 'text-left'}`}>
             <LearningWorkspace
               activeSummary={processedActiveSummary}
+              advExplanationStyle={advExplanationStyle}
               onChangeLearningDepth={(depth) => {
                 setLearningDepth(depth);
                 const isLMode = depth !== 'quick';
@@ -12762,31 +12735,31 @@ ${activeSummary.mindmap.map((node) => `[${node.category}] ${node.concept}: ${nod
         </div>
       )}
 
-      {/* Dynamic Social Proof Indicators Section */}
+      {/* Qualitative Trust Signals Section */}
       {currentScreen !== 'landing' && (
-        <section className="bg-neutral-50 dark:bg-zinc-950/40 py-12 border-t border-b border-neutral-200/50 dark:border-zinc-800/80 font-sans text-center">
+        <section className="bg-neutral-50 dark:bg-zinc-950/40 py-10 border-t border-b border-neutral-200/50 dark:border-zinc-800/80 font-sans text-center">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="space-y-1.5 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-black/[0.03] dark:border-white/[0.02] shadow-xs hover:scale-103 transition duration-300">
-              <div className="inline-flex p-2.5 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400">
-                <PlayCircle className="w-5 h-5 fill-current" />
-              </div>
-              <p className="text-2xl font-black font-display text-neutral-900 dark:text-zinc-50 tracking-tight">10,000+</p>
-              <p className="text-xs text-neutral-500 dark:text-zinc-400 font-medium">Videos & Podcasts Processed</p>
-            </div>
-            <div className="space-y-1.5 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-black/[0.03] dark:border-white/[0.02] shadow-xs hover:scale-103 transition duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-1.5 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-black/[0.03] dark:border-white/[0.02] shadow-xs transition duration-300">
               <div className="inline-flex p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400">
                 <Sparkles className="w-5 h-5" />
               </div>
-              <p className="text-2xl font-black font-display text-neutral-900 dark:text-zinc-50 tracking-tight">500,000+</p>
-              <p className="text-xs text-neutral-500 dark:text-zinc-400 font-medium">AI Study Notes & Cards Generated</p>
+              <p className="text-base font-bold text-neutral-900 dark:text-zinc-50 tracking-tight">Built by Solo Founder</p>
+              <p className="text-xs text-neutral-500 dark:text-zinc-400 font-normal leading-relaxed">Focused indie craftsmanship dedicated to rapid, clean learning tools.</p>
             </div>
-            <div className="space-y-1.5 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-black/[0.03] dark:border-white/[0.02] shadow-xs hover:scale-103 transition duration-300">
+            <div className="space-y-1.5 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-black/[0.03] dark:border-white/[0.02] shadow-xs transition duration-300">
+              <div className="inline-flex p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400">
+                <PlayCircle className="w-5 h-5 fill-current" />
+              </div>
+              <p className="text-base font-bold text-neutral-900 dark:text-zinc-50 tracking-tight">Powered by Gemini 2.5</p>
+              <p className="text-xs text-neutral-500 dark:text-zinc-400 font-normal leading-relaxed">Multimodal AI models for instant timestamped summaries & study decks.</p>
+            </div>
+            <div className="space-y-1.5 p-4 bg-white dark:bg-zinc-900 rounded-2xl border border-black/[0.03] dark:border-white/[0.02] shadow-xs transition duration-300">
               <div className="inline-flex p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400">
                 <ThumbsUp className="w-5 h-5" />
               </div>
-              <p className="text-2xl font-black font-display text-neutral-900 dark:text-zinc-50 tracking-tight">95%</p>
-              <p className="text-xs text-neutral-500 dark:text-zinc-400 font-medium">Student & Professional Satisfaction</p>
+              <p className="text-base font-bold text-neutral-900 dark:text-zinc-50 tracking-tight">Free to Start</p>
+              <p className="text-xs text-neutral-500 dark:text-zinc-400 font-normal leading-relaxed">No credit card or complex setup required to summarize your first video.</p>
             </div>
           </div>
         </div>

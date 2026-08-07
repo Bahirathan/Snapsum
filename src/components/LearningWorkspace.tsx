@@ -48,8 +48,22 @@ import {
   FileCode,
   Bookmark,
   Sliders,
-  Presentation
+  Presentation,
+  Briefcase
 } from 'lucide-react';
+
+export function resolveYouTubeEmbedId(id: string): string {
+  if (!id || id === 'unknown') return 'L35fFDpwIM4';
+  const mapping: Record<string, string> = {
+    'UF8uR6Z6KLc': 'Hd_pt-xlV50', // Steve Jobs Speech
+    'qp0HIF3SfI4': 'lmyZMtPVodo', // Simon Sinek Golden Circle
+    'TjZBTDzGeGg': 'L35fFDpwIM4', // MIT 6.S091 AI Lecture
+    'guZgP-SgW98': 'rCya4Ll88fE', // Harvard Negotiation Strategy
+    'CBYhVcOn7To': '3tneCqSvvj4', // Lenny's Podcast
+    'vN4U5y_937A': 'MnrJzXM7a6o', // iPhone Launch Keynote
+  };
+  return mapping[id] || id;
+}
 import { motion, AnimatePresence } from 'motion/react';
 import { toPng } from 'html-to-image';
 import { YouTubeSummaryResponse, Flashcard, KeyConcept, MindmapNode, QuizQuestion } from '../types';
@@ -87,6 +101,7 @@ interface LearningWorkspaceProps {
   trackGAEvent?: (event: string, params?: any) => void;
   learningDepth?: 'quick' | 'study' | 'mastery';
   onChangeLearningDepth?: (depth: 'quick' | 'study' | 'mastery') => void;
+  advExplanationStyle?: string;
 }
 
 export default function LearningWorkspace({
@@ -116,7 +131,8 @@ export default function LearningWorkspace({
   getHeaders,
   trackGAEvent,
   learningDepth,
-  onChangeLearningDepth
+  onChangeLearningDepth,
+  advExplanationStyle
 }: LearningWorkspaceProps) {
   // Safe Fallback references to prevent any rendering crashes
   const videoId = activeSummary?.metadata?.videoId || 'unknown';
@@ -131,6 +147,24 @@ export default function LearningWorkspace({
   const quizQuestions = activeSummary?.quiz || [];
   const keyConceptsList = activeSummary?.keyConcepts || [];
   const flashcardsList = activeSummary?.flashcards || [];
+
+  // Video playback & Collapsible header state
+  const [userPlayingVideo, setUserPlayingVideo] = useState<boolean>(false);
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (ytStartSeconds !== null) {
+      setUserPlayingVideo(true);
+    }
+  }, [ytStartSeconds]);
+
+  // Detect Professional Mode vs Student Gamification Mode
+  const isProfessionalMode = 
+    advExplanationStyle === 'professional' || 
+    learningDepth === 'quick' || 
+    (activeSummary?.metadata as any)?.isProfessional || 
+    (videoTitle && /meeting|briefing|executive|quarterly|startup|negotiation|strategy|client/i.test(videoTitle)) ||
+    false;
 
   // Main Navigation Sections: Understand, Learn, Apply, Presentation
   const [activeSection, setActiveSection] = useState<'understand' | 'learn' | 'apply' | 'presentation'>('understand');
@@ -757,94 +791,8 @@ export default function LearningWorkspace({
         </div>
       )}
       
-      {/* 🚀 PREMIUM LMS DASHBOARD HEADER */}
-      <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/10">
-        <div className="absolute top-0 right-0 -translate-y-1/3 translate-x-1/3 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
-          
-          {/* Left: Video Thumbnail with play hover overlay */}
-          <div className="lg:col-span-3 flex justify-center lg:justify-start">
-            <div className="relative aspect-video w-full max-w-[240px] rounded-2xl overflow-hidden border border-white/20 shadow-lg group">
-              <img 
-                src={activeSummary?.metadata?.thumbnailUrl || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`} 
-                alt={videoTitle} 
-                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-200">
-                <Play className="w-8 h-8 text-white fill-white animate-pulse" />
-              </div>
-              <span className="absolute bottom-2 right-2 bg-black/75 rounded text-[10px] font-mono font-bold text-white px-1.5 py-0.5">
-                {activeSummary?.metadata?.duration ? `${activeSummary.metadata.duration}m` : 'Video'}
-              </span>
-            </div>
-          </div>
-
-          {/* Center: Title & Analytics Metrics */}
-          <div className="lg:col-span-6 space-y-4 text-center lg:text-left">
-            <div className="flex flex-wrap justify-center lg:justify-start gap-2">
-              <span className="bg-indigo-500/20 text-indigo-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border border-indigo-500/30 uppercase tracking-wider">
-                🎓 AI STUDY WORKSPACE
-              </span>
-              <span className="bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border border-amber-500/30 uppercase tracking-wider">
-                ⚡ LEVEL {Math.floor(xpPoints / 400) + 1}
-              </span>
-              <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 uppercase tracking-wider">
-                🔥 {streakDays} DAY STREAK
-              </span>
-            </div>
-
-            <h1 className="text-xl md:text-2xl font-bold font-display tracking-tight leading-snug">
-              {videoTitle}
-            </h1>
-
-            <p className="text-slate-300 text-xs font-light">
-              Parsed from lecture by <strong className="text-white font-medium">{author}</strong> • ID: <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded text-[11px] text-indigo-200">{videoId}</span>
-            </p>
-
-            {/* Premium Progress Bar */}
-            <div className="space-y-2 pt-1 max-w-md mx-auto lg:mx-0">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400 font-medium">Overall Course Progress</span>
-                <span className="text-emerald-400 font-mono font-bold">{progressPercent}% Completed</span>
-              </div>
-              <div className="w-full bg-white/10 rounded-full h-2.5 overflow-hidden border border-white/5">
-                <div 
-                  className="bg-gradient-to-r from-emerald-400 via-teal-400 to-indigo-500 h-full transition-all duration-500"
-                  style={{ width: `${progressPercent}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Quick LMS Statistics Panel */}
-          <div className="lg:col-span-3 bg-white/5 backdrop-blur-md rounded-2xl p-4.5 border border-white/10 space-y-3">
-            <span className="text-[10px] font-mono font-bold text-indigo-300 uppercase tracking-widest block text-left border-b border-white/10 pb-1.5">
-              LECTURE STATS
-            </span>
-            <div className="grid grid-cols-1 gap-2 text-xs">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-400 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Duration:</span>
-                <span className="font-semibold text-slate-100">{activeSummary?.metadata?.duration ? `${activeSummary.metadata.duration} min` : '15 min'}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-400 flex items-center gap-1.5"><Brain className="w-3.5 h-3.5" /> Est. Study Time:</span>
-                <span className="font-semibold text-slate-100">{estStudyTime} min</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-400 flex items-center gap-1.5"><Award className="w-3.5 h-3.5" /> Difficulty:</span>
-                <span className="font-semibold text-slate-100">{difficultyLevel}</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* 🧭 PREMIUM TRI-DIRECTORY NAVIGATION TABS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 bg-[#f2f2f7] dark:bg-zinc-950 p-2 rounded-3xl gap-2 border border-black/[0.04] dark:border-zinc-800">
+      {/* 🧭 PREMIUM TRI-DIRECTORY NAVIGATION TABS (Top of Workspace for seamless switching) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 bg-[#f2f2f7] dark:bg-zinc-950 p-2 rounded-3xl gap-2 border border-black/[0.04] dark:border-zinc-800 shadow-xs">
         
         {/* Directory 1: UNDERSTAND */}
         <button
@@ -852,18 +800,18 @@ export default function LearningWorkspace({
             setActiveSection('understand');
             trackGAEvent?.('section_changed', { section: 'understand' });
           }}
-          className={`flex items-center justify-center gap-3 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:scale-[0.98] cursor-pointer ${
+          className={`flex items-center justify-center gap-3 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:scale-[0.98] cursor-pointer ${
             activeSection === 'understand'
               ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-md font-bold border border-black/[0.02]'
               : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
           }`}
         >
           <div className={`p-2 rounded-xl transition ${activeSection === 'understand' ? 'bg-indigo-600/10 text-indigo-600' : 'bg-slate-200 dark:bg-zinc-800 text-slate-500'}`}>
-            <BookOpen className="w-5 h-5" />
+            <BookOpen className="w-4.5 h-4.5" />
           </div>
           <div className="text-left">
-            <span className="block text-xs font-mono font-bold tracking-wider uppercase text-slate-450 dark:text-zinc-500">SECTION 01</span>
-            <span className="text-sm">Understand</span>
+            <span className="block text-[10px] font-mono font-bold tracking-wider uppercase text-slate-400 dark:text-zinc-500">SECTION 01</span>
+            <span className="text-xs sm:text-sm font-bold">Understand</span>
           </div>
         </button>
 
@@ -873,18 +821,18 @@ export default function LearningWorkspace({
             setActiveSection('learn');
             trackGAEvent?.('section_changed', { section: 'learn' });
           }}
-          className={`flex items-center justify-center gap-3 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:scale-[0.98] cursor-pointer ${
+          className={`flex items-center justify-center gap-3 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:scale-[0.98] cursor-pointer ${
             activeSection === 'learn'
               ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-md font-bold border border-black/[0.02]'
               : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
           }`}
         >
           <div className={`p-2 rounded-xl transition ${activeSection === 'learn' ? 'bg-indigo-600/10 text-indigo-600' : 'bg-slate-200 dark:bg-zinc-800 text-slate-500'}`}>
-            <Network className="w-5 h-5" />
+            <Network className="w-4.5 h-4.5" />
           </div>
           <div className="text-left">
-            <span className="block text-xs font-mono font-bold tracking-wider uppercase text-slate-450 dark:text-zinc-500">SECTION 02</span>
-            <span className="text-sm">Learn & Retain</span>
+            <span className="block text-[10px] font-mono font-bold tracking-wider uppercase text-slate-400 dark:text-zinc-500">SECTION 02</span>
+            <span className="text-xs sm:text-sm font-bold">Learn & Retain</span>
           </div>
         </button>
 
@@ -894,18 +842,18 @@ export default function LearningWorkspace({
             setActiveSection('apply');
             trackGAEvent?.('section_changed', { section: 'apply' });
           }}
-          className={`flex items-center justify-center gap-3 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:scale-[0.98] cursor-pointer ${
+          className={`flex items-center justify-center gap-3 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:scale-[0.98] cursor-pointer ${
             activeSection === 'apply'
               ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-md font-bold border border-black/[0.02]'
               : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
           }`}
         >
           <div className={`p-2 rounded-xl transition ${activeSection === 'apply' ? 'bg-indigo-600/10 text-indigo-600' : 'bg-slate-200 dark:bg-zinc-800 text-slate-500'}`}>
-            <Award className="w-5 h-5" />
+            <Award className="w-4.5 h-4.5" />
           </div>
           <div className="text-left">
-            <span className="block text-xs font-mono font-bold tracking-wider uppercase text-slate-450 dark:text-zinc-500">SECTION 03</span>
-            <span className="text-sm">Apply & Tutor</span>
+            <span className="block text-[10px] font-mono font-bold tracking-wider uppercase text-slate-400 dark:text-zinc-500">SECTION 03</span>
+            <span className="text-xs sm:text-sm font-bold">Apply & Tutor</span>
           </div>
         </button>
 
@@ -915,22 +863,169 @@ export default function LearningWorkspace({
             setActiveSection('presentation');
             trackGAEvent?.('section_changed', { section: 'presentation' });
           }}
-          className={`flex items-center justify-center gap-3 py-4 rounded-2xl text-sm font-semibold transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:scale-[0.98] cursor-pointer ${
+          className={`flex items-center justify-center gap-3 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 hover:translate-y-[-1px] active:translate-y-[1px] active:scale-[0.98] cursor-pointer ${
             activeSection === 'presentation'
               ? 'bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-md font-bold border border-black/[0.02]'
               : 'text-slate-500 hover:text-slate-800 dark:hover:text-zinc-300'
           }`}
         >
           <div className={`p-2 rounded-xl transition ${activeSection === 'presentation' ? 'bg-indigo-600/10 text-indigo-600' : 'bg-slate-200 dark:bg-zinc-800 text-slate-500'}`}>
-            <Presentation className="w-5 h-5" />
+            <Presentation className="w-4.5 h-4.5" />
           </div>
           <div className="text-left">
-            <span className="block text-xs font-mono font-bold tracking-wider uppercase text-slate-450 dark:text-zinc-500">SECTION 04</span>
-            <span className="text-sm">AI Presentation</span>
+            <span className="block text-[10px] font-mono font-bold tracking-wider uppercase text-slate-400 dark:text-zinc-500">SECTION 04</span>
+            <span className="text-xs sm:text-sm font-bold">AI Presentation</span>
           </div>
         </button>
 
       </div>
+
+      {/* 🚀 COLLAPSIBLE COURSE OVERVIEW HEADER */}
+      {isHeaderExpanded ? (
+        <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden border border-white/10 animate-fadeIn">
+          <div className="absolute top-0 right-0 -translate-y-1/3 translate-x-1/3 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div className="flex justify-end mb-2 relative z-20">
+            <button
+              onClick={() => setIsHeaderExpanded(false)}
+              className="flex items-center gap-1 text-[11px] font-mono text-indigo-200 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg transition cursor-pointer"
+            >
+              <span>Collapse Overview</span>
+              <ChevronUp className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
+            
+            {/* Left: Video Thumbnail */}
+            <div className="lg:col-span-3 flex justify-center lg:justify-start">
+              <div 
+                onClick={() => setUserPlayingVideo(true)}
+                className="relative aspect-video w-full max-w-[240px] rounded-2xl overflow-hidden border border-white/20 shadow-lg group cursor-pointer"
+              >
+                <img 
+                  src={activeSummary?.metadata?.thumbnailUrl || `https://img.youtube.com/vi/${resolveYouTubeEmbedId(videoId)}/maxresdefault.jpg`} 
+                  alt={videoTitle} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = `https://img.youtube.com/vi/${resolveYouTubeEmbedId(videoId)}/hqdefault.jpg`;
+                  }}
+                />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/30 transition">
+                  <Play className="w-8 h-8 text-white fill-white group-hover:scale-110 transition" />
+                </div>
+                <span className="absolute bottom-2 right-2 bg-black/75 rounded text-[10px] font-mono font-bold text-white px-1.5 py-0.5">
+                  {activeSummary?.metadata?.duration ? `${activeSummary.metadata.duration}m` : 'Video'}
+                </span>
+              </div>
+            </div>
+
+            {/* Center: Title & Analytics Metrics */}
+            <div className="lg:col-span-6 space-y-4 text-center lg:text-left">
+              <div className="flex flex-wrap justify-center lg:justify-start gap-2">
+                <span className="bg-indigo-500/20 text-indigo-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border border-indigo-500/30 uppercase tracking-wider">
+                  {isProfessionalMode ? '💼 EXECUTIVE BRIEFING' : '🎓 AI STUDY WORKSPACE'}
+                </span>
+                {!isProfessionalMode && (
+                  <>
+                    <span className="bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border border-amber-500/30 uppercase tracking-wider">
+                      ⚡ LEVEL {Math.floor(xpPoints / 400) + 1}
+                    </span>
+                    <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border border-emerald-500/30 uppercase tracking-wider">
+                      🔥 {streakDays} DAY STREAK
+                    </span>
+                  </>
+                )}
+              </div>
+
+              <h1 className="text-xl md:text-2xl font-bold font-display tracking-tight leading-snug">
+                {videoTitle}
+              </h1>
+
+              <p className="text-slate-300 text-xs font-light">
+                Parsed by <strong className="text-white font-medium">{author}</strong> • ID: <span className="font-mono bg-white/10 px-1.5 py-0.5 rounded text-[11px] text-indigo-200">{videoId}</span>
+              </p>
+
+              {/* Progress Bar */}
+              <div className="space-y-2 pt-1 max-w-md mx-auto lg:mx-0">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-400 font-medium">Overall Course Progress</span>
+                  <span className="text-emerald-400 font-mono font-bold">
+                    {progressPercent > 0 ? `${progressPercent}% Completed` : 'New Workspace'}
+                  </span>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-2.5 overflow-hidden border border-white/5">
+                  <div 
+                    className="bg-gradient-to-r from-emerald-400 via-teal-400 to-indigo-500 h-full transition-all duration-500"
+                    style={{ width: `${Math.max(progressPercent, 5)}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Quick LMS Statistics Panel */}
+            <div className="lg:col-span-3 bg-white/5 backdrop-blur-md rounded-2xl p-4.5 border border-white/10 space-y-3">
+              <span className="text-[10px] font-mono font-bold text-indigo-300 uppercase tracking-widest block text-left border-b border-white/10 pb-1.5">
+                LECTURE STATS
+              </span>
+              <div className="grid grid-cols-1 gap-2 text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Duration:</span>
+                  <span className="font-semibold text-slate-100">{activeSummary?.metadata?.duration ? `${activeSummary.metadata.duration} min` : '15 min'}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 flex items-center gap-1.5"><Brain className="w-3.5 h-3.5" /> Est. Study Time:</span>
+                  <span className="font-semibold text-slate-100">{estStudyTime} min</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 flex items-center gap-1.5"><Award className="w-3.5 h-3.5" /> Profile:</span>
+                  <span className="font-semibold text-slate-100 capitalize">{studyProfile}</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-zinc-900 border border-black/[0.04] dark:border-zinc-800 rounded-2xl p-3.5 px-5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-3.5 min-w-0 w-full sm:w-auto">
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-900 shrink-0 border border-black/10 relative">
+              <img 
+                src={activeSummary?.metadata?.thumbnailUrl || `https://img.youtube.com/vi/${resolveYouTubeEmbedId(videoId)}/hqdefault.jpg`}
+                alt={videoTitle}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = `https://img.youtube.com/vi/${resolveYouTubeEmbedId(videoId)}/hqdefault.jpg`;
+                }}
+              />
+            </div>
+            <div className="min-w-0 flex-1 text-left">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs font-bold text-slate-900 dark:text-white truncate font-display max-w-sm">
+                  {videoTitle}
+                </h2>
+                <span className="hidden md:inline-block bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-[9px] font-mono font-bold px-2 py-0.5 rounded-md border border-indigo-200/50 dark:border-indigo-800/50 shrink-0">
+                  {isProfessionalMode ? 'EXECUTIVE' : 'STUDY HUB'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 dark:text-zinc-500 truncate mt-0.5">
+                {author} • {activeSummary?.metadata?.duration ? `${activeSummary.metadata.duration} min` : '15 min'} • {progressPercent > 0 ? `${progressPercent}% complete` : 'Ready'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsHeaderExpanded(true)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/50 px-3.5 py-1.5 rounded-xl transition cursor-pointer shrink-0"
+          >
+            <span>Overview & Stats</span>
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* 💻 MAIN GRID WORKSPACE MODULES */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start mt-6">
@@ -1778,36 +1873,67 @@ export default function LearningWorkspace({
           
           {/* Persistent Video Player block */}
           <div className="bg-white dark:bg-zinc-900 border border-black/[0.03] dark:border-zinc-850 p-6 rounded-3xl shadow-sm text-left space-y-3.5">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-              <Youtube className="w-4 h-4 text-rose-600 fill-rose-600/10" />
-              Synchronized Lecture Media Player
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Youtube className="w-4 h-4 text-rose-600 fill-rose-600/10" />
+                Synchronized Lecture Media Player
+              </span>
+              {userPlayingVideo && (
+                <button
+                  type="button"
+                  onClick={() => setUserPlayingVideo(false)}
+                  className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-zinc-300 font-mono underline cursor-pointer"
+                >
+                  Show Poster
+                </button>
+              )}
+            </div>
             
-            <div className="aspect-video w-full rounded-2xl bg-black overflow-hidden shadow-md border border-black/[0.08] relative">
-              {videoId && videoId !== 'unknown' ? (
+            <div className="aspect-video w-full rounded-2xl bg-black overflow-hidden shadow-md border border-black/[0.08] relative group">
+              {userPlayingVideo || ytStartSeconds !== null ? (
                 <iframe
                   className="w-full h-full"
-                  src={`https://www.youtube.com/embed/${videoId === 'UF8uR6Z6KLc' ? 'Hd_pt-xlV50' : videoId}?start=${ytStartSeconds !== null ? ytStartSeconds : 0}&autoplay=${ytStartSeconds !== null ? '1' : '0'}`}
+                  src={`https://www.youtube.com/embed/${resolveYouTubeEmbedId(videoId)}?start=${ytStartSeconds !== null ? ytStartSeconds : 0}&autoplay=1&rel=0&modestbranding=1`}
                   title={videoTitle}
                   frameBorder="0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 ></iframe>
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 p-6 text-center text-slate-400">
-                  <span className="text-xl">⚠️</span>
-                  <p className="text-xs font-semibold mt-2">Synchronized Lecture Media Player is currently unavailable.</p>
-                  <p className="text-[10px] text-slate-500 mt-1">Please try re-generating or reloading this summary content.</p>
+                <div 
+                  onClick={() => setUserPlayingVideo(true)}
+                  className="w-full h-full relative cursor-pointer group"
+                >
+                  <img 
+                    src={activeSummary?.metadata?.thumbnailUrl || `https://img.youtube.com/vi/${resolveYouTubeEmbedId(videoId)}/maxresdefault.jpg`}
+                    alt={videoTitle}
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = `https://img.youtube.com/vi/${resolveYouTubeEmbedId(videoId)}/hqdefault.jpg`;
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition flex flex-col items-center justify-center gap-2 p-4 text-center">
+                    <div className="w-13 h-13 rounded-full bg-red-600 group-hover:bg-red-500 text-white flex items-center justify-center shadow-xl group-hover:scale-110 transition duration-200">
+                      <Play className="w-6 h-6 fill-white ml-0.5" />
+                    </div>
+                    <span className="text-white text-xs font-bold tracking-wide bg-black/60 px-3 py-1 rounded-full backdrop-blur-md border border-white/20">
+                      Click to Start Synchronized Player
+                    </span>
+                  </div>
+                  <span className="absolute bottom-3 right-3 bg-black/80 text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded">
+                    {activeSummary?.metadata?.duration ? `${activeSummary.metadata.duration}m` : 'Video'}
+                  </span>
                 </div>
               )}
             </div>
 
             {ytStartSeconds !== null && (
-              <div className="flex items-center justify-between text-[11px] text-[#1d1d1f] bg-white px-3.5 py-2 rounded-xl border border-black/[0.04] shadow-xs">
+              <div className="flex items-center justify-between text-[11px] text-[#1d1d1f] dark:text-zinc-200 bg-white dark:bg-zinc-800 px-3.5 py-2 rounded-xl border border-black/[0.04] dark:border-zinc-700 shadow-xs">
                 <span>🎬 Teleported to: <strong className="font-semibold">{formatTime(ytStartSeconds)}</strong></span>
                 <button 
                   onClick={onResetJump}
-                  className="font-mono font-bold text-slate-500 hover:text-indigo-600 uppercase text-[9px] cursor-pointer transition"
+                  className="font-mono font-bold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 uppercase text-[9px] cursor-pointer transition"
                 >
                   Reset Play
                 </button>
@@ -1851,7 +1977,7 @@ export default function LearningWorkspace({
 
             {quizSubmitted && (
               <div className="bg-indigo-50/50 dark:bg-indigo-950/15 p-3 rounded-xl border border-indigo-100/50 dark:border-indigo-900/35 text-[11px] text-indigo-950 dark:text-indigo-200">
-                🎯 <strong>Cognitive calibration completed!</strong> Your diagnostic score auto-tuned this plan. Feel free to tweak manual speeds above.
+                🎯 <strong>Cognitive calibration completed!</strong> Your diagnostic score auto-tuned this plan.
               </div>
             )}
           </div>
@@ -1864,7 +1990,7 @@ export default function LearningWorkspace({
                 Lecture Timestamps & Annotations
               </span>
               <span className="text-[10px] font-mono text-slate-450 dark:text-zinc-500 font-bold">
-                {customBookmarks.length} Saved
+                {customBookmarks.length > 0 ? `${customBookmarks.length} Saved` : 'Add Pins'}
               </span>
             </div>
 
@@ -1901,8 +2027,8 @@ export default function LearningWorkspace({
             {/* Bookmarks Timeline List */}
             <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
               {customBookmarks.length === 0 ? (
-                <div className="border border-dashed dark:border-zinc-800 rounded-2xl p-6 text-center">
-                  <Bookmark className="w-6 h-6 text-slate-350 dark:text-zinc-700 mx-auto mb-2 animate-pulse" />
+                <div className="border border-dashed dark:border-zinc-800 rounded-2xl p-4 text-center">
+                  <Bookmark className="w-5 h-5 text-slate-350 dark:text-zinc-700 mx-auto mb-1.5" />
                   <p className="text-[11px] text-slate-400">No synchronized annotations yet.</p>
                   <p className="text-[10px] text-slate-500 mt-0.5">Click 📌 on lecture segment modules or submit annotations above to fill your timeline!</p>
                 </div>
@@ -1945,90 +2071,124 @@ export default function LearningWorkspace({
             </div>
           </div>
 
-          {/* Gamified study operating core */}
-          <div className="bg-gradient-to-br from-slate-900 to-[#1d1d1f] text-white rounded-3xl p-6 border border-white/10 shadow-lg space-y-4 text-left relative overflow-hidden">
-            {showStreakCelebration && (
-              <div className="absolute inset-0 bg-emerald-650/95 flex flex-col items-center justify-center text-center p-4 z-20 animate-fadeIn">
-                <Sparkles className="w-8 h-8 text-amber-300 animate-spin mb-2" />
-                <h5 className="font-extrabold text-sm text-white">Streak Reward Claimed!</h5>
-                <p className="text-[11px] text-emerald-105 font-light mt-1">
-                  🔥 +55 XP added. Keep learning tomorrow to multiply your progress.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowStreakCelebration(false)}
-                  className="mt-3 bg-white/20 hover:bg-white/30 text-white font-semibold text-[10px] px-3 py-1 rounded-lg transition"
-                >
-                  Awesome!
-                </button>
+          {/* Professional Briefing Panel vs Gamified Study Operating Core */}
+          {isProfessionalMode ? (
+            <div className="bg-gradient-to-br from-slate-900 to-[#1d1d1f] text-white rounded-3xl p-6 border border-white/10 shadow-lg space-y-4 text-left">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <Briefcase className="w-4.5 h-4.5 text-indigo-400" />
+                  <h4 className="font-bold text-sm text-white font-display">Executive Briefing Status</h4>
+                </div>
+                <span className="bg-indigo-500/20 text-indigo-300 text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border border-indigo-500/30 uppercase">
+                  PROFESSIONAL MODE
+                </span>
               </div>
-            )}
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Trophy className="w-4.5 h-4.5 text-amber-400" />
-                <h4 className="font-bold font-display text-sm text-white">Comprehension Master</h4>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="bg-white/5 border border-white/5 p-3 rounded-xl">
+                  <span className="text-neutral-400 text-[10px] uppercase font-mono block">Document Status</span>
+                  <strong className="text-xs text-white font-medium mt-0.5 block">Parsed & Indexed</strong>
+                </div>
+                <div className="bg-white/5 border border-white/5 p-3 rounded-xl">
+                  <span className="text-neutral-400 text-[10px] uppercase font-mono block">Key Action Items</span>
+                  <strong className="text-xs text-white font-medium mt-0.5 block">{takeawaysList.length || 3} Core Points</strong>
+                </div>
               </div>
-              <div className={`flex items-center gap-1 border px-2.5 py-0.5 rounded-full text-[9px] font-bold font-mono ${
-                streakClaimed 
-                  ? 'bg-zinc-800/80 text-zinc-400 border-zinc-700/50' 
-                  : 'bg-amber-400/10 text-amber-400 border-amber-400/20 animate-pulse'
-              }`}>
-                {streakClaimed ? 'COMPLETED TODAY' : 'CLAIMABLE TODAY'}
-              </div>
-            </div>
 
-            {/* XP progress bars */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-end text-xs">
-                <span className="text-slate-400 font-mono">XP GAINED: {xpPoints} XP</span>
-                <span className="text-amber-400 font-bold font-mono">Next target: {400 - (xpPoints % 400)} XP</span>
-              </div>
-              <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-                <div 
-                  className="bg-gradient-to-r from-amber-400 to-yellow-500 h-full transition-all duration-300"
-                  style={{ width: `${((xpPoints % 400) / 400) * 100}%` }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
-              <div className="bg-white/5 border border-white/5 p-3 rounded-xl">
-                <span className="text-neutral-400 text-[10px] uppercase font-mono block">Streak active</span>
-                <strong className="text-sm text-white font-mono mt-0.5 block flex items-center gap-1">
-                  <span>{streakDays} Days</span>
-                  <span className="text-amber-500 animate-pulse">🔥</span>
-                </strong>
-              </div>
-              <div className="bg-white/5 border border-white/5 p-3 rounded-xl">
-                <span className="text-neutral-400 text-[10px] uppercase font-mono block">Accuracy rate</span>
-                <strong className="text-sm text-white font-mono mt-0.5 block">
-                  {quizSubmitted ? `${Math.round((quizScore / (quizQuestions.length || 1)) * 100)}%` : 'No test yet'}
-                </strong>
-              </div>
-            </div>
-
-            {streakClaimed ? (
-              <div className="w-full bg-zinc-800/50 border border-zinc-750 text-zinc-400 py-2.5 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-1.5">
-                <CheckCircle className="w-4 h-4 text-emerald-500" />
-                <span>Streak Safeguarded For Today</span>
-              </div>
-            ) : (
-              <button 
+              <button
                 type="button"
-                onClick={() => {
-                  localStorage.setItem('zipytiny_checked_today', new Date().toDateString());
-                  awardXp(55);
-                  setStreakDays(prev => prev + 1);
-                  setStreakClaimed(true);
-                  setShowStreakCelebration(true);
-                }}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-xs font-bold transition duration-150 cursor-pointer text-center flex items-center justify-center gap-1.5 hover:shadow-md active:scale-98"
+                onClick={downloadSummaryAsPDF}
+                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-xl text-xs font-bold transition duration-150 cursor-pointer text-center flex items-center justify-center gap-2 shadow-sm"
               >
-                <span>Claim Streak Check-In Reward (+55 XP)</span>
+                <FileText className="w-4 h-4" />
+                <span>Export Executive PDF Briefing</span>
               </button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="bg-gradient-to-br from-slate-900 to-[#1d1d1f] text-white rounded-3xl p-6 border border-white/10 shadow-lg space-y-4 text-left relative overflow-hidden">
+              {showStreakCelebration && (
+                <div className="absolute inset-0 bg-emerald-650/95 flex flex-col items-center justify-center text-center p-4 z-20 animate-fadeIn">
+                  <Sparkles className="w-8 h-8 text-amber-300 animate-spin mb-2" />
+                  <h5 className="font-extrabold text-sm text-white">Streak Reward Claimed!</h5>
+                  <p className="text-[11px] text-emerald-105 font-light mt-1">
+                    🔥 +55 XP added. Keep learning tomorrow to multiply your progress.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowStreakCelebration(false)}
+                    className="mt-3 bg-white/20 hover:bg-white/30 text-white font-semibold text-[10px] px-3 py-1 rounded-lg transition"
+                  >
+                    Awesome!
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Trophy className="w-4.5 h-4.5 text-amber-400" />
+                  <h4 className="font-bold font-display text-sm text-white">Comprehension Master</h4>
+                </div>
+                <div className={`flex items-center gap-1 border px-2.5 py-0.5 rounded-full text-[9px] font-bold font-mono ${
+                  streakClaimed 
+                    ? 'bg-zinc-800/80 text-zinc-400 border-zinc-700/50' 
+                    : 'bg-amber-400/10 text-amber-400 border-amber-400/20 animate-pulse'
+                }`}>
+                  {streakClaimed ? 'COMPLETED TODAY' : 'CLAIMABLE TODAY'}
+                </div>
+              </div>
+
+              {/* XP progress bars */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-end text-xs">
+                  <span className="text-slate-400 font-mono">XP GAINED: {xpPoints} XP</span>
+                  <span className="text-amber-400 font-bold font-mono">Next target: {400 - (xpPoints % 400)} XP</span>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-amber-400 to-yellow-500 h-full transition-all duration-300"
+                    style={{ width: `${((xpPoints % 400) / 400) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
+                <div className="bg-white/5 border border-white/5 p-3 rounded-xl">
+                  <span className="text-neutral-400 text-[10px] uppercase font-mono block">Streak active</span>
+                  <strong className="text-sm text-white font-mono mt-0.5 block flex items-center gap-1">
+                    <span>{streakDays} Days</span>
+                    <span className="text-amber-500 animate-pulse">🔥</span>
+                  </strong>
+                </div>
+                <div className="bg-white/5 border border-white/5 p-3 rounded-xl">
+                  <span className="text-neutral-400 text-[10px] uppercase font-mono block font-mono">Accuracy rate</span>
+                  <strong className="text-sm text-white font-mono mt-0.5 block">
+                    {quizSubmitted ? `${Math.round((quizScore / (quizQuestions.length || 1)) * 100)}%` : 'Ready for Quiz'}
+                  </strong>
+                </div>
+              </div>
+
+              {streakClaimed ? (
+                <div className="w-full bg-zinc-800/50 border border-zinc-750 text-zinc-400 py-2.5 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-1.5">
+                  <CheckCircle className="w-4 h-4 text-emerald-500" />
+                  <span>Streak Safeguarded For Today</span>
+                </div>
+              ) : (
+                <button 
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem('zipytiny_checked_today', new Date().toDateString());
+                    awardXp(55);
+                    setStreakDays(prev => prev + 1);
+                    setStreakClaimed(true);
+                    setShowStreakCelebration(true);
+                  }}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-xs font-bold transition duration-150 cursor-pointer text-center flex items-center justify-center gap-1.5 hover:shadow-md active:scale-98"
+                >
+                  <span>Claim Streak Check-In Reward (+55 XP)</span>
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Quick study instructions guidelines card */}
           <div className="bg-white dark:bg-zinc-900 border border-black/[0.03] dark:border-zinc-850 p-6 rounded-3xl shadow-sm text-left space-y-3.5">

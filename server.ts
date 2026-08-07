@@ -313,9 +313,7 @@ function handleGeminiError(err: any, res: express.Response) {
     errorMessage.includes('API keys are not supported by this API');
 
   if (isScopeError || isNoKeyError) {
-    errorMessage = 'No valid Gemini API Key is configured on the server host. To resolve this: \n\n' +
-                   '1. If you are the owner, open the Settings panel in the Google AI Studio UI (gear/secrets icon in top right) and add a secret named GEMINI_API_KEY with your Google AI Studio Gemini API Key.\n\n' +
-                   '2. Alternatively, you can click the "Google Sign In" / Settings panel in the top right of this page (Zipytiny) and paste your own Gemini API key in the "Custom Gemini API Key" field to analyze videos instantly for free!';
+    errorMessage = 'AI processing service is temporarily unavailable. Please try again in a few moments, or enter a custom Gemini API key in Settings.';
     statusCode = 400;
   } else if (errorMessage === 'TIMEOUT_EXCEEDED') {
     errorMessage = 'The summarization request timed out. This is usually due to temporary congestion on Google Gemini API backends, or the video being exceptionally long. Please try again, or use the "Custom Transcript override" box to paste the dialogue directly to bypass transcript-scraping delays!';
